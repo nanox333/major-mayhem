@@ -195,7 +195,8 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .map-art { display: block; width: 100%; height: 100%; user-select: none; }
 .board__caption { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--f-head); font-weight: 700; font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .board__caption .t { color: var(--t); } .board__caption .ct { color: var(--ct); }
-.board__spot { position: absolute; width: clamp(38px, 11%, 52px); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); }
+.board__spot { position: absolute; width: clamp(38px, 11%, 52px); aspect-ratio: 1 / 1; transform: translate(-50%, -50%); transition: left .6s cubic-bezier(.3,.8,.3,1), top .6s cubic-bezier(.3,.8,.3,1); }
+@media (prefers-reduced-motion: reduce) { .board__spot { transition: none; } }
 
 .token { --ring: var(--t); width: 100%; height: 100%; animation: token-pop .4s cubic-bezier(.2,.85,.3,1) both; }
 .token--ct { --ring: var(--ct); width: 84%; height: 84%; margin: 8%; }

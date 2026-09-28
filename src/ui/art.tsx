@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Role, Roster, Player } from '../data/rosters';
-import { DUST2 } from '../data/dust2';
+import radars from '../data/radars.json';
+
+const RADARS = radars as Record<string, string>;
 
 /** Small line icons for each role (drawn for this game). */
 export function RoleIcon({ role, size = 14 }: { role: Role; size?: number }) {
@@ -68,21 +70,36 @@ export function Avatar({ player, roster, className }: { player: Player; roster: 
   );
 }
 
-/** Dust 2 radar (image supplied by the user). Coordinates on it are 0–100 of the square. */
-export function MapArt() {
-  return <img className="map-art" src={DUST2} alt="Dust 2 radar" draggable={false} />;
+/** Map radar (images supplied by the player, built by scripts/build-radars.mjs). Coordinates on it are 0–100 of the square. */
+export function MapArt({ map }: { map: string }) {
+  return <img className="map-art" src={RADARS[map] ?? RADARS.Dust2} alt={`${map} radar`} draggable={false} />;
 }
 
-// Your team attacks as T; each role starts at its usual Dust 2 spot.
-export const SLOT_POS: Record<Role, { x: number; y: number; hint: string }> = {
-  ENTRY: { x: 86, y: 38, hint: 'Long A' },
-  SUP: { x: 69, y: 60, hint: 'Long doors' },
-  AWP: { x: 46, y: 57, hint: 'Mid doors' },
-  IGL: { x: 45, y: 80, hint: 'Lower mid' },
-  LURK: { x: 15, y: 45, hint: 'Upper tunnels' },
+type Spot = { x: number; y: number; hint: string };
+export interface MapPositions { T: Record<Role, Spot>; CT: Spot[] }
+
+// Your team attacks as T from each role's usual starting spot; opponents hold CT positions.
+export const POSITIONS: Record<string, MapPositions> = {
+  Dust2: {
+    T: { ENTRY: { x: 88, y: 42, hint: 'Long A' }, SUP: { x: 69, y: 60, hint: 'Long doors' }, AWP: { x: 47, y: 52, hint: 'Mid' }, IGL: { x: 50, y: 78, hint: 'Outside mid' }, LURK: { x: 18, y: 61, hint: 'Upper tunnels' } },
+    CT: [{ x: 79, y: 17, hint: 'A site' }, { x: 20, y: 14, hint: 'B site' }, { x: 59, y: 21, hint: 'CT spawn' }, { x: 47, y: 34, hint: 'CT mid' }, { x: 32, y: 22, hint: 'B doors' }],
+  },
+  Mirage: {
+    T: { ENTRY: { x: 66, y: 64, hint: 'A ramp' }, SUP: { x: 78, y: 76, hint: 'Palace' }, AWP: { x: 62, y: 42, hint: 'Top mid' }, IGL: { x: 86, y: 52, hint: 'T ramp' }, LURK: { x: 46, y: 12, hint: 'B apartments' } },
+    CT: [{ x: 53, y: 77, hint: 'A site' }, { x: 18, y: 21, hint: 'B site' }, { x: 28, y: 69, hint: 'CT spawn' }, { x: 36, y: 47, hint: 'Window' }, { x: 42, y: 27, hint: 'Short' }],
+  },
+  Inferno: {
+    T: { ENTRY: { x: 44, y: 48, hint: 'Banana' }, SUP: { x: 33, y: 62, hint: 'Lower banana' }, AWP: { x: 56, y: 66, hint: 'Mid' }, IGL: { x: 15, y: 72, hint: 'T spawn' }, LURK: { x: 44, y: 86, hint: 'Apartments' } },
+    CT: [{ x: 46, y: 20, hint: 'B site' }, { x: 83, y: 70, hint: 'A site' }, { x: 90, y: 36, hint: 'CT spawn' }, { x: 73, y: 55, hint: 'Arch' }, { x: 89, y: 86, hint: 'Pit' }],
+  },
+  Nuke: {
+    T: { ENTRY: { x: 44, y: 46, hint: 'Hut' }, SUP: { x: 38, y: 55, hint: 'Lobby' }, AWP: { x: 52, y: 70, hint: 'Outside' }, IGL: { x: 22, y: 53, hint: 'T side' }, LURK: { x: 75, y: 70, hint: 'Secret' } },
+    CT: [{ x: 55, y: 49, hint: 'A site' }, { x: 55, y: 31, hint: 'Heaven' }, { x: 83, y: 45, hint: 'CT spawn' }, { x: 67, y: 48, hint: 'Mini' }, { x: 63, y: 62, hint: 'Garage' }],
+  },
+  Ancient: {
+    T: { ENTRY: { x: 16, y: 45, hint: 'A main' }, SUP: { x: 30, y: 45, hint: 'Donut' }, AWP: { x: 49, y: 52, hint: 'Mid' }, IGL: { x: 49, y: 80, hint: 'T ramp' }, LURK: { x: 80, y: 68, hint: 'B ramp' } },
+    CT: [{ x: 29, y: 23, hint: 'A site' }, { x: 79, y: 41, hint: 'B site' }, { x: 52, y: 11, hint: 'CT spawn' }, { x: 48, y: 30, hint: 'Top mid' }, { x: 70, y: 55, hint: 'Cave' }],
+  },
 };
-// Opponents defend as CT.
-export const OPP_POS = [
-  { x: 79, y: 11, hint: 'A site' }, { x: 18, y: 12, hint: 'B site' }, { x: 60, y: 21, hint: 'CT spawn' },
-  { x: 49, y: 33, hint: 'CT mid' }, { x: 29, y: 24, hint: 'B doors' },
-];
+/** Maps without a radar yet (Anubis, Train) show on Dust 2. */
+export const boardMap = (map: string | null | undefined) => (map && RADARS[map] && POSITIONS[map] ? map : 'Dust2');

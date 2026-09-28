@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ROLE_LABEL, ROLE_ORDER, ROLE_SHORT, Roster, Player } from '../data/rosters';
 import * as G from '../game/logic';
 import { Run } from '../game/state';
-import { Avatar, MapArt, OPP_POS, RoleIcon, SLOT_POS, TeamBadge } from './art';
+import { Avatar, MapArt, POSITIONS, RoleIcon, TeamBadge, boardMap } from './art';
 import { reduceMotion } from './util';
 
 // ---------------- board (stays mounted across phases so tokens don't re-animate) ----------------
@@ -58,13 +58,15 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing }: {
     const roster = G.rosterById.get(pk.rosterId)!;
     return { slot, roster, player: roster.players.find((p) => p.id === pk.playerId)! };
   });
+  const map = boardMap(playing);
+  const { T, CT } = POSITIONS[map];
   return (
-    <aside className="board" aria-label="Dust 2 positions">
+    <aside className="board" aria-label={`${map} positions`}>
       <div className="board__map">
-        <MapArt />
+        <MapArt map={map} />
         {ROLE_ORDER.map((slot, i) => {
           const l = lineup[i];
-          const pos = SLOT_POS[slot];
+          const pos = T[slot];
           return (
             <div key={slot} className="board__spot" style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: Math.round(pos.y) }}>
               {l ? <MapToken key={l.player.id} l={l} pulse={pulses?.[l.player.id]} /> : (
@@ -78,7 +80,7 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing }: {
             </div>
           );
         })}
-        {opp && OPP_POS.map((pos, i) => (
+        {opp && CT.map((pos, i) => (
           <div key={`${i}-${concealed ? 'x' : opp[i].player.id}`} className="board__spot" style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: Math.round(pos.y) }}>
             {concealed ? (
               <div className="token token--ct token--mystery" style={{ ['--d' as string]: `${i * 110}ms` }}><div className="token__inner"><div className="token__face">?</div></div></div>
@@ -86,7 +88,7 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing }: {
           </div>
         ))}
       </div>
-      <div className="board__caption"><span>{playing && playing !== 'Dust2' ? `Now on ${playing} · tactics on de_dust2` : 'de_dust2'}</span><span className="t">T · your team</span>{opp && <span className="ct">CT · opponent</span>}</div>
+      <div className="board__caption"><span>{playing && playing !== map ? `${playing} · shown on de_dust2` : `de_${map.toLowerCase()}`}</span><span className="t">T · your team</span>{opp && <span className="ct">CT · opponent</span>}</div>
     </aside>
   );
 }

@@ -4,3 +4,4 @@ shots/
 *.log
 .DS_Store
 src/data/media.json
+src/data/radars.json
