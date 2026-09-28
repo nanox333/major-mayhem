@@ -18,9 +18,11 @@ npx playwright install chromium   # once, for e2e
 npm run e2e          # plays a full daily run in headless Chromium (desktop + phone width), screenshots in shots/
 ```
 
-`dev`, `build`, `test` and `check` first run `npm run media`, which generates `src/data/media.json` and `src/data/radars.json` from `assets-src/` (skipped when it's already up to date). Set `CHROMIUM_PATH` to use an existing Chromium for e2e. GitHub Actions runs all of the above on every push (`.github/workflows/ci.yml`).
+`dev`, `build`, `test` and `check` first run `npm run media`, which generates `src/data/media.json` and `src/data/radars.json` from `assets-src/`, plus the icons and link-preview image in `public/` (skipped when it's already up to date). Set `CHROMIUM_PATH` to use an existing Chromium for e2e. GitHub Actions runs all of the above on every push (`.github/workflows/ci.yml`).
 
 **Live site:** every push to `main` builds the game and publishes it to GitHub Pages (`.github/workflows/pages.yml`) at https://nanox333.github.io/major-mayhem/. It's public, photos and logos included. Pages must be switched on once under Settings → Pages → Source: "GitHub Actions".
+
+**Sharing, domain and analytics:** links to the game unfurl with a preview image, title and description in Discord, X, WhatsApp and Reddit, and it installs to a phone's home screen with its own icon. The results screen can copy the text result, and share (phones) or download (desktop) a result card image. Analytics and crash reports are built in but off until you set them. The site address, analytics and Sentry all live in `site.config.json`; see [HOSTING.md](HOSTING.md) for moving hosts, adding a custom domain and turning analytics on.
 
 ## Data
 
@@ -50,6 +52,8 @@ All randomness goes through a seeded generator. Each case, opponent and match is
 - `src/game/stats.ts`, `src/game/share.ts` — lifetime stats and the share text
 - `src/game/*.test.ts` — unit tests
 - `src/App.tsx` — the page shell; `src/screens/` — draft (case reel, teams, players), lobby, match found, live HUD and scoreboards, results, help, stats
+- `src/ui/card.ts` — the shareable result card, drawn on a canvas; `src/analytics.ts`, `src/ui/useTracking.ts` — analytics events and crash reporting (off by default)
+- `site.config.json` — site address, preview text, analytics and Sentry settings; `scripts/site-plugin.ts` turns it into preview tags, the web app manifest, `robots.txt` and `sitemap.xml`; `scripts/build-social.mjs` draws the icons and the preview image into `public/` (generated, git-ignored)
 - `src/ui/Board.tsx` — the tactics board; `src/ui/art.tsx` — role icons, team badges, player avatars, radars and positions per map
 - `src/styles.css` — the CS2-style look and animations
 - `scripts/` — `check.ts` (balance check), `e2e.mjs` (headless playthrough), `fetch-data.ts` (source refresh), `build-media.mjs` and `build-radars.mjs` (image pipeline), `sheet*.mjs` (contact sheets for checking photos by eye)

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Draft a five-player dream team from Counter-Strike Major history, then play it through a simulated Major.",
   "scripts": {
-    "media": "node scripts/build-media.mjs && node scripts/build-radars.mjs",
+    "media": "node scripts/build-media.mjs && node scripts/build-radars.mjs && node scripts/build-social.mjs",
     "predev": "npm run media",
     "dev": "vite",
     "prebuild": "npm run media",

@@ -42,7 +42,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
             <small>Daily #{todayN} done</small>
             <strong>{doneToday.placement}</strong>
             <span>MVP {doneToday.mvp}{doneToday.grade !== null ? ` · Draft ${Math.round(doneToday.grade * 100)}%` : ''}</span>
-            {doneToday.share && <ShareBar text={() => [doneToday.share, pageUrl()].filter(Boolean).join('\n')} />}
+            {doneToday.share && <ShareBar text={() => [doneToday.share, pageUrl()].filter(Boolean).join('\n')} props={{ mode: 'daily', daily: todayN, from: 'daily-done' }} />}
             <NextDaily />
           </div>
         )}
