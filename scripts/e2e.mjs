@@ -41,14 +41,24 @@ async function run(viewport, tag) {
   await p.screenshot({ path: `shots/${tag}-3-ready.png`, fullPage: true });
   if (await p.$('.lobby__stat')) throw new Error('ratings visible in lobby');
   await cta('Find match');
-  let n = 0, shotLive = false, shotSb = false;
+  let n = 0, shotSb = false, shotKnife = false, shotHalf = false;
   while (!(await p.$('.final')) && n++ < 12) {
     await p.waitForSelector('button.cta', { timeout: 6000 });
     if (n === 1) await p.screenshot({ path: `shots/${tag}-4-preview.png`, fullPage: true });
     await cta('Accept');
-    if (!shotLive) { await p.waitForTimeout(3200); await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true }); shotLive = true; }
     const maps = [];
     for (let g = 0; g < 3; g++) {
+      // Knife round: pick a side when we win it (alternating T/CT), or go live on the side we're left with.
+      await p.waitForSelector('.knife');
+      if (!shotKnife) { await p.screenshot({ path: `shots/${tag}-5a-knife.png`, fullPage: true }); shotKnife = true; }
+      const sides = p.locator('.side-btn');
+      if (await sides.count()) await sides.nth(g % 2).click(); else await cta('Go live');
+      if (g === 0 && n === 1) { await p.waitForTimeout(3200); await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true }); }
+      if (g === 0 && n === 1 && !shotHalf) {
+        await p.locator('.speed button', { hasText: '4×' }).click();
+        await p.waitForSelector('.kf--half', { timeout: 15000 });
+        await p.screenshot({ path: `shots/${tag}-5b-halftime.png`, fullPage: true }); shotHalf = true;
+      }
       const skip = p.locator('.ghost-btn', { hasText: 'Skip' }); if (await skip.count()) await skip.click();
       await p.waitForSelector('.sb');
       maps.push((await p.textContent('.sb__head')).trim());

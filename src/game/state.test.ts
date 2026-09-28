@@ -15,7 +15,11 @@ function playThrough(start: Run): Run {
     s = reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
   }
   s = reducer(s, { type: 'play' });
-  while (s.phase !== 'final') { s = reducer(s, { type: 'start' }); s = reducer(s, { type: 'next' }); }
+  while (s.phase !== 'final') {
+    s = reducer(s, { type: 'start' });
+    while (!s.current!.done) s = reducer(s, { type: 'side', side: G.autoSide(s.current!.next!) });
+    s = reducer(s, { type: 'next' });
+  }
   return s;
 }
 
