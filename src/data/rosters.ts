@@ -48,6 +48,10 @@ export interface Roster {
   liquipediaUrl: string;
   logo?: string;
   players: Player[];
+  /** First daily (YYYY-MM-DD) this roster may appear in. Unset for the launch set. */
+  since?: string;
+  /** Last daily this roster appears in. Retire rosters this way rather than deleting them. */
+  until?: string;
 }
 
 const ORG: Record<string, { tag: string; color: string }> = {
@@ -78,8 +82,6 @@ const ORG: Record<string, { tag: string; color: string }> = {
   'The MongolZ': { tag: 'MNG', color: '#e8b43c' },
   'Team Falcons': { tag: 'FLC', color: '#1fae6a' },
   'Aurora Gaming': { tag: 'AUR', color: '#8b5cf6' },
-  'SK Gaming': { tag: 'SK', color: '#2a6fdb' },
-  'Team LDLC.com': { tag: 'LDLC', color: '#3d8fe0' },
 };
 
 const WIKI = 'https://en.wikipedia.org/wiki/';
@@ -88,7 +90,12 @@ const lq = (q: string) => `https://liquipedia.net/counterstrike/index.php?search
 export const pid = (nick: string) => nick.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 // "nick:ROLE/ROLE:rating"
-type Row = [org: string, year: number, event: string, dates: string, result: string, wikiPage: string, players: string[]];
+//
+// Dailies must not change once they've started, so data changes only reach future dailies:
+// - A new roster gets `{ since: '<tomorrow>' }` as its last element.
+// - A roster is never deleted: give it `{ until: '<today>' }` instead.
+// - Changing an existing roster's players, roles or ratings changes every daily it appears in, past ones included.
+type Row = [org: string, year: number, event: string, dates: string, result: string, wikiPage: string, players: string[], opts?: { since?: string; until?: string }];
 
 const ROWS: Row[] = [
   ['Ninjas in Pyjamas', 2014, 'EMS One Katowice 2014', 'Mar 13–16, 2014', 'Runner-up', 'EMS_One_Katowice_2014',
@@ -198,7 +205,7 @@ export const CREDITS = {
   logos: Object.entries(LOGOS).map(([org, m]) => ({ id: org, ...m, src: undefined })),
 };
 
-export const ROSTERS: Roster[] = ROWS.map(([org, year, event, dates, result, page, ps]) => {
+export const ROSTERS: Roster[] = ROWS.map(([org, year, event, dates, result, page, ps, opts]) => {
   const o = ORG[org] ?? { tag: org.slice(0, 3).toUpperCase(), color: '#c9a45c' };
   const id = `${pid(org)}-${year}-${pid(event).slice(0, 10)}`;
   return {
@@ -206,6 +213,8 @@ export const ROSTERS: Roster[] = ROWS.map(([org, year, event, dates, result, pag
     sourceUrl: WIKI + page,
     liquipediaUrl: lq(event),
     logo: LOGOS[org]?.src,
+    since: opts?.since,
+    until: opts?.until,
     players: ps.map((s) => {
       const [nick, roles, r] = s.split(':');
       const id = pid(nick);
@@ -215,3 +224,8 @@ export const ROSTERS: Roster[] = ROWS.map(([org, year, event, dates, result, pag
 });
 
 export const playerLiquipedia = (nick: string) => lq(nick);
+
+/** The rosters a daily on `date` (YYYY-MM-DD) draws from: later data additions and retirements don't change it. */
+export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.since <= date) && (!r.until || date <= r.until));
+/** Free play draws from every roster that isn't retired. */
+export const activeRosters = () => ROSTERS.filter((r) => !r.until);

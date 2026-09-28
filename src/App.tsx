@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_ORDER } from './data/rosters';
 import * as G from './game/logic';
-import { Phase, dailyDate, dailyNumber, load, reducer, save } from './game/state';
-import { loadStats, recordRun } from './game/stats';
+import { Action, Phase, dailyDate, dailyNumber, load, reducer, save } from './game/state';
+import { abandonDaily, dailyStarted, loadStats, recordRun } from './game/stats';
 import { BoardHost } from './ui/Board';
 import { RoleIcon } from './ui/art';
 import { DraftScreen } from './screens/Draft';
@@ -13,7 +13,14 @@ import { HelpModal } from './screens/Help';
 import { StatsModal } from './screens/Stats';
 
 export default function App() {
-  const [s, dispatch] = useReducer(reducer, undefined, load);
+  const [s, rawDispatch] = useReducer(reducer, undefined, load);
+  const latest = useRef(s);
+  latest.current = s;
+  // Resetting a daily after opening a case records it as abandoned, so it can't be replayed with hindsight.
+  const dispatch = useCallback((a: Action) => {
+    if (a.type === 'reset' && dailyStarted(latest.current)) setStats(abandonDaily(latest.current));
+    rawDispatch(a);
+  }, []);
   const [help, setHelp] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [stats, setStats] = useState(loadStats);
@@ -52,7 +59,7 @@ export default function App() {
         </div>
         <div className="masthead__right">
           <button className="hud-btn" onClick={() => setShowStats(true)} aria-label="Your stats"><StatsIcon /></button>
-          <NewRunButton onConfirm={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
+          <NewRunButton abandon={dailyStarted(s)} onConfirm={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
         </div>
       </header>
 
@@ -107,11 +114,11 @@ function DraftPips({ picks }: { picks: G.Pick[] }) {
   );
 }
 
-function NewRunButton({ onConfirm }: { onConfirm: () => void }) {
+function NewRunButton({ onConfirm, abandon }: { onConfirm: () => void; abandon: boolean }) {
   const [ask, setAsk] = useState(false);
   useEffect(() => { if (!ask) return; const t = setTimeout(() => setAsk(false), 3000); return () => clearTimeout(t); }, [ask]);
   return ask ? (
-    <button className="hud-btn hud-btn--wide" onClick={() => { setAsk(false); onConfirm(); }}>New run?</button>
+    <button className="hud-btn hud-btn--wide" onClick={() => { setAsk(false); onConfirm(); }} title={abandon ? "Today's daily will count as abandoned" : undefined}>{abandon ? 'Abandon daily?' : 'New run?'}</button>
   ) : (
     <button className="hud-btn" onClick={() => setAsk(true)} aria-label="Start a new run">↺</button>
   );

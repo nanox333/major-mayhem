@@ -1,8 +1,12 @@
 name: CI
 
+# Every push and PR runs the full checks. On main, the exact build that passed them is deployed to GitHub Pages,
+# so a failing unit test, balance check or playthrough blocks the deploy. Run it by hand from the Actions tab
+# (on main) to redeploy.
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   test:
@@ -32,3 +36,26 @@ jobs:
           name: e2e-screenshots
           path: shots/
           if-no-files-found: ignore
+      - name: Package the site
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - id: deployment
+        uses: actions/deploy-pages@v4

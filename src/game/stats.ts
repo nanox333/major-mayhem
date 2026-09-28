@@ -3,7 +3,7 @@ import * as G from './logic';
 import { Run, dailyDate, dailyNumber } from './state';
 import { shareText } from './share';
 
-export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null; share?: string }
+export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null; share?: string; abandoned?: boolean }
 export interface Stats {
   v: 1;
   runs: number;
@@ -52,15 +52,36 @@ export function addRun(st: Stats, run: Run): Stats {
   return next;
 }
 
+/**
+ * A daily is deterministic, so resetting it and playing again would mean replaying with hindsight. Once a case is
+ * opened, resetting records the daily as abandoned; it can't be played for a result again in this browser.
+ * (Clearing site data gets round this; anything competitive would need results checked on a server.)
+ */
+export const dailyStarted = (run: Run) => !!dailyDate(run) && run.offerKey > 0 && run.phase !== 'final';
+
+export function addAbandon(st: Stats, run: Run): Stats {
+  const date = dailyDate(run);
+  if (!date || st.daily[date]) return st;
+  const pl = G.placement(run.t);
+  const share = `Major Mayhem Daily #${dailyNumber(date)} 🏳️ Abandoned`;
+  return { ...st, daily: { ...st.daily, [date]: { placement: 'Abandoned', reached: run.t.matches.length ? pl.reached : 0, mvp: '–', grade: null, share, abandoned: true } } };
+}
+
+export function abandonDaily(run: Run): Stats {
+  const next = addAbandon(loadStats(), run);
+  saveStats(next);
+  return next;
+}
+
 export function recordRun(run: Run): Stats {
   const next = addRun(loadStats(), run);
   saveStats(next);
   return next;
 }
 
-/** Days in a row with a finished daily. The current streak still counts if today's isn't played yet. */
+/** Days in a row with a finished (not abandoned) daily. The current streak still counts if today's isn't played yet. */
 export function dailyStreak(daily: Stats['daily'], today: string): { current: number; best: number } {
-  const days = new Set(Object.keys(daily).map(dailyNumber));
+  const days = new Set(Object.entries(daily).filter(([, d]) => !d.abandoned).map(([date]) => dailyNumber(date)));
   let best = 0;
   for (const d of days) {
     if (days.has(d - 1)) continue;
