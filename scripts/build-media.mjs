@@ -1,6 +1,14 @@
-// Turns the Commons bundle (assets-src/major-mayhem-assets.json) into cropped portraits + logos
-// in src/data/media.json, with author/license credits kept for each file.
-import fs from 'fs'; import sharp from '/home/claude/.npm-global/lib/node_modules/sharp/lib/index.js';
+// Turns the image bundles in assets-src/ (bo3.gg, plus Wikimedia Commons for gaps) into cropped portraits + logos
+// in src/data/media.json, with credits kept for each file. media.json is generated, not committed: this runs
+// before dev, build, test and check, and skips the work when the output is newer than its inputs and this script.
+import fs from 'fs'; import sharp from 'sharp';
+const OUT = 'src/data/media.json';
+const INPUTS = ['assets-src/major-mayhem-assets.json', 'assets-src/major-mayhem-bo3.json', new URL(import.meta.url).pathname];
+const mtime = (f) => fs.statSync(f).mtimeMs;
+if (!process.argv.includes('--force') && fs.existsSync(OUT) && INPUTS.every((f) => mtime(f) < mtime(OUT))) {
+  console.log('media.json is up to date');
+  process.exit(0);
+}
 const a = JSON.parse(fs.readFileSync('assets-src/major-mayhem-assets.json', 'utf8'));
 const pid = (n) => n.toLowerCase().replace(/[^a-z0-9]/g, '');
 // Photos rejected after review: group shots where the player can't be identified with confidence.
@@ -56,5 +64,5 @@ for (const [org, v] of Object.entries(b.teams)) {
   bl++;
 }
 console.log('bo3 players', bp, 'bo3 logos', bl);
-fs.writeFileSync('src/data/media.json', JSON.stringify(out));
-console.log('players', Object.keys(out.players).length, 'logos', Object.keys(out.logos).length, 'KB', Math.round(fs.statSync('src/data/media.json').size / 1024));
+fs.writeFileSync(OUT, JSON.stringify(out));
+console.log('players', Object.keys(out.players).length, 'logos', Object.keys(out.logos).length, 'KB', Math.round(fs.statSync(OUT).size / 1024));

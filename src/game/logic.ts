@@ -2,9 +2,32 @@ import { ROSTERS, ROLE_ORDER, Role, Roster, Player } from '../data/rosters';
 
 export const rosterById = new Map(ROSTERS.map((r) => [r.id, r]));
 
-export interface Pick { slot: Role; rosterId: string; playerId: string }
+/** `offer` is the case the pick came from, kept for the end-of-run draft review. */
+export interface Pick { slot: Role; rosterId: string; playerId: string; offer?: string[] }
 
-export const rand = (n: number) => Math.floor(Math.random() * n);
+// ---------- randomness ----------
+// All game randomness goes through `random()`. `seeded()` swaps in a deterministic generator,
+// so the daily challenge gives everyone the same cases and a saved run replays identically.
+
+/** mulberry32: small, fast, good enough for a game. */
+export const mulberry32 = (seed: number) => () => {
+  seed = (seed + 0x6d2b79f5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+};
+/** FNV-1a string hash. */
+export const hash = (s: string) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+
+let rng: () => number = Math.random;
+export const random = () => rng();
+export function seeded<T>(seed: string, fn: () => T): T {
+  const prev = rng;
+  rng = mulberry32(hash(seed));
+  try { return fn(); } finally { rng = prev; }
+}
+
+export const rand = (n: number) => Math.floor(random() * n);
 export const shuffle = <T,>(a: T[]) => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = rand(i + 1); [b[i], b[j]] = [b[j], b[i]]; } return b; };
 
 export const openSlots = (picks: Pick[]) => ROLE_ORDER.filter((r) => !picks.some((p) => p.slot === r));
@@ -60,8 +83,14 @@ export function lineupFromPicks(picks: Pick[]): Lineup[] {
   });
 }
 
-/** Best slot assignment for a real roster (brute force over 120 permutations). */
+/** Best slot assignment for a real roster (brute force over 120 permutations, cached per roster). */
+const natural = new Map<string, Lineup[]>();
 export function naturalLineup(r: Roster): Lineup[] {
+  let l = natural.get(r.id);
+  if (!l) natural.set(r.id, (l = bestLineup(r)));
+  return l;
+}
+function bestLineup(r: Roster): Lineup[] {
   const perms = (a: number[]): number[][] => (a.length <= 1 ? [a] : a.flatMap((x, i) => perms([...a.slice(0, i), ...a.slice(i + 1)]).map((p) => [x, ...p])));
   let best: number[] = [0, 1, 2, 3, 4];
   let bestV = -1;
@@ -125,20 +154,53 @@ function winTarget(a: number, b: number) {
   return 16 + ot * 3;
 }
 
+// {p} player, {t} opposing org, {s} a callout on the current map.
 const EVENT_TEXT: Record<Role, string[]> = {
-  IGL: ['{p} reads the rotate and calls a perfect mid-round', '{p} calls a fake B that pulls three', '{p} wins the round with a gutsy anti-eco call'],
-  AWP: ['{p} opens it up with an AWP pick through mid', '{p} flicks a no-scope to save the round', '{p} holds the angle and takes two with the AWP'],
-  ENTRY: ['{p} dry-peeks into site and gets the opening frag', '{p} storms the site for a 4K', '{p} trades perfectly on the entry'],
-  LURK: ['{p} catches the rotation from behind', '{p} backstabs three on the flank', '{p} wins a 1v2 from the lurk spot'],
-  SUP: ['{p} pops a flash that blinds the whole site', '{p} holds the anchor spot alone and wins a 1v3', '{p} molly-stalls the push until help arrives'],
+  IGL: [
+    '{p} reads the rotate and calls a perfect mid-round', '{p} calls a fake that pulls three off {s}', '{p} wins the round with a gutsy anti-eco call',
+    '{p} spots the stack on {s} and calls the team the other way', '{p} calls a late execute through {s} with seconds to spare', '{p} keeps the team calm on a 4v5 and wins it',
+  ],
+  AWP: [
+    '{p} opens it up with an AWP pick on {s}', '{p} flicks a no-scope to save the round', '{p} holds {s} and takes two with the AWP',
+    '{p} lands a collateral on {s}', '{p} one-taps the rotator with a quick-scope', '{p} picks the aggressive peek on {s} and the round is over',
+  ],
+  ENTRY: [
+    '{p} dry-peeks {s} and gets the opening frag', '{p} storms the site for a 4K', '{p} trades perfectly on the entry',
+    '{p} swings through {s} and takes the first two', '{p} jiggles {s}, baits the AWP, and the team trades', '{p} deagles two on the force buy',
+  ],
+  LURK: [
+    '{p} catches the rotation from behind', '{p} backstabs three on the flank', '{p} wins a 1v2 from {s}',
+    '{p} waits out the timing on {s} and takes two', '{p} cuts off the retake alone', '{p} steals the pick on {s} while everyone looks the other way',
+  ],
+  SUP: [
+    '{p} pops a flash that blinds the whole site', '{p} holds {s} alone and wins a 1v3', '{p} molly-stalls the push until help arrives',
+    '{p} smokes off {s} and the execute walks in', '{p} drops the AWP for the star and survives to trade', '{p} defuses with 0.3 on the clock',
+  ],
 };
-const OPP_TEXT = ['{p} wins a clutch for {t}', '{p} hits a triple kill on the retake', '{t} steamrolls the site with {p} leading', '{p} lands a lucky wallbang'];
+const OPP_TEXT = [
+  '{p} wins a clutch for {t}', '{p} hits a triple kill on the retake', '{t} steamrolls {s} with {p} leading', '{p} lands a lucky wallbang',
+  '{p} holds {s} and shuts the push down', '{t} win the force buy through {s}', '{p} ninja-defuses behind the smoke', '{p} gets a 1v3 on {s}',
+];
+/** A few recognizable callouts per map so the killfeed isn't all Dust 2. */
+export const CALLOUTS: Record<string, string[]> = {
+  Mirage: ['Palace', 'A ramp', 'Connector', 'Jungle', 'Window', 'B apartments', 'Short', 'Underpass'],
+  Inferno: ['Banana', 'Apartments', 'Pit', 'Mid', 'Arch', 'Library', 'Car', 'Second mid'],
+  Nuke: ['Outside', 'Ramp', 'Heaven', 'Secret', 'Hut', 'Lobby', 'Vents', 'Silo'],
+  Ancient: ['Donut', 'Cave', 'Main', 'Temple', 'B ramp', 'Elbow', 'Red room'],
+  Anubis: ['Canal', 'Bridge', 'Connector', 'Palace', 'Water', 'Ruins', 'Street'],
+  Dust2: ['Long A', 'Catwalk', 'Mid doors', 'Upper tunnels', 'B window', 'Pit', 'Xbox', 'Goose'],
+  Train: ['Ivy', 'Connector', 'Popdog', 'Upper B', 'Lower hall', 'Heaven', 'Z-connector'],
+};
+const fill = (tpl: string, p: string, t: string, map: string) => {
+  const spots = CALLOUTS[map] ?? ['mid'];
+  return tpl.replace('{p}', p).replace('{t}', t).replace('{s}', spots[rand(spots.length)]);
+};
 
 /** Hand out n kills (or deaths) to five players, weighted by skill and luck. */
 function spread(n: number, weights: number[], out: number[], forced?: number) {
   for (let i = 0; i < n; i++) {
     if (forced !== undefined && i < 1) { out[forced]++; continue; }
-    let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+    let r = random() * weights.reduce((a, b) => a + b, 0);
     let k = 0;
     while (r > weights[k] && k < 4) { r -= weights[k]; k++; }
     out[k]++;
@@ -151,31 +213,31 @@ const matchRating = (k: number, d: number, r: number) => Math.max(0.2, Math.min(
 function playMap(map: string, mine: Lineup[], oppL: Lineup[], oppOrg: string, A: number, B: number, form: number, impact: Record<string, number>): MapGame {
   const rounds: boolean[] = [];
   const events: MatchEvent[] = [];
-  const mapForm = form + (Math.random() - 0.5) * 3; // some maps just go better than others
+  const mapForm = form + (random() - 0.5) * 3; // some maps just go better than others
   const K = [0, 0, 0, 0, 0], D = [0, 0, 0, 0, 0], OK = [0, 0, 0, 0, 0], OD = [0, 0, 0, 0, 0];
   // Each map, each player has a good or bad day on top of their hidden game rating.
-  const dayM = mine.map(() => 0.7 + Math.random() * 0.6), dayO = oppL.map(() => 0.7 + Math.random() * 0.6);
+  const dayM = mine.map(() => 0.7 + random() * 0.6), dayO = oppL.map(() => 0.7 + random() * 0.6);
   const killW = (l: Lineup[], day: number[]) => l.map((x, i) => (x.player.rating / 85) ** 3 * day[i]);
   const deathW = (l: Lineup[], day: number[]) => l.map((x, i) => (85 / x.player.rating) ** 1.5 / day[i] * (x.slot === 'ENTRY' ? 1.25 : x.slot === 'AWP' || x.slot === 'LURK' ? 0.85 : 1));
   const kwM = killW(mine, dayM), kwO = killW(oppL, dayO), dwM = deathW(mine, dayM), dwO = deathW(oppL, dayO);
   let a = 0, b = 0;
   while (a < winTarget(a, b) && b < winTarget(a, b)) {
-    const swing = (Math.random() - 0.5) * 4; // economy / luck per round
+    const swing = (random() - 0.5) * 4; // economy / luck per round
     const p = 1 / (1 + Math.exp(-(A - B + mapForm + swing) / 5.5));
-    const won = Math.random() < p;
+    const won = random() < p;
     rounds.push(won);
     won ? a++ : b++;
     const rn = rounds.length;
     let star: number | undefined;
-    if (Math.random() < 0.22) {
+    if (random() < 0.22) {
       if (won) {
         star = rand(5);
         const x = mine[star];
         impact[x.player.id] += 2.5;
-        events.push({ round: rn, text: EVENT_TEXT[x.slot][rand(3)].replace('{p}', x.player.nick), playerId: x.player.id, mine: true, good: true });
+        events.push({ round: rn, text: fill(EVENT_TEXT[x.slot][rand(EVENT_TEXT[x.slot].length)], x.player.nick, oppOrg, map), playerId: x.player.id, mine: true, good: true });
       } else {
         const y = oppL[rand(5)];
-        events.push({ round: rn, text: OPP_TEXT[rand(OPP_TEXT.length)].replace('{p}', y.player.nick).replace('{t}', oppOrg), playerId: mine[rand(5)].player.id, mine: false, good: false });
+        events.push({ round: rn, text: fill(OPP_TEXT[rand(OPP_TEXT.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
       }
     }
     // kills this round: winners usually wipe the other side, losers take a few with them
@@ -206,9 +268,8 @@ export function playMatch(stage: StageKey, mine: Lineup[], oppId: string, stageB
   const opp = rosterById.get(oppId)!;
   const oppL = naturalLineup(opp);
   const A = teamPower(mine).total;
-  // Real rosters are tuned down slightly: your dream team is the star of the show.
-  const B = teamPower(oppL).total - 3 + stageBoost;
-  const form = (Math.random() - 0.5) * 5; // match-day form
+  const B = teamPower(oppL).total - OPP_HANDICAP + stageBoost;
+  const form = (random() - 0.5) * 5; // match-day form
   const bestOf = BEST_OF[stage];
   const need = Math.ceil(bestOf / 2);
   const pool = shuffle(MAPS);
@@ -257,7 +318,9 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[]): st
   return slice[rand(slice.length)].r.id;
 }
 
-export const STAGE_BOOST: Record<StageKey, number> = { QUAL: -0.5, QF: 0, SF: 0.4, F: 0.8 };
+/** Real rosters are tuned down slightly: your dream team is the star of the show. Tuned with `npm run check`. */
+export const OPP_HANDICAP = 2;
+export const STAGE_BOOST: Record<StageKey, number> = { QUAL: -0.5, QF: 0, SF: 0.8, F: 1.6 };
 
 export function applyResult(t: Tournament, m: Match): Tournament {
   const next: Tournament = { ...t, matches: [...t.matches, m], used: [...t.used, m.opponentId], qual: { ...t.qual } };
@@ -286,4 +349,40 @@ export function mvp(t: Tournament, mine: Lineup[]): Lineup {
   for (const m of t.matches) for (const [k, v] of Object.entries(m.impact)) tot[k] = (tot[k] ?? 0) + v;
   const score = (id: string) => (r[id]?.rating ?? 0) * 100 + (tot[id] ?? 0) * 0.05;
   return [...mine].sort((a, b) => score(b.player.id) - score(a.player.id))[0];
+}
+
+// ---------- draft review ----------
+
+export interface PickReview {
+  slot: Role;
+  player: Player;
+  roster: Roster;
+  value: number;
+  /** Strongest pick that was on the board that round (from the same case), or null if the case wasn't recorded. */
+  best: { player: Player; roster: Roster; slot: Role; value: number } | null;
+}
+
+/** Game value of a pick: rating adjusted for role fit. */
+export const pickValue = (p: Player, slot: Role) => p.rating * fit(p, slot);
+
+/** Compare each pick with the best one available in its case that round. Picks are in draft order. */
+export function draftReview(picks: Pick[]): { rounds: PickReview[]; grade: number | null } {
+  const rounds = picks.map((pk, i) => {
+    const before = picks.slice(0, i);
+    const roster = rosterById.get(pk.rosterId)!;
+    const player = roster.players.find((p) => p.id === pk.playerId)!;
+    let best: PickReview['best'] = null;
+    for (const id of pk.offer ?? []) {
+      const r = rosterById.get(id);
+      if (!r) continue;
+      for (const p of r.players) for (const slot of eligibleSlots(p, before)) {
+        const v = pickValue(p, slot);
+        if (!best || v > best.value) best = { player: p, roster: r, slot, value: v };
+      }
+    }
+    return { slot: pk.slot, player, roster, value: pickValue(player, pk.slot), best };
+  });
+  const scored = rounds.filter((r) => r.best);
+  const grade = scored.length ? scored.reduce((a, r) => a + r.value, 0) / scored.reduce((a, r) => a + r.best!.value, 0) : null;
+  return { rounds, grade };
 }
