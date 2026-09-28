@@ -49,8 +49,8 @@ export function load(): Run {
     const r = JSON.parse(raw);
     // v2 saves predate daily mode: carry them over as free runs.
     if (r.v === 2) Object.assign(r, { v: 3, mode: 'free', seed: `free-${Math.random().toString(36).slice(2, 10)}`, recorded: r.phase === 'final' });
-    // A match saved before knife rounds existed can't be continued: replay it from the match-found screen.
-    if (r.current && !('done' in r.current)) Object.assign(r, { current: null, phase: r.pending ? 'preview' : r.phase });
+    // A match saved before map vetoes existed can't be continued: replay it from the match-found screen.
+    if (r.current && !('veto' in r.current)) Object.assign(r, { current: null, phase: r.pending ? 'preview' : r.phase });
     const ok = r.v === 3 && r.picks.every((p: G.Pick) => G.rosterById.has(p.rosterId)) && r.offer.every((id: string) => G.rosterById.has(id));
     return ok ? (r as Run) : fresh();
   } catch { return fresh(); }
@@ -60,7 +60,7 @@ export const save = (r: Run) => { try { localStorage.setItem(KEY, JSON.stringify
 export type Action =
   | { type: 'spin' } | { type: 'reroll' } | { type: 'team'; id: string } | { type: 'back' }
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
-  | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode } | { type: 'recorded' };
+  | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode } | { type: 'recorded' };
 
 const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen));
 const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) =>
@@ -94,6 +94,12 @@ export function reducer(s: Run, a: Action): Run {
       const { stage, oppId } = s.pending;
       const m = G.seeded(`${s.seed}:match:${s.t.matches.length}`, () => G.startMatch(stage, G.lineupFromPicks(s.picks), oppId));
       return { ...s, phase: 'live', current: m };
+    }
+    case 'veto': {
+      // The veto has no luck in it except the decider's knife round, seeded like the maps.
+      const m = s.current;
+      if (!m || m.done) return s;
+      return { ...s, current: G.seeded(`${s.seed}:match:${s.t.matches.length}:veto`, () => G.applyVeto(m, G.lineupFromPicks(s.picks), a.map)) };
     }
     case 'side': {
       // Your pick after winning the knife, or the side the opponent left you. The map's luck is seeded by

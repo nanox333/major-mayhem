@@ -4,6 +4,13 @@ import { Run, dailyNumber, fresh, reducer } from './state';
 import { addRun, dailyStreak, emptyStats } from './stats';
 import { shareText } from './share';
 
+/** Plays your veto turns with the sensible choice. */
+function vetoAll(s: Run): Run {
+  const oppL = G.naturalLineup(G.rosterById.get(s.current!.opponentId)!);
+  while (G.vetoTurn(s.current!.veto)) s = reducer(s, { type: 'veto', map: G.vetoChoice(s.current!.veto, 'us', G.lineupFromPicks(s.picks), oppL) });
+  return s;
+}
+
 /** Plays a whole run through the reducer, always taking the first eligible chip. */
 function playThrough(start: Run): Run {
   let s = start;
@@ -17,6 +24,7 @@ function playThrough(start: Run): Run {
   s = reducer(s, { type: 'play' });
   while (s.phase !== 'final') {
     s = reducer(s, { type: 'start' });
+    s = vetoAll(s);
     while (!s.current!.done) s = reducer(s, { type: 'side', side: G.autoSide(s.current!.next!) });
     s = reducer(s, { type: 'next' });
   }
@@ -104,7 +112,7 @@ describe('knife round', () => {
       const p = r.players.find((p) => G.eligibleSlots(p, s.picks).length)!;
       s = reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
     }
-    return reducer(reducer(s, { type: 'play' }), { type: 'start' });
+    return vetoAll(reducer(reducer(s, { type: 'play' }), { type: 'start' }));
   };
   it('lets you pick only the side left to you after losing the knife', () => {
     const s = toLive();

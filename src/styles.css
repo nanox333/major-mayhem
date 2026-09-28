@@ -480,3 +480,28 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
   .hud__tag { display: inline; }
   .page:not(.phase-draft) .tagline { display: none; }
 }
+
+/* ---------- veto, pistols, clutches ---------- */
+.veto { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--line); background: var(--panel); }
+.veto .knife__kicker, .veto .knife__title, .veto .knife__advice { text-align: center; justify-self: center; }
+.veto__maps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.veto__map button { width: 100%; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.4fr) 5.5em; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer; text-align: left; font: inherit; }
+.veto__map button:hover:not(:disabled) { border-color: var(--t); }
+.veto__map button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.veto__map button:disabled { cursor: default; }
+.veto__name { display: grid; font-family: var(--f-head); font-weight: 800; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .03em; }
+.veto__name small { font-family: var(--f-body); font-weight: 600; font-size: .72rem; color: var(--muted); text-transform: none; letter-spacing: 0; }
+.veto__comfort { display: grid; font-size: .78rem; font-variant-numeric: tabular-nums; letter-spacing: .08em; white-space: nowrap; }
+.veto__comfort .us { color: var(--t); } .veto__comfort .them { color: var(--ct); }
+.veto__state { text-align: right; font-family: var(--f-head); font-weight: 700; font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.veto__map.is-banned button { opacity: .45; }
+.veto__map.is-banned .veto__name { text-decoration: line-through; }
+.veto__map.is-picked button { border-color: var(--go); }
+.veto__map.is-picked .veto__state { color: var(--go); }
+.kf--pistol { font-family: var(--f-head); letter-spacing: .03em; text-transform: uppercase; background: rgba(255,255,255,.04); }
+.kf--clutch { border-color: var(--t); background: linear-gradient(90deg, rgba(224,163,59,.28), rgba(0,0,0,.45)); font-size: 1.08rem; }
+@media (max-width: 520px) {
+  .veto { padding: 12px 10px; }
+  .veto__map button { grid-template-columns: minmax(0, 1fr) auto; }
+  .veto__state { grid-column: 1 / -1; text-align: left; }
+}

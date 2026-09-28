@@ -126,7 +126,7 @@ export const MAPS = ['Mirage', 'Inferno', 'Nuke', 'Ancient', 'Anubis', 'Dust2', 
 /** Qualification matches are Bo1; every playoff match is a Bo3. */
 export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3 };
 
-export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' }
+export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' | 'pistol' | 'clutch' }
 export interface PlayerStat { id: string; nick: string; k: number; d: number; rating: number }
 export interface MapGame {
   map: string;
@@ -138,9 +138,14 @@ export interface MapGame {
   won: boolean;
   stats: { mine: PlayerStat[]; opp: PlayerStat[] };
 }
-/** The knife round before a map: whoever wins it picks the starting side. */
+/**
+ * Who picks the starting side before a map. On a picked map the other team chooses; on the decider (and in a Bo1)
+ * a knife round decides.
+ */
 export interface Knife {
   map: string;
+  how: 'knife' | 'our-pick' | 'their-pick';
+  /** True when you choose the starting side. */
   won: boolean;
   /** The better starting side for your team on this map, against this lineup. */
   best: Side;
@@ -155,14 +160,47 @@ export interface Match {
   impact: Record<string, number>;
   /** Match-day form, shared by every map of the series. */
   form: number;
-  /** Map order for the series. */
+  /** The map veto, played before the first map. */
+  veto: Veto;
+  /** Map order for the series, set when the veto is done. */
   pool: string[];
-  /** Set up for the next map while the series is still going. */
+  /** Set up for the next map once the veto is done, while the series is still going. */
   next: Knife | null;
   done: boolean;
   won: boolean;
   /** maps won–lost for a Bo3, rounds for a Bo1 */
   score: [number, number];
+}
+
+// ---------- map veto ----------
+
+export type Team = 'us' | 'them';
+export interface VetoStep { team: Team; action: 'ban' | 'pick'; map: string }
+export interface Veto { order: { team: Team; action: 'ban' | 'pick' }[]; steps: VetoStep[]; left: string[] }
+
+const turn = (team: Team, action: 'ban' | 'pick') => ({ team, action });
+/** Bo1: six alternating bans, the last map is played. Bo3: ban, ban, pick, pick, ban, ban, then the decider. */
+export const VETO_ORDER: Record<1 | 3, Veto['order']> = {
+  1: [turn('us', 'ban'), turn('them', 'ban'), turn('us', 'ban'), turn('them', 'ban'), turn('us', 'ban'), turn('them', 'ban')],
+  3: [turn('us', 'ban'), turn('them', 'ban'), turn('us', 'pick'), turn('them', 'pick'), turn('us', 'ban'), turn('them', 'ban')],
+};
+
+/**
+ * Invented game values, like the ratings: how comfortable a roster was on each map, from -1.5 to +1.5.
+ * A drafted team averages the comfort of each player's original lineup.
+ */
+export const rosterComfort = (rosterId: string, map: string) => ((hash(`${rosterId}:${map}`) % 1001) / 1000 - 0.5) * 3;
+export const comfort = (l: Lineup[], map: string) => l.reduce((s, x) => s + rosterComfort(x.roster.id, map), 0) / l.length;
+/** Comfort shown as 1–5 pips. */
+export const comfortPips = (c: number) => Math.max(1, Math.min(5, Math.round(((c + 1.5) / 3) * 4) + 1));
+
+export const vetoTurn = (v: Veto) => (v.steps.length < v.order.length ? v.order[v.steps.length] : null);
+
+/** A sensible veto choice for `team`: ban the map that suits the other side most, pick the one that suits you most. */
+export function vetoChoice(v: Veto, team: Team, mine: Lineup[], oppL: Lineup[]): string {
+  const edge = (map: string) => (comfort(mine, map) - comfort(oppL, map)) * (team === 'us' ? 1 : -1);
+  const t = vetoTurn(v)!;
+  return [...v.left].sort((a, b) => (t.action === 'pick' ? edge(b) - edge(a) : edge(a) - edge(b)))[0];
 }
 
 // ---------- sides ----------
@@ -267,7 +305,8 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
   const killW = (l: Lineup[], day: number[]) => l.map((x, i) => (x.player.rating / 85) ** 3 * day[i]);
   const deathW = (l: Lineup[], day: number[]) => l.map((x, i) => (85 / x.player.rating) ** 1.5 / day[i] * (x.slot === 'ENTRY' ? 1.25 : x.slot === 'AWP' || x.slot === 'LURK' ? 0.85 : 1));
   const kwM = killW(mine, dayM), kwO = killW(oppL, dayO), dwM = deathW(mine, dayM), dwO = deathW(oppL, dayO);
-  let a = 0, b = 0, halfLead = 0;
+  let a = 0, b = 0, halfLead = 0, econ = 0, ecoLeft = 0;
+  const fam = (comfort(mine, map) - comfort(oppL, map)) * COMFORT;
   while (a < winTarget(a, b) && b < winTarget(a, b)) {
     const side = sideAt(rounds.length, start);
     const bias = (CT_BIAS[map] ?? 0) * (side === 'CT' ? 1 : -1);
@@ -275,14 +314,22 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     // Momentum: whoever leads at halftime carries confidence into the second half. This is what makes the
     // starting side matter: open on your stronger side and you're likelier to take that lead.
     const momentum = rounds.length >= 12 ? Math.max(-MOMENTUM_CAP, Math.min(MOMENTUM_CAP, halfLead * MOMENTUM)) : 0;
-    const swing = (random() - 0.5) * 4; // economy / luck per round
-    const p = 1 / (1 + Math.exp(-(A - B + mapForm + bias + edge + momentum + swing) / 5.5));
+    // Economy: the two rounds after a pistol favour the pistol winner while the losers save.
+    const eco = ecoLeft === 2 ? econ * 2.5 : ecoLeft === 1 ? econ * 1.2 : 0;
+    const swing = (random() - 0.5) * 4; // luck per round
+    const p = 1 / (1 + Math.exp(-(A - B + mapForm + fam + bias + edge + momentum + eco + swing) / 5.5));
     const won = random() < p;
     rounds.push(won);
     won ? a++ : b++;
     const rn = rounds.length;
+    if (ecoLeft > 0) ecoLeft--;
     let star: number | undefined;
-    if (random() < 0.22) {
+    if (won && random() < 0.05) {
+      star = rand(5);
+      const x = mine[star];
+      impact[x.player.id] += 5;
+      events.push({ round: rn, text: `${x.player.nick} clutches a 1v${2 + rand(3)}!`, playerId: x.player.id, mine: true, good: true, kind: 'clutch' });
+    } else if (random() < 0.22) {
       if (won) {
         star = rand(5);
         const x = mine[star];
@@ -300,6 +347,10 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     spread(Math.min(5, ourKills), dwO, OD);
     spread(Math.min(5, theirKills), kwO, OK);
     spread(Math.min(5, theirKills), dwM, D);
+    if (rn === 1 || rn === 13) {
+      econ = won ? 1 : -1; ecoLeft = 2;
+      events.push({ round: rn, text: won ? `Pistol round to you. ${oppOrg} are on an eco.` : `${oppOrg} take the pistol round. You're saving.`, mine: true, good: won, kind: 'pistol' });
+    }
     if (rn === 12) halfLead = a - b;
     if (rn === 12) events.push({ round: rn, text: `Halftime ${a}–${b}. You switch to ${otherSide(start)}.`, mine: true, good: a >= b, kind: 'half' });
     if (a === 12 && b === 12) events.push({ round: rn, text: 'Overtime! First to 16, sides swap every three rounds.', mine: true, good: true, kind: 'ot' });
@@ -321,23 +372,46 @@ export function seriesRatings(maps: MapGame[]): Record<string, { k: number; d: n
   return Object.fromEntries(Object.entries(acc).map(([id, e]) => [id, { k: e.k, d: e.d, rating: Math.round((e.rr / e.r) * 100) / 100 }]));
 }
 
-const MOMENTUM = 0.7, MOMENTUM_CAP = 3;
+const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1;
 
 /** How good a first half on `side` is for `us`: the map's lean plus which roles matter on that side. */
 export const sideScore = (map: string, side: Side, us: Lineup[], them: Lineup[]) =>
   (CT_BIAS[map] ?? 0) * (side === 'CT' ? 1 : -1) + sideEdge(us, side) - sideEdge(them, otherSide(side));
 const bestSide = (map: string, us: Lineup[], them: Lineup[]): Side => (sideScore(map, 'CT', us, them) >= sideScore(map, 'T', us, them) ? 'CT' : 'T');
 
-const knife = (map: string, mine: Lineup[], oppL: Lineup[]): Knife =>
-  ({ map, won: random() < 0.5, best: bestSide(map, mine, oppL), oppPick: bestSide(map, oppL, mine) });
+/** Side choice before map `i`: the non-picker chooses on a picked map, a knife round decides the decider and Bo1s. */
+function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL: Lineup[]): Knife {
+  const map = pool[i];
+  const how: Knife['how'] = bestOf === 3 && i === 0 ? 'our-pick' : bestOf === 3 && i === 1 ? 'their-pick' : 'knife';
+  const won = how === 'their-pick' ? true : how === 'our-pick' ? false : random() < 0.5;
+  return { map, how, won, best: bestSide(map, mine, oppL), oppPick: bestSide(map, oppL, mine) };
+}
 
-/** Sets up a series: match-day form, map order and the first knife round. No maps are played yet. */
+/** Sets up a series: match-day form and an empty map veto. No maps are played yet. */
 export function startMatch(stage: StageKey, mine: Lineup[], oppId: string): Match {
   const form = (random() - 0.5) * 5; // match-day form
-  const pool = shuffle(MAPS);
   const impact: Record<string, number> = Object.fromEntries(mine.map((x) => [x.player.id, 0]));
-  const oppL = naturalLineup(rosterById.get(oppId)!);
-  return { stage, opponentId: oppId, bestOf: BEST_OF[stage], maps: [], impact, form, pool, next: knife(pool[0], mine, oppL), done: false, won: false, score: [0, 0] };
+  const bestOf = BEST_OF[stage];
+  const veto: Veto = { order: VETO_ORDER[bestOf], steps: [], left: [...MAPS] };
+  return { stage, opponentId: oppId, bestOf, maps: [], impact, form, veto, pool: [], next: null, done: false, won: false, score: [0, 0] };
+}
+
+/** Your veto step, followed by the opponent's replies. When the veto ends, the map order and first side choice are set. */
+export function applyVeto(m: Match, mine: Lineup[], map: string): Match {
+  const t = vetoTurn(m.veto);
+  if (!t || t.team !== 'us' || !m.veto.left.includes(map)) return m;
+  const oppL = naturalLineup(rosterById.get(m.opponentId)!);
+  let v = m.veto;
+  const step = (team: Team, pickMap: string) => {
+    const tt = vetoTurn(v)!;
+    v = { ...v, steps: [...v.steps, { team, action: tt.action, map: pickMap }], left: v.left.filter((x) => x !== pickMap) };
+  };
+  step('us', map);
+  while (vetoTurn(v)?.team === 'them') step('them', vetoChoice(v, 'them', mine, oppL));
+  if (vetoTurn(v)) return { ...m, veto: v };
+  const picks = v.steps.filter((x) => x.action === 'pick').map((x) => x.map);
+  const pool = [...picks, v.left[0]];
+  return { ...m, veto: v, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL) };
 }
 
 /** Plays the next map with your team starting on `start`, then sets up the following knife round if the series goes on. */
@@ -354,7 +428,7 @@ export function playNextMap(m: Match, mine: Lineup[], start: Side): Match {
   const need = Math.ceil(m.bestOf / 2);
   const done = w >= need || l >= need;
   const score: [number, number] = m.bestOf === 1 ? maps[0].score : [w, l];
-  return { ...m, maps, impact, done, won: done && w > l, score, next: done ? null : knife(m.pool[maps.length], mine, oppL) };
+  return { ...m, maps, impact, done, won: done && w > l, score, next: done ? null : setupMap(m.bestOf, m.pool, maps.length, mine, oppL) };
 }
 
 /** The side you end up on with the sensible pick: your better side if you won the knife, else what's left. */
@@ -370,9 +444,11 @@ export function sideAdvice(k: Knife, mine: Lineup[]): string {
   return `${k.map} is ${lean}.${roles}`;
 }
 
-/** Plays a whole series with sides picked automatically (for simulations and tests). */
+/** Plays a whole series with the veto and sides picked automatically (for simulations and tests). */
 export function playMatch(stage: StageKey, mine: Lineup[], oppId: string): Match {
   let m = startMatch(stage, mine, oppId);
+  const oppL = naturalLineup(rosterById.get(oppId)!);
+  while (vetoTurn(m.veto)) m = applyVeto(m, mine, vetoChoice(m.veto, 'us', mine, oppL));
   while (!m.done) m = playNextMap(m, mine, autoSide(m.next!));
   return m;
 }
