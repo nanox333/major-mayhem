@@ -404,3 +404,35 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
   .stepper__item { letter-spacing: .06em; font-size: .7rem; }
   .masthead { gap: 6px; }
 }
+
+/* ---------- stats, sharing, draft review ---------- */
+.masthead__right { display: flex; gap: 6px; }
+.share-bar { display: flex; justify-content: center; }
+.final__actions { display: grid; justify-items: center; }
+.review { border: 1px solid var(--line); background: var(--panel); padding: 12px 14px; }
+.review p { margin: 4px 0 8px; }
+.review__head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--f-head); font-weight: 800; font-size: 1.1rem; letter-spacing: .1em; text-transform: uppercase; }
+.review__head b { font-size: 1.5rem; color: var(--t); }
+.review__head b.hi { color: var(--go); }
+.review__head b.lo { color: var(--loss); }
+.review__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.review__list li { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) minmax(0, 1.3fr); gap: 8px; align-items: center; font-size: .88rem; padding: 4px 0; border-top: 1px solid var(--line); }
+.review__list li > span { min-width: 0; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.review__round { color: var(--muted); font-family: var(--f-head); font-weight: 700; }
+.review__list em { font-style: normal; color: var(--t); font-weight: 700; }
+.review__best { color: var(--muted); }
+.review__list li.is-top .review__best { color: var(--go); }
+.stat-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
+.stat-tiles div { display: grid; justify-items: center; padding: 10px 4px; border: 1px solid var(--line); background: var(--panel); }
+.stat-tiles b { font-family: var(--f-head); font-size: 1.6rem; color: var(--t); line-height: 1; }
+.stat-tiles small { color: var(--muted); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; }
+.bars { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
+.bars li { display: grid; grid-template-columns: 11em minmax(0, 1fr) 2.5em; gap: 8px; align-items: center; font-size: .85rem !important; }
+.bars i { display: block; height: 10px; min-width: 2px; background: var(--t); }
+.bars b { text-align: right; }
+@media (max-width: 520px) {
+  .stat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bars li { grid-template-columns: 8.5em minmax(0, 1fr) 2em; }
+  .review__list li { grid-template-columns: 2em minmax(0, 1fr); }
+  .review__best { grid-column: 2; }
+}

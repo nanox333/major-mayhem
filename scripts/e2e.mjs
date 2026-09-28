@@ -1,18 +1,24 @@
-// Plays one full run in headless Chromium: 5 draft rounds (with case reel + reroll) and the whole Major.
-import { chromium } from '/home/claude/.npm-global/lib/node_modules/playwright/index.mjs';
+// Plays one full daily run in headless Chromium (desktop + phone width): 5 draft rounds with the case reel
+// and a reroll, the whole Major, then the results screen, sharing and stats. Needs `npm run build` first.
+// Uses Playwright's own Chromium (`npx playwright install chromium`), or CHROMIUM_PATH if set.
+// Exits 1 on page errors, horizontal overflow or a missing screen.
+import { chromium } from 'playwright';
 import fs from 'fs';
 const html = fs.readFileSync('dist/index.html', 'utf8');
-const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+fs.mkdirSync('shots', { recursive: true });
+const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+const problems = [];
 async function run(viewport, tag) {
   const p = await b.newPage({ viewport });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
-  await p.route('https://cdnjs.cloudflare.com/**', r => r.fulfill({ contentType: 'text/javascript', body: fs.readFileSync(r.request().url().includes('react-dom') ? 'node_modules/react-dom/umd/react-dom.production.min.js' : 'node_modules/react/umd/react.production.min.js') }));
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/', r => r.fulfill({ contentType: 'text/html', body: html }));
   await p.goto('http://game.local/');
   await p.evaluate(() => localStorage.clear()); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
   await p.waitForSelector('button.cta');
+  await p.locator('.ghost-btn', { hasText: 'Play Daily' }).click();
+  if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   for (let r = 0; r < 5; r++) {
     await cta('Open case');
@@ -58,12 +64,31 @@ async function run(viewport, tag) {
   await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-7-final.png`, fullPage: true });
   console.log(tag, 'final:', (await p.textContent('.final__banner h3')).trim(), '| MVP', (await p.textContent('.mvp-card strong')).trim(), (await p.textContent('.mvp-card__rating b')).trim());
+  if (!(await p.$('.review__list li'))) throw new Error('no draft review');
+  const grade = (await p.textContent('.review__head b')).trim();
+  // The test page isn't a secure context, so capture what the game writes instead of reading the clipboard.
+  await p.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { window.__copied = t; } } }));
+  await p.locator('.share-bar .ghost-btn').click();
+  await p.waitForSelector('.share-bar .ghost-btn:has-text("Copied")');
+  const shared = await p.evaluate(() => window.__copied ?? '');
+  if (!shared.includes('Major Mayhem Daily #')) throw new Error('share text not copied: ' + JSON.stringify(shared));
+  console.log(tag, 'draft grade', grade, '| share:', shared.split('\n')[0]);
+  await p.screenshot({ path: `shots/${tag}-8-review.png`, fullPage: true });
   await p.reload(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
+  await p.click('[aria-label="Your stats"]');
+  const runs = (await p.textContent('.stat-tiles div b')).trim();
+  if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
+  await p.waitForTimeout(500); await p.screenshot({ path: `shots/${tag}-9-stats.png` });
+  await p.keyboard.press('Escape');
   const sw = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   console.log(tag, 'horizontal overflow px:', sw, 'errors:', errs);
+  if (sw > 0) problems.push(`${tag}: page scrolls sideways by ${sw}px`);
+  if (errs.length) problems.push(`${tag}: page errors: ${errs.join(' | ')}`);
   if (sw > 0) console.log(await p.evaluate(() => [...document.querySelectorAll('*')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).map(e => e.className + ' ' + Math.round(e.getBoundingClientRect().right)).slice(0, 12)));
   await p.close();
 }
 await run({ width: 1280, height: 900 }, 'desk');
 await run({ width: 390, height: 844 }, 'mob');
 await b.close();
+if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
+console.log('OK');

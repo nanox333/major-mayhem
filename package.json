@@ -1,17 +1,23 @@
 {
   "name": "major-mayhem",
   "version": "1.0.0",
-  "description": "",
+  "description": "Draft a five-player dream team from Counter-Strike Major history, then play it through a simulated Major.",
   "scripts": {
+    "media": "node scripts/build-media.mjs",
+    "predev": "npm run media",
     "dev": "vite",
+    "prebuild": "npm run media",
     "build": "tsc -p . && vite build",
     "preview": "vite preview",
-    "fetch-data": "tsx scripts/fetch-data.ts",
+    "pretest": "npm run media",
+    "test": "vitest run",
+    "precheck": "npm run media",
     "check": "tsx scripts/check.ts",
-    "e2e": "node scripts/e2e.mjs"
+    "e2e": "node scripts/e2e.mjs",
+    "fetch-data": "tsx scripts/fetch-data.ts"
   },
   "keywords": [],
-  "author": "",
+  "author": "Kristian",
   "license": "ISC",
   "dependencies": {
     "react": "^18.3.1",
@@ -22,10 +28,13 @@
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^4.7.0",
+    "playwright": "^1.63.0",
+    "sharp": "^0.34.5",
     "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vite": "^5.4.21",
-    "vite-plugin-singlefile": "^2.3.3"
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^3.2.7"
   },
   "private": true,
   "type": "module"

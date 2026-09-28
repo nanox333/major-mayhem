@@ -1,4 +1,5 @@
-import fs from 'fs'; import sharp from '/home/claude/.npm-global/lib/node_modules/sharp/lib/index.js';
+import fs from 'fs'; import sharp from 'sharp';
+fs.mkdirSync('shots', { recursive: true });
 const a = JSON.parse(fs.readFileSync('assets-src/major-mayhem-assets.json', 'utf8'));
 const items = Object.entries(a.players);
 const W = 200, H = 250, COLS = 6;

@@ -1,15 +1,11 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 
-// React and ReactDOM load from cdnjs (see index.html) and are treated as globals,
-// so the built game is one small self-contained HTML file.
+// Everything, React included, is inlined into one self-contained dist/index.html that works offline
+// (only the Google Fonts stylesheet is external, and the game falls back to system fonts without it).
 export default defineConfig({
-  plugins: [react({ jsxRuntime: 'classic' }), viteSingleFile()],
-  build: {
-    rollupOptions: {
-      external: ['react', 'react-dom', 'react-dom/client'],
-      output: { format: 'iife', globals: { react: 'React', 'react-dom': 'ReactDOM', 'react-dom/client': 'ReactDOM' } },
-    },
-  },
+  plugins: [react(), viteSingleFile()],
+  test: { include: ['src/**/*.test.ts'] },
 });
