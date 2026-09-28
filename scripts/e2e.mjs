@@ -80,6 +80,12 @@ async function run(viewport, tag) {
   if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
   await p.waitForTimeout(500); await p.screenshot({ path: `shots/${tag}-9-stats.png` });
   await p.keyboard.press('Escape');
+  // After today's daily, the start screen shows the result instead of offering a replay.
+  await p.locator('button.cta', { hasText: 'Play again' }).click();
+  await p.waitForSelector('.daily-done');
+  if (await p.locator('.ghost-btn', { hasText: 'Play Daily' }).count()) throw new Error('daily replay still offered after finishing it');
+  console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', (await p.textContent('.daily-done .next-daily')).trim());
+  await p.screenshot({ path: `shots/${tag}-10-daily-done.png`, fullPage: true });
   const sw = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   console.log(tag, 'horizontal overflow px:', sw, 'errors:', errs);
   if (sw > 0) problems.push(`${tag}: page scrolls sideways by ${sw}px`);

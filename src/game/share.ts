@@ -25,6 +25,9 @@ export function shareText(run: Run, url?: string): string {
   return lines.join('\n');
 }
 
+/** The page's own link, when it's served from a web address (not opened as a local file). */
+export const pageUrl = () => (typeof location !== 'undefined' && location.protocol.startsWith('http') ? location.href.split('#')[0] : undefined);
+
 /** Clipboard API where allowed, falling back to a hidden textarea. */
 export async function copyText(text: string): Promise<boolean> {
   try { await navigator.clipboard.writeText(text); return true; } catch { /* fall through */ }

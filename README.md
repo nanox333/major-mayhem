@@ -20,6 +20,8 @@ npm run e2e          # plays a full daily run in headless Chromium (desktop + ph
 
 `dev`, `build`, `test` and `check` first run `npm run media`, which generates `src/data/media.json` and `src/data/radars.json` from `assets-src/` (skipped when it's already up to date). Set `CHROMIUM_PATH` to use an existing Chromium for e2e. GitHub Actions runs all of the above on every push (`.github/workflows/ci.yml`).
 
+**Live site:** every push to `main` builds the game and publishes it to GitHub Pages (`.github/workflows/pages.yml`) at https://nanox333.github.io/major-mayhem/. It's public, photos and logos included. Pages must be switched on once under Settings → Pages → Source: "GitHub Actions".
+
 ## Data
 
 - **Rosters, event dates and placements** come from the "Final standings" tables of English Wikipedia's Major pages (19 events, 2014–2026), retrieved 28 Sep 2026 and cached in `data/cache/wikipedia-standings.json`. The game reads only the bundled data; nothing is scraped at spin time.

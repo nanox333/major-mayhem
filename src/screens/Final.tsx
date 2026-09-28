@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
-import { copyText, shareText } from '../game/share';
-import { Stats } from '../game/stats';
+import { copyText, pageUrl, shareText } from '../game/share';
+import { Stats, dailyStreak } from '../game/stats';
+import { NextDaily } from '../ui/Countdown';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
 import { RosterList } from './Lobby';
@@ -15,6 +16,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   const champ = pl.key === 'CHAMP';
   const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps));
   const date = dailyDate(s);
+  const streak = date ? dailyStreak(stats.daily, date).current : 0;
   return (
     <div className="final">
       <div className={`final__banner ${champ ? 'is-champ' : ''}`}>
@@ -31,7 +33,13 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </div>
         <div className="mvp-card__rating"><b>{fmt(ratings[star.player.id].rating)}</b><small>Event rating</small></div>
       </div>
-      <ShareBar s={s} />
+      <ShareBar text={() => shareText(s, pageUrl())} />
+      {date && (
+        <p className="daily-meta">
+          {streak > 1 && <span>🔥 {streak}-day daily streak</span>}
+          <NextDaily />
+        </p>
+      )}
       <RosterList mine={mine} stats={ratings} mvpId={star.player.id} />
       <ul className="history">
         {s.t.matches.map((m, i) => {
@@ -60,11 +68,10 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   );
 }
 
-function ShareBar({ s }: { s: Run }) {
+export function ShareBar({ text }: { text: () => string }) {
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
   const share = async () => {
-    const text = shareText(s, location.protocol.startsWith('http') ? location.href.split('#')[0] : undefined);
-    setState((await copyText(text)) ? 'copied' : 'failed');
+    setState((await copyText(text())) ? 'copied' : 'failed');
     setTimeout(() => setState('idle'), 2200);
   };
   return (
