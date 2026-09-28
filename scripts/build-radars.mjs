@@ -7,7 +7,7 @@ const DIR = 'assets-src/radars';
 const SIZE = 760;
 // file → map name as used in MAPS (src/game/logic.ts). `clip` drops the source's frame first (fractions
 // of the image: left, top, right, bottom), `dark` makes the black background and grey grid transparent
-// (the map's own dark areas are tinted, so they stay),
+// (the map's own dark areas are tinted, so they stay), `black` only drops pure-black background,
 // `faint` drops semi-transparent grid dots.
 const MAPS = {
   mirage: { name: 'Mirage', faint: true },
@@ -15,8 +15,8 @@ const MAPS = {
   nuke: { name: 'Nuke', faint: true },
   ancient: { name: 'Ancient', clip: [0.07, 0.06, 0.93, 0.94], dark: true },
   dust2: { name: 'Dust2' },
-  anubis: { name: 'Anubis' },
-  train: { name: 'Train' },
+  anubis: { name: 'Anubis', black: true },
+  train: { name: 'Train', black: true },
 };
 const files = Object.keys(MAPS).map((k) => `${DIR}/${k}.png`).filter((f) => fs.existsSync(f));
 const mtime = (f) => fs.statSync(f).mtimeMs;
@@ -29,7 +29,7 @@ if (!process.argv.includes('--force') && fs.existsSync(OUT) && inputs.every((f) 
 const out = {};
 for (const file of files) {
   const key = file.slice(DIR.length + 1, -4);
-  const { name, clip, dark, faint } = MAPS[key];
+  const { name, clip, dark, black, faint } = MAPS[key];
   let img = sharp(file).ensureAlpha();
   const meta = await sharp(file).metadata();
   if (clip) {
@@ -43,7 +43,7 @@ for (const file of files) {
     const i = (y * w + x) * 4;
     const [r, g, b, a] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
     const grey = Math.abs(r - g) < 5 && Math.abs(g - b) < 5;
-    if ((dark && (Math.max(r, g, b) < 33 || (grey && Math.max(r, g, b) < 70))) || (faint && a < 140)) data[i + 3] = 0;
+    if ((dark && (Math.max(r, g, b) < 33 || (grey && Math.max(r, g, b) < 70))) || (black && Math.max(r, g, b) < 22) || (faint && a < 140)) data[i + 3] = 0;
     if (data[i + 3] > 40) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); }
   }
   // Square around the playable area with a little padding, centered.

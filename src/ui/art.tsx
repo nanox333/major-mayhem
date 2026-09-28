@@ -100,6 +100,14 @@ export const POSITIONS: Record<string, MapPositions> = {
     T: { ENTRY: { x: 16, y: 45, hint: 'A main' }, SUP: { x: 30, y: 45, hint: 'Donut' }, AWP: { x: 49, y: 52, hint: 'Mid' }, IGL: { x: 49, y: 80, hint: 'T ramp' }, LURK: { x: 80, y: 68, hint: 'B ramp' } },
     CT: [{ x: 29, y: 23, hint: 'A site' }, { x: 79, y: 41, hint: 'B site' }, { x: 52, y: 11, hint: 'CT spawn' }, { x: 48, y: 30, hint: 'Top mid' }, { x: 70, y: 55, hint: 'Cave' }],
   },
+  Anubis: {
+    T: { ENTRY: { x: 79, y: 60, hint: 'A main' }, SUP: { x: 70, y: 51, hint: 'Canal' }, AWP: { x: 50, y: 62, hint: 'Mid' }, IGL: { x: 60, y: 79, hint: 'T spawn' }, LURK: { x: 22, y: 62, hint: 'B main' } },
+    CT: [{ x: 74, y: 26, hint: 'A site' }, { x: 32, y: 50, hint: 'B site' }, { x: 42, y: 21, hint: 'CT spawn' }, { x: 57, y: 37, hint: 'Connector' }, { x: 29, y: 35, hint: 'Street' }],
+  },
+  Train: {
+    T: { ENTRY: { x: 62, y: 18, hint: 'Ivy' }, SUP: { x: 36, y: 42, hint: 'Upper hall' }, AWP: { x: 40, y: 20, hint: 'T main' }, IGL: { x: 12, y: 18, hint: 'T spawn' }, LURK: { x: 30, y: 76, hint: 'Lower hall' } },
+    CT: [{ x: 55, y: 44, hint: 'A site' }, { x: 55, y: 79, hint: 'B site' }, { x: 91, y: 51, hint: 'CT spawn' }, { x: 75, y: 47, hint: 'Connector' }, { x: 86, y: 78, hint: 'Z-connector' }],
+  },
 };
-/** Maps without a radar yet (Anubis, Train) show on Dust 2. */
+/** A map without a radar or positions shows on Dust 2. */
 export const boardMap = (map: string | null | undefined) => (map && RADARS[map] && POSITIONS[map] ? map : 'Dust2');
