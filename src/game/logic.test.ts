@@ -3,8 +3,15 @@ import { ROSTERS, ROLE_ORDER } from '../data/rosters';
 import * as G from './logic';
 
 const lineupOf = (i: number) => G.naturalLineup(ROSTERS[i]);
+/** startMatch plus an automatic veto, so the first map is set up. */
+const vetoed = (stage: G.StageKey, us: G.Lineup[], oppId: string) => {
+  let m = G.startMatch(stage, us, oppId);
+  const oppL = G.naturalLineup(G.rosterById.get(oppId)!);
+  while (G.vetoTurn(m.veto)) m = G.applyVeto(m, us, G.vetoChoice(m.veto, 'us', us, oppL));
+  return m;
+};
 const fakeMatch = (stage: G.StageKey, won: boolean, opponentId = ROSTERS[0].id): G.Match =>
-  ({ stage, won, opponentId, bestOf: G.BEST_OF[stage], maps: [], impact: {}, form: 0, pool: [], next: null, done: true, score: won ? [2, 0] : [0, 2] });
+  ({ stage, won, opponentId, bestOf: G.BEST_OF[stage], maps: [], impact: {}, form: 0, veto: { order: [], steps: [], left: [] }, pool: [], next: null, done: true, score: won ? [2, 0] : [0, 2] });
 
 describe('seeded randomness', () => {
   it('replays the same sequence for the same seed', () => {
@@ -151,7 +158,7 @@ describe('sides', () => {
   });
   it('plays a series one map at a time, with a knife round before each', () => {
     G.seeded('series', () => {
-      let m = G.startMatch('F', lineupOf(0), ROSTERS[9].id);
+      let m = vetoed('F', lineupOf(0), ROSTERS[9].id);
       expect(m.maps).toHaveLength(0);
       while (!m.done) {
         const k = m.next!;
@@ -166,12 +173,69 @@ describe('sides', () => {
   it('recommends the side that scores higher for you, and the opponent picks theirs the same way', () => {
     const us = lineupOf(0), them = lineupOf(5);
     for (let i = 0; i < 40; i++) {
-      const k = G.seeded(`k-${i}`, () => G.startMatch('QUAL', us, ROSTERS[5].id).next!);
+      const k = G.seeded(`k-${i}`, () => vetoed('QUAL', us, ROSTERS[5].id).next!);
       const ours = G.sideScore(k.map, 'CT', us, them) >= G.sideScore(k.map, 'T', us, them) ? 'CT' : 'T';
       const theirs = G.sideScore(k.map, 'CT', them, us) >= G.sideScore(k.map, 'T', them, us) ? 'CT' : 'T';
       expect(k.best).toBe(ours);
       expect(k.oppPick).toBe(theirs);
       expect(G.sideAdvice(k, us)).toContain(k.map);
+    }
+  });
+});
+
+describe('map veto', () => {
+  const us = lineupOf(0), oppId = ROSTERS[9].id;
+  it('Bo1: six alternating bans leave one map, decided by a knife round', () => {
+    const m = G.seeded('veto1', () => vetoed('QUAL', us, oppId));
+    expect(m.veto.steps.map((x) => `${x.team}:${x.action}`)).toEqual(['us:ban', 'them:ban', 'us:ban', 'them:ban', 'us:ban', 'them:ban']);
+    expect(m.pool).toEqual(m.veto.left);
+    expect(m.pool).toHaveLength(1);
+    expect(m.next!.how).toBe('knife');
+  });
+  it('Bo3: ban, ban, pick, pick, ban, ban; the non-picker chooses sides and the decider gets a knife', () => {
+    let m = G.seeded('veto3', () => vetoed('F', us, oppId));
+    expect(m.veto.steps.map((x) => `${x.team}:${x.action}`)).toEqual(['us:ban', 'them:ban', 'us:pick', 'them:pick', 'us:ban', 'them:ban']);
+    const picks = m.veto.steps.filter((x) => x.action === 'pick').map((x) => x.map);
+    expect(m.pool).toEqual([...picks, m.veto.left[0]]);
+    expect(new Set([...m.pool, ...m.veto.steps.map((x) => x.map)]).size).toBe(G.MAPS.length);
+    expect(m.next).toMatchObject({ how: 'our-pick', won: false });
+    G.seeded('veto3-play', () => {
+      m = G.playNextMap(m, us, G.autoSide(m.next!));
+      expect(m.next).toMatchObject({ how: 'their-pick', won: true });
+      if (!m.done) { m = G.playNextMap(m, us, G.autoSide(m.next!)); if (!m.done) expect(m.next!.how).toBe('knife'); }
+    });
+  });
+  it('ignores a ban out of turn or on a map that is gone', () => {
+    const m = G.startMatch('QUAL', us, oppId);
+    const after = G.applyVeto(m, us, 'Nuke');
+    expect(G.applyVeto(after, us, 'Nuke')).toBe(after);
+    expect(G.applyVeto(after, us, 'Atlantis')).toBe(after);
+  });
+  it('has the opponent ban the map that suits you most', () => {
+    const oppL = G.naturalLineup(G.rosterById.get(oppId)!);
+    const edge = (map: string) => G.comfort(us, map) - G.comfort(oppL, map);
+    const m = G.applyVeto(G.startMatch('QUAL', us, oppId), us, 'Nuke');
+    const left = G.MAPS.filter((x) => x !== 'Nuke');
+    expect(m.veto.steps[1].map).toBe([...left].sort((a, b) => edge(b) - edge(a))[0]);
+  });
+});
+
+describe('pistols and clutches', () => {
+  it('marks rounds 1 and 13 as pistol rounds', () => {
+    for (let i = 0; i < 20; i++) {
+      const g = G.seeded(`pistol-${i}`, () => G.playMatch('QUAL', lineupOf(2), ROSTERS[6].id)).maps[0];
+      const pistols = g.events.filter((e) => e.kind === 'pistol');
+      expect(pistols.map((e) => e.round)).toEqual(g.rounds.length >= 13 ? [1, 13] : [1]);
+      expect(pistols.every((e) => e.good === g.rounds[e.round - 1])).toBe(true);
+    }
+  });
+  it('credits clutches to one of your players in a round you won', () => {
+    const clutches = Array.from({ length: 60 }, (_, i) => G.seeded(`c-${i}`, () => G.playMatch('F', lineupOf(3), ROSTERS[8].id)))
+      .flatMap((m) => m.maps.flatMap((g) => g.events.filter((e) => e.kind === 'clutch').map((e) => ({ e, g }))));
+    expect(clutches.length).toBeGreaterThan(0);
+    for (const { e, g } of clutches) {
+      expect(g.rounds[e.round - 1]).toBe(true);
+      expect(lineupOf(3).map((x) => x.player.id)).toContain(e.playerId);
     }
   });
 });

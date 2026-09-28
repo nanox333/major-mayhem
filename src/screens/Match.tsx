@@ -86,6 +86,10 @@ function Scoreboard({ game, opp, mine }: { game: G.MapGame; opp: Roster; mine: G
 const SPEEDS = [1, 2, 4];
 const loadSpeed = () => { try { const v = Number(localStorage.getItem('mm-speed')); return SPEEDS.includes(v) ? v : 1; } catch { return 1; } };
 const sideCls = (side: G.Side) => (side === 'T' ? 't' : 'ct');
+const KF_CLASS = (e: G.MatchEvent) =>
+  e.kind === 'half' || e.kind === 'ot' ? 'kf--half'
+    : e.kind === 'clutch' ? 'kf--clutch'
+      : `${e.good ? 'kf--us' : 'kf--them'}${e.kind === 'pistol' ? ' kf--pistol' : ''}`;
 
 export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Match; t: G.Tournament; dispatch: React.Dispatch<Action> }) {
   const opp = G.rosterById.get(m.opponentId)!;
@@ -97,6 +101,7 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
   const mapDone = !!game && n >= total;
   const seriesDone = m.done && mapDone && mapIdx === m.maps.length - 1;
   const mapName = game?.map ?? m.next?.map ?? '';
+  const vetoing = m.pool.length === 0;
 
   useEffect(() => {
     if (!game || mapDone) return;
@@ -128,7 +133,7 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
   return (
     <div className="stack">
       <div className="hud">
-        <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · {mapName}{ot ? ' · OT' : ''}</div>
+        <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{vetoing ? ' · Map veto' : `${m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · ${mapName}${ot ? ' · OT' : ''}`}</div>
         <div className="hud__score">
           <div className={`hud__team hud__team--${sideCls(side)}`}><i className="side-chip">{side}</i><span className="hud__org">Your team</span><span className="hud__tag">You</span>{m.bestOf === 3 && <em>{mapsWon}</em>}</div>
           <div className="hud__nums">
@@ -150,7 +155,7 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
             return <i key={i} className={game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`} />;
           })}
         </div>
-        {m.bestOf === 3 && (
+        {m.bestOf === 3 && !vetoing && (
           <div className="maps">
             {[0, 1, 2].map((i) => {
               const g = m.maps[i];
@@ -166,13 +171,15 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
         )}
       </div>
 
-      {!game ? (
+      {vetoing ? (
+        <VetoPanel m={m} opp={opp} mine={mine} dispatch={dispatch} />
+      ) : !game ? (
         m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} dispatch={dispatch} />
       ) : !mapDone ? (
         <>
           <div className="killfeed" aria-live="polite">
             {shown.slice(-3).reverse().map((e) => (
-              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${e.kind ? 'kf--half' : e.good ? 'kf--us' : 'kf--them'}`}><small>R{e.round}</small>{e.text}</div>
+              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}</small>{e.text}</div>
             ))}
             {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
@@ -208,10 +215,14 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, dispatch }: {
   k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; dispatch: React.Dispatch<Action>;
 }) {
   const left = G.otherSide(k.oppPick);
+  const title = k.how === 'our-pick' ? `Your pick: ${opp.org} choose sides`
+    : k.how === 'their-pick' ? `${opp.org}'s pick: you choose sides`
+      : k.won ? 'You won the knife!' : `${opp.org} won the knife`;
+  const label = k.how === 'knife' ? (bestOf === 3 ? 'Decider · Knife round' : 'Knife round') : 'Side choice';
   return (
     <div className={`knife anim-in ${k.won ? 'is-won' : 'is-lost'}`}>
-      <small className="knife__kicker">{bestOf === 3 ? `Map ${mapNo} · ` : ''}{k.map} · Knife round</small>
-      <strong className="knife__title">{k.won ? 'You won the knife!' : `${opp.org} won the knife`}</strong>
+      <small className="knife__kicker">{bestOf === 3 ? `Map ${mapNo} · ` : ''}{k.map} · {label}</small>
+      <strong className="knife__title">{title}</strong>
       <p className="knife__advice">{G.sideAdvice(k, mine)} Whoever leads at halftime carries momentum into the second half.</p>
       {k.won ? (
         <div className="knife__pick">
@@ -224,6 +235,43 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, dispatch }: {
           <button className="cta cta--orange" onClick={() => dispatch({ type: 'side', side: left })}>Go live</button>
         </>
       )}
+    </div>
+  );
+}
+
+/** The map veto before a series: bans (and picks in a Bo3), with each team's comfort on every map. */
+function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: G.Lineup[]; dispatch: React.Dispatch<Action> }) {
+  const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
+  const t = G.vetoTurn(m.veto);
+  const done = (map: string) => m.veto.steps.find((x) => x.map === map);
+  const pips = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n);
+  return (
+    <div className="veto anim-in">
+      <small className="knife__kicker">Map veto · Best of {m.bestOf}</small>
+      <strong className="knife__title">{t ? `Your turn: ${t.action} a map` : 'Veto done'}</strong>
+      <p className="knife__advice">
+        {m.bestOf === 3 ? 'Ban, ban, pick, pick, ban, ban; the last map is the decider. ' : 'Bans alternate until one map is left. '}
+        Comfort comes from each player's original lineup: ban their best maps, {m.bestOf === 3 ? 'pick yours.' : 'keep yours.'}
+      </p>
+      <ul className="veto__maps">
+        {G.MAPS.map((map) => {
+          const st = done(map);
+          const mineC = G.comfortPips(G.comfort(mine, map)), theirC = G.comfortPips(G.comfort(oppL, map));
+          const state = st ? `${st.action === 'ban' ? 'is-banned' : 'is-picked'} by-${st.team}` : '';
+          return (
+            <li key={map} className={`veto__map ${state}`}>
+              <button disabled={!!st || !t} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
+                <span className="veto__name">{map}<small>{G.sideLean(map)}</small></span>
+                <span className="veto__comfort" title="Map comfort (game values)">
+                  <span className="us">You {pips(mineC)}</span>
+                  <span className="them">{opp.tag} {pips(theirC)}</span>
+                </span>
+                <span className="veto__state">{st ? `${st.team === 'us' ? 'You' : opp.tag} ${st.action === 'ban' ? 'banned' : 'picked'}` : t ? (t.action === 'ban' ? 'Ban' : 'Pick') : ''}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }

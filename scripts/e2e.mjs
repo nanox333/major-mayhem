@@ -46,6 +46,14 @@ async function run(viewport, tag) {
     await p.waitForSelector('button.cta', { timeout: 6000 });
     if (n === 1) await p.screenshot({ path: `shots/${tag}-4-preview.png`, fullPage: true });
     await cta('Accept');
+    // Map veto: take the first open map on each of our turns until the first map is set up.
+    await p.waitForSelector('.veto');
+    if (n === 1) await p.screenshot({ path: `shots/${tag}-4b-veto.png`, fullPage: true });
+    while (await p.$('.veto')) {
+      await p.locator('.veto__map button:not([disabled])').first().click();
+      await p.waitForTimeout(100);
+    }
+    if (n === 1) await p.screenshot({ path: `shots/${tag}-4c-veto-done.png`, fullPage: true });
     const maps = [];
     for (let g = 0; g < 3; g++) {
       // Knife round: pick a side when we win it (alternating T/CT), or go live on the side we're left with.
