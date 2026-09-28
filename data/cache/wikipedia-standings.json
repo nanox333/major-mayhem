@@ -1,0 +1,116 @@
+{
+  "note": "Final-standings rosters retrieved from English Wikipedia Major pages on 2026-09-28 (Liquipedia was unreachable: network egress blocked, api.php disallowed by robots.txt for automated fetchers, and a Cloudflare human-verification wall in the browser). Top-8 placements, five players and coach per team, as extracted from each page's 'Final standings' table.",
+  "retrievedAt": "2026-09-28",
+  "events": [
+    { "event": "EMS One Katowice 2014", "dates": "2014-03-13/2014-03-16", "url": "https://en.wikipedia.org/wiki/EMS_One_Katowice_2014", "standings": [
+      "1 | Virtus.pro | TaZ, NEO, pashaBiceps, byali, Snax",
+      "2 | Ninjas in Pyjamas | f0rest, GeT RiGhT, Xizt, friberg, Fifflaren",
+      "3-4 | Team Dignitas | FeTiSh, dev1ce, cajunb, dupreeh, Xyp9x",
+      "3-4 | LGB eSports | dennis, olofmeister, KRiMZ, twist, cype" ] },
+    { "event": "ESL One Cologne 2014", "dates": "2014-08-14/2014-08-17", "url": "https://en.wikipedia.org/wiki/ESL_One_Cologne_2014", "standings": [
+      "1 | Ninjas in Pyjamas | f0rest, GeT RiGhT, Xizt, friberg, Fifflaren | pita",
+      "2 | Fnatic | JW, flusha, pronax, olofmeister, KRiMZ | Devilwalk",
+      "3-4 | Team Dignitas | FeTiSh, dev1ce, aizy, dupreeh, Xyp9x | 3k2",
+      "3-4 | Team LDLC.com | Uzzziii, Happy, KQLY, apEX, Maniac | MoMan",
+      "5-8 | Cloud9 | Hiko, sgares, n0thing, shroud, Semphis" ] },
+    { "event": "ESL One Katowice 2015", "dates": "2015-03-12/2015-03-15", "url": "https://en.wikipedia.org/wiki/ESL_One_Katowice_2015", "standings": [
+      "1 | Fnatic | JW, flusha, pronax, olofmeister, KRiMZ | Devilwalk",
+      "2 | Ninjas in Pyjamas | f0rest, GeT RiGhT, Xizt, friberg, allu | pita",
+      "3-4 | Team EnVyUs | kioShiMa, Happy, SmithZz, NBK, shox",
+      "3-4 | Virtus.pro | TaZ, NEO, pashaBiceps, byali, Snax | kuben",
+      "5-8 | Team SoloMid | karrigan, dev1ce, cajunb, dupreeh, Xyp9x | 3k2" ] },
+    { "event": "DreamHack Open Cluj-Napoca 2015", "dates": "2015-10-28/2015-11-01", "url": "https://en.wikipedia.org/wiki/DreamHack_Open_Cluj-Napoca_2015", "standings": [
+      "1 | Team EnVyUs | kioShiMa, Happy, kennyS, NBK, apEX | Next",
+      "2 | Natus Vincere | Edward, Zeus, seized, flamie, GuardiaN | starix",
+      "3-4 | G2 Esports | Maikelele, fox, dennis, jkaem, rain | zbM",
+      "3-4 | Ninjas in Pyjamas | f0rest, GeT RiGhT, Xizt, friberg, allu | HeatoN" ] },
+    { "event": "MLG Major Championship: Columbus 2016", "dates": "2016-03-29/2016-04-03", "url": "https://en.wikipedia.org/wiki/MLG_Major_Championship:_Columbus", "standings": [
+      "1 | Luminosity Gaming | FalleN, fer, coldzera, fnx, TACO | zews",
+      "2 | Natus Vincere | Zeus, Edward, seized, flamie, GuardiaN | starix",
+      "3-4 | Astralis | karrigan, dev1ce, cajunb, dupreeh, Xyp9x | zonic",
+      "3-4 | Team Liquid | Hiko, nitr0, EliGE, adreN, s1mple | GBJames" ] },
+    { "event": "ESL One Cologne 2016", "dates": "2016-07-05/2016-07-10", "url": "https://en.wikipedia.org/wiki/ESL_One_Cologne_2016", "standings": [
+      "1 | SK Gaming | FalleN, coldzera, fnx, TACO, fer | zews",
+      "2 | Team Liquid | Hiko, EliGE, jdm64, nitr0, s1mple | peacemaker",
+      "3-4 | Virtus.pro | TaZ, NEO, pashaBiceps, Snax, byali | kuben",
+      "3-4 | fnatic | flusha, olofmeister, JW, dennis, KRiMZ | vuggo" ] },
+    { "event": "ELEAGUE Major: Atlanta 2017", "dates": "2017-01-22/2017-01-29", "url": "https://en.wikipedia.org/wiki/ELEAGUE_Major_2017", "standings": [
+      "1 | Astralis | gla1ve, dev1ce, dupreeh, Xyp9x, Kjaerbye | zonic",
+      "2 | Virtus.pro | NEO, TaZ, pashaBiceps, Snax, byali | kuben",
+      "3-4 | Fnatic | dennis, olofmeister, KRiMZ, disco doplan, twist | Jumpy",
+      "3-4 | SK Gaming | FalleN, coldzera, fer, TACO, fox | dead",
+      "5-8 | Gambit Gaming | Zeus, AdreN, mou, HObbit, Dosia | kane" ] },
+    { "event": "PGL Major: Kraków 2017", "dates": "2017-07-16/2017-07-23", "url": "https://en.wikipedia.org/wiki/PGL_Major:_Krak%C3%B3w_2017", "standings": [
+      "1 | Gambit Esports | Zeus, AdreN, HObbit, mou, Dosia | kane",
+      "2 | Immortals | boltz, HEN1, kNg, LUCAS1, steel | zakk",
+      "3-4 | Astralis | gla1ve, dev1ce, dupreeh, Kjaerbye, Xyp9x | zonic",
+      "3-4 | Virtus.pro | Snax, byali, NEO, pashaBiceps, TaZ | kuben" ] },
+    { "event": "ELEAGUE Major: Boston 2018", "dates": "2018-01-12/2018-01-28", "url": "https://en.wikipedia.org/wiki/ELEAGUE_Major:_Boston_2018", "standings": [
+      "1 | Cloud9 | tarik, autimatic, RUSH, Skadoodle, Stewie2K | valens",
+      "2 | FaZe Clan | karrigan, GuardiaN, NiKo, olofmeister, rain | RobbaN",
+      "3-4 | Natus Vincere | Zeus, Edward, s1mple, electronic, flamie | kane",
+      "3-4 | SK Gaming | FalleN, coldzera, felps, fer, TACO | dead",
+      "5-8 | G2 Esports | shox, apEX, bodyy, kennyS, NBK- | SmithZz" ] },
+    { "event": "FACEIT Major: London 2018", "dates": "2018-09-05/2018-09-23", "url": "https://en.wikipedia.org/wiki/FACEIT_Major:_London_2018", "standings": [
+      "1 | Astralis | gla1ve, dev1ce, dupreeh, Magisk, Xyp9x | zonic",
+      "2 | Natus Vincere | Zeus, Edward, s1mple, electronic, flamie | kane",
+      "3-4 | MIBR | FalleN, coldzera, fer, Stewie2K, tarik | YNk",
+      "3-4 | Team Liquid | nitr0, ELiGE, NAF, Twistzz, TACO | zews",
+      "5-8 | BIG | gob b, nex, tabseN, tiziaN, smooya | LEGIJA" ] },
+    { "event": "IEM Katowice Major 2019", "dates": "2019-02-13/2019-03-03", "url": "https://en.wikipedia.org/wiki/IEM_Katowice_Major_2019", "standings": [
+      "1 | Astralis | gla1ve, dev1ce, dupreeh, Magisk, Xyp9x | zonic",
+      "2 | ENCE | Aleksib, Aerial, allu, sergej, xseven | Twista",
+      "3-4 | MIBR | FalleN, coldzera, felps, fer, TACO | zews",
+      "3-4 | Natus Vincere | Zeus, Edward, s1mple, electronic, flamie | kane" ] },
+    { "event": "StarLadder Major: Berlin 2019", "dates": "2019-08-23/2019-09-08", "url": "https://en.wikipedia.org/wiki/StarLadder_Major:_Berlin_2019", "standings": [
+      "1 | Astralis | gla1ve, dev1ce, dupreeh, Magisk, Xyp9x | zonic",
+      "2 | AVANGAR | Jame, buster, qikert, Sanji, AdreN | dastan",
+      "3-4 | Renegades | jkaem, Gratisfaction, AZR, jks, Liazz | kassad",
+      "3-4 | NRG Esports | stanislaw, CeRq, Brehze, Ethan, tarik | ImAPet",
+      "5-8 | Team Vitality | ALEX, apEX, NBK-, ZywOo, RpK | XTQZZZ" ] },
+    { "event": "PGL Major Stockholm 2021", "dates": "2021-10-26/2021-11-07", "url": "https://en.wikipedia.org/wiki/PGL_Major_Stockholm_2021", "standings": [
+      "1 | Natus Vincere | s1mple, electroNic, Boombl4, Perfecto, b1t | B1ad3",
+      "2 | G2 Esports | JaCkz, AmaNEk, nexa, huNter-, NiKo | maLeK",
+      "3-4 | Heroic | stavn, cadiaN, TeSeS, refrezh, sjuush | Xizt",
+      "3-4 | Gambit Esports | nafany, sh1ro, Ax1Le, interz, HObbit | groove",
+      "5-8 | Team Vitality | apEX, ZywOo, shox, misutaaa, Kyojin | XTQZZZ",
+      "5-8 | FURIA Esports | yuurih, arT, VINI, KSCERATO, drop | tacitus" ] },
+    { "event": "PGL Major Antwerp 2022", "dates": "2022-05-09/2022-05-22", "url": "https://en.wikipedia.org/wiki/PGL_Major_Antwerp_2022", "standings": [
+      "1 | FaZe Clan | rain, broky, Twistzz, karrigan, ropz | Eddie",
+      "2 | Natus Vincere | s1mple, electronic, Boombl4, Perfecto, b1t | B1ad3",
+      "3-4 | Team Spirit | chopper, magixx, degster, Patsi, S1ren",
+      "3-4 | ENCE | Snappi, Spinx, dycha, hades, maden | sAw",
+      "5-8 | Copenhagen Flames | jabbi, nicoodoz, roeJ, HooXi, Zyphon | vorborg" ] },
+    { "event": "IEM Rio Major 2022", "dates": "2022-10-31/2022-11-13", "url": "https://en.wikipedia.org/wiki/IEM_Rio_Major_2022", "standings": [
+      "1 | Outsiders | Jame, FL1T, fame, n0rb3r7, Qikert | dastan",
+      "2 | Heroic | cadiaN, TeSeS, jabbi, sjuush, stavn | Xizt",
+      "3-4 | FURIA Esports | arT, KSCERATO, drop, yuurih, saffee | André Akkari",
+      "3-4 | MOUZ | dexter, torzsi, JDC, xertioN, frozen | sycrone",
+      "5-8 | Cloud9 | nafany, sh1ro, Ax1Le, interz, Hobbit | groove" ] },
+    { "event": "PGL Major Copenhagen 2024", "dates": "2024-03-17/2024-03-31", "url": "https://en.wikipedia.org/wiki/PGL_Major_Copenhagen_2024", "standings": [
+      "1 | Natus Vincere | Aleksib, iM, b1t, jL, w0nderful | B1ad3",
+      "2 | FaZe Clan | karrigan, rain, frozen, broky, ropz | NEO",
+      "3-4 | G2 Esports | NiKo, huNter-, nexa, HooXi, m0NESY | TaZ",
+      "3-4 | Team Vitality | apEX, ZywOo, flameZ, Spinx, mezii | XTQZZZ",
+      "5-8 | MOUZ | siuhy, Brollan, torzsi, Jimpphat, xertioN | sycrone",
+      "5-8 | Eternal Fire | MAJ3R, XANTARES, woxic, Calyx, Wicadia | Fabre" ] },
+    { "event": "Perfect World Shanghai Major 2024", "dates": "2024-11-30/2024-12-15", "url": "https://en.wikipedia.org/wiki/Perfect_World_Shanghai_Major_2024", "standings": [
+      "1 | Team Spirit | donk, chopper, sh1ro, zont1x, magixx | hally",
+      "2 | FaZe Clan | ropz, frozen, broky, rain, karrigan | NEO",
+      "3-4 | G2 Esports | Snax, NiKo, m0NESY, malbsMd, huNter | TaZ",
+      "3-4 | MOUZ | Brollan, siuhy, torzsi, Jimpphat, xertioN | sycrone",
+      "5-8 | The MongolZ | bLitz, Techno4K, Senzu, mzinho, 910 | maaRaa",
+      "5-8 | Team Liquid | Twistzz, jks, ultimate, NAF, YEKINDAR | mithR" ] },
+    { "event": "StarLadder Budapest Major 2025", "dates": "2025-11-24/2025-12-14", "url": "https://en.wikipedia.org/wiki/StarLadder_Budapest_Major_2025", "standings": [
+      "1 | Team Vitality | ZywOo, flameZ, apEX, ropz, mezii | XTQZZZ",
+      "2 | FaZe Clan | karrigan, jcobbb, broky, frozen, rain | NEO",
+      "3-4 | Team Spirit | chopper, sh1ro, donk, zont1x, zweih | hally",
+      "3-4 | Natus Vincere | w0nderful, iM, Aleksib, makazze, b1t | B1ad3",
+      "5-8 | The MongolZ | bLitz, mzinho, Techno4K, 910, Senzu | maaRaa" ] },
+    { "event": "IEM Cologne Major 2026", "dates": "2026-06-02/2026-06-21", "url": "https://en.wikipedia.org/wiki/IEM_Cologne_Major_2026", "standings": [
+      "1 | Team Falcons | kyousuke, kyxsan, m0NESY, NiKo, TeSeS | zonic",
+      "2 | FURIA Esports | FalleN, KSCERATO, molodoy, YEKINDAR, yuurih | sidde",
+      "3-4 | Team Spirit | donk, magixx, sh1ro, tN1R, zont1x | hally",
+      "3-4 | Aurora Gaming | MAJ3R, soulfly, Wicadia, woxic, XANTARES | Fabre" ] }
+  ]
+}
