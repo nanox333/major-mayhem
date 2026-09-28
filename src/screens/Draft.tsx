@@ -39,10 +39,10 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
         )}
         {s.picks.length === 0 && s.mode === 'free' && doneToday && (
           <div className="daily-done">
-            <small>Daily #{todayN} done</small>
+            <small>Daily #{todayN} {doneToday.abandoned ? 'abandoned' : 'done'}</small>
             <strong>{doneToday.placement}</strong>
-            <span>MVP {doneToday.mvp}{doneToday.grade !== null ? ` · Draft ${Math.round(doneToday.grade * 100)}%` : ''}</span>
-            {doneToday.share && <ShareBar text={() => [doneToday.share, pageUrl()].filter(Boolean).join('\n')} />}
+            <span>{doneToday.abandoned ? 'Reset after it started, so it has no result.' : `MVP ${doneToday.mvp}${doneToday.grade !== null ? ` · Draft ${Math.round(doneToday.grade * 100)}%` : ''}`}</span>
+            {doneToday.share && !doneToday.abandoned && <ShareBar text={() => [doneToday.share, pageUrl()].filter(Boolean).join('\n')} />}
             <NextDaily />
           </div>
         )}

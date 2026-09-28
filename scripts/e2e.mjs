@@ -93,6 +93,7 @@ async function run(viewport, tag) {
   console.log(tag, 'draft grade', grade, '| share:', shared.split('\n')[0]);
   await p.screenshot({ path: `shots/${tag}-8-review.png`, fullPage: true });
   await p.reload(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
+  const finalSave = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
   await p.click('[aria-label="Your stats"]');
   const runs = (await p.textContent('.stat-tiles div b')).trim();
   if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
@@ -109,6 +110,24 @@ async function run(viewport, tag) {
   if (sw > 0) problems.push(`${tag}: page scrolls sideways by ${sw}px`);
   if (errs.length) problems.push(`${tag}: page errors: ${errs.join(' | ')}`);
   if (sw > 0) console.log(await p.evaluate(() => [...document.querySelectorAll('*')].filter(e => e.getBoundingClientRect().right > innerWidth + 1).map(e => e.className + ' ' + Math.round(e.getBoundingClientRect().right)).slice(0, 12)));
+  // Broken saves (checked after the error tally above, since a crash logs errors on purpose).
+  const setSave = async (edit) => {
+    const s = JSON.parse(finalSave); edit(s);
+    await p.evaluate((v) => localStorage.setItem('major-mayhem-run-v2', v), JSON.stringify(s));
+    await p.reload();
+  };
+  // A save pointing at a player who no longer exists starts a new run instead of crashing.
+  await setSave((s) => { s.picks[0].playerId = 'retired-player'; });
+  await p.waitForSelector('.spin-stage');
+  if (await p.$('.crash')) throw new Error('a save with a missing player crashed the page');
+  // A save that passes the checks but still crashes shows the error screen; "Reset run" recovers and keeps stats.
+  await setSave((s) => { s.t.matches[0].maps = null; });
+  await p.waitForSelector('.crash');
+  await p.screenshot({ path: `shots/${tag}-11-crash.png`, fullPage: true });
+  await p.locator('.crash button', { hasText: 'Reset run' }).click();
+  await p.waitForSelector('.spin-stage');
+  if (!(await p.evaluate(() => localStorage.getItem('major-mayhem-stats-v1')))) throw new Error('reset run cleared lifetime stats');
+  console.log(tag, 'broken saves recover OK');
   await p.close();
 }
 await run({ width: 1280, height: 900 }, 'desk');

@@ -21,7 +21,7 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
         </ol>
         <p>Player strength is hidden, so trust your CS knowledge. After every map you get a scoreboard with kills, deaths and a match rating (1.00 is average). Stronger players tend to post better ratings, but anyone can have a bad map. Results also depend on role fit, a small chemistry bonus for teammates who share a lineup or organization, and luck. When the run ends, the draft review reveals the hidden ratings and shows the best pick you passed up each round. Your run and lifetime stats save in this browser.</p>
         <h3>Data</h3>
-        <p>Rosters, event dates and placements come from the “Final standings” tables on English Wikipedia's Major pages, retrieved 28 September 2026. Each roster links to Liquipedia. Roles are assigned for the game and player strength is a hidden game rating, not a real statistic. The Dust 2 radar was supplied by the player.</p>
+        <p>Rosters, event dates and placements come from the “Final standings” tables on English Wikipedia's Major pages, retrieved 28 September 2026. Each roster links to Liquipedia. Roles are assigned for the game and player strength is a hidden game rating, not a real statistic. The radars for all seven maps were supplied by the player, and map comfort (used in the veto) is an invented game value like the ratings. A new daily only draws on rosters that were in the game when it started.</p>
         <ul className="sources">
           {events.map((r) => (
             <li key={r.event}><span>{r.event}</span> <a href={r.sourceUrl} target="_blank" rel="noreferrer">Wikipedia</a> <a href={r.liquipediaUrl} target="_blank" rel="noreferrer">Liquipedia</a></li>

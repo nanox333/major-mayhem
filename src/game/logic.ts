@@ -46,9 +46,9 @@ export const rosterEligible = (r: Roster, picks: Pick[]) => r.players.some((p) =
  * Three distinct teams, each with at least one valid pick. When possible, the three teams
  * together cover every open slot, and they avoid rosters already seen this run.
  */
-export function makeOffer(picks: Pick[], seen: string[]): string[] {
+export function makeOffer(picks: Pick[], seen: string[], rosters: Roster[] = ROSTERS): string[] {
   const open = openSlots(picks);
-  const valid = ROSTERS.filter((r) => rosterEligible(r, picks));
+  const valid = rosters.filter((r) => rosterEligible(r, picks));
   const fresh = valid.filter((r) => !seen.includes(r.id));
   const pool = fresh.length >= 6 ? fresh : valid;
   let best: Roster[] = [];
@@ -471,11 +471,11 @@ export function nextStage(t: Tournament): StageKey | null {
 }
 
 /** Opponents get tougher as the bracket goes on. Excludes rosters you drafted from. */
-export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[]): string {
+export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], rosters: Roster[] = ROSTERS): string {
   // Skip rosters that include anyone on your team, so nobody faces themselves.
   const mineIds = new Set(mine.map((x) => x.player.id));
-  const clean = ROSTERS.filter((r) => !r.players.some((p) => mineIds.has(p.id)) && !t.used.includes(r.id));
-  const pool = clean.length >= 8 ? clean : ROSTERS.filter((r) => !mine.some((x) => x.roster.id === r.id) && !t.used.includes(r.id));
+  const clean = rosters.filter((r) => !r.players.some((p) => mineIds.has(p.id)) && !t.used.includes(r.id));
+  const pool = clean.length >= 8 ? clean : rosters.filter((r) => !mine.some((x) => x.roster.id === r.id) && !t.used.includes(r.id));
   const ranked = pool
     .map((r) => ({ r, p: teamPower(naturalLineup(r)).total }))
     .sort((x, y) => y.p - x.p);
