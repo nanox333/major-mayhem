@@ -134,3 +134,44 @@ describe('tournament', () => {
     }
   });
 });
+
+describe('sides', () => {
+  it('swaps at halftime, then every three rounds of overtime starting on the second-half sides', () => {
+    const seq = Array.from({ length: 33 }, (_, i) => G.sideAt(i, 'T'));
+    expect(seq.slice(0, 12).every((s) => s === 'T')).toBe(true);
+    expect(seq.slice(12, 24).every((s) => s === 'CT')).toBe(true);
+    expect(seq.slice(24, 27)).toEqual(['CT', 'CT', 'CT']);
+    expect(seq.slice(27, 30)).toEqual(['T', 'T', 'T']);
+    expect(seq.slice(30, 33)).toEqual(['CT', 'CT', 'CT']);
+  });
+  it('announces halftime at round 12 with the side you switch to', () => {
+    const g = G.seeded('half', () => G.playMatch('QUAL', lineupOf(1), ROSTERS[2].id)).maps[0];
+    const half = g.events.find((e) => e.kind === 'half' && e.round === 12)!;
+    expect(half.text).toContain(`switch to ${G.otherSide(g.start)}`);
+  });
+  it('plays a series one map at a time, with a knife round before each', () => {
+    G.seeded('series', () => {
+      let m = G.startMatch('F', lineupOf(0), ROSTERS[9].id);
+      expect(m.maps).toHaveLength(0);
+      while (!m.done) {
+        const k = m.next!;
+        expect(G.MAPS).toContain(k.map);
+        m = G.playNextMap(m, lineupOf(0), 'CT');
+        expect(m.maps[m.maps.length - 1]).toMatchObject({ map: k.map, start: 'CT' });
+      }
+      expect(m.next).toBeNull();
+      expect(G.playNextMap(m, lineupOf(0), 'T')).toBe(m);
+    });
+  });
+  it('recommends the side that scores higher for you, and the opponent picks theirs the same way', () => {
+    const us = lineupOf(0), them = lineupOf(5);
+    for (let i = 0; i < 40; i++) {
+      const k = G.seeded(`k-${i}`, () => G.startMatch('QUAL', us, ROSTERS[5].id).next!);
+      const ours = G.sideScore(k.map, 'CT', us, them) >= G.sideScore(k.map, 'T', us, them) ? 'CT' : 'T';
+      const theirs = G.sideScore(k.map, 'CT', them, us) >= G.sideScore(k.map, 'T', them, us) ? 'CT' : 'T';
+      expect(k.best).toBe(ours);
+      expect(k.oppPick).toBe(theirs);
+      expect(G.sideAdvice(k, us)).toContain(k.map);
+    }
+  });
+});

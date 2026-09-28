@@ -93,3 +93,31 @@ describe('daily streak', () => {
     expect(st.daily['2026-10-01'].share).toContain('Daily #4');
   });
 });
+
+describe('knife round', () => {
+  const toLive = () => {
+    let s = fresh('daily', '2026-10-01');
+    while (s.phase === 'draft') {
+      s = reducer(s, { type: 'spin' });
+      const r = G.rosterById.get(s.offer.find((id) => G.rosterEligible(G.rosterById.get(id)!, s.picks))!)!;
+      s = reducer(s, { type: 'team', id: r.id });
+      const p = r.players.find((p) => G.eligibleSlots(p, s.picks).length)!;
+      s = reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
+    }
+    return reducer(reducer(s, { type: 'play' }), { type: 'start' });
+  };
+  it('lets you pick only the side left to you after losing the knife', () => {
+    const s = toLive();
+    const k = s.current!.next!;
+    const wrong = k.won ? null : k.oppPick;
+    if (wrong) expect(reducer(s, { type: 'side', side: wrong })).toBe(s);
+    const ok = reducer(s, { type: 'side', side: G.autoSide(k) });
+    expect(ok.current!.maps).toHaveLength(1);
+  });
+  it('replays a map identically for the same side pick, and not before the series is over', () => {
+    const s = toLive();
+    const side = G.autoSide(s.current!.next!);
+    expect(reducer(s, { type: 'side', side }).current).toEqual(reducer(s, { type: 'side', side }).current);
+    expect(reducer(s, { type: 'next' })).toBe(s);
+  });
+});
