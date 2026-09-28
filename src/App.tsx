@@ -43,7 +43,7 @@ export default function App() {
   const showBoard = s.phase !== 'final';
 
   return (
-    <div className="page">
+    <div className={`page phase-${s.phase}`}>
       <header className="masthead">
         <button className="hud-btn" onClick={() => setHelp(true)} aria-label="How to play and data sources">?</button>
         <div className="brand">

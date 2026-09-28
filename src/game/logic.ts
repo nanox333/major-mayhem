@@ -126,15 +126,26 @@ export const MAPS = ['Mirage', 'Inferno', 'Nuke', 'Ancient', 'Anubis', 'Dust2', 
 /** Qualification matches are Bo1; every playoff match is a Bo3. */
 export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3 };
 
-export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean }
+export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' }
 export interface PlayerStat { id: string; nick: string; k: number; d: number; rating: number }
 export interface MapGame {
   map: string;
+  /** The side your team starts on; sides swap at halftime and every three rounds of overtime. */
+  start: Side;
   rounds: boolean[];      // true = we won the round
   events: MatchEvent[];
   score: [number, number];
   won: boolean;
   stats: { mine: PlayerStat[]; opp: PlayerStat[] };
+}
+/** The knife round before a map: whoever wins it picks the starting side. */
+export interface Knife {
+  map: string;
+  won: boolean;
+  /** The better starting side for your team on this map, against this lineup. */
+  best: Side;
+  /** The side the opponent takes if they win the knife. */
+  oppPick: Side;
 }
 export interface Match {
   stage: StageKey;
@@ -142,9 +153,45 @@ export interface Match {
   bestOf: 1 | 3;
   maps: MapGame[];
   impact: Record<string, number>;
+  /** Match-day form, shared by every map of the series. */
+  form: number;
+  /** Map order for the series. */
+  pool: string[];
+  /** Set up for the next map while the series is still going. */
+  next: Knife | null;
+  done: boolean;
   won: boolean;
   /** maps won–lost for a Bo3, rounds for a Bo1 */
   score: [number, number];
+}
+
+// ---------- sides ----------
+
+export type Side = 'T' | 'CT';
+export const otherSide = (s: Side): Side => (s === 'T' ? 'CT' : 'T');
+
+/** Your side in round i (0-based): MR12 halves, then overtime halves of three, starting on the second-half sides. */
+export function sideAt(i: number, start: Side): Side {
+  if (i < 12) return start;
+  if (i < 24) return otherSide(start);
+  return Math.floor((i - 24) / 3) % 2 === 0 ? otherSide(start) : start;
+}
+
+/** How much each map favours the CT side, in team-power points per round. */
+export const CT_BIAS: Record<string, number> = { Nuke: 1.6, Train: 1.2, Ancient: 0.9, Inferno: 0.7, Mirage: 0.4, Dust2: 0, Anubis: -0.6 };
+export const sideLean = (map: string) => {
+  const b = CT_BIAS[map] ?? 0;
+  return b >= 1 ? 'CT-sided' : b >= 0.3 ? 'slightly CT-sided' : b <= -0.3 ? 'T-sided' : 'balanced';
+};
+
+/**
+ * Roles matter more on one side: entry fraggers and lurkers win T rounds, AWPers and anchors hold CT ones.
+ * Returns a small bonus from how strong those two players are.
+ */
+export function sideEdge(l: Lineup[], side: Side): number {
+  const keys: Role[] = side === 'T' ? ['ENTRY', 'LURK'] : ['AWP', 'SUP'];
+  const v = l.filter((x) => keys.includes(x.slot)).map((x) => pickValue(x.player, x.slot));
+  return v.length ? ((v.reduce((a, b) => a + b, 0) / v.length) - 85) * 0.12 : 0;
 }
 
 function winTarget(a: number, b: number) {
@@ -210,7 +257,7 @@ function spread(n: number, weights: number[], out: number[], forced?: number) {
 /** A made-up but consistent match rating: ~1.00 is average, 1.30+ is a big game. */
 const matchRating = (k: number, d: number, r: number) => Math.max(0.2, Math.min(2.6, 0.26 + (k / r) * 0.95 + ((r - d) / r) * 0.5));
 
-function playMap(map: string, mine: Lineup[], oppL: Lineup[], oppOrg: string, A: number, B: number, form: number, impact: Record<string, number>): MapGame {
+function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOrg: string, A: number, B: number, form: number, impact: Record<string, number>): MapGame {
   const rounds: boolean[] = [];
   const events: MatchEvent[] = [];
   const mapForm = form + (random() - 0.5) * 3; // some maps just go better than others
@@ -220,10 +267,16 @@ function playMap(map: string, mine: Lineup[], oppL: Lineup[], oppOrg: string, A:
   const killW = (l: Lineup[], day: number[]) => l.map((x, i) => (x.player.rating / 85) ** 3 * day[i]);
   const deathW = (l: Lineup[], day: number[]) => l.map((x, i) => (85 / x.player.rating) ** 1.5 / day[i] * (x.slot === 'ENTRY' ? 1.25 : x.slot === 'AWP' || x.slot === 'LURK' ? 0.85 : 1));
   const kwM = killW(mine, dayM), kwO = killW(oppL, dayO), dwM = deathW(mine, dayM), dwO = deathW(oppL, dayO);
-  let a = 0, b = 0;
+  let a = 0, b = 0, halfLead = 0;
   while (a < winTarget(a, b) && b < winTarget(a, b)) {
+    const side = sideAt(rounds.length, start);
+    const bias = (CT_BIAS[map] ?? 0) * (side === 'CT' ? 1 : -1);
+    const edge = sideEdge(mine, side) - sideEdge(oppL, otherSide(side));
+    // Momentum: whoever leads at halftime carries confidence into the second half. This is what makes the
+    // starting side matter: open on your stronger side and you're likelier to take that lead.
+    const momentum = rounds.length >= 12 ? Math.max(-MOMENTUM_CAP, Math.min(MOMENTUM_CAP, halfLead * MOMENTUM)) : 0;
     const swing = (random() - 0.5) * 4; // economy / luck per round
-    const p = 1 / (1 + Math.exp(-(A - B + mapForm + swing) / 5.5));
+    const p = 1 / (1 + Math.exp(-(A - B + mapForm + bias + edge + momentum + swing) / 5.5));
     const won = random() < p;
     rounds.push(won);
     won ? a++ : b++;
@@ -247,11 +300,15 @@ function playMap(map: string, mine: Lineup[], oppL: Lineup[], oppOrg: string, A:
     spread(Math.min(5, ourKills), dwO, OD);
     spread(Math.min(5, theirKills), kwO, OK);
     spread(Math.min(5, theirKills), dwM, D);
+    if (rn === 12) halfLead = a - b;
+    if (rn === 12) events.push({ round: rn, text: `Halftime ${a}–${b}. You switch to ${otherSide(start)}.`, mine: true, good: a >= b, kind: 'half' });
+    if (a === 12 && b === 12) events.push({ round: rn, text: 'Overtime! First to 16, sides swap every three rounds.', mine: true, good: true, kind: 'ot' });
+    else if (rn > 24 && (rn - 24) % 3 === 0 && a < winTarget(a, b) && b < winTarget(a, b)) events.push({ round: rn, text: `Overtime ${a}–${b}. You switch to ${sideAt(rn, start)}.`, mine: true, good: a >= b, kind: 'half' });
   }
   const r = rounds.length;
   mine.forEach((x, i) => (impact[x.player.id] += K[i] * 0.6 - D[i] * 0.2));
   const stat = (l: Lineup[], k: number[], d: number[]) => l.map((x, i) => ({ id: x.player.id, nick: x.player.nick, k: k[i], d: d[i], rating: Math.round(matchRating(k[i], d[i], r) * 100) / 100 }));
-  return { map, rounds, events, score: [a, b], won: a > b, stats: { mine: stat(mine, K, D), opp: stat(oppL, OK, OD) } };
+  return { map, start, rounds, events, score: [a, b], won: a > b, stats: { mine: stat(mine, K, D), opp: stat(oppL, OK, OD) } };
 }
 
 /** Average match rating per player across a set of maps (weighted by rounds). */
@@ -264,25 +321,60 @@ export function seriesRatings(maps: MapGame[]): Record<string, { k: number; d: n
   return Object.fromEntries(Object.entries(acc).map(([id, e]) => [id, { k: e.k, d: e.d, rating: Math.round((e.rr / e.r) * 100) / 100 }]));
 }
 
-export function playMatch(stage: StageKey, mine: Lineup[], oppId: string, stageBoost: number): Match {
-  const opp = rosterById.get(oppId)!;
-  const oppL = naturalLineup(opp);
-  const A = teamPower(mine).total;
-  const B = teamPower(oppL).total - OPP_HANDICAP + stageBoost;
+const MOMENTUM = 0.7, MOMENTUM_CAP = 3;
+
+/** How good a first half on `side` is for `us`: the map's lean plus which roles matter on that side. */
+export const sideScore = (map: string, side: Side, us: Lineup[], them: Lineup[]) =>
+  (CT_BIAS[map] ?? 0) * (side === 'CT' ? 1 : -1) + sideEdge(us, side) - sideEdge(them, otherSide(side));
+const bestSide = (map: string, us: Lineup[], them: Lineup[]): Side => (sideScore(map, 'CT', us, them) >= sideScore(map, 'T', us, them) ? 'CT' : 'T');
+
+const knife = (map: string, mine: Lineup[], oppL: Lineup[]): Knife =>
+  ({ map, won: random() < 0.5, best: bestSide(map, mine, oppL), oppPick: bestSide(map, oppL, mine) });
+
+/** Sets up a series: match-day form, map order and the first knife round. No maps are played yet. */
+export function startMatch(stage: StageKey, mine: Lineup[], oppId: string): Match {
   const form = (random() - 0.5) * 5; // match-day form
-  const bestOf = BEST_OF[stage];
-  const need = Math.ceil(bestOf / 2);
   const pool = shuffle(MAPS);
   const impact: Record<string, number> = Object.fromEntries(mine.map((x) => [x.player.id, 0]));
-  const maps: MapGame[] = [];
-  let w = 0, l = 0;
-  while (w < need && l < need) {
-    const g = playMap(pool[maps.length], mine, oppL, opp.org, A, B, form, impact);
-    maps.push(g);
-    g.won ? w++ : l++;
-  }
-  const score: [number, number] = bestOf === 1 ? maps[0].score : [w, l];
-  return { stage, opponentId: oppId, bestOf, maps, impact, won: w > l, score };
+  const oppL = naturalLineup(rosterById.get(oppId)!);
+  return { stage, opponentId: oppId, bestOf: BEST_OF[stage], maps: [], impact, form, pool, next: knife(pool[0], mine, oppL), done: false, won: false, score: [0, 0] };
+}
+
+/** Plays the next map with your team starting on `start`, then sets up the following knife round if the series goes on. */
+export function playNextMap(m: Match, mine: Lineup[], start: Side): Match {
+  if (m.done || !m.next) return m;
+  const opp = rosterById.get(m.opponentId)!;
+  const oppL = naturalLineup(opp);
+  const A = teamPower(mine).total;
+  const B = teamPower(oppL).total - OPP_HANDICAP + STAGE_BOOST[m.stage];
+  const impact = { ...m.impact };
+  const g = playMap(m.next.map, start, mine, oppL, opp.org, A, B, m.form, impact);
+  const maps = [...m.maps, g];
+  const w = maps.filter((x) => x.won).length, l = maps.length - w;
+  const need = Math.ceil(m.bestOf / 2);
+  const done = w >= need || l >= need;
+  const score: [number, number] = m.bestOf === 1 ? maps[0].score : [w, l];
+  return { ...m, maps, impact, done, won: done && w > l, score, next: done ? null : knife(m.pool[maps.length], mine, oppL) };
+}
+
+/** The side you end up on with the sensible pick: your better side if you won the knife, else what's left. */
+export const autoSide = (k: Knife): Side => (k.won ? k.best : otherSide(k.oppPick));
+
+/** One-line reasons for the knife-round screen. */
+export function sideAdvice(k: Knife, mine: Lineup[]): string {
+  const lean = sideLean(k.map);
+  const tEdge = sideEdge(mine, 'T'), ctEdge = sideEdge(mine, 'CT');
+  const roles = Math.abs(ctEdge - tEdge) < 0.4 ? '' : ctEdge > tEdge
+    ? ' Your AWPer and anchor make CT your stronger side.'
+    : ' Your entry and lurker make T your stronger side.';
+  return `${k.map} is ${lean}.${roles}`;
+}
+
+/** Plays a whole series with sides picked automatically (for simulations and tests). */
+export function playMatch(stage: StageKey, mine: Lineup[], oppId: string): Match {
+  let m = startMatch(stage, mine, oppId);
+  while (!m.done) m = playNextMap(m, mine, autoSide(m.next!));
+  return m;
 }
 
 export interface Tournament {

@@ -3,7 +3,7 @@ import { Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending } from '../game/state';
 import { RoleIcon, TeamBadge } from '../ui/art';
-import { announceMap, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
+import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -83,61 +83,82 @@ function Scoreboard({ game, opp, mine }: { game: G.MapGame; opp: Roster; mine: G
   );
 }
 
+const SPEEDS = [1, 2, 4];
+const loadSpeed = () => { try { const v = Number(localStorage.getItem('mm-speed')); return SPEEDS.includes(v) ? v : 1; } catch { return 1; } };
+const sideCls = (side: G.Side) => (side === 'T' ? 't' : 'ct');
+
 export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Match; t: G.Tournament; dispatch: React.Dispatch<Action> }) {
   const opp = G.rosterById.get(m.opponentId)!;
   const [mapIdx, setMapIdx] = useState(0);
   const [n, setN] = useState(0);
-  const game = m.maps[mapIdx];
-  const total = game.rounds.length;
-  const mapDone = n >= total;
-  const seriesDone = mapDone && mapIdx === m.maps.length - 1;
+  const [speed, setSpeed] = useState(loadSpeed);
+  const game: G.MapGame | undefined = m.maps[mapIdx];
+  const total = game?.rounds.length ?? 0;
+  const mapDone = !!game && n >= total;
+  const seriesDone = m.done && mapDone && mapIdx === m.maps.length - 1;
+  const mapName = game?.map ?? m.next?.map ?? '';
 
   useEffect(() => {
-    if (mapDone) return;
-    const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230);
+    if (!game || mapDone) return;
+    const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230 / speed);
     return () => clearTimeout(tm);
-  }, [n, mapDone, mapIdx]);
+  }, [n, mapDone, mapIdx, !!game, speed]);
 
   // pulse the map token of whoever made the highlight this round
-  const shown = game.events.filter((e) => e.round <= n);
+  const shown = game ? game.events.filter((e) => e.round <= n) : [];
   useEffect(() => {
-    const e = game.events.find((x) => x.round === n);
+    const e = game?.events.find((x) => x.round === n && x.playerId);
     if (e?.playerId) pulse(e.playerId, e.good);
   }, [n, mapIdx]);
-  useEffect(() => { announceMap(game.map); }, [game.map]);
-  useEffect(() => () => { announceMap(null); }, []);
+  // Your side for the round being played (sides swap at halftime and in overtime).
+  const side: G.Side = game ? G.sideAt(Math.min(n, total - 1), game.start) : 'T';
+  useEffect(() => { announceMap(mapName || null); }, [mapName]);
+  useEffect(() => { announceSide(side); }, [side]);
+  useEffect(() => () => { announceMap(null); announceSide('T'); }, []);
 
-  const a = game.rounds.slice(0, n).filter(Boolean).length;
+  const a = game ? game.rounds.slice(0, n).filter(Boolean).length : 0;
   const b = n - a;
   const mapsWon = m.maps.slice(0, mapIdx + (mapDone ? 1 : 0)).filter((g) => g.won).length;
-  const mapsLost = mapIdx + (mapDone ? 1 : 0) - mapsWon;
-  const next = G.nextStage(G.applyResult(t, m));
+  const mapsLost = Math.min(mapIdx + (mapDone ? 1 : 0), m.maps.length) - mapsWon;
+  const next = seriesDone ? G.nextStage(G.applyResult(t, m)) : null;
   const series = G.seriesRatings(m.maps);
+  const setSpeedSaved = (v: number) => { setSpeed(v); try { localStorage.setItem('mm-speed', String(v)); } catch { /* storage unavailable */ } };
+  const ot = total > 24 && n > 24;
 
   return (
     <div className="stack">
       <div className="hud">
-        <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · {game.map}{total > 24 && mapDone ? ' · OT' : ''}</div>
+        <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · {mapName}{ot ? ' · OT' : ''}</div>
         <div className="hud__score">
-          <div className="hud__team hud__team--t"><span>Your team</span>{m.bestOf === 3 && <em>{mapsWon}</em>}</div>
+          <div className={`hud__team hud__team--${sideCls(side)}`}><i className="side-chip">{side}</i><span className="hud__org">Your team</span><span className="hud__tag">You</span>{m.bestOf === 3 && <em>{mapsWon}</em>}</div>
           <div className="hud__nums">
-            <b key={`a${a}`} className={`t ${a ? 'pop' : ''}`}>{a}</b>
+            <b key={`a${a}`} className={`${sideCls(side)} ${a ? 'pop' : ''}`}>{a}</b>
             <i>:</i>
-            <b key={`b${b}`} className={`ct ${b ? 'pop' : ''}`}>{b}</b>
+            <b key={`b${b}`} className={`${sideCls(G.otherSide(side))} ${b ? 'pop' : ''}`}>{b}</b>
           </div>
-          <div className="hud__team hud__team--ct">{m.bestOf === 3 && <em>{mapsLost}</em>}<TeamBadge roster={opp} size={20} /><span>{opp.org} {opp.year}</span></div>
+          <div className={`hud__team hud__team--${sideCls(G.otherSide(side))}`}>
+            {m.bestOf === 3 && <em>{mapsLost}</em>}<TeamBadge roster={opp} size={20} />
+            <span className="hud__org">{opp.org} {opp.year}</span><span className="hud__tag">{opp.tag}</span>
+            <i className="side-chip">{G.otherSide(side)}</i>
+          </div>
         </div>
         <div className="rounds" aria-hidden="true">
-          {Array.from({ length: Math.max(24, total) }, (_, i) => <i key={i} className={i < n ? (game.rounds[i] ? 'w' : 'l') : ''} />)}
+          {Array.from({ length: Math.max(24, total) }, (_, i) => {
+            if (!game || i >= n) return <i key={i} />;
+            // Coloured by the side that won the round, like the in-game round history; your losses are dimmed.
+            const ours = G.sideAt(i, game.start);
+            return <i key={i} className={game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`} />;
+          })}
         </div>
         {m.bestOf === 3 && (
           <div className="maps">
             {[0, 1, 2].map((i) => {
               const g = m.maps[i];
               const played = g && (i < mapIdx || (i === mapIdx && mapDone));
+              const name = g?.map ?? (i === m.maps.length && m.next ? m.next.map : m.pool[i]);
               return (
                 <span key={i} className={`maps__pill ${i === mapIdx ? 'is-now' : ''} ${played ? (g.won ? 'w' : 'l') : ''}`}>
-                  {g ? g.map : 'Decider'}{played ? ` ${g.score[0]}–${g.score[1]}` : ''}
+                  {i === 2 && !g ? `Decider · ${name}` : name}{played ? ` ${g.score[0]}–${g.score[1]}` : ''}
                 </span>
               );
             })}
@@ -145,15 +166,22 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
         )}
       </div>
 
-      {!mapDone ? (
+      {!game ? (
+        m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} dispatch={dispatch} />
+      ) : !mapDone ? (
         <>
           <div className="killfeed" aria-live="polite">
             {shown.slice(-3).reverse().map((e) => (
-              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${e.good ? 'kf--t' : 'kf--ct'}`}><small>R{e.round}</small>{e.text}</div>
+              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${e.kind ? 'kf--half' : e.good ? 'kf--us' : 'kf--them'}`}><small>R{e.round}</small>{e.text}</div>
             ))}
-            {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>Both teams buy and head out.</div>}
+            {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
-          <button className="ghost-btn" onClick={() => setN(total)}>Skip to end of map</button>
+          <div className="playback">
+            <div className="speed" role="group" aria-label="Playback speed">
+              {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+            </div>
+            <button className="ghost-btn" onClick={() => setN(total)}>Skip to end of map</button>
+          </div>
         </>
       ) : (
         <>
@@ -169,6 +197,31 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
           ) : (
             <button className="cta cta--orange" onClick={() => { setMapIdx((i) => i + 1); setN(0); }}>Next map</button>
           )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Before each map: the knife round. Win it and you pick the starting side; lose it and the opponent picks. */
+function KnifePanel({ k, opp, mine, mapNo, bestOf, dispatch }: {
+  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; dispatch: React.Dispatch<Action>;
+}) {
+  const left = G.otherSide(k.oppPick);
+  return (
+    <div className={`knife anim-in ${k.won ? 'is-won' : 'is-lost'}`}>
+      <small className="knife__kicker">{bestOf === 3 ? `Map ${mapNo} · ` : ''}{k.map} · Knife round</small>
+      <strong className="knife__title">{k.won ? 'You won the knife!' : `${opp.org} won the knife`}</strong>
+      <p className="knife__advice">{G.sideAdvice(k, mine)} Whoever leads at halftime carries momentum into the second half.</p>
+      {k.won ? (
+        <div className="knife__pick">
+          <button className="side-btn side-btn--t" onClick={() => dispatch({ type: 'side', side: 'T' })}><b>T</b><span>Start attacking</span></button>
+          <button className="side-btn side-btn--ct" onClick={() => dispatch({ type: 'side', side: 'CT' })}><b>CT</b><span>Start defending</span></button>
+        </div>
+      ) : (
+        <>
+          <p className="knife__advice">They start on {k.oppPick}, so you start on {left}.</p>
+          <button className="cta cta--orange" onClick={() => dispatch({ type: 'side', side: left })}>Go live</button>
         </>
       )}
     </div>

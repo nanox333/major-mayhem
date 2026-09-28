@@ -34,12 +34,19 @@ export function BoardHost({ s, mine }: { s: Run; mine: G.Lineup[] | null }) {
     window.addEventListener('mm-map', h);
     return () => window.removeEventListener('mm-map', h);
   }, []);
-  return <TacticalBoard picks={s.picks} mine={mine ?? undefined} opp={opp} concealed={concealed} pulses={pulses} playing={s.phase === 'live' ? map : null} />;
+  const [side, setSide] = useState<G.Side>('T');
+  useEffect(() => {
+    const h = (e: Event) => setSide((e as CustomEvent).detail as G.Side);
+    window.addEventListener('mm-side', h);
+    return () => window.removeEventListener('mm-side', h);
+  }, []);
+  const live = s.phase === 'live';
+  return <TacticalBoard picks={s.picks} mine={mine ?? undefined} opp={opp} concealed={concealed} pulses={pulses} playing={live ? map : null} side={live ? side : 'T'} />;
 }
 
-function MapToken({ l, pulse, opponent }: { l: { player: Player; roster: Roster }; pulse?: 'pos' | 'neg'; opponent?: boolean }) {
+function MapToken({ l, side, pulse, opponent }: { l: { player: Player; roster: Roster }; side: G.Side; pulse?: 'pos' | 'neg'; opponent?: boolean }) {
   return (
-    <div className={`token ${opponent ? 'token--ct' : 'token--t'} ${pulse === 'pos' ? 'token--good' : pulse === 'neg' ? 'token--bad' : ''}`}>
+    <div className={`token token--${side === 'T' ? 't' : 'ct'} ${opponent ? 'token--opp' : ''} ${pulse === 'pos' ? 'token--good' : pulse === 'neg' ? 'token--bad' : ''}`}>
       <div className="token__inner">
         <div className="token__face"><Avatar player={l.player} roster={l.roster} /></div>
         <div className="token__badge"><TeamBadge roster={l.roster} size={opponent ? 16 : 20} /></div>
@@ -49,8 +56,8 @@ function MapToken({ l, pulse, opponent }: { l: { player: Player; roster: Roster 
   );
 }
 
-function TacticalBoard({ picks, mine, opp, concealed, pulses, playing }: {
-  picks: G.Pick[]; mine?: G.Lineup[]; opp?: G.Lineup[]; concealed?: boolean; pulses?: Record<string, 'pos' | 'neg'>; playing?: string | null;
+function TacticalBoard({ picks, mine, opp, concealed, pulses, playing, side }: {
+  picks: G.Pick[]; mine?: G.Lineup[]; opp?: G.Lineup[]; concealed?: boolean; pulses?: Record<string, 'pos' | 'neg'>; playing?: string | null; side: G.Side;
 }) {
   const lineup: (G.Lineup | null)[] = mine ?? ROLE_ORDER.map((slot) => {
     const pk = picks.find((p) => p.slot === slot);
@@ -60,16 +67,20 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing }: {
   });
   const map = boardMap(playing);
   const { T, CT } = POSITIONS[map];
+  // On T each role starts from its usual spot; on CT your five hold the defensive spots, and the opponent attacks.
+  const ourPos = (slot: typeof ROLE_ORDER[number], i: number) => (side === 'T' ? T[slot] : CT[i]);
+  const theirPos = (l: G.Lineup, i: number) => (side === 'T' ? CT[i] : T[l.slot]);
+  const theirSide = G.otherSide(side);
   return (
     <aside className="board" aria-label={`${map} positions`}>
       <div className="board__map">
         <MapArt map={map} />
         {ROLE_ORDER.map((slot, i) => {
           const l = lineup[i];
-          const pos = T[slot];
+          const pos = ourPos(slot, i);
           return (
             <div key={slot} className="board__spot" style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: Math.round(pos.y) }}>
-              {l ? <MapToken key={l.player.id} l={l} pulse={pulses?.[l.player.id]} /> : (
+              {l ? <MapToken key={l.player.id} l={l} side={side} pulse={pulses?.[l.player.id]} /> : (
                 <div className="token token--empty" title={`${ROLE_LABEL[slot]} · ${pos.hint}`}>
                   <div className="token__inner">
                     <div className="token__face"><RoleIcon role={slot} size={18} /></div>
@@ -80,15 +91,18 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing }: {
             </div>
           );
         })}
-        {opp && CT.map((pos, i) => (
-          <div key={`${i}-${concealed ? 'x' : opp[i].player.id}`} className="board__spot" style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: Math.round(pos.y) }}>
-            {concealed ? (
-              <div className="token token--ct token--mystery" style={{ ['--d' as string]: `${i * 110}ms` }}><div className="token__inner"><div className="token__face">?</div></div></div>
-            ) : <MapToken l={opp[i]} opponent />}
-          </div>
-        ))}
+        {opp && opp.map((l, i) => {
+          const pos = theirPos(l, i);
+          return (
+            <div key={`${i}-${concealed ? 'x' : l.player.id}`} className="board__spot" style={{ left: `${pos.x}%`, top: `${pos.y}%`, zIndex: Math.round(pos.y) }}>
+              {concealed ? (
+                <div className="token token--ct token--opp token--mystery" style={{ ['--d' as string]: `${i * 110}ms` }}><div className="token__inner"><div className="token__face">?</div></div></div>
+              ) : <MapToken l={l} side={theirSide} opponent />}
+            </div>
+          );
+        })}
       </div>
-      <div className="board__caption"><span>{playing && playing !== map ? `${playing} · shown on de_dust2` : `de_${map.toLowerCase()}`}</span><span className="t">T · your team</span>{opp && <span className="ct">CT · opponent</span>}</div>
+      <div className="board__caption"><span>{playing && playing !== map ? `${playing} · shown on de_dust2` : `de_${map.toLowerCase()}`}</span><span className={side === 'T' ? 't' : 'ct'}>{side} · your team</span>{opp && <span className={theirSide === 'T' ? 't' : 'ct'}>{theirSide} · opponent</span>}</div>
     </aside>
   );
 }

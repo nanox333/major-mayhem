@@ -30,7 +30,7 @@ function simulate(drafter: Drafter, seed: string) {
       const mine = G.lineupFromPicks(picks);
       let t = G.newTournament(); let guard = 0;
       for (let st = G.nextStage(t); st && guard++ < 10; st = G.nextStage(t)) {
-        const m = G.playMatch(st, mine, G.pickOpponent(t, st, mine), G.STAGE_BOOST[st]);
+        const m = G.playMatch(st, mine, G.pickOpponent(t, st, mine));
         if (m.maps.some((g) => g.rounds.length < 13) || (m.bestOf === 3 && m.maps.length < 2)) fails++;
         t = G.applyResult(t, m);
       }
@@ -58,7 +58,7 @@ const bands: Record<string, number[]> = {};
 G.seeded('check-bands', () => {
   const mine = G.naturalLineup(ROSTERS[0]);
   for (let i = 0; i < 400; i++) {
-    const m = G.playMatch('QF', mine, ROSTERS[5].id, 0);
+    const m = G.playMatch('QF', mine, ROSTERS[5].id);
     for (const g of m.maps) for (const s of [...g.stats.mine, ...g.stats.opp]) {
       const p = ROSTERS.flatMap((r) => r.players).find((p) => p.id === s.id)!;
       (bands[String(Math.floor(p.rating / 5) * 5)] ??= []).push(s.rating);

@@ -4,7 +4,7 @@ import * as G from './logic';
 
 const lineupOf = (i: number) => G.naturalLineup(ROSTERS[i]);
 const fakeMatch = (stage: G.StageKey, won: boolean, opponentId = ROSTERS[0].id): G.Match =>
-  ({ stage, won, opponentId, bestOf: G.BEST_OF[stage], maps: [], impact: {}, score: won ? [2, 0] : [0, 2] });
+  ({ stage, won, opponentId, bestOf: G.BEST_OF[stage], maps: [], impact: {}, form: 0, pool: [], next: null, done: true, score: won ? [2, 0] : [0, 2] });
 
 describe('seeded randomness', () => {
   it('replays the same sequence for the same seed', () => {
@@ -23,7 +23,7 @@ describe('seeded randomness', () => {
     expect(x).toBeGreaterThanOrEqual(0); expect(x).toBeLessThan(1);
   });
   it('makes whole matches reproducible', () => {
-    const run = () => G.seeded('match', () => G.playMatch('SF', lineupOf(0), ROSTERS[3].id, 0));
+    const run = () => G.seeded('match', () => G.playMatch('SF', lineupOf(0), ROSTERS[3].id));
     expect(run()).toEqual(run());
   });
 });
@@ -79,7 +79,7 @@ describe('draft review', () => {
 describe('maps', () => {
   it('plays MR12 to 13, with MR3 overtime when it reaches 12–12', () => {
     for (let i = 0; i < 300; i++) {
-      const g = G.seeded(`map-${i}`, () => G.playMatch('QUAL', lineupOf(1), ROSTERS[2].id, 0)).maps[0];
+      const g = G.seeded(`map-${i}`, () => G.playMatch('QUAL', lineupOf(1), ROSTERS[2].id)).maps[0];
       const [a, b] = g.score, hi = Math.max(a, b), lo = Math.min(a, b);
       expect(a + b).toBe(g.rounds.length);
       expect(g.won).toBe(a > b);
@@ -92,7 +92,7 @@ describe('maps', () => {
   });
   it('plays a Bo3 until someone has two maps, on distinct maps', () => {
     for (let i = 0; i < 100; i++) {
-      const m = G.seeded(`bo3-${i}`, () => G.playMatch('F', lineupOf(4), ROSTERS[7].id, 0));
+      const m = G.seeded(`bo3-${i}`, () => G.playMatch('F', lineupOf(4), ROSTERS[7].id));
       const w = m.maps.filter((g) => g.won).length, l = m.maps.length - w;
       expect(Math.max(w, l)).toBe(2);
       expect(new Set(m.maps.map((g) => g.map)).size).toBe(m.maps.length);
@@ -131,6 +131,47 @@ describe('tournament', () => {
           t = G.applyResult(t, fakeMatch(stage, true, opp.id));
         }
       });
+    }
+  });
+});
+
+describe('sides', () => {
+  it('swaps at halftime, then every three rounds of overtime starting on the second-half sides', () => {
+    const seq = Array.from({ length: 33 }, (_, i) => G.sideAt(i, 'T'));
+    expect(seq.slice(0, 12).every((s) => s === 'T')).toBe(true);
+    expect(seq.slice(12, 24).every((s) => s === 'CT')).toBe(true);
+    expect(seq.slice(24, 27)).toEqual(['CT', 'CT', 'CT']);
+    expect(seq.slice(27, 30)).toEqual(['T', 'T', 'T']);
+    expect(seq.slice(30, 33)).toEqual(['CT', 'CT', 'CT']);
+  });
+  it('announces halftime at round 12 with the side you switch to', () => {
+    const g = G.seeded('half', () => G.playMatch('QUAL', lineupOf(1), ROSTERS[2].id)).maps[0];
+    const half = g.events.find((e) => e.kind === 'half' && e.round === 12)!;
+    expect(half.text).toContain(`switch to ${G.otherSide(g.start)}`);
+  });
+  it('plays a series one map at a time, with a knife round before each', () => {
+    G.seeded('series', () => {
+      let m = G.startMatch('F', lineupOf(0), ROSTERS[9].id);
+      expect(m.maps).toHaveLength(0);
+      while (!m.done) {
+        const k = m.next!;
+        expect(G.MAPS).toContain(k.map);
+        m = G.playNextMap(m, lineupOf(0), 'CT');
+        expect(m.maps[m.maps.length - 1]).toMatchObject({ map: k.map, start: 'CT' });
+      }
+      expect(m.next).toBeNull();
+      expect(G.playNextMap(m, lineupOf(0), 'T')).toBe(m);
+    });
+  });
+  it('recommends the side that scores higher for you, and the opponent picks theirs the same way', () => {
+    const us = lineupOf(0), them = lineupOf(5);
+    for (let i = 0; i < 40; i++) {
+      const k = G.seeded(`k-${i}`, () => G.startMatch('QUAL', us, ROSTERS[5].id).next!);
+      const ours = G.sideScore(k.map, 'CT', us, them) >= G.sideScore(k.map, 'T', us, them) ? 'CT' : 'T';
+      const theirs = G.sideScore(k.map, 'CT', them, us) >= G.sideScore(k.map, 'T', them, us) ? 'CT' : 'T';
+      expect(k.best).toBe(ours);
+      expect(k.oppPick).toBe(theirs);
+      expect(G.sideAdvice(k, us)).toContain(k.map);
     }
   });
 });
