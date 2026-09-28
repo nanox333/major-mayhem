@@ -147,7 +147,7 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
 
       {!mapDone ? (
         <>
-          <div className="killfeed">
+          <div className="killfeed" aria-live="polite">
             {shown.slice(-3).reverse().map((e) => (
               <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${e.good ? 'kf--t' : 'kf--ct'}`}><small>R{e.round}</small>{e.text}</div>
             ))}

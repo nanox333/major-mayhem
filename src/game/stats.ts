@@ -1,8 +1,9 @@
 // Lifetime stats, kept in this browser next to the run save.
 import * as G from './logic';
-import { Run, dailyDate } from './state';
+import { Run, dailyDate, dailyNumber } from './state';
+import { shareText } from './share';
 
-export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null }
+export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null; share?: string }
 export interface Stats {
   v: 1;
   runs: number;
@@ -47,7 +48,7 @@ export function addRun(st: Stats, run: Run): Stats {
   };
   for (const p of run.picks) next.drafted[p.playerId] = (next.drafted[p.playerId] ?? 0) + 1;
   const date = dailyDate(run);
-  if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade };
+  if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade, share: shareText(run) };
   return next;
 }
 
@@ -55,4 +56,21 @@ export function recordRun(run: Run): Stats {
   const next = addRun(loadStats(), run);
   saveStats(next);
   return next;
+}
+
+/** Days in a row with a finished daily. The current streak still counts if today's isn't played yet. */
+export function dailyStreak(daily: Stats['daily'], today: string): { current: number; best: number } {
+  const days = new Set(Object.keys(daily).map(dailyNumber));
+  let best = 0;
+  for (const d of days) {
+    if (days.has(d - 1)) continue;
+    let n = 1;
+    while (days.has(d + n)) n++;
+    best = Math.max(best, n);
+  }
+  let d = dailyNumber(today);
+  if (!days.has(d)) d--;
+  let current = 0;
+  while (days.has(d - current)) current++;
+  return { current, best };
 }

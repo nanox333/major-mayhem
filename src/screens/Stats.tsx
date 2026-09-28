@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { ROSTERS } from '../data/rosters';
-import { Stats } from '../game/stats';
-import { dailyNumber } from '../game/state';
+import { Stats, dailyStreak } from '../game/stats';
+import { dailyNumber, today } from '../game/state';
 
 const REACHED = ['Out in qualification', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
 const nickById = new Map(ROSTERS.flatMap((r) => r.players.map((p) => [p.id, p.nick] as const)));
@@ -11,6 +11,7 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
   const most = Object.entries(stats.drafted).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const dailies = Object.entries(stats.daily).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7);
   const max = Math.max(1, ...stats.reached);
+  const streak = dailyStreak(stats.daily, today());
   return (
     <div className="modal" role="dialog" aria-modal="true" aria-label="Your stats" onClick={onClose}>
       <div className="modal__card" onClick={(e) => e.stopPropagation()}>
@@ -35,6 +36,7 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
             {dailies.length > 0 && (
               <>
                 <h3>Recent dailies</h3>
+                <p>Daily streak: {streak.current} day{streak.current === 1 ? '' : 's'} (best {streak.best})</p>
                 <ul className="sources">
                   {dailies.map(([date, d]) => <li key={date}><span>#{dailyNumber(date)} · {d.placement}</span> <span className="muted">MVP {d.mvp}{d.grade !== null ? ` · draft ${Math.round(d.grade * 100)}%` : ''}</span></li>)}
                 </ul>

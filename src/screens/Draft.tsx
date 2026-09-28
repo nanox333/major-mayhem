@@ -3,6 +3,9 @@ import { ROLE_LABEL, ROLE_SHORT, Roster, ROSTERS, playerLiquipedia } from '../da
 import * as G from '../game/logic';
 import { Action, Run, dailyDate, dailyNumber, today } from '../game/state';
 import { Stats } from '../game/stats';
+import { pageUrl } from '../game/share';
+import { NextDaily } from '../ui/Countdown';
+import { ShareBar } from './Final';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
 
@@ -14,6 +17,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
     const date = dailyDate(s);
     const played = date ? stats.daily[date] : undefined;
     const todayN = dailyNumber(today());
+    const doneToday = stats.daily[today()];
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
         <div className="case-art" aria-hidden="true"><span /></div>
@@ -27,10 +31,20 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
           </p>
         )}
         <button className="cta cta--orange" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button>
-        {s.picks.length === 0 && s.rerolls === 2 && (
-          s.mode === 'free'
-            ? <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}>Play Daily #{todayN} instead</button>
-            : <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
+        {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'daily' && (
+          <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
+        )}
+        {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'free' && !doneToday && (
+          <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}>Play Daily #{todayN} instead</button>
+        )}
+        {s.picks.length === 0 && s.mode === 'free' && doneToday && (
+          <div className="daily-done">
+            <small>Daily #{todayN} done</small>
+            <strong>{doneToday.placement}</strong>
+            <span>MVP {doneToday.mvp}{doneToday.grade !== null ? ` · Draft ${Math.round(doneToday.grade * 100)}%` : ''}</span>
+            {doneToday.share && <ShareBar text={() => [doneToday.share, pageUrl()].filter(Boolean).join('\n')} />}
+            <NextDaily />
+          </div>
         )}
       </div>
     );
