@@ -7,6 +7,7 @@ import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 import { play } from '../ui/sound';
+import { Tip } from '../ui/tips';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -63,6 +64,7 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
         ))}
       </div>
       {out && <p className={`subs__tradeoff small ${!hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`}>{tradeoff(out)}.</p>}
+      <Tip id="form" title="Match-day form">The arrows show how each player is playing today: ▲▲ hot, ▲ good, ▼ cold. Your bench player can replace one starter for this match only, and takes that starter's role.</Tip>
     </div>
   );
 }
@@ -319,6 +321,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
             </div>
             {paused && <p className="muted small playback__note">Paused after round {Math.min(n, total)}. Timeouts can still be called.</p>}
           </div>
+          {!buyQuestion && <Tip id="calls" title="Timeouts and buys">You get one timeout per half: it stops the opponent's run and lifts your next three rounds. After a lost pistol you choose whether to save or force buy. You can pause, step through rounds and slow the playback whenever you like.</Tip>}
           <div className="killfeed" aria-live="polite">
             {/* The opponent's run is news to act on (a timeout stops it), so it leads the feed rather than crowding the buttons. */}
             {nudge && <div className="kf kf--run"><small>Run</small>{opp.tag} have won {theirRun} in a row. A timeout stops it.</div>}
@@ -334,6 +337,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
             <div className={`result-stamp ${m.won ? 'w' : 'l'}`}>{m.won ? 'Victory' : 'Defeat'} {m.score[0]}–{m.score[1]}</div>
           )}
           <Scoreboard game={game} opp={opp} mine={mine} />
+          <Tip id="rating" title="Match rating">1.00 is an average map. ▲ marks a rating well above that and ▼ well below. Stronger players tend to rate higher, but anyone can have a bad map.</Tip>
           {seriesDone && m.bestOf === 3 && (
             <p className="muted small">Series ratings: {mine.map((x) => `${x.player.nick} ${fmt(series[x.player.id].rating)}`).join(' · ')}</p>
           )}
@@ -366,6 +370,7 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
       <small className="knife__kicker">{bestOf === 3 ? `Map ${mapNo} · ` : ''}{k.map} · {label}</small>
       <strong className="knife__title">{title}</strong>
       <p className="knife__advice">{G.sideAdvice(k, mine)} Whoever leads at halftime carries momentum into the second half.</p>
+      <Tip id="knife" title="The knife round">It decides who picks the starting side: T attacks and CT defends, and sides swap at halftime. Rounds 1 and 13 are pistol rounds, and the team that loses one is on an eco for the next two rounds.</Tip>
       {k.won ? (
         <div className="knife__pick">
           <button className="side-btn side-btn--t" onClick={() => dispatch({ type: 'side', side: 'T' })}><b>T</b><span>Start attacking</span></button>

@@ -12,6 +12,7 @@ import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
+import { ThreeSteps, Tip } from '../ui/tips';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
@@ -24,6 +25,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
     const doneToday = stats.daily[today()];
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
+        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><ThreeSteps compact /></Tip>}
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
           {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
@@ -215,6 +217,9 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
           </div>
         </div>
       </div>
+      {!bench && (hard
+        ? <Tip id="fit" title="Hard mode">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
+        : <Tip id="fit" title="Roles and fit">Each player has a main role. Draft them there for the best fit: another role they cover costs a little, and an off-role costs more. The line under each Draft button says which. The + and − chips are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
       <div className="players-grid">
         {players.map((p, i) => {
           const slots = slotsFor(s, p);

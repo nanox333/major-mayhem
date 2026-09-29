@@ -738,6 +738,36 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
   .killfeed { min-height: 172px; }
 }
 
+/* ---------- onboarding: three steps, first-time tips, the help's details (#21) ---------- */
+.tip { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 14px; width: min(100%, 680px); justify-self: center; padding: 10px 14px; border: 1px solid rgba(94, 152, 217, .55); border-left-width: 4px; background: rgba(94, 152, 217, .1); text-align: left; }
+.tip__text { min-width: 0; font-family: var(--f-read); font-size: .95rem; line-height: 1.45; color: #dce3ea; }
+.tip__text b { display: block; margin-bottom: 2px; font-family: var(--f-body); font-size: 1.02rem; color: #fff; }
+.steps, .modal__card .steps { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 10px; counter-reset: step; }
+.steps li { position: relative; display: grid; gap: 2px; padding-left: 44px; counter-increment: step; }
+.steps li::before { content: counter(step); position: absolute; left: 0; top: 0; width: 32px; height: 32px; display: grid; place-items: center; border: 2px solid var(--t); border-radius: 50%; color: var(--t); font-family: var(--f-head); font-weight: 800; font-size: 1.1rem; }
+.steps b { font-family: var(--f-head); font-size: 1.15rem; letter-spacing: .03em; text-transform: uppercase; color: #fff; }
+.steps span { font-family: var(--f-read); font-size: .95rem; line-height: 1.5; color: #cfd6de; }
+.tip .steps { margin: 6px 0 0; gap: 8px; }
+.help__tabs { width: calc(100% - 48px); margin-bottom: 12px; }
+.details { display: grid; gap: 4px; }
+.details details { border: 1px solid var(--line); background: #141920; }
+.details summary { min-height: 44px; display: flex; align-items: center; padding: 8px 12px; cursor: pointer; font-weight: 700; font-size: 1.02rem; }
+.details details[open] summary { border-bottom: 1px solid var(--line); color: var(--t); }
+.details p { margin: 0; padding: 10px 12px 12px; }
+.help__foot { display: flex; justify-content: center; margin-top: 14px; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--ct); font: inherit; text-decoration: underline; cursor: pointer; }
+@media (max-width: 520px) {
+  .tip { grid-template-columns: minmax(0, 1fr); padding: 8px 12px; }
+  .tip__ok { width: 100%; }
+  .tip .steps li { padding-left: 38px; }
+  .tip .steps li::before { width: 28px; height: 28px; font-size: 1rem; }
+  .steps span { font-size: .9rem; line-height: 1.4; }
+  /* On the very first screen the empty strip would only push the intro and the case down. */
+  .page.is-start .strip { display: none; }
+  /* Under the buttons, so a tip never pushes the choice down the screen. */
+  .players-col .tip { order: 5; }
+}
+
 /* ---------- desktop layout and typography (#20) ---------- */
 /* While you draft the radar is scenery, so it's small and the cards get the room; in a match it's the picture, so it grows. */
 @media (min-width: 861px) {

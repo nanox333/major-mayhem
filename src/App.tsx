@@ -13,7 +13,7 @@ import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
 import { LiveScreen, PreviewScreen } from './screens/Match';
 import { FinalScreen } from './screens/Final';
-import { HelpModal } from './screens/Help';
+import { HelpModal, HelpTab } from './screens/Help';
 import { StatsModal } from './screens/Stats';
 import { ChatVoteBar, ChatVoteProvider, TwitchButton, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
@@ -31,7 +31,7 @@ function Game() {
     if ((a.type === 'reset' || a.type === 'duel') && dailyStarted(latest.current)) setStats(abandonDaily(latest.current));
     rawDispatch(a);
   }, []);
-  const [help, setHelp] = useState(false);
+  const [help, setHelp] = useState<HelpTab | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [twitch, setTwitch] = useState(false);
   const [stats, setStats] = useState(loadStats);
@@ -85,7 +85,7 @@ function Game() {
           <p className="tagline">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p>
         </div>
         <div className="utility" role="group" aria-label="Help, sound, chat votes, stats and new run">
-          <button className="hud-btn" onClick={() => setHelp(true)} aria-label="How to play and data sources"><span aria-hidden="true">?</span><HudLabel>How to play</HudLabel></button>
+          <button className="hud-btn" onClick={() => setHelp('play')} aria-label="How to play and data sources"><span aria-hidden="true">?</span><HudLabel>How to play</HudLabel></button>
           <SoundButton />
           <TwitchButton onClick={() => setTwitch(true)} />
           <button className="hud-btn" onClick={() => setShowStats(true)} aria-label="Your stats"><StatsIcon /><HudLabel>Stats</HudLabel></button>
@@ -137,14 +137,14 @@ function Game() {
       </main>
 
       <footer className="foot">
-        Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons, credited under “?”. Logos are trademarks of their teams.
+        Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.
         Player strength is hidden; match ratings are simulated. Fan project, not affiliated with Valve or any team.
       </footer>
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
-      {help && <HelpModal onClose={() => setHelp(false)} />}
+      {help && <HelpModal tab={help} onClose={() => setHelp(null)} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>
   );
