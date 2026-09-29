@@ -3,10 +3,16 @@ name: CI
 # Every push and PR runs the full checks. On main, the exact build that passed them is deployed to GitHub Pages,
 # so a failing unit test, balance check or playthrough blocks the deploy. Run it by hand from the Actions tab
 # (on main) to redeploy.
+# Branches are tested through their pull request only (push runs on main), and a newer push cancels the older run.
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   test:
@@ -25,6 +31,11 @@ jobs:
         run: npm run check
       - name: Typecheck and build
         run: npm run build
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: End-to-end playthrough
