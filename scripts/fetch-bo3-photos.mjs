@@ -11,7 +11,8 @@ const rosters = JSON.parse(fs.readFileSync('src/data/rosters.json', 'utf8'));
 const bo3 = JSON.parse(fs.readFileSync(BO3, 'utf8'));
 const other = JSON.parse(fs.readFileSync('assets-src/major-mayhem-assets.json', 'utf8'));
 const have = new Set([...Object.keys(bo3.players), ...Object.keys(other.players)].map(pid));
-const haveLogo = new Set([...Object.keys(bo3.teams), ...Object.keys(other.logos)]);
+const LOGO_DROP = new Set(['Team Spirit', 'Team Dignitas']); // same list as build-media.mjs: wrong orgs in the Commons bundle
+const haveLogo = new Set([...Object.keys(bo3.teams), ...Object.keys(other.logos).filter((k) => !LOGO_DROP.has(k))]);
 const BO3_WRONG = new Set(['huNter-']);
 
 const nicks = [...new Set(rosters.rosters.flatMap((r) => r.players.map((p) => p.nick)))].filter((n) => !have.has(pid(n)));
@@ -21,9 +22,9 @@ const wanted = (n) => !only.length || only.includes(n);
 const slug = (n) => n.toLowerCase().replace(/[^a-z0-9_]+/g, '-').replace(/^-|-$/g, ''); // bo3.gg keeps underscores
 // slugs that can't be derived from the nick / org name (bo3.gg's own URLs)
 const PLAYER_SLUG = { saffee: 'saffe', frozen: 'frozen-david-cernansky', xertioN: 'xertionic', 910: 'player-910', kNg: 'kngv' };
-const TEAM_SLUG = { 'Luminosity Gaming': 'luminosity-cs-go', AVANGAR: 'avangar-cs-go', 'Team LDLC.com': 'ldlc-cs-go', 'Copenhagen Flames': 'cph-flames', 'LGB eSports': 'lgb-cs-go', 'SK Gaming': 'sk', 'NRG Esports': 'nrg' };
+const TEAM_SLUG = { 'Luminosity Gaming': 'luminosity-cs-go', AVANGAR: 'avangar-cs-go', 'Team LDLC.com': 'ldlc-cs-go', 'Copenhagen Flames': 'cph-flames', 'Team Dignitas': 'dignitas', 'LGB eSports': 'lgb-cs-go', 'SK Gaming': 'sk', 'NRG Esports': 'nrg' };
 // team page titles use short names ("SK", "NRG")
-const TEAM_TITLE = { 'SK Gaming': 'SK', 'NRG Esports': 'NRG', 'Luminosity Gaming': 'Luminosity', 'Team LDLC.com': 'LDLC', 'LGB eSports': 'LGB' };
+const TEAM_TITLE = { 'Team Dignitas': 'Dignitas', 'SK Gaming': 'SK', 'NRG Esports': 'NRG', 'Luminosity Gaming': 'Luminosity', 'Team LDLC.com': 'LDLC', 'LGB eSports': 'LGB' };
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 fs.mkdirSync('shots', { recursive: true });
