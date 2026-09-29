@@ -29,6 +29,8 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
             <li key={r.event}><span>{r.event}{r.unverified ? ' (unverified)' : ''}</span> <a href={r.sourceUrl} target="_blank" rel="noreferrer">Wikipedia</a> <a href={r.liquipediaUrl} target="_blank" rel="noreferrer">Liquipedia</a></li>
           ))}
         </ul>
+        <h3>Sounds</h3>
+        <p>Sound effects are recordings from four CC0 packs by <a href="https://kenney.nl" target="_blank" rel="noreferrer">Kenney</a>: Interface Sounds, Impact Sounds, Casino Audio and Sci-fi Sounds. Layered and levelled for the game; the speaker button at the top left mutes them.</p>
         <h3>Photos and logos</h3>
         <p>Player photos and team logos come mainly from bo3.gg's public player and team pages, with a few freely licensed Wikimedia Commons files filling gaps. Logos are trademarks of their teams and photos belong to their owners; they're used only to identify players and teams in a personal fan project. {CREDITS.photos.length} of {players} players have a photo and {CREDITS.logos.length} of {orgs} teams have a logo.</p>
         <ul className="sources credits">

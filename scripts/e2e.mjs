@@ -289,14 +289,14 @@ async function twitch() {
   await p.close();
 }
 
-/** Sound: silent until the first click, ticks and a chime when a case opens, one note per Guess clue, and mute that survives a reload. */
+/** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
   await p.addInitScript(() => {
     window.__osc = 0; window.__ctxs = [];
     const AC = window.AudioContext;
     window.AudioContext = class extends AC { constructor(...a) { super(...a); window.__ctxs.push(navigator.userActivation.hasBeenActive); } };
-    const make = AC.prototype.createOscillator; AC.prototype.createOscillator = function () { window.__osc++; return make.call(this); };
+    const make = AC.prototype.createBufferSource; AC.prototype.createBufferSource = function () { window.__osc++; return make.call(this); };
   });
   const heard = async (act, wait = 300) => { const before = await p.evaluate(() => window.__osc); await act(); await p.waitForTimeout(wait); return (await p.evaluate(() => window.__osc)) - before; };
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();

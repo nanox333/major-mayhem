@@ -1,5 +1,7 @@
+import fs from 'fs';
+import path from 'path';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { Bank, Recipe, RARITIES, SFX_NAMES, pickVariant, recipeKey, renderSfx, resetVariants } from './sfx';
+import { Bank, RARITIES, RECIPES, Recipe, SFX_NAMES, pickVariant, recipeKey, renderSfx, resetVariants } from './sfx';
 
 /** A stand-in audio context that records each sample as it is started, so the renderer can be checked without a browser. */
 function stubContext() {
@@ -89,5 +91,51 @@ describe('sample playback', () => {
     expect(pickVariant('x', 1)).toBe(0);
     expect(RARITIES).toHaveLength(5);
     expect(SFX_NAMES).toContain('reveal');
+  });
+});
+
+describe('the real recipes', () => {
+  const dir = path.join(__dirname, '..', 'sounds');
+  const sources = path.join(__dirname, '..', '..', 'assets-src', 'sounds');
+  const onDisk = new Set(fs.readdirSync(dir).filter((f) => f.endsWith('.mp3')).map((f) => f.replace(/\.mp3$/, '')));
+  const keys = [...SFX_NAMES.filter((n) => n !== 'reveal'), ...RARITIES.map((r) => `reveal:${r}`)];
+
+  it('cover every effect and every reveal rarity', () => {
+    for (const key of keys) expect(RECIPES[key], key).toBeDefined();
+    for (const key of Object.keys(RECIPES)) expect(keys, `unknown recipe ${key}`).toContain(key);
+  });
+
+  it('only use samples that exist, with sensible timing and levels', () => {
+    for (const [key, r] of Object.entries(RECIPES)) {
+      expect(r.variants.length, key).toBeGreaterThan(0);
+      expect(r.gain ?? 1, key).toBeGreaterThan(0);
+      expect(r.gain ?? 1, key).toBeLessThanOrEqual(1.5);
+      for (const layers of r.variants) {
+        expect(layers.length, key).toBeGreaterThan(0);
+        for (const l of layers) {
+          expect(onDisk.has(l.file), `${key} uses ${l.file}, which is not in src/sounds`).toBe(true);
+          expect(l.at ?? 0, key).toBeGreaterThanOrEqual(0);
+          expect(l.at ?? 0, key).toBeLessThan(1);
+          expect(l.rate ?? 1, key).toBeGreaterThan(0.5);
+          expect(l.rate ?? 1, key).toBeLessThan(2);
+        }
+      }
+    }
+  });
+
+  it('ship no sample that nothing uses, and keep the original of every one', () => {
+    const used = new Set(Object.values(RECIPES).flatMap((r) => r.variants.flat().map((l) => l.file)));
+    for (const id of onDisk) {
+      expect(used.has(id), `${id}.mp3 is in src/sounds but no recipe plays it`).toBe(true);
+      expect(fs.existsSync(path.join(sources, `${id}.ogg`)), `${id} has no original in assets-src/sounds`).toBe(true);
+    }
+  });
+
+  it('keeps the tiny constant sounds well below the big moments', () => {
+    const g = (k: string) => RECIPES[k].gain ?? 1;
+    // Same-scale samples, so a lower gain means quieter: clicks and ticks sit far under an accept, which sits under a champion.
+    expect(g('click')).toBeLessThan(g('accept'));
+    expect(g('tick')).toBeLessThan(g('draft'));
+    expect(g('reveal:milspec')).toBeLessThan(g('reveal:gold') + 1);
   });
 });
