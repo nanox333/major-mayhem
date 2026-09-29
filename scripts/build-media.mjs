@@ -1,9 +1,10 @@
+import { fileURLToPath } from 'node:url';
 // Turns the image bundles in assets-src/ (bo3.gg, plus Wikimedia Commons for gaps) into cropped portraits + logos
 // in src/data/media.json, with credits kept for each file. media.json is generated, not committed: this runs
 // before dev, build, test and check, and skips the work when the output is newer than its inputs and this script.
 import fs from 'fs'; import sharp from 'sharp';
 const OUT = 'src/data/media.json';
-const INPUTS = ['assets-src/major-mayhem-assets.json', 'assets-src/major-mayhem-bo3.json', new URL(import.meta.url).pathname];
+const INPUTS = ['assets-src/major-mayhem-assets.json', 'assets-src/major-mayhem-bo3.json', fileURLToPath(import.meta.url)];
 const mtime = (f) => fs.statSync(f).mtimeMs;
 if (!process.argv.includes('--force') && fs.existsSync(OUT) && INPUTS.every((f) => mtime(f) < mtime(OUT))) {
   console.log('media.json is up to date');
