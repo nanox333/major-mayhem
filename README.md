@@ -1,69 +1,58 @@
+<div align="center">
+
 # Major Mayhem
 
-A Counter-Strike take on LoLdle's *Worlds Mayhem*. Spin for three historical Major rosters, draft one player per round into IGL, AWPer, Entry, Lurker and Support/Anchor, then a coach and a bench player, and run your dream team through a simulated Major: a Swiss stage (3 wins to advance, 3 losses and you're out), quarterfinal, semifinal and grand final.
+**Draft a dream team from Counter-Strike Major history, then play it through a simulated Major.**
 
-**Modes:** the daily challenge; free play, optionally limited to one era (CS:GO or CS2), to champions or underdogs, or on hard mode without role labels; **draft duels**, where a friend opens your challenge link, drafts from the same cases and their team plays yours in a best-of-three; **Twitch chat votes**, where a streamer's chat picks teams, players, the coach, map bans and sides (read-only, anonymous connection; no login); and **Guess the pro**, a second daily where everyone hunts the same pro in eight guesses. **Achievements** (21) are kept with the lifetime stats. **Sound** is on by default and starts after your first click: case-opening ticks that follow the reel as it slows, a chime that grows with the rarity of the team you land on, pick and veto sounds, a match-found chime, a blip for every round, stingers for clutches and halftime, win and lose jingles, a champion fanfare and an achievement bell. The speaker button at the top left mutes it (remembered in the browser). The sounds are dry, tactical recordings (mechanical clicks, plate thuds with a metal clang, bells and pitched confirmations) from Kenney's CC0 packs, layered and varied per event in `src/ui/sfx.ts`; credits are in the game's “?” panel and `assets-src/sounds/CREDITS.md`.
+[**Play it**](https://nanox333.github.io/major-mayhem/) · [Dev log](DEVLOG.md) · [Open issues](https://github.com/nanox333/major-mayhem/issues) · [How it works](docs/HOW-IT-WORKS.md)
 
-**Daily challenge:** everyone gets the same cases each day (Daily #1 was 28 Sep 2026). At the end, copy a spoiler-light result to share. Dailies are deterministic, so resetting one after opening a case records it as abandoned rather than allowing a replay with hindsight. That only holds within one browser (clearing site data gets round it), so leaderboards or prizes would need results checked on a server. The results screen also reveals the hidden ratings in a **draft review**: each pick against the strongest pick in that round's case. **Lifetime stats** (titles, finishes, streaks, most-drafted players, recent dailies) live behind the chart button.
+[![CI](https://github.com/nanox333/major-mayhem/actions/workflows/ci.yml/badge.svg)](https://github.com/nanox333/major-mayhem/actions/workflows/ci.yml)
 
-React 18 + TypeScript + Vite. The build is a single self-contained HTML file (`dist/index.html`) with React and the fonts (Latin subsets of Saira Stencil One, Saira Condensed and Rajdhani, SIL OFL, in `src/fonts/`) bundled in, so it works offline and makes no third-party requests.
+</div>
 
-## Run it
+A Counter-Strike take on LoLdle's *Worlds Mayhem*. You get three historical Major rosters, pick one player from them, and repeat until you have a full team. Then you find out how far it goes.
+
+## How a run goes
+
+1. **Spin** for three rosters from Major history (2014 to 2026).
+2. **Draft** one player per round into a role: IGL, AWPer, Entry, Lurker, Support/Anchor. Then a coach and a bench player.
+3. **Play** a Swiss stage (three wins to advance, three losses and you're out), then quarterfinal, semifinal and grand final.
+4. **Call it** during the match: take a timeout when the other side is on a run, or force buy after a lost pistol.
+5. **Share** a spoiler-light result card.
+
+## Ways to play
+
+| Mode | What it is |
+| --- | --- |
+| **Daily challenge** | Everyone gets the same cases each day. Copy your result to share it. |
+| **Free play** | Any time. Limit it to CS:GO or CS2, champions or underdogs, or turn on hard mode (no role labels). |
+| **Draft duels** | Send a friend your challenge link. They draft from the same cases and the two teams play a best-of-three. |
+| **Twitch chat votes** | A streamer's chat picks teams, players, the coach, map bans and sides. Read-only, no login. |
+| **Guess the pro** | A second daily: everyone hunts the same pro in eight guesses. |
+
+There are also 21 achievements, lifetime stats, and sound (on by default, starts after your first click; the speaker button mutes it).
+
+## Run it yourself
 
 ```bash
 npm install
-npm run dev          # local dev server
-npm test             # unit tests (vitest): rules, seeding, daily mode, stats, share text
-npm run check        # balance check: 9,000 seeded simulated runs, fails if balance drifts out of range
-npm run build        # typecheck + single-file build in dist/
-npx playwright install chromium   # once, for e2e
-npm run e2e          # plays a full daily run in headless Chromium (desktop + phone width), a draft duel, a Twitch chat vote, the sound (silent before the first click, reel ticks, mute that survives a reload) and Guess the pro; screenshots in shots/
+npm run dev      # local dev server
+npm test         # unit tests
+npm run check    # balance check: 9,000 simulated runs
+npm run build    # typecheck + single-file build in dist/
+npm run e2e      # full playthrough in headless Chromium (needs: npx playwright install chromium)
 ```
 
-`dev`, `build`, `test` and `check` first run `npm run media`, which generates `src/data/media.json` and `src/data/radars.json` from `assets-src/`, plus the icons and link-preview image in `public/` (skipped when it's already up to date). Set `CHROMIUM_PATH` to use an existing Chromium for e2e. GitHub Actions runs all of the above on every push (`.github/workflows/ci.yml`).
+The build is one self-contained HTML file with React and the fonts inside, so it works offline and makes no third-party requests. Built with React 18, TypeScript and Vite. CI runs all of the above and, on `main`, deploys to GitHub Pages once everything passes.
 
-**Live site:** on `main`, the CI workflow deploys the build to GitHub Pages at https://nanox333.github.io/major-mayhem/, but only after the unit tests, balance check and e2e playthrough all pass (`.github/workflows/ci.yml`, job `deploy`). To redeploy by hand, run CI on `main` from the Actions tab. It's public, photos and logos included. Pages → Source must be "GitHub Actions"; "Deploy from a branch" would publish the raw source instead.
+## What to know
 
-**Sharing, domain and analytics:** links to the game unfurl with a preview image, title and description in Discord, X, WhatsApp and Reddit, and it installs to a phone's home screen with its own icon. The results screen can copy the text result, and share (phones) or download (desktop) a result card image. Analytics and crash reports are built in but off until you set them. The site address, analytics and Sentry all live in `site.config.json`; see [HOSTING.md](HOSTING.md) for moving hosts, adding a custom domain and turning analytics on.
+- **Ratings are made up.** Rosters, dates and placements come from Wikipedia's Major standings. The strength ratings, roles and map comfort are game values written for balance, not real statistics.
+- **Photos and logos** come from bo3.gg's public pages: 168 of 190 players and all 34 teams. Players without a photo show a silhouette in their team's colours.
+- **Known gaps** are tracked as [issues](https://github.com/nanox333/major-mayhem/issues). The [dev log](DEVLOG.md) says what changed lately and why.
 
-## Data
+More detail is in [How it works](docs/HOW-IT-WORKS.md) (data sources, how a result is worked out, every file) and [HOSTING.md](HOSTING.md) (domain, analytics, moving hosts).
 
-- **Rosters, event dates and placements** come from the "Final standings" tables of English Wikipedia's Major pages, retrieved 28 Sep 2026 and cached in `data/cache/wikipedia-standings.json`: 67 lineups from 19 events, 2014–2026 (exact repeats of a lineup are left out). The game reads only the bundled data; nothing is scraped at spin time.
-- **Three more champions are marked unverified:** Fnatic at DreamHack Winter 2013, Team LDLC.com at DreamHack Winter 2014 and Vitality at Paris 2023. Wikipedia couldn't be reached when they were added, so they were written from knowledge; run `npm run fetch-data` somewhere with access to check them, then drop their `"source": "unverified"`. ESL One Cologne 2015 and Austin 2025 add nothing new: their top lineups repeat ones already in the game.
-- **Nationalities** (for synergies and Guess the pro) and **coaches** (from the cached standings) are in `src/data/rosters.json`; coach ratings are game values like player ratings.
-- **Liquipedia** was the requested source but couldn't be used from the build environment: network egress to liquipedia.net was blocked, its `api.php` is disallowed for automated fetchers in robots.txt, and the site showed a Cloudflare human check in the browser. The game doesn't claim Liquipedia as its source; each roster and player links to Liquipedia so you can check it there.
-- `npm run fetch-data` (Wikipedia) or `CONTACT=you@example.com npm run fetch-data -- --source liquipedia` fetches each event page through the MediaWiki API with a descriptive User-Agent, gzip and throttling (2 s between Liquipedia requests), caches the raw wikitext in `data/cache/<source>/`, and reports any roster whose players aren't found on the page. The Liquipedia page titles in the script are best guesses; it reports any title that doesn't resolve.
-- **Roles** are assigned for the game (the sources don't list them). Players list a main role plus roles they can also cover; off-main roles cost a little strength.
-- **Ratings** are invented *game ratings* for balance, not HLTV ratings or any real statistic. They're hidden in the game. After every map the scoreboard shows simulated kills, deaths and a match rating (1.00 = average) that tracks the hidden rating with plenty of map-to-map variance.
-- **Maps:** radars for all seven maps (Dust 2, Mirage, Inferno, Nuke, Ancient, Anubis and Train) were supplied by the player (`assets-src/radars/`). `scripts/build-radars.mjs` trims each one to a square with a transparent background and writes `src/data/radars.json` (generated, not committed). During a match the tactics board switches to the map being played. Your team starts from each role's usual T-side spot and opponents hold CT positions (`POSITIONS` in `src/ui/art.tsx`). A map without a radar or positions falls back to the Dust 2 board. Nuke's radar shows the upper level only. The live killfeed uses callouts from whichever map is being played.
-- **Sounds:** 55 recorded samples from four CC0 packs by [Kenney](https://kenney.nl) (Interface Sounds, Impact Sounds, Casino Audio and Sci-fi Sounds), chosen for a dry, tactical feel. Valve's own Counter-Strike sounds are copyrighted and aren't used. The originals, licences and a table of which file is which are in `assets-src/sounds/`. To change one, drop a new file there, run `npm run sounds` and point a recipe in `src/ui/sfx.ts` at it.
-- **Photos and logos:** 168 of 190 player photos and 34 of 34 team logos (the 24 lineups added on 29 Sep brought 43 players and 7 organizations without images yet; they get the drawn avatar and monogram badge). Most come from bo3.gg's public player and team pages (allowed by its robots.txt; its `/api/` wasn't used), loaded in a normal browser at a gentle pace, checked by eye against the player's real name, and cropped. A few gaps are filled with freely licensed Wikimedia Commons files. `scripts/build-media.mjs` turns the two bundles in `assets-src/` into `src/data/media.json` (generated, not committed); credits are in the game's "?" panel. Logos are trademarks of their teams and photos belong to their owners: fine for a personal fan project, but get permission before sharing the game publicly. Still missing: 910, GeT_RiGhT, pronax, jdm64, sergej, RpK, saffee, xertioN, FeTiSh, Fifflaren, frozen, jL, huNter- (photos) and Dignitas, Luminosity, AVANGAR, Renegades, Outsiders (logos).
+## Licence
 
-## How results work
-
-Team power = average (rating × role fit) + role balance (players on their main role) + chemistry + the coach. Chemistry comes from synergies (`src/game/synergy.ts`): teammates from the same lineup, organization or neighbouring years, a national core (3, 4 or 5 players from one country or the CIS), famous duos, one era, and a coach who coached one of your players; the positives cap at +3, and a second main AWPer costs a point (uncapped). The coach adds `(rating − 75) × 0.06`. Real rosters play with their own coach and full chemistry. Before each match every player's form is rolled (a few rating points either way), and the bench player can sub in for one starter. Each round is a weighted coin flip on the power gap plus match-day form and per-round swing; a team on a run of three or more rounds gets a little confidence from it. Swiss matches are Bo1, except the ones that can send you through or out, which are Bo3; opponents are paired by record. Quarterfinal, semifinal and grand final are Bo3 on distinct maps from the Active Duty pool. During a map you can call one timeout per half (it stops the opponent's run and lifts your next three rounds, more with a better coach) and, after a lost pistol, force buy instead of saving. The controls (timeout, speed, skip) sit under the score and above the killfeed, so a new line never moves a button; the round bar notches the two pistol rounds and dots any round with a clutch, and when the opponent is on a run of three the feed suggests the timeout. A call replays the map under the same seed, so rounds already shown never change. Maps are MR12 to 13 with MR3 overtime. Every match opens with a map veto: six alternating bans in a Bo1, and ban, ban, pick, pick, ban, ban plus a decider in a Bo3. Veto choices rest on map comfort, invented game values per roster (`rosterComfort`) that a drafted team averages over its players' original lineups. On a picked map the other team chooses sides; on the decider and in a Bo1 a knife round decides who picks the starting side; sides swap at halftime and every three rounds of overtime. Each map leans CT or T (`CT_BIAS`), entry fraggers and lurkers count for more on T while AWPers and anchors count for more on CT (`sideEdge`), and the team leading at halftime carries momentum into the second half, so the starting side is a real choice. Rounds 1 and 13 are pistol rounds: the loser is on an eco for the next two rounds. Occasional 1v2–1v4 clutches show up in the killfeed and count towards the MVP. The MVP is the player with the best event rating, with highlight impact as a tiebreaker. Opponents get tougher each stage and never include anyone on your team. Real rosters get a small handicap (`OPP_HANDICAP`) so your dream team has an edge, and the semifinal and final get tougher (`STAGE_BOOST`).
-
-All randomness goes through a seeded generator. Each case, opponent and match is seeded from the run seed plus the step, so a daily deals the same cases to everyone and reloading a run can't reroll it.
-
-**Balance** (`npm run check`, 3,000 runs per drafter, each also picking a coach): a random drafter wins under 1% of Majors, a "fan" drafter who judges ratings with about ±4 error wins about 31% and goes out in the Swiss stage about 12% of the time, and an expert who knows every hidden rating wins about 52%. The check fails if the fan drifts outside 20–40% or out of the Swiss stage outside 5–25%, the expert goes above 65% or the random drafter above 8%. Synergies, form, subs and calls aren't used by the simulated drafters, so a real player who uses them does a little better.
-
-## Files
-
-- `src/data/rosters.json` — the dataset: organizations, player nationalities, coach ratings and rosters (edit here to add rosters; `src/data/rosters.ts` loads it). Dailies must not change once they've started, so give a new roster `"since": "<tomorrow>"`, and retire a roster with `"until": "<today>"` instead of deleting it. Two different people whose nicks collide need an explicit `"id"`. `src/data/rosters.test.ts` checks unique ids, five distinct players, roles, ratings, nationalities, coaches and dates. Editing an existing roster's players, roles or ratings still changes past dailies.
-- `src/data/media.json` — cropped player photos and team logos (generated by `scripts/build-media.mjs`, git-ignored)
-- `src/data/radars.json` — map radars (generated by `scripts/build-radars.mjs`, git-ignored)
-- `src/game/logic.ts` — seeded randomness, draft rules, case offers, team power, match and Bo3 series sim, map callouts, player match ratings, bracket, draft review
-- `src/game/state.ts` — run state, daily/free/duel modes and free-play options, coach and bench rounds, form and subs, tactical calls, save/load, the reducer
-- `src/game/synergy.ts` — synergies and draft hints; `src/game/achievements.ts` — achievements; `src/game/duel.ts` — draft duel links; `src/game/twitch.ts` and `src/ui/ChatVote.tsx` — Twitch chat votes; `src/game/guess.ts` and `src/screens/Guess.tsx` — Guess the pro
-- `src/game/stats.ts`, `src/game/share.ts` — lifetime stats and the share text
-- `src/game/*.test.ts` — unit tests
-- `src/App.tsx` — the page shell; `src/screens/` — draft (case reel, teams, players), lobby, match found, live HUD and scoreboards, results, help, stats
-- `src/ui/card.ts` — the shareable result card, drawn on a canvas; `src/analytics.ts`, `src/ui/useTracking.ts` — analytics events and crash reporting (off by default)
-- `site.config.json` — site address, preview text, analytics and Sentry settings; `scripts/site-plugin.ts` turns it into preview tags, the web app manifest, `robots.txt` and `sitemap.xml`; `scripts/build-social.mjs` draws the icons and the preview image into `public/` (generated, git-ignored)
-- `src/ui/sfx.ts` — the recipes: which recorded samples make up each game event, and how they are layered, varied and levelled; `src/ui/sound.ts` — the mute switch, audio unlock, sample decoding and `play`; `src/sounds/*.mp3` — the samples (inlined into the build); `src/ui/reel.ts` — the case reel's timing curve, which the ticks follow. A button picks its sound with `data-sfx="draft"` (default: a click; `"none"` opts out).
-- `src/ui/Board.tsx` — the tactics board; `src/ui/art.tsx` — role icons, team badges, player avatars, radars and positions per map
-- `src/styles.css` — the CS2-style look and animations
-- `scripts/` — `check.ts` (balance check), `e2e.mjs` (headless playthrough), `fetch-data.ts` (source refresh), `build-media.mjs` and `build-radars.mjs` (image pipeline), `sheet*.mjs` (contact sheets for checking photos by eye)
-- `assets-src/` — raw image bundles and map radars used by the image pipeline; `assets-src/sounds/` — the original sound files and their credits, which `npm run sounds` (`scripts/prepare-sounds.mjs`, needs Chromium) turns into `src/sounds/*.mp3`
-
-Code is ISC-licensed (see `LICENSE`); photos and logos are not covered by it. Fan project. Not affiliated with Valve, Liquipedia, bo3.gg or any team. Logos are trademarks of their teams and photos belong to their owners.
+Code is ISC-licensed (see [`LICENSE`](LICENSE)); photos and logos are not covered by it. Fan project, not affiliated with Valve, Liquipedia, bo3.gg or any team. Logos are trademarks of their teams and photos belong to their owners. Get permission before sharing the game publicly.
