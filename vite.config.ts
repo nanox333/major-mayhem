@@ -4,8 +4,7 @@ import react from '@vitejs/plugin-react';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { loadSite, runtimeSite, sitePlugin } from './scripts/site-plugin';
 
-// Everything, React included, is inlined into one self-contained dist/index.html that works offline
-// (only the Google Fonts stylesheet is external, and the game falls back to system fonts without it).
+// Everything, React and the fonts included, is inlined into one self-contained dist/index.html that works offline.
 // Icons, the link-preview image, the manifest, robots.txt and sitemap.xml sit next to it (see scripts/site-plugin.ts).
 const site = loadSite();
 export default defineConfig({

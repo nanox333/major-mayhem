@@ -8,6 +8,7 @@ import { Avatar, TeamBadge } from '../ui/art';
 import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
 import { track } from '../analytics';
+import { play } from '../ui/sound';
 
 const HEADS: [Clue['key'], string][] = [['country', 'Nation'], ['role', 'Role'], ['majors', 'Majors'], ['best', 'Best'], ['first', 'First'], ['orgs', 'Teams']];
 
@@ -26,6 +27,9 @@ export function GuessScreen() {
     if (next === day) return;
     const s = { ...store, [date]: next };
     setStore(s); saveGuesses(s); setText(''); setActive(0);
+    // One note per clue, left to right: bright for a match, mid for close, low for a miss; then the verdict.
+    compare(p, answer).forEach((c, i) => play(c.state === 'hit' ? 'hit' : c.state === 'near' ? 'near' : 'miss', { delay: i * 70 }));
+    if (next.done) play(next.won ? 'mapWin' : 'mapLose', { delay: 6 * 70 + 250 });
     if (day.guesses.length === 0) track('guess_start', { daily: dailyNumber(date) });
     if (next.done) track('guess_finish', { daily: dailyNumber(date), won: next.won, guesses: next.guesses.length });
   };
@@ -50,7 +54,7 @@ export function GuessScreen() {
             <ul className="guess__suggest" role="listbox">
               {options.map((p, i) => (
                 <li key={p.id} role="option" aria-selected={i === active}>
-                  <button className={i === active ? 'is-on' : ''} onClick={() => guess(p)}>
+                  <button className={i === active ? 'is-on' : ''} data-sfx="none" onClick={() => guess(p)}>
                     <b>{p.nick}</b><small>{p.country} · {p.orgs.slice(-1)[0]}</small>
                   </button>
                 </li>

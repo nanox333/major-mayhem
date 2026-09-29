@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ChatMsg, TwitchChat, VoteOption, matchVote, tally, validChannel, winner } from '../game/twitch';
 import { track } from '../analytics';
+import { Modal } from './Modal';
 
 // Twitch chat votes. The provider owns the chat connection and the one vote running at a time; each decision screen
 // calls useChatVote with its options, and the vote bar shows the count down and the tally.
@@ -129,12 +130,9 @@ export function TwitchPanel({ onClose }: { onClose: () => void }) {
   const api = useContext(Ctx)!;
   const [channel, setChannel] = useState(api.settings.channel);
   const [seconds, setSeconds] = useState(api.settings.seconds);
-  useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [onClose]);
   const statusText = { off: 'Not connected', connecting: 'Connecting…', live: `Reading #${api.settings.channel}`, error: validChannel(channel) ? 'Couldn\'t connect. Check the channel name.' : 'Channel names are 3–25 letters, numbers or underscores.' }[api.status];
   return (
-    <div className="modal" role="dialog" aria-modal="true" aria-label="Twitch chat votes" onClick={onClose}>
-      <div className="modal__card modal__card--small" onClick={(e) => e.stopPropagation()}>
-        <button className="modal__close" onClick={onClose} aria-label="Close">×</button>
+    <Modal label="Twitch chat votes" onClose={onClose} small>
         <h3>Twitch chat votes</h3>
         <p>Let your chat pick: the teams in each case, the player, the coach, map bans and picks, the side after a knife round and the buy after a lost pistol. Viewers type the option's number (or its name). When time's up the most votes wins; you can always click yourself instead.</p>
         <p className="muted small">The game only reads chat, anonymously: no login, and nothing is posted to your channel.</p>
@@ -149,7 +147,6 @@ export function TwitchPanel({ onClose }: { onClose: () => void }) {
           </div>
         </form>
         <p className={`twitch-status is-${api.status}`}>{statusText}</p>
-      </div>
-    </div>
+    </Modal>
   );
 }

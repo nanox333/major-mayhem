@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
@@ -6,6 +6,7 @@ import { RoleIcon, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
+import { play } from '../ui/sound';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -64,6 +65,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
   const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
   const [found, setFound] = useState(false);
   useEffect(() => { setFound(false); const tm = setTimeout(() => setFound(true), reduceMotion() ? 0 : 1500); return () => clearTimeout(tm); }, [pending.oppId]);
+  useEffect(() => { if (found) play('found'); }, [found]);
   return (
     <div className="stack">
       {pending.stage !== 'DUEL' && <StageTrack t={t} current={pending.stage} />}
@@ -91,7 +93,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
           </div>
           <SubPanel s={s} pending={pending} dispatch={dispatch} />
           <div className="accept-bar"><span /></div>
-          <button className="cta cta--go" onClick={() => dispatch({ type: 'start' })}>Accept</button>
+          <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
         </div>
       )}
     </div>
@@ -172,6 +174,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
   // The opponent's current run of rounds, which a timeout stops.
   let theirRun = 0;
   if (game) for (let i = Math.min(n, total) - 1; i >= 0 && !game.rounds[i]; i--) theirRun++;
+  // The run only makes the feed while a timeout is there to answer it; once it's called, the feed shows the timeout instead.
+  const nudge = theirRun >= 3 && canTimeout;
 
   // pulse the map token of whoever made the highlight this round
   const shown = game ? game.events.filter((e) => e.round <= n) : [];
@@ -179,6 +183,18 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     const e = game?.events.find((x) => x.round === n && x.playerId);
     if (e?.playerId) pulse(e.playerId, e.good);
   }, [n, mapIdx]);
+  // Sound: a blip as each round is played (only when playback moves on by one, so skipping ahead stays quiet), a sting for a
+  // clutch or the half, and a jingle when the map ends.
+  const prevN = useRef(n);
+  useEffect(() => {
+    const from = prevN.current;
+    prevN.current = n;
+    if (!game || n !== from + 1 || n > total) return;
+    const evs = game.events.filter((e) => e.round === n);
+    play(evs.some((e) => e.kind === 'clutch' && e.good) ? 'clutch' : game.rounds[n - 1] ? 'roundWin' : 'roundLoss');
+    if (evs.some((e) => e.kind === 'half' || e.kind === 'ot')) play('half', { delay: 250 });
+  }, [n]);
+  useEffect(() => { if (game && mapDone) play(game.won ? 'mapWin' : 'mapLose', { delay: 350 }); }, [mapDone, mapIdx]);
   // Your side for the round being played (sides swap at halftime and in overtime).
   const side: G.Side = game ? G.sideAt(Math.min(n, total - 1), game.start) : 'T';
   useEffect(() => { announceMap(mapName || null); }, [mapName]);
@@ -213,10 +229,13 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
         </div>
         <div className="rounds" aria-hidden="true">
           {Array.from({ length: Math.max(24, total) }, (_, i) => {
-            if (!game || i >= n) return <i key={i} />;
+            // Pistol rounds are notched, before and after they're played; a clutch gets a dot once it has happened.
+            const pistol = i === 0 || i === 12 ? ' pistol' : '';
+            if (!game || i >= n) return <i key={i} className={pistol || undefined} />;
             // Coloured by the side that won the round, like the in-game round history; your losses are dimmed.
             const ours = G.sideAt(i, game.start);
-            return <i key={i} className={game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`} />;
+            const clutch = game.events.some((e) => e.kind === 'clutch' && e.round === i + 1) ? ' clutch' : '';
+            return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}`} />;
           })}
         </div>
         {m.bestOf === 3 && !vetoing && (
@@ -241,35 +260,40 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
         m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} dispatch={dispatch} />
       ) : !mapDone ? (
         <>
-          <div className="killfeed" aria-live="polite">
-            {shown.slice(-3).reverse().map((e) => (
-              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}</small>{e.text}</div>
-            ))}
-            {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
-          </div>
-          {buyQuestion ? (
+          {/* Everything you can press sits above the killfeed, so the feed can grow downward without moving a button. */}
+          {buyQuestion && (
             <div className="buy anim-in" role="group" aria-label="Buy after the lost pistol">
               <strong>Pistol lost. Save or force?</strong>
               <p>Saving means an eco now and a full buy after. A force buy gives you a real chance next round, but if it fails you're broke for the one after.</p>
               <div className="buy__btns">
-                <button className="ghost-btn" onClick={() => setBought((b) => [...b, n])}>Save (eco)</button>
-                <button className="ghost-btn buy__force" onClick={() => call('force')}>Force buy</button>
+                <button className="ghost-btn" data-sfx="call" onClick={() => setBought((b) => [...b, n])}>Save (eco)</button>
+                <button className="ghost-btn buy__force" data-sfx="call" onClick={() => call('force')}>Force buy</button>
               </div>
             </div>
-          ) : (
-            <div className="calls">
-              <button className="ghost-btn calls__timeout" onClick={() => call('timeout')} disabled={!canTimeout}
-                title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
-                Timeout
-              </button>
-              {theirRun >= 3 && <span className="calls__run">{opp.tag} have won {theirRun} in a row</span>}
-            </div>
           )}
-          <div className="playback">
-            <div className="speed" role="group" aria-label="Playback speed">
-              {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+          <div className="controls">
+            {!buyQuestion && (
+              <div className="calls">
+                <button className="ghost-btn calls__timeout" data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
+                  title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
+                  Timeout
+                </button>
+              </div>
+            )}
+            <div className="playback">
+              <div className="speed" role="group" aria-label="Playback speed">
+                {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+              </div>
+              <button className="ghost-btn" onClick={() => setN(total)}>Skip map</button>
             </div>
-            <button className="ghost-btn" onClick={() => setN(total)}>Skip to end of map</button>
+          </div>
+          <div className="killfeed" aria-live="polite">
+            {/* The opponent's run is news to act on (a timeout stops it), so it leads the feed rather than crowding the buttons. */}
+            {nudge && <div className="kf kf--run"><small>Run</small>{opp.tag} have won {theirRun} in a row. A timeout stops it.</div>}
+            {shown.slice(nudge ? -2 : -3).reverse().map((e) => (
+              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}</small>{e.text}</div>
+            ))}
+            {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
         </>
       ) : (
@@ -347,7 +371,7 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
           const state = st ? `${st.action === 'ban' ? 'is-banned' : 'is-picked'} by-${st.team}` : '';
           return (
             <li key={map} className={`veto__map ${state}`}>
-              <button disabled={!!st || !t} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
+              <button disabled={!!st || !t} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
                 <span className="veto__name">{map}<small>{G.sideLean(map)}</small></span>
                 <span className="veto__comfort" title="Map comfort (game values)">
                   <span className="us">You {pips(mineC)}</span>
