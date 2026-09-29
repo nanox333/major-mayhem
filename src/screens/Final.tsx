@@ -1,31 +1,42 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, dailyDate, dailyNumber } from '../game/state';
+import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
+import { cleanName, duelFrom, duelLink } from '../game/duel';
 import { reportError, track } from '../analytics';
-import { RosterList } from './Lobby';
+import { RosterList, Staff } from './Lobby';
+import { achievementById } from '../game/achievements';
 import { StageTrack } from './Match';
 
 export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s: Run; stats: Stats; dispatch: React.Dispatch<Action> }) {
   const pl = G.placement(s.t);
-  const star = G.mvp(s.t, mine);
+  const star = G.mvp(s.t, squadOf(s));
   const champ = pl.key === 'CHAMP';
   const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps));
   const date = dailyDate(s);
   const streak = date ? dailyStreak(stats.daily, date).current : 0;
   return (
     <div className="final">
-      <div className={`final__banner ${champ ? 'is-champ' : ''}`}>
-        <small>{date ? `Daily #${dailyNumber(date)} · ` : ''}Your Major Mayhem team finished</small>
-        <h3>{champ ? 'Major champions' : pl.label}</h3>
+      <div className={`final__banner ${champ || pl.key === 'DUEL-W' ? 'is-champ' : ''}`}>
+        {s.duel ? (
+          <>
+            <small>Draft duel vs {s.duel.name}'s team</small>
+            <h3>{pl.key === 'DUEL-W' ? 'You won' : 'They won'} {s.t.matches[0]?.score.join('–')}</h3>
+          </>
+        ) : (
+          <>
+            <small>{date ? `Daily #${dailyNumber(date)} · ` : ''}Your Major Mayhem team finished</small>
+            <h3>{champ ? 'Major champions' : pl.label}</h3>
+          </>
+        )}
       </div>
-      <StageTrack t={s.t} />
+      {!s.duel && <StageTrack t={s.t} />}
       <div className="mvp-card anim-in">
         <span className="mvp-card__photo"><Avatar player={star.player} roster={star.roster} /></span>
         <div>
@@ -35,11 +46,18 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </div>
         <div className="mvp-card__rating"><b>{fmt(ratings[star.player.id].rating)}</b><small>Event rating</small></div>
       </div>
+      {s.recorded && stats.lastNew?.length > 0 && (
+        <div className="new-ach anim-in" role="status">
+          <small>New achievement{stats.lastNew.length > 1 ? 's' : ''}</small>
+          {stats.lastNew.map((id) => <span key={id} title={achievementById.get(id)?.desc}>★ {achievementById.get(id)?.name ?? id}</span>)}
+        </div>
+      )}
       <ShareBar
         text={() => shareText(s, pageUrl())}
         image={{ draw: () => drawResultCard(s, siteHost()), name: cardFileName(s) }}
         props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }}
       />
+      <ChallengeBar s={s} />
       {date && (
         <p className="daily-meta">
           {streak > 1 && <span>🔥 {streak}-day daily streak</span>}
@@ -47,12 +65,13 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </p>
       )}
       <RosterList mine={mine} stats={ratings} mvpId={star.player.id} />
+      <Staff s={s} stats={ratings} />
       <ul className="history">
         {s.t.matches.map((m, i) => {
           const o = G.rosterById.get(m.opponentId)!;
           return (
             <li key={i} className={m.won ? 'w' : 'l'}>
-              <span>{m.stage === 'QUAL' ? 'Qual' : m.stage}</span>
+              <span>{m.stage === 'QUAL' ? (s.t.qual.need ? 'Swiss' : 'Qual') : m.stage === 'DUEL' ? 'BO3' : m.stage}</span>
               <span className="history__opp">{o.org} {o.year}</span>
               <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
               <b>{m.score[0]}–{m.score[1]}</b>
@@ -141,6 +160,38 @@ export function ShareBar({ text, image, props = {} }: {
     </div>
   );
 }
+
+const NAME_KEY = 'mm-name';
+/** Sends this team as a draft duel: the friend drafts from the same cases, then the two teams play a Bo3. */
+function ChallengeBar({ s }: { s: Run }) {
+  const [name, setName] = useState(() => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } });
+  const [state, setState] = useState<'idle' | 'copied' | 'shared' | 'failed'>('idle');
+  const done = (x: typeof state) => { setState(x); setTimeout(() => setState('idle'), 2200); };
+  const send = async () => {
+    try { localStorage.setItem(NAME_KEY, name); } catch { /* storage unavailable */ }
+    const link = duelLink(pageUrl() ?? __SITE__.url, duelFrom(s, name));
+    const text = `${cleanName(name)} challenges you to a Major Mayhem draft duel: same cases, then a best-of-three.`;
+    if (canShareLink()) {
+      try { await navigator.share({ text, url: link }); track('challenge', { method: 'share', mode: s.mode }); return done('shared'); }
+      catch (e) { if (e instanceof DOMException && e.name === 'AbortError') return; }
+    }
+    const ok = await copyText(`${text}\n${link}`);
+    track('challenge', { method: 'copy', mode: s.mode, ok });
+    done(ok ? 'copied' : 'failed');
+  };
+  return (
+    <div className="challenge">
+      <label>
+        <span>{s.duel ? 'Challenge back, or send this team to someone else' : 'Challenge a friend with this team'}</span>
+        <input value={name} maxLength={24} placeholder="Your name" onChange={(e) => setName(e.target.value)} aria-label="Your name for the challenge" />
+      </label>
+      <button className="ghost-btn" onClick={send}>
+        {state === 'copied' ? '✓ Link copied' : state === 'shared' ? '✓ Sent' : state === 'failed' ? 'Copy blocked by the browser' : '⚔ Challenge'}
+      </button>
+    </div>
+  );
+}
+const canShareLink = () => { try { return matchMedia('(pointer: coarse)').matches && typeof navigator.share === 'function'; } catch { return false; } };
 
 /** Reveals the hidden game ratings: what you took vs the strongest pick on the board that round. */
 function DraftReview({ picks }: { picks: G.Pick[] }) {

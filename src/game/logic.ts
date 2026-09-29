@@ -1,4 +1,5 @@
-import { ROSTERS, ROLE_ORDER, Role, Roster, Player } from '../data/rosters';
+import { COACHES, ROSTERS, ROLE_ORDER, Role, Roster, Player } from '../data/rosters';
+import { Synergy, chemistryOf, coachBonus, synergies } from './synergy';
 
 export const rosterById = new Map(ROSTERS.map((r) => [r.id, r]));
 
@@ -69,6 +70,52 @@ export function makeOffer(picks: Pick[], seen: string[], rosters: Roster[] = ROS
   return best.map((r) => r.id);
 }
 
+/** Coach round: three rosters whose coaches are all different, avoiding rosters already seen when possible. */
+export function makeCoachOffer(seen: string[], rosters: Roster[] = ROSTERS): string[] {
+  const coached = rosters.filter((r) => r.coach);
+  const fresh = coached.filter((r) => !seen.includes(r.id));
+  const pool = shuffle(fresh.length >= 6 ? fresh : coached);
+  const out: Roster[] = [];
+  for (const r of pool) if (out.length < 3 && !out.some((x) => x.coach === r.coach)) out.push(r);
+  return out.map((r) => r.id);
+}
+
+/** Bench round: three teams from three orgs, each with someone you haven't drafted. */
+export function makeBenchOffer(picks: Pick[], seen: string[], rosters: Roster[] = ROSTERS): string[] {
+  const taken = draftedIds(picks);
+  const valid = rosters.filter((r) => r.players.some((p) => !taken.has(p.id)));
+  const fresh = valid.filter((r) => !seen.includes(r.id));
+  const pool = shuffle(fresh.length >= 6 ? fresh : valid);
+  const out: Roster[] = [];
+  for (const r of pool) if (out.length < 3 && !out.some((x) => x.org === r.org)) out.push(r);
+  return out.map((r) => r.id);
+}
+
+// ---------- match-day form and the bench ----------
+
+/** How each player feels on match day, in rating points. Rolled per match; the bench player can cover a cold one. */
+export const FORM_STEPS = [{ v: 4, label: 'Hot', p: 0.12 }, { v: 2, label: 'Good', p: 0.23 }, { v: 0, label: 'Normal', p: 0.45 }, { v: -3, label: 'Cold', p: 0.2 }];
+export function rollForm(ids: string[]): Record<string, number> {
+  return Object.fromEntries(ids.map((id) => {
+    let r = random();
+    const step = FORM_STEPS.find((s) => (r -= s.p) < 0) ?? FORM_STEPS[2];
+    return [id, step.v];
+  }));
+}
+export const formLabel = (v: number | undefined) => FORM_STEPS.find((s) => s.v === v)?.label ?? 'Normal';
+
+/**
+ * The five who play a match: your starters with the bench player in for `subOut` (in the same slot), each rated
+ * with their match-day form.
+ */
+export function matchLineup(base: Lineup[], bench: Lineup | null, subOut: string | null | undefined, form: Record<string, number> | undefined): Lineup[] {
+  return base.map((x) => {
+    const l = subOut && bench && x.player.id === subOut ? { ...bench, slot: x.slot } : x;
+    const f = form?.[l.player.id] ?? 0;
+    return f ? { ...l, player: { ...l.player, rating: Math.max(60, Math.min(99, l.player.rating + f)) } } : l;
+  });
+}
+
 // ---------- strength ----------
 
 export const fit = (p: Player, slot: Role) => (p.roles[0] === slot ? 1 : p.roles.includes(slot) ? 0.965 : 0.86);
@@ -85,6 +132,14 @@ export function lineupFromPicks(picks: Pick[]): Lineup[] {
 
 /** Best slot assignment for a real roster (brute force over 120 permutations, cached per roster). */
 const natural = new Map<string, Lineup[]>();
+/**
+ * Adds a made-up team (a friend's drafted five, for a duel) that plays like a roster. Its lineup keeps each player's
+ * own roster, so map comfort and synergies work as they do for a drafted team.
+ */
+export function registerTeam(r: Roster, lineup: Lineup[]) {
+  rosterById.set(r.id, r);
+  natural.set(r.id, lineup);
+}
 export function naturalLineup(r: Roster): Lineup[] {
   let l = natural.get(r.id);
   if (!l) natural.set(r.id, (l = bestLineup(r)));
@@ -101,32 +156,34 @@ function bestLineup(r: Roster): Lineup[] {
   return ROLE_ORDER.map((slot, i) => ({ slot, player: r.players[best[i]], roster: r }));
 }
 
-export interface Power { skill: number; balance: number; chemistry: number; total: number }
+export interface Power { skill: number; balance: number; chemistry: number; coach: number; synergies: Synergy[]; total: number }
 
-export function teamPower(l: Lineup[]): Power {
+/**
+ * Team power = average (rating × role fit) + role balance + chemistry (synergies, see synergy.ts) + the coach.
+ * Real rosters get their own coach; a drafted team gets the one you picked.
+ */
+export function teamPower(l: Lineup[], coach?: string | null): Power {
   const skill = l.reduce((s, x) => s + x.player.rating * fit(x.player, x.slot), 0) / l.length;
   const mains = l.filter((x) => x.player.roles[0] === x.slot).length;
   const balance = mains * 0.4 + (l.every((x) => x.player.roles.includes(x.slot)) ? 0.5 : 0);
-  let chem = 0;
-  for (let i = 0; i < l.length; i++)
-    for (let j = i + 1; j < l.length; j++) {
-      if (l[i].roster.id === l[j].roster.id) chem += 0.5;
-      else if (l[i].roster.org === l[j].roster.org) chem += 0.3;
-      else if (Math.abs(l[i].roster.year - l[j].roster.year) <= 1) chem += 0.08;
-    }
-  const chemistry = Math.min(2, chem);
-  return { skill, balance, chemistry, total: skill + balance + chemistry };
+  const syn = synergies(l, coach);
+  const chemistry = chemistryOf(syn);
+  const c = coachBonus(coach);
+  return { skill, balance, chemistry, coach: c, synergies: syn, total: skill + balance + chemistry + c };
 }
+/** A real roster at full strength: its natural lineup under its own coach. */
+export const rosterPower = (r: Roster) => teamPower(naturalLineup(r), r.coach);
 
 // ---------- tournament ----------
 
-export type StageKey = 'QUAL' | 'QF' | 'SF' | 'F';
-export const STAGE_NAME: Record<StageKey, string> = { QUAL: 'Qualification Stage', QF: 'Quarterfinal', SF: 'Semifinal', F: 'Grand Final' };
+/** DUEL is a draft duel's one-off showmatch against a friend's drafted team. */
+export type StageKey = 'QUAL' | 'QF' | 'SF' | 'F' | 'DUEL';
+export const STAGE_NAME: Record<StageKey, string> = { QUAL: 'Swiss Stage', QF: 'Quarterfinal', SF: 'Semifinal', F: 'Grand Final', DUEL: 'Showmatch' };
 export const MAPS = ['Mirage', 'Inferno', 'Nuke', 'Ancient', 'Anubis', 'Dust2', 'Train'];
-/** Qualification matches are Bo1; every playoff match is a Bo3. */
-export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3 };
+/** Swiss matches are Bo1 unless they decide advancement or elimination (see bestOfFor); every playoff match is a Bo3. */
+export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3, DUEL: 3 };
 
-export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' | 'pistol' | 'clutch' }
+export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' | 'pistol' | 'clutch' | 'call' }
 export interface PlayerStat { id: string; nick: string; k: number; d: number; rating: number }
 export interface MapGame {
   map: string;
@@ -137,7 +194,23 @@ export interface MapGame {
   score: [number, number];
   won: boolean;
   stats: { mine: PlayerStat[]; opp: PlayerStat[] };
+  /** How the starting side was decided (kept so the map can be replayed with a new tactical call). */
+  knife?: Knife;
+  /** Your tactical calls on this map. */
+  calls?: Calls;
+  /** Highlight impact per player on this map (the series total is Match.impact). */
+  impact?: Record<string, number>;
 }
+
+/**
+ * Tactical calls, each tied to the round (0-based) it takes effect from. One timeout per half (one in overtime):
+ * it stops the opponent's run and lifts your next three rounds, more with a better coach. After a lost pistol you
+ * can force buy instead of saving: a better next round, but you're broke for the one after if it fails.
+ */
+export interface Calls { timeouts: number[]; force: number[] }
+export const noCalls = (): Calls => ({ timeouts: [], force: [] });
+export type Call = { kind: 'timeout' | 'force'; round: number };
+const halfOf = (i: number) => (i < 12 ? 0 : i < 24 ? 1 : 2);
 /**
  * Who picks the starting side before a map. On a picked map the other team chooses; on the decider (and in a Bo1)
  * a knife round decides.
@@ -170,6 +243,10 @@ export interface Match {
   won: boolean;
   /** maps won–lost for a Bo3, rounds for a Bo1 */
   score: [number, number];
+  /** The starter the bench player replaced for this match, if any. */
+  subOut?: string | null;
+  /** Match-day form per player id, in rating points. */
+  playerForm?: Record<string, number>;
 }
 
 // ---------- map veto ----------
@@ -295,7 +372,8 @@ function spread(n: number, weights: number[], out: number[], forced?: number) {
 /** A made-up but consistent match rating: ~1.00 is average, 1.30+ is a big game. */
 const matchRating = (k: number, d: number, r: number) => Math.max(0.2, Math.min(2.6, 0.26 + (k / r) * 0.95 + ((r - d) / r) * 0.5));
 
-function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOrg: string, A: number, B: number, form: number, impact: Record<string, number>): MapGame {
+function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOrg: string, A: number, B: number, form: number, calls: Calls, coachRating: number): MapGame {
+  const impact: Record<string, number> = Object.fromEntries(mine.map((x) => [x.player.id, 0]));
   const rounds: boolean[] = [];
   const events: MatchEvent[] = [];
   const mapForm = form + (random() - 0.5) * 3; // some maps just go better than others
@@ -305,24 +383,44 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
   const killW = (l: Lineup[], day: number[]) => l.map((x, i) => (x.player.rating / 85) ** 3 * day[i]);
   const deathW = (l: Lineup[], day: number[]) => l.map((x, i) => (85 / x.player.rating) ** 1.5 / day[i] * (x.slot === 'ENTRY' ? 1.25 : x.slot === 'AWP' || x.slot === 'LURK' ? 0.85 : 1));
   const kwM = killW(mine, dayM), kwO = killW(oppL, dayO), dwM = deathW(mine, dayM), dwO = deathW(oppL, dayO);
-  let a = 0, b = 0, halfLead = 0, econ = 0, ecoLeft = 0;
+  let a = 0, b = 0, halfLead = 0, econ = 0, ecoLeft = 0, forced = false, ourRun = 0, theirRun = 0, toLeft = 0;
   const fam = (comfort(mine, map) - comfort(oppL, map)) * COMFORT;
+  const toLift = TIMEOUT * (1 + (coachRating - 75) / 40);
   while (a < winTarget(a, b) && b < winTarget(a, b)) {
-    const side = sideAt(rounds.length, start);
+    const i = rounds.length;
+    const side = sideAt(i, start);
+    // A timeout stops the other team's run and gives you a lift for the next three rounds.
+    if (calls.timeouts.includes(i)) {
+      theirRun = 0; toLeft = 3;
+      events.push({ round: i, text: `Tactical timeout at ${a}–${b}. The team regroups.`, mine: true, good: true, kind: 'call' });
+    }
+    if (econ < 0 && ecoLeft === 2 && calls.force.includes(i)) {
+      forced = true;
+      events.push({ round: i, text: 'You force buy instead of saving.', mine: true, good: true, kind: 'call' });
+    }
     const bias = (CT_BIAS[map] ?? 0) * (side === 'CT' ? 1 : -1);
     const edge = sideEdge(mine, side) - sideEdge(oppL, otherSide(side));
     // Momentum: whoever leads at halftime carries confidence into the second half. This is what makes the
     // starting side matter: open on your stronger side and you're likelier to take that lead.
     const momentum = rounds.length >= 12 ? Math.max(-MOMENTUM_CAP, Math.min(MOMENTUM_CAP, halfLead * MOMENTUM)) : 0;
-    // Economy: the two rounds after a pistol favour the pistol winner while the losers save.
-    const eco = ecoLeft === 2 ? econ * 2.5 : ecoLeft === 1 ? econ * 1.2 : 0;
+    // Economy: the two rounds after a pistol favour the pistol winner while the losers save. A force buy trades a
+    // better first of those rounds for a broke second one if the force fails.
+    const eco = forced
+      ? (ecoLeft === 2 ? econ * 1 : ecoLeft === 1 && !rounds[i - 1] ? econ * 2.2 : 0)
+      : ecoLeft === 2 ? econ * 2.5 : ecoLeft === 1 ? econ * 1.2 : 0;
+    // A team on a run of three or more rounds gets a little confidence from it.
+    const roll = Math.min(ROLL_CAP, Math.max(0, ourRun - 2) * ROLL) - Math.min(ROLL_CAP, Math.max(0, theirRun - 2) * ROLL);
+    const to = toLeft > 0 ? toLift : 0;
+    if (toLeft > 0) toLeft--;
     const swing = (random() - 0.5) * 4; // luck per round
-    const p = 1 / (1 + Math.exp(-(A - B + mapForm + fam + bias + edge + momentum + eco + swing) / 5.5));
+    const p = 1 / (1 + Math.exp(-(A - B + mapForm + fam + bias + edge + momentum + eco + roll + to + swing) / 5.5));
     const won = random() < p;
     rounds.push(won);
     won ? a++ : b++;
+    if (won) { ourRun++; theirRun = 0; } else { theirRun++; ourRun = 0; }
     const rn = rounds.length;
     if (ecoLeft > 0) ecoLeft--;
+    if (ecoLeft === 0) forced = false;
     let star: number | undefined;
     if (won && random() < 0.05) {
       star = rand(5);
@@ -348,7 +446,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     spread(Math.min(5, theirKills), kwO, OK);
     spread(Math.min(5, theirKills), dwM, D);
     if (rn === 1 || rn === 13) {
-      econ = won ? 1 : -1; ecoLeft = 2;
+      econ = won ? 1 : -1; ecoLeft = 2; forced = false;
       events.push({ round: rn, text: won ? `Pistol round to you. ${oppOrg} are on an eco.` : `${oppOrg} take the pistol round. You're saving.`, mine: true, good: won, kind: 'pistol' });
     }
     if (rn === 12) halfLead = a - b;
@@ -359,7 +457,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
   const r = rounds.length;
   mine.forEach((x, i) => (impact[x.player.id] += K[i] * 0.6 - D[i] * 0.2));
   const stat = (l: Lineup[], k: number[], d: number[]) => l.map((x, i) => ({ id: x.player.id, nick: x.player.nick, k: k[i], d: d[i], rating: Math.round(matchRating(k[i], d[i], r) * 100) / 100 }));
-  return { map, start, rounds, events, score: [a, b], won: a > b, stats: { mine: stat(mine, K, D), opp: stat(oppL, OK, OD) } };
+  return { map, start, rounds, events, score: [a, b], won: a > b, stats: { mine: stat(mine, K, D), opp: stat(oppL, OK, OD) }, calls, impact };
 }
 
 /** Average match rating per player across a set of maps (weighted by rounds). */
@@ -372,7 +470,7 @@ export function seriesRatings(maps: MapGame[]): Record<string, { k: number; d: n
   return Object.fromEntries(Object.entries(acc).map(([id, e]) => [id, { k: e.k, d: e.d, rating: Math.round((e.rr / e.r) * 100) / 100 }]));
 }
 
-const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1;
+const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1, ROLL = 0.4, ROLL_CAP = 1.2, TIMEOUT = 1.2;
 
 /** How good a first half on `side` is for `us`: the map's lean plus which roles matter on that side. */
 export const sideScore = (map: string, side: Side, us: Lineup[], them: Lineup[]) =>
@@ -388,10 +486,9 @@ function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL
 }
 
 /** Sets up a series: match-day form and an empty map veto. No maps are played yet. */
-export function startMatch(stage: StageKey, mine: Lineup[], oppId: string): Match {
+export function startMatch(stage: StageKey, mine: Lineup[], oppId: string, bestOf: 1 | 3 = BEST_OF[stage]): Match {
   const form = (random() - 0.5) * 5; // match-day form
   const impact: Record<string, number> = Object.fromEntries(mine.map((x) => [x.player.id, 0]));
-  const bestOf = BEST_OF[stage];
   const veto: Veto = { order: VETO_ORDER[bestOf], steps: [], left: [...MAPS] };
   return { stage, opponentId: oppId, bestOf, maps: [], impact, form, veto, pool: [], next: null, done: false, won: false, score: [0, 0] };
 }
@@ -414,15 +511,17 @@ export function applyVeto(m: Match, mine: Lineup[], map: string): Match {
   return { ...m, veto: v, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL) };
 }
 
-/** Plays the next map with your team starting on `start`, then sets up the following knife round if the series goes on. */
-export function playNextMap(m: Match, mine: Lineup[], start: Side): Match {
+/** Plays the next map with your team starting on `start`, then sets up the following side choice if the series goes on. */
+export function playNextMap(m: Match, mine: Lineup[], start: Side, coach?: string | null, calls: Calls = noCalls()): Match {
   if (m.done || !m.next) return m;
   const opp = rosterById.get(m.opponentId)!;
   const oppL = naturalLineup(opp);
-  const A = teamPower(mine).total;
-  const B = teamPower(oppL).total - OPP_HANDICAP + STAGE_BOOST[m.stage];
+  const A = teamPower(mine, coach).total;
+  // A friend's drafted team is a dream team too: no handicap in a showmatch.
+  const B = rosterPower(opp).total - (m.stage === 'DUEL' ? 0 : OPP_HANDICAP) + STAGE_BOOST[m.stage];
+  const g = { ...playMap(m.next.map, start, mine, oppL, opp.org, A, B, m.form, calls, coach ? COACHES[coach]?.rating ?? 75 : 70), knife: m.next };
   const impact = { ...m.impact };
-  const g = playMap(m.next.map, start, mine, oppL, opp.org, A, B, m.form, impact);
+  for (const [id, v] of Object.entries(g.impact!)) impact[id] = (impact[id] ?? 0) + v;
   const maps = [...m.maps, g];
   const w = maps.filter((x) => x.won).length, l = maps.length - w;
   const need = Math.ceil(m.bestOf / 2);
@@ -430,6 +529,34 @@ export function playNextMap(m: Match, mine: Lineup[], start: Side): Match {
   const score: [number, number] = m.bestOf === 1 ? maps[0].score : [w, l];
   return { ...m, maps, impact, done, won: done && w > l, score, next: done ? null : setupMap(m.bestOf, m.pool, maps.length, mine, oppL) };
 }
+
+/**
+ * Replays the last map with a new set of calls. Run under the same seed as the original, the rounds before the first
+ * changed call come out exactly the same; only what follows changes.
+ */
+export function replayLastMap(m: Match, mine: Lineup[], coach: string | null | undefined, calls: Calls): Match {
+  const last = m.maps[m.maps.length - 1];
+  if (!last?.knife || !last.impact) return m;
+  const impact = { ...m.impact };
+  for (const [id, v] of Object.entries(last.impact)) impact[id] = (impact[id] ?? 0) - v;
+  const before: Match = { ...m, maps: m.maps.slice(0, -1), impact, next: last.knife, done: false, won: false };
+  return playNextMap(before, mine, last.start, coach, calls);
+}
+
+/**
+ * Whether a call is allowed on the last map at `call.round` (the next round to be played): a timeout once per half
+ * (once in overtime), a force buy only in the round after a lost pistol.
+ */
+export function canCall(m: Match, call: Call): boolean {
+  const g = m.maps[m.maps.length - 1];
+  if (!g?.knife || !g.impact || call.round < 1 || call.round >= g.rounds.length) return false;
+  const calls = g.calls ?? noCalls();
+  if (call.kind === 'timeout') return !calls.timeouts.some((r) => halfOf(r) === halfOf(call.round));
+  return (call.round === 1 || call.round === 13) && !g.rounds[call.round - 1] && !calls.force.includes(call.round);
+}
+
+export const withCall = (c: Calls, call: Call): Calls =>
+  call.kind === 'timeout' ? { ...c, timeouts: [...c.timeouts, call.round] } : { ...c, force: [...c.force, call.round] };
 
 /** The side you end up on with the sensible pick: your better side if you won the knife, else what's left. */
 export const autoSide = (k: Knife): Side => (k.won ? k.best : otherSide(k.oppPick));
@@ -445,29 +572,41 @@ export function sideAdvice(k: Knife, mine: Lineup[]): string {
 }
 
 /** Plays a whole series with the veto and sides picked automatically (for simulations and tests). */
-export function playMatch(stage: StageKey, mine: Lineup[], oppId: string): Match {
-  let m = startMatch(stage, mine, oppId);
+export function playMatch(stage: StageKey, mine: Lineup[], oppId: string, bestOf: 1 | 3 = BEST_OF[stage], coach?: string | null): Match {
+  let m = startMatch(stage, mine, oppId, bestOf);
   const oppL = naturalLineup(rosterById.get(oppId)!);
   while (vetoTurn(m.veto)) m = applyVeto(m, mine, vetoChoice(m.veto, 'us', mine, oppL));
-  while (!m.done) m = playNextMap(m, mine, autoSide(m.next!));
+  while (!m.done) m = playNextMap(m, mine, autoSide(m.next!), coach);
   return m;
 }
 
 export interface Tournament {
   matches: Match[];
-  qual: { w: number; l: number };
+  /** Swiss record. `need` is the wins to advance and losses to go out: 3 (runs saved before the Swiss stage use 2). */
+  qual: { w: number; l: number; need?: number };
   status: 'running' | 'eliminated' | 'champion';
   used: string[];
+  /** A draft duel: a single showmatch instead of a Major. */
+  duel?: boolean;
 }
 
-export const newTournament = (): Tournament => ({ matches: [], qual: { w: 0, l: 0 }, status: 'running', used: [] });
+export const newTournament = (): Tournament => ({ matches: [], qual: { w: 0, l: 0, need: 3 }, status: 'running', used: [] });
+export const qualNeed = (t: Tournament) => t.qual.need ?? 2;
 
 /** What stage the next match belongs to, or null if the run is over. */
 export function nextStage(t: Tournament): StageKey | null {
   if (t.status !== 'running') return null;
-  if (t.qual.w < 2) return 'QUAL';
+  if (t.duel) return t.matches.length ? null : 'DUEL';
+  if (t.qual.w < qualNeed(t)) return 'QUAL';
   const playoff = t.matches.filter((m) => m.stage !== 'QUAL').length;
   return (['QF', 'SF', 'F'] as StageKey[])[playoff] ?? null;
+}
+
+/** Like a real Major's Swiss stage: matches that can send you through or out are Bo3, the rest Bo1. */
+export function bestOfFor(stage: StageKey, t: Tournament): 1 | 3 {
+  if (stage !== 'QUAL') return BEST_OF[stage];
+  const need = qualNeed(t);
+  return need === 3 && (t.qual.w === need - 1 || t.qual.l === need - 1) ? 3 : 1;
 }
 
 /** Opponents get tougher as the bracket goes on. Excludes rosters you drafted from. */
@@ -475,26 +614,32 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
   // Skip rosters that include anyone on your team, so nobody faces themselves.
   const mineIds = new Set(mine.map((x) => x.player.id));
   const clean = rosters.filter((r) => !r.players.some((p) => mineIds.has(p.id)) && !t.used.includes(r.id));
-  const pool = clean.length >= 8 ? clean : rosters.filter((r) => !mine.some((x) => x.roster.id === r.id) && !t.used.includes(r.id));
+  // Smaller pools (era modes) can run short over a long run: fall back to rosters you drafted from, then to repeats.
+  const notUsed = rosters.filter((r) => !t.used.includes(r.id));
+  const pool = clean.length >= 8 ? clean
+    : [notUsed.filter((r) => !mine.some((x) => x.roster.id === r.id)), notUsed, rosters].find((x) => x.length)!;
   const ranked = pool
-    .map((r) => ({ r, p: teamPower(naturalLineup(r)).total }))
+    .map((r) => ({ r, p: rosterPower(r).total }))
     .sort((x, y) => y.p - x.p);
   const n = ranked.length;
-  const range: Record<StageKey, [number, number]> = { QUAL: [0.35, 1], QF: [0.15, 0.6], SF: [0.05, 0.35], F: [0, 0.18] };
-  const [lo, hi] = range[stage];
+  const range: Record<StageKey, [number, number]> = { QUAL: [0.35, 1], QF: [0.15, 0.6], SF: [0.05, 0.35], F: [0, 0.18], DUEL: [0, 1] };
+  // Swiss pairs teams on the same record: winners meet stronger teams, strugglers weaker ones.
+  const swiss: Record<number, [number, number]> = { [-2]: [0.35, 1], [-1]: [0.25, 0.9], 0: [0.1, 0.75], 1: [0.05, 0.5], 2: [0, 0.35] };
+  const [lo, hi] = stage === 'QUAL' && qualNeed(t) === 3 ? swiss[Math.max(-2, Math.min(2, t.qual.w - t.qual.l))] : range[stage];
   const slice = ranked.slice(Math.floor(lo * n), Math.max(Math.floor(lo * n) + 1, Math.ceil(hi * n)));
   return slice[rand(slice.length)].r.id;
 }
 
 /** Real rosters are tuned down slightly: your dream team is the star of the show. Tuned with `npm run check`. */
-export const OPP_HANDICAP = 2;
-export const STAGE_BOOST: Record<StageKey, number> = { QUAL: -0.5, QF: 0, SF: 0.8, F: 1.6 };
+export const OPP_HANDICAP = 2.5;
+export const STAGE_BOOST: Record<StageKey, number> = { QUAL: 1.5, QF: 0, SF: 0.8, F: 1.6, DUEL: 0 };
 
 export function applyResult(t: Tournament, m: Match): Tournament {
   const next: Tournament = { ...t, matches: [...t.matches, m], used: [...t.used, m.opponentId], qual: { ...t.qual } };
-  if (m.stage === 'QUAL') {
+  if (m.stage === 'DUEL') next.status = m.won ? 'champion' : 'eliminated';
+  else if (m.stage === 'QUAL') {
     m.won ? next.qual.w++ : next.qual.l++;
-    if (next.qual.l >= 2) next.status = 'eliminated';
+    if (next.qual.l >= qualNeed(next)) next.status = 'eliminated';
   } else if (!m.won) next.status = 'eliminated';
   else if (m.stage === 'F') next.status = 'champion';
   return next;
@@ -502,9 +647,10 @@ export function applyResult(t: Tournament, m: Match): Tournament {
 
 export function placement(t: Tournament): { key: string; label: string; reached: number } {
   // reached: 0 qual, 1 QF, 2 SF, 3 F, 4 champion
+  if (t.duel) return t.status === 'champion' ? { key: 'DUEL-W', label: 'Won the showmatch', reached: 4 } : { key: 'DUEL-L', label: 'Lost the showmatch', reached: 0 };
   if (t.status === 'champion') return { key: 'CHAMP', label: 'Major Champions', reached: 4 };
   const last = t.matches[t.matches.length - 1];
-  if (!last || last.stage === 'QUAL') return { key: 'QUAL', label: 'Qualification Stage', reached: 0 };
+  if (!last || last.stage === 'QUAL') return { key: 'QUAL', label: t.qual.need ? `Swiss Stage (${t.qual.w}–${t.qual.l})` : 'Qualification Stage', reached: 0 };
   if (last.stage === 'QF') return { key: 'QF', label: 'Quarterfinals', reached: 1 };
   if (last.stage === 'SF') return { key: 'SF', label: 'Semifinals', reached: 2 };
   return { key: 'F', label: 'Runner-up', reached: 3 };

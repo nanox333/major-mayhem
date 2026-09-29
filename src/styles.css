@@ -513,3 +513,113 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .crash__actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px; }
 .crash details { color: var(--muted); font-size: .85rem; max-width: 100%; }
 .crash code { display: block; margin-top: 6px; overflow-wrap: anywhere; }
+
+/* ---------- synergies ---------- */
+.agent__flag { position: absolute; z-index: 1; right: 6px; top: 6px; padding: 2px 5px; background: rgba(0,0,0,.6); color: #cfd6de; font-family: var(--f-head); font-weight: 700; font-size: .66rem; letter-spacing: .08em; }
+.hint { display: inline-block; margin: 0 2px 4px; padding: 1px 6px; font-family: var(--f-head); font-weight: 700; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; border: 1px solid; }
+.hint--good { color: #9be09b; border-color: rgba(79,179,79,.5); background: rgba(79,179,79,.1); }
+.hint--bad { color: #f0a19e; border-color: rgba(217,83,79,.5); background: rgba(217,83,79,.1); }
+.synergies { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.syn { display: flex; align-items: baseline; gap: 10px; padding: 5px 10px; border: 1px solid var(--line); background: #141920; font-size: .9rem; color: #cfd6de; }
+.syn b { min-width: 2.2em; color: var(--go); font-family: var(--f-head); letter-spacing: .05em; }
+.syn.is-bad b { color: var(--loss); }
+
+/* ---------- coach, bench, form and calls ---------- */
+.pip--extra { font-family: var(--f-head); font-weight: 800; font-size: .7rem; }
+.case-item--coach .case-item__name { font-size: 1.35rem; }
+.lobby--staff .lobby__row { opacity: .92; }
+.lobby__avatar--coach { display: grid; place-items: center; }
+.form { margin-left: 4px; font-style: normal; font-size: .72rem; letter-spacing: -.05em; }
+.form--hot, .form--good { color: var(--go); }
+.form--cold { color: var(--loss); }
+.subs { border: 1px solid var(--line); background: var(--panel); padding: 10px 12px; display: grid; gap: 8px; }
+.subs__head small { display: block; color: var(--muted); }
+.subs__btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.subs__btns .ghost-btn { font-size: .8rem; padding: 6px 10px; }
+.subs__btns .is-on { border-color: var(--t); color: #fff; background: rgba(224,163,59,.15); }
+.calls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.calls__run { color: #f0a19e; font-family: var(--f-head); font-weight: 700; letter-spacing: .04em; font-size: .9rem; }
+.buy { border: 1px solid var(--loss); background: rgba(217,83,79,.08); padding: 12px 14px; display: grid; gap: 6px; }
+.buy p { margin: 0; color: #cfd6de; font-size: .92rem; }
+.buy__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.buy__force { border-color: var(--t); color: var(--t); }
+
+/* ---------- free-play modes ---------- */
+.modes { display: grid; gap: 6px; width: min(420px, 100%); margin: 4px auto 0; }
+.modes__row { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; }
+.modes__row > span { font-family: var(--f-head); font-weight: 700; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-align: right; }
+.seg { display: flex; border: 1px solid var(--line); }
+.seg button { flex: 1; padding: 6px 8px; background: var(--panel); color: #cfd6de; border: 0; border-right: 1px solid var(--line); font-family: var(--f-head); font-weight: 700; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.seg button:last-child { border-right: 0; }
+.seg button.is-on { background: rgba(224,163,59,.18); color: #fff; box-shadow: inset 0 -2px 0 var(--t); }
+
+/* ---------- achievements ---------- */
+.achievements { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+.achievements li { padding: 7px 9px; border: 1px solid var(--line); background: #141920; opacity: .55; }
+.achievements li.is-earned { opacity: 1; border-color: rgba(224,163,59,.55); background: rgba(224,163,59,.08); }
+.achievements b { display: block; font-family: var(--f-head); font-size: .92rem; color: #fff; }
+.achievements li.is-earned b { color: var(--t); }
+.achievements small { color: var(--muted); font-size: .78rem; }
+.new-ach { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; padding: 8px 10px; border: 1px solid var(--t); background: rgba(224,163,59,.1); }
+.new-ach small { width: 100%; text-align: center; font-family: var(--f-head); font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--t); font-size: .72rem; }
+.new-ach span { font-family: var(--f-head); font-weight: 700; color: #fff; }
+
+/* ---------- draft duels ---------- */
+.challenge { display: flex; flex-wrap: wrap; align-items: end; justify-content: center; gap: 8px; }
+.challenge label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.challenge input { padding: 7px 10px; background: #0f1419; border: 1px solid var(--line); color: #fff; font: inherit; font-weight: 600; min-width: 170px; }
+.challenger { border: 1px solid var(--t); background: rgba(224,163,59,.06); padding: 10px 12px; display: grid; gap: 4px; }
+.challenger small { font-family: var(--f-head); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--t); font-size: .72rem; }
+.challenger ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.challenger li { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.modal__card--small { max-width: 440px; }
+
+/* ---------- Twitch chat votes ---------- */
+.twitch-btn.is-live { color: #b48cff; border-color: #7d4fe0; }
+.twitch-btn.is-connecting { color: var(--muted); }
+.twitch-btn.is-error { color: var(--loss); }
+.chatvote { border: 1px solid #7d4fe0; background: rgba(125,79,224,.1); padding: 8px 10px; margin-bottom: 10px; }
+.chatvote__head { display: flex; justify-content: space-between; gap: 10px; font-family: var(--f-head); letter-spacing: .08em; text-transform: uppercase; font-size: .78rem; }
+.chatvote__head b { color: #b48cff; }
+.chatvote__head span { color: #cfd6de; }
+.chatvote__opts { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 3px; }
+.chatvote__opts li { position: relative; display: grid; grid-template-columns: 1.4em 1fr auto; align-items: center; gap: 8px; padding: 3px 8px; background: #141920; overflow: hidden; }
+.chatvote__opts li i { position: absolute; inset: 0 auto 0 0; background: rgba(125,79,224,.28); transition: width .3s; }
+.chatvote__opts li > :not(i) { position: relative; }
+.chatvote__opts span { color: #b48cff; font-family: var(--f-head); font-weight: 800; }
+.chatvote__opts em { font-style: normal; font-weight: 700; }
+.twitch-form { display: grid; gap: 10px; }
+.twitch-form label { display: grid; gap: 4px; font-size: .85rem; color: var(--muted); }
+.twitch-form input, .twitch-form select { padding: 8px 10px; background: #0f1419; border: 1px solid var(--line); color: #fff; font: inherit; font-weight: 600; }
+.twitch-form__btns { display: flex; gap: 8px; align-items: center; }
+.twitch-status { font-weight: 600; }
+.twitch-status.is-live { color: #b48cff; }
+.twitch-status.is-error { color: var(--loss); }
+
+/* ---------- game tabs and Guess the pro ---------- */
+.tabs { display: flex; justify-content: center; gap: 6px; margin: 4px 0 8px; }
+.tabs button { padding: 7px 16px; background: var(--panel); border: 1px solid var(--line); color: var(--muted); font-family: var(--f-head); font-weight: 700; font-size: .85rem; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; }
+.tabs button.is-on { color: #fff; border-color: var(--t); box-shadow: inset 0 -2px 0 var(--t); }
+.guess__box { position: relative; }
+.guess__box input { width: 100%; box-sizing: border-box; padding: 11px 12px; background: #0f1419; border: 1px solid var(--line); color: #fff; font: inherit; font-weight: 600; font-size: 1.05rem; }
+.guess__box input:focus { border-color: var(--t); outline: none; }
+.guess__suggest { list-style: none; margin: 2px 0 0; padding: 0; border: 1px solid var(--line); background: var(--panel); }
+.guess__suggest button { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 12px; background: none; border: 0; color: #e8eaed; font: inherit; cursor: pointer; text-align: left; }
+.guess__suggest button.is-on, .guess__suggest button:hover { background: rgba(224,163,59,.12); }
+.guess__suggest small { color: var(--muted); }
+.guess__grid { display: grid; gap: 4px; overflow-x: auto; }
+.guess__row { display: grid; grid-template-columns: minmax(84px, 1.3fr) repeat(5, minmax(56px, 1fr)) minmax(96px, 1.6fr); gap: 4px; min-width: 560px; }
+.guess__row > span { padding: 7px 6px; background: #141920; border: 1px solid var(--line); font-weight: 700; font-size: .85rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.guess__row--head > span { background: none; border: 0; color: var(--muted); font-family: var(--f-head); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; padding: 0 4px; }
+.guess__who { text-align: left !important; }
+.guess__who.is-hit { color: var(--go); }
+.clue--hit { background: rgba(79,179,79,.25) !important; border-color: var(--go) !important; color: #fff; }
+.clue--near { background: rgba(224,163,59,.22) !important; border-color: var(--t) !important; color: #fff; }
+.clue--miss { color: #aab3be; }
+.guess__answer { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); background: var(--panel); }
+.guess__answer.is-won { border-color: var(--go); }
+.guess__answer small { display: block; font-family: var(--f-head); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--t); font-size: .72rem; }
+.guess__answer strong { display: block; font-family: var(--f-head); font-size: 1.6rem; }
+.guess__answer > div > span { display: block; color: #cfd6de; font-size: .9rem; }
+.guess__photo { width: 72px; height: 72px; flex: none; overflow: hidden; border: 1px solid var(--line); }
+.guess__teams { display: flex !important; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; color: var(--muted) !important; font-size: .8rem !important; }

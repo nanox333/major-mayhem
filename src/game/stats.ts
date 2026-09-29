@@ -1,7 +1,8 @@
 // Lifetime stats, kept in this browser next to the run save.
 import * as G from './logic';
-import { Run, dailyDate, dailyNumber } from './state';
+import { Run, dailyDate, dailyNumber, squadOf } from './state';
 import { shareText } from './share';
+import { newAchievements } from './achievements';
 
 export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null; share?: string; abandoned?: boolean }
 export interface Stats {
@@ -17,10 +18,16 @@ export interface Stats {
   drafted: Record<string, number>;
   /** First finished result for each daily, by date. */
   daily: Record<string, DailyResult>;
+  /** Achievements earned: id → date (YYYY-MM-DD). */
+  ach: Record<string, string>;
+  /** Achievements earned by the last finished run, for the results screen. */
+  lastNew: string[];
+  /** Draft duel showmatches won and lost. */
+  duels: { w: number; l: number };
 }
 
 const KEY = 'major-mayhem-stats-v1';
-export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {} });
+export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [], duels: { w: 0, l: 0 } });
 
 export function loadStats(): Stats {
   try {
@@ -34,7 +41,7 @@ const saveStats = (s: Stats) => { try { localStorage.setItem(KEY, JSON.stringify
 /** Pure: the stats after adding one finished run. */
 export function addRun(st: Stats, run: Run): Stats {
   const pl = G.placement(run.t);
-  const mine = G.lineupFromPicks(run.picks);
+  const mine = squadOf(run);
   const champ = pl.key === 'CHAMP';
   const next: Stats = {
     ...st,
@@ -49,6 +56,10 @@ export function addRun(st: Stats, run: Run): Stats {
   for (const p of run.picks) next.drafted[p.playerId] = (next.drafted[p.playerId] ?? 0) + 1;
   const date = dailyDate(run);
   if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade, share: shareText(run) };
+  const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0 }, st.ach ?? {});
+  const day = date ?? new Date().toISOString().slice(0, 10);
+  next.ach = { ...(st.ach ?? {}), ...Object.fromEntries(earned.map((id) => [id, day])) };
+  next.lastNew = earned;
   return next;
 }
 
@@ -69,6 +80,15 @@ export function addAbandon(st: Stats, run: Run): Stats {
 
 export function abandonDaily(run: Run): Stats {
   const next = addAbandon(loadStats(), run);
+  saveStats(next);
+  return next;
+}
+
+/** A duel doesn't count as a Major run: it only adds to the duel record. */
+export function recordDuel(run: Run): Stats {
+  const st = loadStats();
+  const won = run.t.status === 'champion';
+  const next = { ...st, duels: { w: st.duels.w + (won ? 1 : 0), l: st.duels.l + (won ? 0 : 1) }, lastNew: [] };
   saveStats(next);
   return next;
 }

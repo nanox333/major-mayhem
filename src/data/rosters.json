@@ -1,0 +1,4380 @@
+{
+ "_readme": [
+  "Rosters, placements and dates: English Wikipedia \"Final standings\" tables (data/cache/wikipedia-standings.json), except rosters marked \"source\": \"unverified\", which were written from knowledge and need checking with `npm run fetch-data`.",
+  "Roles, ratings (60-99), coach ratings and player nationalities are game data written for Major Mayhem, not official statistics.",
+  "Dailies must not change once played: give a new roster \"since\": \"<tomorrow>\"; never delete a roster, give it \"until\": \"<today>\"; changing an existing roster changes every daily it appears in.",
+  "Player ids default to the nick lowercased with non-alphanumerics removed (the same person keeps one id across rosters). Two different people whose nicks collide need an explicit \"id\"."
+ ],
+ "orgs": {
+  "Virtus.pro": {
+   "tag": "VP",
+   "color": "#e66b1f"
+  },
+  "Ninjas in Pyjamas": {
+   "tag": "NIP",
+   "color": "#d4d7da"
+  },
+  "Fnatic": {
+   "tag": "FNC",
+   "color": "#ff5900"
+  },
+  "Team Dignitas": {
+   "tag": "DIG",
+   "color": "#f2c200"
+  },
+  "Cloud9": {
+   "tag": "C9",
+   "color": "#1f9ce3"
+  },
+  "Team EnVyUs": {
+   "tag": "NV",
+   "color": "#3b73d9"
+  },
+  "Natus Vincere": {
+   "tag": "NAVI",
+   "color": "#f7e11b"
+  },
+  "Luminosity Gaming": {
+   "tag": "LG",
+   "color": "#3a8fd8"
+  },
+  "Team Liquid": {
+   "tag": "TL",
+   "color": "#2a5fa8"
+  },
+  "Astralis": {
+   "tag": "AST",
+   "color": "#e8374a"
+  },
+  "Gambit Esports": {
+   "tag": "GMB",
+   "color": "#d8272f"
+  },
+  "FaZe Clan": {
+   "tag": "FAZE",
+   "color": "#e4002b"
+  },
+  "MIBR": {
+   "tag": "MIBR",
+   "color": "#e9e9e9"
+  },
+  "ENCE": {
+   "tag": "ENCE",
+   "color": "#1b78c4"
+  },
+  "AVANGAR": {
+   "tag": "AVG",
+   "color": "#c43b3b"
+  },
+  "Renegades": {
+   "tag": "RNG",
+   "color": "#c7a14a"
+  },
+  "Team Vitality": {
+   "tag": "VIT",
+   "color": "#ffe500"
+  },
+  "G2 Esports": {
+   "tag": "G2",
+   "color": "#f23a2f"
+  },
+  "Heroic": {
+   "tag": "HRC",
+   "color": "#f25c3a"
+  },
+  "Outsiders": {
+   "tag": "OUT",
+   "color": "#b53fd1"
+  },
+  "FURIA Esports": {
+   "tag": "FUR",
+   "color": "#c9c9c9"
+  },
+  "MOUZ": {
+   "tag": "MOUZ",
+   "color": "#e2173b"
+  },
+  "Team Spirit": {
+   "tag": "TS",
+   "color": "#dcdcdc"
+  },
+  "Eternal Fire": {
+   "tag": "EF",
+   "color": "#ff7a1a"
+  },
+  "The MongolZ": {
+   "tag": "MNG",
+   "color": "#e8b43c"
+  },
+  "Team Falcons": {
+   "tag": "FLC",
+   "color": "#1fae6a"
+  },
+  "Aurora Gaming": {
+   "tag": "AUR",
+   "color": "#8b5cf6"
+  },
+  "LGB eSports": {
+   "tag": "LGB",
+   "color": "#5aa9e6"
+  },
+  "Team LDLC.com": {
+   "tag": "LDLC",
+   "color": "#3d8fe0"
+  },
+  "SK Gaming": {
+   "tag": "SK",
+   "color": "#2a6fdb"
+  },
+  "Immortals": {
+   "tag": "IMT",
+   "color": "#3fcad8"
+  },
+  "BIG": {
+   "tag": "BIG",
+   "color": "#f5b700"
+  },
+  "NRG Esports": {
+   "tag": "NRG",
+   "color": "#e8e8e8"
+  },
+  "Copenhagen Flames": {
+   "tag": "CPHF",
+   "color": "#ff5a1f"
+  }
+ },
+ "players": {
+  "910": {
+   "country": "MN"
+  },
+  "adren": {
+   "country": "KZ"
+  },
+  "adren-us": {
+   "country": "US"
+  },
+  "aerial": {
+   "country": "FI"
+  },
+  "aizy": {
+   "country": "DK"
+  },
+  "aleksib": {
+   "country": "FI"
+  },
+  "alex": {
+   "country": "GB"
+  },
+  "allu": {
+   "country": "FI"
+  },
+  "amanek": {
+   "country": "FR"
+  },
+  "apex": {
+   "country": "FR"
+  },
+  "art": {
+   "country": "BR"
+  },
+  "autimatic": {
+   "country": "US"
+  },
+  "ax1le": {
+   "country": "RU"
+  },
+  "azr": {
+   "country": "AU"
+  },
+  "b1t": {
+   "country": "UA"
+  },
+  "blitz": {
+   "country": "MN"
+  },
+  "bodyy": {
+   "country": "FR"
+  },
+  "boltz": {
+   "country": "BR"
+  },
+  "boombl4": {
+   "country": "RU"
+  },
+  "brehze": {
+   "country": "US"
+  },
+  "broky": {
+   "country": "LV"
+  },
+  "brollan": {
+   "country": "SE"
+  },
+  "buster": {
+   "country": "KZ"
+  },
+  "byali": {
+   "country": "PL"
+  },
+  "cadian": {
+   "country": "DK"
+  },
+  "cajunb": {
+   "country": "DK"
+  },
+  "calyx": {
+   "country": "TR"
+  },
+  "cerq": {
+   "country": "BG"
+  },
+  "chopper": {
+   "country": "RU"
+  },
+  "coldzera": {
+   "country": "BR"
+  },
+  "cype": {
+   "country": "SE"
+  },
+  "degster": {
+   "country": "RU"
+  },
+  "dennis": {
+   "country": "SE"
+  },
+  "dev1ce": {
+   "country": "DK"
+  },
+  "devilwalk": {
+   "country": "SE"
+  },
+  "dexter": {
+   "country": "AU"
+  },
+  "discodoplan": {
+   "country": "SE"
+  },
+  "donk": {
+   "country": "RU"
+  },
+  "dosia": {
+   "country": "KZ"
+  },
+  "drop": {
+   "country": "BR"
+  },
+  "dupreeh": {
+   "country": "DK"
+  },
+  "dycha": {
+   "country": "PL"
+  },
+  "edward": {
+   "country": "UA"
+  },
+  "electronic": {
+   "country": "RU"
+  },
+  "elige": {
+   "country": "US"
+  },
+  "ethan": {
+   "country": "US"
+  },
+  "f0rest": {
+   "country": "SE"
+  },
+  "fallen": {
+   "country": "BR"
+  },
+  "fame": {
+   "country": "RU"
+  },
+  "felps": {
+   "country": "BR"
+  },
+  "fer": {
+   "country": "BR"
+  },
+  "fetish": {
+   "country": "DK"
+  },
+  "fifflaren": {
+   "country": "SE"
+  },
+  "fl1t": {
+   "country": "RU"
+  },
+  "flamez": {
+   "country": "IL"
+  },
+  "flamie": {
+   "country": "RU"
+  },
+  "flusha": {
+   "country": "SE"
+  },
+  "fnx": {
+   "country": "BR"
+  },
+  "fox": {
+   "country": "PT"
+  },
+  "friberg": {
+   "country": "SE"
+  },
+  "frozen": {
+   "country": "SK"
+  },
+  "getright": {
+   "country": "SE"
+  },
+  "gla1ve": {
+   "country": "DK"
+  },
+  "gobb": {
+   "country": "DE"
+  },
+  "gratisfaction": {
+   "country": "AU"
+  },
+  "guardian": {
+   "country": "SK"
+  },
+  "hades": {
+   "country": "PL"
+  },
+  "happy": {
+   "country": "FR"
+  },
+  "hen1": {
+   "country": "BR"
+  },
+  "hiko": {
+   "country": "US"
+  },
+  "hobbit": {
+   "country": "KZ"
+  },
+  "hooxi": {
+   "country": "DK"
+  },
+  "hunter": {
+   "country": "BA"
+  },
+  "im": {
+   "country": "RO"
+  },
+  "interz": {
+   "country": "RU"
+  },
+  "jabbi": {
+   "country": "DK"
+  },
+  "jackz": {
+   "country": "FR"
+  },
+  "jame": {
+   "country": "RU"
+  },
+  "jcobbb": {
+   "country": "PL"
+  },
+  "jdc": {
+   "country": "DE"
+  },
+  "jdm64": {
+   "country": "US"
+  },
+  "jimpphat": {
+   "country": "FI"
+  },
+  "jkaem": {
+   "country": "NO"
+  },
+  "jks": {
+   "country": "AU"
+  },
+  "jl": {
+   "country": "LT"
+  },
+  "jw": {
+   "country": "SE"
+  },
+  "karrigan": {
+   "country": "DK"
+  },
+  "kennys": {
+   "country": "FR"
+  },
+  "kioshima": {
+   "country": "FR"
+  },
+  "kjaerbye": {
+   "country": "DK"
+  },
+  "kng": {
+   "country": "BR"
+  },
+  "kqly": {
+   "country": "FR"
+  },
+  "krimz": {
+   "country": "SE"
+  },
+  "kscerato": {
+   "country": "BR"
+  },
+  "kyojin": {
+   "country": "FR"
+  },
+  "kyousuke": {
+   "country": "RU"
+  },
+  "kyxsan": {
+   "country": "MK"
+  },
+  "liazz": {
+   "country": "AU"
+  },
+  "lucas1": {
+   "country": "BR"
+  },
+  "m0nesy": {
+   "country": "RU"
+  },
+  "maden": {
+   "country": "ME"
+  },
+  "magisk": {
+   "country": "DK"
+  },
+  "magixx": {
+   "country": "RU"
+  },
+  "maj3r": {
+   "country": "TR"
+  },
+  "makazze": {
+   "country": "XK"
+  },
+  "malbsmd": {
+   "country": "GT"
+  },
+  "maniac": {
+   "country": "CH"
+  },
+  "mezii": {
+   "country": "GB"
+  },
+  "misutaaa": {
+   "country": "FR"
+  },
+  "molodoy": {
+   "country": "KZ"
+  },
+  "mou": {
+   "country": "KZ"
+  },
+  "mzinho": {
+   "country": "MN"
+  },
+  "n0rb3r7": {
+   "country": "RU"
+  },
+  "n0thing": {
+   "country": "US"
+  },
+  "naf": {
+   "country": "CA"
+  },
+  "nafany": {
+   "country": "RU"
+  },
+  "nbk": {
+   "country": "FR"
+  },
+  "neo": {
+   "country": "PL"
+  },
+  "nex": {
+   "country": "DE"
+  },
+  "nexa": {
+   "country": "RS"
+  },
+  "nicoodoz": {
+   "country": "DK"
+  },
+  "niko": {
+   "country": "BA"
+  },
+  "nitr0": {
+   "country": "US"
+  },
+  "olofmeister": {
+   "country": "SE"
+  },
+  "pashabiceps": {
+   "country": "PL"
+  },
+  "patsi": {
+   "country": "RU"
+  },
+  "perfecto": {
+   "country": "RU"
+  },
+  "pronax": {
+   "country": "SE"
+  },
+  "qikert": {
+   "country": "KZ"
+  },
+  "rain": {
+   "country": "NO"
+  },
+  "refrezh": {
+   "country": "DK"
+  },
+  "roej": {
+   "country": "DK"
+  },
+  "ropz": {
+   "country": "EE"
+  },
+  "rpk": {
+   "country": "FR"
+  },
+  "rush": {
+   "country": "US"
+  },
+  "s1mple": {
+   "country": "UA"
+  },
+  "s1ren": {
+   "country": "RU"
+  },
+  "saffee": {
+   "country": "BR"
+  },
+  "sanji": {
+   "country": "KZ"
+  },
+  "schneider": {
+   "country": "SE"
+  },
+  "seized": {
+   "country": "RU"
+  },
+  "semphis": {
+   "country": "GB"
+  },
+  "senzu": {
+   "country": "MN"
+  },
+  "sergej": {
+   "country": "FI"
+  },
+  "sgares": {
+   "country": "US"
+  },
+  "sh1ro": {
+   "country": "RU"
+  },
+  "shox": {
+   "country": "FR"
+  },
+  "shroud": {
+   "country": "CA"
+  },
+  "siuhy": {
+   "country": "PL"
+  },
+  "sjuush": {
+   "country": "DK"
+  },
+  "skadoodle": {
+   "country": "US"
+  },
+  "smithzz": {
+   "country": "FR"
+  },
+  "smooya": {
+   "country": "GB"
+  },
+  "snappi": {
+   "country": "DK"
+  },
+  "snax": {
+   "country": "PL"
+  },
+  "soulfly": {
+   "country": "TR"
+  },
+  "spinx": {
+   "country": "IL"
+  },
+  "stanislaw": {
+   "country": "CA"
+  },
+  "stavn": {
+   "country": "DK"
+  },
+  "steel": {
+   "country": "BR"
+  },
+  "stewie2k": {
+   "country": "US"
+  },
+  "tabsen": {
+   "country": "DE"
+  },
+  "taco": {
+   "country": "BR"
+  },
+  "tarik": {
+   "country": "US"
+  },
+  "taz": {
+   "country": "PL"
+  },
+  "techno4k": {
+   "country": "MN"
+  },
+  "teses": {
+   "country": "DK"
+  },
+  "tizian": {
+   "country": "DE"
+  },
+  "tn1r": {
+   "country": "RU"
+  },
+  "torzsi": {
+   "country": "HU"
+  },
+  "twist": {
+   "country": "SE"
+  },
+  "twistzz": {
+   "country": "CA"
+  },
+  "ultimate": {
+   "country": "PL"
+  },
+  "uzzziii": {
+   "country": "FR"
+  },
+  "vini": {
+   "country": "BR"
+  },
+  "w0nderful": {
+   "country": "UA"
+  },
+  "wicadia": {
+   "country": "TR"
+  },
+  "woxic": {
+   "country": "TR"
+  },
+  "xantares": {
+   "country": "TR"
+  },
+  "xertion": {
+   "country": "IL"
+  },
+  "xizt": {
+   "country": "SE"
+  },
+  "xseven": {
+   "country": "FI"
+  },
+  "xyp9x": {
+   "country": "DK"
+  },
+  "yekindar": {
+   "country": "LV"
+  },
+  "yuurih": {
+   "country": "BR"
+  },
+  "zeus": {
+   "country": "UA"
+  },
+  "zont1x": {
+   "country": "UA"
+  },
+  "zweih": {
+   "country": "RU"
+  },
+  "zyphon": {
+   "country": "DK"
+  },
+  "zywoo": {
+   "country": "FR"
+  }
+ },
+ "coaches": {
+  "3k2": {
+   "rating": 76
+  },
+  "B1ad3": {
+   "rating": 90
+  },
+  "Devilwalk": {
+   "rating": 80
+  },
+  "Eddie": {
+   "rating": 76
+  },
+  "Fabre": {
+   "rating": 76
+  },
+  "GBJames": {
+   "rating": 72
+  },
+  "ImAPet": {
+   "rating": 72
+  },
+  "Jumpy": {
+   "rating": 74
+  },
+  "LEGIJA": {
+   "rating": 76
+  },
+  "MoMan": {
+   "rating": 70
+  },
+  "NEO": {
+   "rating": 78
+  },
+  "Next": {
+   "rating": 72
+  },
+  "RobbaN": {
+   "rating": 82
+  },
+  "SmithZz": {
+   "rating": 74
+  },
+  "TaZ": {
+   "rating": 78
+  },
+  "Twista": {
+   "rating": 74
+  },
+  "XTQZZZ": {
+   "rating": 88
+  },
+  "Xizt": {
+   "rating": 80
+  },
+  "YNk": {
+   "rating": 74
+  },
+  "dastan": {
+   "rating": 80
+  },
+  "dead": {
+   "rating": 80
+  },
+  "groove": {
+   "rating": 78
+  },
+  "guerri": {
+   "rating": 82
+  },
+  "hally": {
+   "rating": 86
+  },
+  "kane": {
+   "rating": 84
+  },
+  "kassad": {
+   "rating": 76
+  },
+  "kuben": {
+   "rating": 80
+  },
+  "maLeK": {
+   "rating": 78
+  },
+  "maaRaa": {
+   "rating": 78
+  },
+  "mithR": {
+   "rating": 76
+  },
+  "peacemaker": {
+   "rating": 76
+  },
+  "pita": {
+   "rating": 82
+  },
+  "sAw": {
+   "rating": 76
+  },
+  "sidde": {
+   "rating": 76
+  },
+  "starix": {
+   "rating": 78
+  },
+  "sycrone": {
+   "rating": 83
+  },
+  "tacitus": {
+   "rating": 72
+  },
+  "valens": {
+   "rating": 80
+  },
+  "vorborg": {
+   "rating": 74
+  },
+  "vuggo": {
+   "rating": 74
+  },
+  "zakk": {
+   "rating": 78
+  },
+  "zews": {
+   "rating": 85
+  },
+  "zonic": {
+   "rating": 95
+  }
+ },
+ "rosters": [
+  {
+   "org": "Ninjas in Pyjamas",
+   "year": 2014,
+   "event": "EMS One Katowice 2014",
+   "dates": "Mar 13–16, 2014",
+   "result": "Runner-up",
+   "wiki": "EMS_One_Katowice_2014",
+   "players": [
+    {
+     "nick": "f0rest",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "GeT_RiGhT",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 93
+    },
+    {
+     "nick": "Xizt",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "friberg",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "Fifflaren",
+     "roles": [
+      "SUP",
+      "AWP"
+     ],
+     "rating": 78
+    }
+   ]
+  },
+  {
+   "org": "Virtus.pro",
+   "year": 2014,
+   "event": "EMS One Katowice 2014",
+   "dates": "Mar 13–16, 2014",
+   "result": "Champions",
+   "wiki": "EMS_One_Katowice_2014",
+   "players": [
+    {
+     "nick": "TaZ",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "NEO",
+     "roles": [
+      "LURK",
+      "SUP",
+      "IGL"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "pashaBiceps",
+     "roles": [
+      "AWP",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "Snax",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "byali",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 82
+    }
+   ]
+  },
+  {
+   "org": "Team Dignitas",
+   "year": 2014,
+   "event": "ESL One Cologne 2014",
+   "dates": "Aug 14–17, 2014",
+   "result": "Semifinalist",
+   "wiki": "ESL_One_Cologne_2014",
+   "coach": "3k2",
+   "players": [
+    {
+     "nick": "FeTiSh",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 76
+    },
+    {
+     "nick": "dev1ce",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "aizy",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "dupreeh",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "Xyp9x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 82
+    }
+   ]
+  },
+  {
+   "org": "Cloud9",
+   "year": 2014,
+   "event": "ESL One Cologne 2014",
+   "dates": "Aug 14–17, 2014",
+   "result": "Quarterfinalist",
+   "wiki": "ESL_One_Cologne_2014",
+   "players": [
+    {
+     "nick": "sgares",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 76
+    },
+    {
+     "nick": "Semphis",
+     "roles": [
+      "AWP",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "shroud",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "n0thing",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "Hiko",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Fnatic",
+   "year": 2015,
+   "event": "ESL One Katowice 2015",
+   "dates": "Mar 12–15, 2015",
+   "result": "Champions",
+   "wiki": "ESL_One_Katowice_2015",
+   "coach": "Devilwalk",
+   "players": [
+    {
+     "nick": "pronax",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "JW",
+     "roles": [
+      "AWP",
+      "ENTRY"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "olofmeister",
+     "roles": [
+      "ENTRY",
+      "AWP"
+     ],
+     "rating": 95
+    },
+    {
+     "nick": "flusha",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "KRiMZ",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 89
+    }
+   ]
+  },
+  {
+   "org": "Team EnVyUs",
+   "year": 2015,
+   "event": "DreamHack Open Cluj-Napoca 2015",
+   "dates": "Oct 28 – Nov 1, 2015",
+   "result": "Champions",
+   "wiki": "DreamHack_Open_Cluj-Napoca_2015",
+   "coach": "Next",
+   "players": [
+    {
+     "nick": "Happy",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "kennyS",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 93
+    },
+    {
+     "nick": "apEX",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "NBK-",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "kioShiMa",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 80
+    }
+   ]
+  },
+  {
+   "org": "Natus Vincere",
+   "year": 2016,
+   "event": "MLG Major Championship: Columbus",
+   "dates": "Mar 29 – Apr 3, 2016",
+   "result": "Runner-up",
+   "wiki": "MLG_Major_Championship:_Columbus",
+   "coach": "starix",
+   "players": [
+    {
+     "nick": "Zeus",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "GuardiaN",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "seized",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "flamie",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "Edward",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 84
+    }
+   ]
+  },
+  {
+   "org": "Luminosity Gaming",
+   "year": 2016,
+   "event": "MLG Major Championship: Columbus",
+   "dates": "Mar 29 – Apr 3, 2016",
+   "result": "Champions",
+   "wiki": "MLG_Major_Championship:_Columbus",
+   "coach": "zews",
+   "players": [
+    {
+     "nick": "FalleN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "coldzera",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 93
+    },
+    {
+     "nick": "fer",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "fnx",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "TACO",
+     "roles": [
+      "SUP"
+     ],
+     "rating": 80
+    }
+   ]
+  },
+  {
+   "org": "Team Liquid",
+   "year": 2016,
+   "event": "ESL One Cologne 2016",
+   "dates": "Jul 5–10, 2016",
+   "result": "Runner-up",
+   "wiki": "ESL_One_Cologne_2016",
+   "coach": "peacemaker",
+   "players": [
+    {
+     "nick": "nitr0",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "s1mple",
+     "roles": [
+      "AWP",
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 94
+    },
+    {
+     "nick": "Hiko",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "EliGE",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "jdm64",
+     "roles": [
+      "AWP",
+      "SUP"
+     ],
+     "rating": 80
+    }
+   ]
+  },
+  {
+   "org": "Astralis",
+   "year": 2017,
+   "event": "ELEAGUE Major: Atlanta 2017",
+   "dates": "Jan 22–29, 2017",
+   "result": "Champions",
+   "wiki": "ELEAGUE_Major_2017",
+   "coach": "zonic",
+   "players": [
+    {
+     "nick": "gla1ve",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "dev1ce",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 92
+    },
+    {
+     "nick": "Kjaerbye",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "dupreeh",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Xyp9x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 87
+    }
+   ]
+  },
+  {
+   "org": "Virtus.pro",
+   "year": 2017,
+   "event": "ELEAGUE Major: Atlanta 2017",
+   "dates": "Jan 22–29, 2017",
+   "result": "Runner-up",
+   "wiki": "ELEAGUE_Major_2017",
+   "coach": "kuben",
+   "players": [
+    {
+     "nick": "NEO",
+     "roles": [
+      "IGL",
+      "LURK",
+      "SUP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "TaZ",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "pashaBiceps",
+     "roles": [
+      "AWP",
+      "ENTRY"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "Snax",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "byali",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Gambit Esports",
+   "year": 2017,
+   "event": "PGL Major: Kraków 2017",
+   "dates": "Jul 16–23, 2017",
+   "result": "Champions",
+   "wiki": "PGL_Major:_Krak%C3%B3w_2017",
+   "coach": "kane",
+   "players": [
+    {
+     "nick": "Zeus",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "mou",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "Dosia",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "AdreN",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "HObbit",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 89
+    }
+   ]
+  },
+  {
+   "org": "Cloud9",
+   "year": 2018,
+   "event": "ELEAGUE Major: Boston 2018",
+   "dates": "Jan 12–28, 2018",
+   "result": "Champions",
+   "wiki": "ELEAGUE_Major:_Boston_2018",
+   "coach": "valens",
+   "players": [
+    {
+     "nick": "tarik",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "Skadoodle",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "Stewie2K",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "RUSH",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "autimatic",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 86
+    }
+   ]
+  },
+  {
+   "org": "FaZe Clan",
+   "year": 2018,
+   "event": "ELEAGUE Major: Boston 2018",
+   "dates": "Jan 12–28, 2018",
+   "result": "Runner-up",
+   "wiki": "ELEAGUE_Major:_Boston_2018",
+   "coach": "RobbaN",
+   "players": [
+    {
+     "nick": "karrigan",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "GuardiaN",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "NiKo",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 94
+    },
+    {
+     "nick": "olofmeister",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "rain",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 89
+    }
+   ]
+  },
+  {
+   "org": "Astralis",
+   "year": 2018,
+   "event": "FACEIT Major: London 2018",
+   "dates": "Sep 5–23, 2018",
+   "result": "Champions",
+   "wiki": "FACEIT_Major:_London_2018",
+   "coach": "zonic",
+   "players": [
+    {
+     "nick": "gla1ve",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "dev1ce",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 95
+    },
+    {
+     "nick": "Magisk",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "dupreeh",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "Xyp9x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 90
+    }
+   ]
+  },
+  {
+   "org": "Natus Vincere",
+   "year": 2018,
+   "event": "FACEIT Major: London 2018",
+   "dates": "Sep 5–23, 2018",
+   "result": "Runner-up",
+   "wiki": "FACEIT_Major:_London_2018",
+   "coach": "kane",
+   "players": [
+    {
+     "nick": "Zeus",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "s1mple",
+     "roles": [
+      "AWP",
+      "LURK"
+     ],
+     "rating": 98
+    },
+    {
+     "nick": "electroNic",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "flamie",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "Edward",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 80
+    }
+   ]
+  },
+  {
+   "org": "MIBR",
+   "year": 2018,
+   "event": "FACEIT Major: London 2018",
+   "dates": "Sep 5–23, 2018",
+   "result": "Semifinalist",
+   "wiki": "FACEIT_Major:_London_2018",
+   "coach": "YNk",
+   "players": [
+    {
+     "nick": "FalleN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "coldzera",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "fer",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "Stewie2K",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "tarik",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 82
+    }
+   ]
+  },
+  {
+   "org": "Team Liquid",
+   "year": 2018,
+   "event": "FACEIT Major: London 2018",
+   "dates": "Sep 5–23, 2018",
+   "result": "Semifinalist",
+   "wiki": "FACEIT_Major:_London_2018",
+   "coach": "zews",
+   "players": [
+    {
+     "nick": "nitr0",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "EliGE",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "NAF",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "Twistzz",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "TACO",
+     "roles": [
+      "SUP"
+     ],
+     "rating": 80
+    }
+   ]
+  },
+  {
+   "org": "ENCE",
+   "year": 2019,
+   "event": "IEM Katowice Major 2019",
+   "dates": "Feb 13 – Mar 3, 2019",
+   "result": "Runner-up",
+   "wiki": "IEM_Katowice_Major_2019",
+   "coach": "Twista",
+   "players": [
+    {
+     "nick": "Aleksib",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "allu",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "sergej",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "Aerial",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "xseveN",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 84
+    }
+   ]
+  },
+  {
+   "org": "AVANGAR",
+   "year": 2019,
+   "event": "StarLadder Major: Berlin 2019",
+   "dates": "Aug 23 – Sep 8, 2019",
+   "result": "Runner-up",
+   "wiki": "StarLadder_Major:_Berlin_2019",
+   "coach": "dastan",
+   "players": [
+    {
+     "nick": "AdreN",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "Jame",
+     "roles": [
+      "AWP",
+      "IGL"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "buster",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "qikert",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "Sanji",
+     "roles": [
+      "LURK"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Renegades",
+   "year": 2019,
+   "event": "StarLadder Major: Berlin 2019",
+   "dates": "Aug 23 – Sep 8, 2019",
+   "result": "Semifinalist",
+   "wiki": "StarLadder_Major:_Berlin_2019",
+   "coach": "kassad",
+   "players": [
+    {
+     "nick": "AZR",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "Gratisfaction",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "jks",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Liazz",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "jkaem",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 81
+    }
+   ]
+  },
+  {
+   "org": "Team Vitality",
+   "year": 2019,
+   "event": "StarLadder Major: Berlin 2019",
+   "dates": "Aug 23 – Sep 8, 2019",
+   "result": "Quarterfinalist",
+   "wiki": "StarLadder_Major:_Berlin_2019",
+   "coach": "XTQZZZ",
+   "players": [
+    {
+     "nick": "ALEX",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "ZywOo",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 95
+    },
+    {
+     "nick": "apEX",
+     "roles": [
+      "ENTRY",
+      "IGL"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "NBK-",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "RpK",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Natus Vincere",
+   "year": 2021,
+   "event": "PGL Major Stockholm 2021",
+   "dates": "Oct 26 – Nov 7, 2021",
+   "result": "Champions",
+   "wiki": "PGL_Major_Stockholm_2021",
+   "coach": "B1ad3",
+   "players": [
+    {
+     "nick": "Boombl4",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "s1mple",
+     "roles": [
+      "AWP",
+      "LURK"
+     ],
+     "rating": 99
+    },
+    {
+     "nick": "electroNic",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "b1t",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Perfecto",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    }
+   ]
+  },
+  {
+   "org": "G2 Esports",
+   "year": 2021,
+   "event": "PGL Major Stockholm 2021",
+   "dates": "Oct 26 – Nov 7, 2021",
+   "result": "Runner-up",
+   "wiki": "PGL_Major_Stockholm_2021",
+   "coach": "maLeK",
+   "players": [
+    {
+     "nick": "nexa",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "AmaNEk",
+     "roles": [
+      "AWP",
+      "SUP",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "NiKo",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 92
+    },
+    {
+     "nick": "huNter-",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "JaCkz",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 82
+    }
+   ]
+  },
+  {
+   "org": "Heroic",
+   "year": 2021,
+   "event": "PGL Major Stockholm 2021",
+   "dates": "Oct 26 – Nov 7, 2021",
+   "result": "Semifinalist",
+   "wiki": "PGL_Major_Stockholm_2021",
+   "coach": "Xizt",
+   "players": [
+    {
+     "nick": "cadiaN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "stavn",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "TeSeS",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "refrezh",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "sjuush",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Gambit Esports",
+   "year": 2021,
+   "event": "PGL Major Stockholm 2021",
+   "dates": "Oct 26 – Nov 7, 2021",
+   "result": "Semifinalist",
+   "wiki": "PGL_Major_Stockholm_2021",
+   "coach": "groove",
+   "players": [
+    {
+     "nick": "nafany",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "sh1ro",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 92
+    },
+    {
+     "nick": "Ax1Le",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "interz",
+     "roles": [
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "HObbit",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 86
+    }
+   ]
+  },
+  {
+   "org": "FaZe Clan",
+   "year": 2022,
+   "event": "PGL Major Antwerp 2022",
+   "dates": "May 9–22, 2022",
+   "result": "Champions",
+   "wiki": "PGL_Major_Antwerp_2022",
+   "coach": "Eddie",
+   "players": [
+    {
+     "nick": "karrigan",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "broky",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "rain",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "Twistzz",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "ropz",
+     "roles": [
+      "LURK"
+     ],
+     "rating": 92
+    }
+   ]
+  },
+  {
+   "org": "ENCE",
+   "year": 2022,
+   "event": "PGL Major Antwerp 2022",
+   "dates": "May 9–22, 2022",
+   "result": "Semifinalist",
+   "wiki": "PGL_Major_Antwerp_2022",
+   "coach": "sAw",
+   "players": [
+    {
+     "nick": "Snappi",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "hades",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "Spinx",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "dycha",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "maden",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Outsiders",
+   "year": 2022,
+   "event": "IEM Rio Major 2022",
+   "dates": "Oct 31 – Nov 13, 2022",
+   "result": "Champions",
+   "wiki": "IEM_Rio_Major_2022",
+   "coach": "dastan",
+   "players": [
+    {
+     "nick": "Jame",
+     "roles": [
+      "AWP",
+      "IGL"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "FL1T",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "fame",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "n0rb3r7",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "qikert",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 84
+    }
+   ]
+  },
+  {
+   "org": "Heroic",
+   "year": 2022,
+   "event": "IEM Rio Major 2022",
+   "dates": "Oct 31 – Nov 13, 2022",
+   "result": "Runner-up",
+   "wiki": "IEM_Rio_Major_2022",
+   "coach": "Xizt",
+   "players": [
+    {
+     "nick": "cadiaN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "stavn",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "TeSeS",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "jabbi",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "sjuush",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "FURIA Esports",
+   "year": 2022,
+   "event": "IEM Rio Major 2022",
+   "dates": "Oct 31 – Nov 13, 2022",
+   "result": "Semifinalist",
+   "wiki": "IEM_Rio_Major_2022",
+   "coach": "guerri",
+   "players": [
+    {
+     "nick": "arT",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "saffee",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "KSCERATO",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "yuurih",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "drop",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 82
+    }
+   ]
+  },
+  {
+   "org": "MOUZ",
+   "year": 2022,
+   "event": "IEM Rio Major 2022",
+   "dates": "Oct 31 – Nov 13, 2022",
+   "result": "Semifinalist",
+   "wiki": "IEM_Rio_Major_2022",
+   "coach": "sycrone",
+   "players": [
+    {
+     "nick": "dexter",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "torzsi",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "frozen",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "JDC",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "xertioN",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 84
+    }
+   ]
+  },
+  {
+   "org": "Natus Vincere",
+   "year": 2024,
+   "event": "PGL Major Copenhagen 2024",
+   "dates": "Mar 17–31, 2024",
+   "result": "Champions",
+   "wiki": "PGL_Major_Copenhagen_2024",
+   "coach": "B1ad3",
+   "players": [
+    {
+     "nick": "Aleksib",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "w0nderful",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "jL",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "iM",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "b1t",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 88
+    }
+   ]
+  },
+  {
+   "org": "FaZe Clan",
+   "year": 2024,
+   "event": "PGL Major Copenhagen 2024",
+   "dates": "Mar 17–31, 2024",
+   "result": "Runner-up",
+   "wiki": "PGL_Major_Copenhagen_2024",
+   "coach": "NEO",
+   "players": [
+    {
+     "nick": "karrigan",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "broky",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "rain",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "frozen",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "ropz",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 91
+    }
+   ]
+  },
+  {
+   "org": "G2 Esports",
+   "year": 2024,
+   "event": "PGL Major Copenhagen 2024",
+   "dates": "Mar 17–31, 2024",
+   "result": "Semifinalist",
+   "wiki": "PGL_Major_Copenhagen_2024",
+   "coach": "TaZ",
+   "players": [
+    {
+     "nick": "HooXi",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 74
+    },
+    {
+     "nick": "m0NESY",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 94
+    },
+    {
+     "nick": "NiKo",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 93
+    },
+    {
+     "nick": "huNter-",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "nexa",
+     "roles": [
+      "SUP",
+      "IGL"
+     ],
+     "rating": 82
+    }
+   ]
+  },
+  {
+   "org": "Team Vitality",
+   "year": 2024,
+   "event": "PGL Major Copenhagen 2024",
+   "dates": "Mar 17–31, 2024",
+   "result": "Semifinalist",
+   "wiki": "PGL_Major_Copenhagen_2024",
+   "coach": "XTQZZZ",
+   "players": [
+    {
+     "nick": "apEX",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "ZywOo",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 96
+    },
+    {
+     "nick": "flameZ",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Spinx",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "mezii",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Eternal Fire",
+   "year": 2024,
+   "event": "PGL Major Copenhagen 2024",
+   "dates": "Mar 17–31, 2024",
+   "result": "Quarterfinalist",
+   "wiki": "PGL_Major_Copenhagen_2024",
+   "coach": "Fabre",
+   "players": [
+    {
+     "nick": "MAJ3R",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 77
+    },
+    {
+     "nick": "woxic",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "XANTARES",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "Calyx",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "Wicadia",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 85
+    }
+   ]
+  },
+  {
+   "org": "Team Spirit",
+   "year": 2024,
+   "event": "Perfect World Shanghai Major 2024",
+   "dates": "Nov 30 – Dec 15, 2024",
+   "result": "Champions",
+   "wiki": "Perfect_World_Shanghai_Major_2024",
+   "coach": "hally",
+   "players": [
+    {
+     "nick": "chopper",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "sh1ro",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "donk",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 98
+    },
+    {
+     "nick": "zont1x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "magixx",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 84
+    }
+   ]
+  },
+  {
+   "org": "MOUZ",
+   "year": 2024,
+   "event": "Perfect World Shanghai Major 2024",
+   "dates": "Nov 30 – Dec 15, 2024",
+   "result": "Semifinalist",
+   "wiki": "Perfect_World_Shanghai_Major_2024",
+   "coach": "sycrone",
+   "players": [
+    {
+     "nick": "siuhy",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "torzsi",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "xertioN",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "Brollan",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Jimpphat",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 88
+    }
+   ]
+  },
+  {
+   "org": "The MongolZ",
+   "year": 2024,
+   "event": "Perfect World Shanghai Major 2024",
+   "dates": "Nov 30 – Dec 15, 2024",
+   "result": "Quarterfinalist",
+   "wiki": "Perfect_World_Shanghai_Major_2024",
+   "coach": "maaRaa",
+   "players": [
+    {
+     "nick": "bLitz",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "910",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Senzu",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "mzinho",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "Techno4K",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 84
+    }
+   ]
+  },
+  {
+   "org": "Team Vitality",
+   "year": 2025,
+   "event": "StarLadder Budapest Major 2025",
+   "dates": "Nov 24 – Dec 14, 2025",
+   "result": "Champions",
+   "wiki": "StarLadder_Budapest_Major_2025",
+   "coach": "XTQZZZ",
+   "players": [
+    {
+     "nick": "apEX",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "ZywOo",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 97
+    },
+    {
+     "nick": "flameZ",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "ropz",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 92
+    },
+    {
+     "nick": "mezii",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    }
+   ]
+  },
+  {
+   "org": "FaZe Clan",
+   "year": 2025,
+   "event": "StarLadder Budapest Major 2025",
+   "dates": "Nov 24 – Dec 14, 2025",
+   "result": "Runner-up",
+   "wiki": "StarLadder_Budapest_Major_2025",
+   "coach": "NEO",
+   "players": [
+    {
+     "nick": "karrigan",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "broky",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "jcobbb",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "frozen",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "rain",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "Team Spirit",
+   "year": 2025,
+   "event": "StarLadder Budapest Major 2025",
+   "dates": "Nov 24 – Dec 14, 2025",
+   "result": "Semifinalist",
+   "wiki": "StarLadder_Budapest_Major_2025",
+   "coach": "hally",
+   "players": [
+    {
+     "nick": "chopper",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "sh1ro",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "donk",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 97
+    },
+    {
+     "nick": "zont1x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "zweih",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 85
+    }
+   ]
+  },
+  {
+   "org": "Team Falcons",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Champions",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "zonic",
+   "players": [
+    {
+     "nick": "kyxsan",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "m0NESY",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 96
+    },
+    {
+     "nick": "NiKo",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "kyousuke",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "TeSeS",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 85
+    }
+   ]
+  },
+  {
+   "org": "FURIA Esports",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Runner-up",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "sidde",
+   "players": [
+    {
+     "nick": "FalleN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "molodoy",
+     "roles": [
+      "AWP",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "YEKINDAR",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "KSCERATO",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "yuurih",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 87
+    }
+   ]
+  },
+  {
+   "org": "Aurora Gaming",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Semifinalist",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "Fabre",
+   "players": [
+    {
+     "nick": "MAJ3R",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 77
+    },
+    {
+     "nick": "woxic",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "XANTARES",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "Wicadia",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "soulfly",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 83
+    }
+   ]
+  },
+  {
+   "org": "LGB eSports",
+   "year": 2014,
+   "event": "EMS One Katowice 2014",
+   "dates": "Mar 13–16, 2014",
+   "result": "Semifinalist",
+   "wiki": "EMS_One_Katowice_2014",
+   "players": [
+    {
+     "nick": "cype",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 76
+    },
+    {
+     "nick": "olofmeister",
+     "roles": [
+      "ENTRY",
+      "AWP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "dennis",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "KRiMZ",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "twist",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 80
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team LDLC.com",
+   "year": 2014,
+   "event": "ESL One Cologne 2014",
+   "dates": "Aug 14–17, 2014",
+   "result": "Semifinalist",
+   "wiki": "ESL_One_Cologne_2014",
+   "coach": "MoMan",
+   "players": [
+    {
+     "nick": "Happy",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "Uzzziii",
+     "roles": [
+      "AWP",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "KQLY",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "apEX",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "Maniac",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 80
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Ninjas in Pyjamas",
+   "year": 2015,
+   "event": "ESL One Katowice 2015",
+   "dates": "Mar 12–15, 2015",
+   "result": "Runner-up",
+   "wiki": "ESL_One_Katowice_2015",
+   "coach": "pita",
+   "players": [
+    {
+     "nick": "Xizt",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "allu",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "f0rest",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "GeT_RiGhT",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "friberg",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 81
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Astralis",
+   "year": 2016,
+   "event": "MLG Major Championship: Columbus",
+   "dates": "Mar 29 – Apr 3, 2016",
+   "result": "Semifinalist",
+   "wiki": "MLG_Major_Championship:_Columbus",
+   "coach": "zonic",
+   "players": [
+    {
+     "nick": "karrigan",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "dev1ce",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "dupreeh",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "cajunb",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "Xyp9x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team Liquid",
+   "year": 2016,
+   "event": "MLG Major Championship: Columbus",
+   "dates": "Mar 29 – Apr 3, 2016",
+   "result": "Semifinalist",
+   "wiki": "MLG_Major_Championship:_Columbus",
+   "coach": "GBJames",
+   "players": [
+    {
+     "nick": "Hiko",
+     "roles": [
+      "IGL",
+      "LURK"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "s1mple",
+     "roles": [
+      "AWP",
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 93
+    },
+    {
+     "nick": "EliGE",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "nitr0",
+     "roles": [
+      "SUP",
+      "IGL"
+     ],
+     "rating": 77
+    },
+    {
+     "nick": "adreN",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 78,
+     "id": "adren-us"
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Fnatic",
+   "year": 2016,
+   "event": "ESL One Cologne 2016",
+   "dates": "Jul 5–10, 2016",
+   "result": "Semifinalist",
+   "wiki": "ESL_One_Cologne_2016",
+   "coach": "vuggo",
+   "players": [
+    {
+     "nick": "dennis",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "JW",
+     "roles": [
+      "AWP",
+      "ENTRY"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "olofmeister",
+     "roles": [
+      "ENTRY",
+      "AWP"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "flusha",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "KRiMZ",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 88
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Fnatic",
+   "year": 2017,
+   "event": "ELEAGUE Major: Atlanta 2017",
+   "dates": "Jan 22–29, 2017",
+   "result": "Semifinalist",
+   "wiki": "ELEAGUE_Major_2017",
+   "coach": "Jumpy",
+   "players": [
+    {
+     "nick": "dennis",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "olofmeister",
+     "roles": [
+      "AWP",
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "KRiMZ",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "twist",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "disco doplan",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 79
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "SK Gaming",
+   "year": 2017,
+   "event": "ELEAGUE Major: Atlanta 2017",
+   "dates": "Jan 22–29, 2017",
+   "result": "Semifinalist",
+   "wiki": "ELEAGUE_Major_2017",
+   "coach": "dead",
+   "players": [
+    {
+     "nick": "FalleN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "coldzera",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 94
+    },
+    {
+     "nick": "fer",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "fox",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "TACO",
+     "roles": [
+      "SUP"
+     ],
+     "rating": 80
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Immortals",
+   "year": 2017,
+   "event": "PGL Major: Kraków 2017",
+   "dates": "Jul 16–23, 2017",
+   "result": "Runner-up",
+   "wiki": "PGL_Major:_Krak%C3%B3w_2017",
+   "coach": "zakk",
+   "players": [
+    {
+     "nick": "steel",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 76
+    },
+    {
+     "nick": "HEN1",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "kNg",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "LUCAS1",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "boltz",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 82
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "SK Gaming",
+   "year": 2018,
+   "event": "ELEAGUE Major: Boston 2018",
+   "dates": "Jan 12–28, 2018",
+   "result": "Semifinalist",
+   "wiki": "ELEAGUE_Major:_Boston_2018",
+   "coach": "dead",
+   "players": [
+    {
+     "nick": "FalleN",
+     "roles": [
+      "IGL",
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "coldzera",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "felps",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "fer",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "TACO",
+     "roles": [
+      "SUP"
+     ],
+     "rating": 78
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "G2 Esports",
+   "year": 2018,
+   "event": "ELEAGUE Major: Boston 2018",
+   "dates": "Jan 12–28, 2018",
+   "result": "Quarterfinalist",
+   "wiki": "ELEAGUE_Major:_Boston_2018",
+   "coach": "SmithZz",
+   "players": [
+    {
+     "nick": "NBK-",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "kennyS",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "shox",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "apEX",
+     "roles": [
+      "ENTRY",
+      "IGL"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "bodyy",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 81
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "BIG",
+   "year": 2018,
+   "event": "FACEIT Major: London 2018",
+   "dates": "Sep 5–23, 2018",
+   "result": "Quarterfinalist",
+   "wiki": "FACEIT_Major:_London_2018",
+   "coach": "LEGIJA",
+   "players": [
+    {
+     "nick": "gob b",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 75
+    },
+    {
+     "nick": "smooya",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "tabseN",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "tiziaN",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "nex",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 81
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "NRG Esports",
+   "year": 2019,
+   "event": "StarLadder Major: Berlin 2019",
+   "dates": "Aug 23 – Sep 8, 2019",
+   "result": "Semifinalist",
+   "wiki": "StarLadder_Major:_Berlin_2019",
+   "coach": "ImAPet",
+   "players": [
+    {
+     "nick": "stanislaw",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "CeRq",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Brehze",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "Ethan",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "tarik",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 81
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team Vitality",
+   "year": 2021,
+   "event": "PGL Major Stockholm 2021",
+   "dates": "Oct 26 – Nov 7, 2021",
+   "result": "Quarterfinalist",
+   "wiki": "PGL_Major_Stockholm_2021",
+   "coach": "XTQZZZ",
+   "players": [
+    {
+     "nick": "apEX",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "ZywOo",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 96
+    },
+    {
+     "nick": "shox",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "misutaaa",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "Kyojin",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 80
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "FURIA Esports",
+   "year": 2021,
+   "event": "PGL Major Stockholm 2021",
+   "dates": "Oct 26 – Nov 7, 2021",
+   "result": "Quarterfinalist",
+   "wiki": "PGL_Major_Stockholm_2021",
+   "coach": "tacitus",
+   "players": [
+    {
+     "nick": "arT",
+     "roles": [
+      "IGL",
+      "AWP",
+      "ENTRY"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "KSCERATO",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "yuurih",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "VINI",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "drop",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 80
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team Spirit",
+   "year": 2022,
+   "event": "PGL Major Antwerp 2022",
+   "dates": "May 9–22, 2022",
+   "result": "Semifinalist",
+   "wiki": "PGL_Major_Antwerp_2022",
+   "players": [
+    {
+     "nick": "chopper",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "degster",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "Patsi",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "magixx",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "S1ren",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 81
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Copenhagen Flames",
+   "year": 2022,
+   "event": "PGL Major Antwerp 2022",
+   "dates": "May 9–22, 2022",
+   "result": "Quarterfinalist",
+   "wiki": "PGL_Major_Antwerp_2022",
+   "coach": "vorborg",
+   "players": [
+    {
+     "nick": "HooXi",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 74
+    },
+    {
+     "nick": "nicoodoz",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "jabbi",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "roeJ",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "Zyphon",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 80
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "G2 Esports",
+   "year": 2024,
+   "event": "Perfect World Shanghai Major 2024",
+   "dates": "Nov 30 – Dec 15, 2024",
+   "result": "Semifinalist",
+   "wiki": "Perfect_World_Shanghai_Major_2024",
+   "coach": "TaZ",
+   "players": [
+    {
+     "nick": "Snax",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "m0NESY",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 95
+    },
+    {
+     "nick": "NiKo",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "malbsMd",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "huNter-",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 86
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team Liquid",
+   "year": 2024,
+   "event": "Perfect World Shanghai Major 2024",
+   "dates": "Nov 30 – Dec 15, 2024",
+   "result": "Quarterfinalist",
+   "wiki": "Perfect_World_Shanghai_Major_2024",
+   "coach": "mithR",
+   "players": [
+    {
+     "nick": "jks",
+     "roles": [
+      "IGL",
+      "LURK"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "ultimate",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "YEKINDAR",
+     "roles": [
+      "ENTRY",
+      "IGL"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "Twistzz",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "NAF",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Natus Vincere",
+   "year": 2025,
+   "event": "StarLadder Budapest Major 2025",
+   "dates": "Nov 24 – Dec 14, 2025",
+   "result": "Semifinalist",
+   "wiki": "StarLadder_Budapest_Major_2025",
+   "coach": "B1ad3",
+   "players": [
+    {
+     "nick": "Aleksib",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "w0nderful",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "iM",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "makazze",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "b1t",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 87
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team Spirit",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Semifinalist",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "hally",
+   "players": [
+    {
+     "nick": "magixx",
+     "roles": [
+      "IGL",
+      "LURK"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "sh1ro",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 90
+    },
+    {
+     "nick": "donk",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 97
+    },
+    {
+     "nick": "tN1R",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "zont1x",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 84
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Fnatic",
+   "year": 2013,
+   "event": "DreamHack Winter 2013",
+   "dates": "Nov 28–30, 2013",
+   "result": "Champions",
+   "wiki": "DreamHack_Winter_2013",
+   "source": "unverified",
+   "players": [
+    {
+     "nick": "pronax",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "JW",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "flusha",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "schneider",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "Devilwalk",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 78
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team LDLC.com",
+   "year": 2014,
+   "event": "DreamHack Winter 2014",
+   "dates": "Nov 27–29, 2014",
+   "result": "Champions",
+   "wiki": "DreamHack_Winter_2014",
+   "source": "unverified",
+   "players": [
+    {
+     "nick": "Happy",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 84
+    },
+    {
+     "nick": "kioShiMa",
+     "roles": [
+      "AWP",
+      "SUP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "shox",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 91
+    },
+    {
+     "nick": "NBK-",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "SmithZz",
+     "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rating": 82
+    }
+   ],
+   "since": "2026-09-30"
+  },
+  {
+   "org": "Team Vitality",
+   "year": 2023,
+   "event": "BLAST.tv Paris Major 2023",
+   "dates": "May 8–21, 2023",
+   "result": "Champions",
+   "wiki": "BLAST.tv_Paris_Major_2023",
+   "coach": "XTQZZZ",
+   "source": "unverified",
+   "players": [
+    {
+     "nick": "apEX",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "ZywOo",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 97
+    },
+    {
+     "nick": "Spinx",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 88
+    },
+    {
+     "nick": "dupreeh",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 85
+    },
+    {
+     "nick": "Magisk",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    }
+   ],
+   "since": "2026-09-30"
+  }
+ ]
+}

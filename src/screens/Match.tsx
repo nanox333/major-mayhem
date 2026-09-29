@@ -1,20 +1,21 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Roster } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Pending } from '../game/state';
+import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
 import { RoleIcon, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
+import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
   const playoffs = t.matches.filter((m) => m.stage !== 'QUAL');
-  const nodes: { k: G.StageKey; label: string }[] = [{ k: 'QUAL', label: 'Qual' }, { k: 'QF', label: 'Quarter' }, { k: 'SF', label: 'Semi' }, { k: 'F', label: 'Final' }];
+  const nodes: { k: G.StageKey; label: string }[] = [{ k: 'QUAL', label: t.qual.need ? 'Swiss' : 'Qual' }, { k: 'QF', label: 'Quarter' }, { k: 'SF', label: 'Semi' }, { k: 'F', label: 'Final' }];
   return (
     <div className="track">
       {nodes.map((n) => {
-        const done = n.k === 'QUAL' ? q.w >= 2 : playoffs.some((m) => m.stage === n.k && m.won);
-        const lost = n.k === 'QUAL' ? q.l >= 2 : playoffs.some((m) => m.stage === n.k && !m.won);
+        const done = n.k === 'QUAL' ? q.w >= G.qualNeed(t) : playoffs.some((m) => m.stage === n.k && m.won);
+        const lost = n.k === 'QUAL' ? q.l >= G.qualNeed(t) : playoffs.some((m) => m.stage === n.k && !m.won);
         return (
           <div key={n.k} className={`track__node ${done ? 'is-done' : ''} ${lost ? 'is-lost' : ''} ${current === n.k ? 'is-current' : ''}`}>
             <i>{done ? '✓' : lost ? '✗' : n.k === 'QUAL' ? `${q.w}-${q.l}` : `Bo${G.BEST_OF[n.k]}`}</i>
@@ -26,19 +27,51 @@ export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageK
   );
 }
 
-export function PreviewScreen({ mine, pending, t, dispatch }: { mine: G.Lineup[]; pending: Pending; t: G.Tournament; dispatch: React.Dispatch<Action> }) {
+/** Match-day form as a small tag: ▲▲ hot, ▲ good, ▼ cold. */
+function FormTag({ v }: { v?: number }) {
+  const label = G.formLabel(v);
+  if (label === 'Normal') return null;
+  return <em className={`form form--${label.toLowerCase()}`} title={`${label} form today`}>{v! > 2 ? '▲▲' : v! > 0 ? '▲' : '▼'}</em>;
+}
+
+/** Before a match: everyone's form, and which starter (if any) the bench player replaces. */
+function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch: React.Dispatch<Action> }) {
+  const bench = benchLineup(s);
+  if (!bench || !pending.form) return null;
+  const starters = G.lineupFromPicks(s.picks);
+  return (
+    <div className="subs anim-in">
+      <div className="subs__head">
+        <strong>Bench: {bench.player.nick}</strong> <FormTag v={pending.form[bench.player.id]} />
+        <small>{G.formLabel(pending.form[bench.player.id])} form. Sub in for one match, in the starter's role.</small>
+      </div>
+      <div className="subs__btns" role="group" aria-label="Substitution">
+        <button className={`ghost-btn ${!pending.subOut ? 'is-on' : ''}`} aria-pressed={!pending.subOut} onClick={() => dispatch({ type: 'sub', out: null })}>Keep starters</button>
+        {starters.map((l) => (
+          <button key={l.player.id} className={`ghost-btn ${pending.subOut === l.player.id ? 'is-on' : ''}`} aria-pressed={pending.subOut === l.player.id}
+            onClick={() => dispatch({ type: 'sub', out: l.player.id })}>
+            Sub out {l.player.nick} <FormTag v={pending.form![l.player.id]} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { mine: G.Lineup[]; s: Run; pending: Pending; t: G.Tournament; dispatch: React.Dispatch<Action> }) {
+  const mine = useMemo(() => (pending.form ? lineupFor(s, pending.subOut, undefined) : starters), [starters, pending.subOut, pending.form]);
   const opp = G.rosterById.get(pending.oppId)!;
   const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
   const [found, setFound] = useState(false);
   useEffect(() => { setFound(false); const tm = setTimeout(() => setFound(true), reduceMotion() ? 0 : 1500); return () => clearTimeout(tm); }, [pending.oppId]);
   return (
     <div className="stack">
-      <StageTrack t={t} current={pending.stage} />
+      {pending.stage !== 'DUEL' && <StageTrack t={t} current={pending.stage} />}
       {!found ? (
         <div className="searching anim-in">
           <span className="searching__ring" />
           <strong>Searching for opponent</strong>
-          <small>{G.STAGE_NAME[pending.stage]} · Best of {G.BEST_OF[pending.stage]}</small>
+          <small>{G.STAGE_NAME[pending.stage]} · Best of {G.bestOfFor(pending.stage, t)}</small>
         </div>
       ) : (
         <div className="match-found anim-in">
@@ -46,7 +79,7 @@ export function PreviewScreen({ mine, pending, t, dispatch }: { mine: G.Lineup[]
           <div className="versus">
             <div className="versus__side versus__side--t">
               <small>T · Your team</small>
-              <ul>{mine.map((l) => <li key={l.player.id}><RoleIcon role={l.slot} size={12} />{l.player.nick}</li>)}</ul>
+              <ul>{mine.map((l) => <li key={l.player.id}><RoleIcon role={l.slot} size={12} />{l.player.nick}<FormTag v={pending.form?.[l.player.id]} /></li>)}</ul>
             </div>
             <div className="versus__vs">VS</div>
             <div className="versus__side versus__side--ct">
@@ -56,6 +89,7 @@ export function PreviewScreen({ mine, pending, t, dispatch }: { mine: G.Lineup[]
               <ul>{oppL.map((l) => <li key={l.player.id}><RoleIcon role={l.slot} size={12} />{l.player.nick}</li>)}</ul>
             </div>
           </div>
+          <SubPanel s={s} pending={pending} dispatch={dispatch} />
           <div className="accept-bar"><span /></div>
           <button className="cta cta--go" onClick={() => dispatch({ type: 'start' })}>Accept</button>
         </div>
@@ -88,14 +122,25 @@ const SPEEDS = [1, 2, 4];
 const loadSpeed = () => { try { const v = Number(localStorage.getItem('mm-speed')); return SPEEDS.includes(v) ? v : 1; } catch { return 1; } };
 const sideCls = (side: G.Side) => (side === 'T' ? 't' : 'ct');
 const KF_CLASS = (e: G.MatchEvent) =>
-  e.kind === 'half' || e.kind === 'ot' ? 'kf--half'
+  e.kind === 'half' || e.kind === 'ot' || e.kind === 'call' ? 'kf--half'
     : e.kind === 'clutch' ? 'kf--clutch'
       : `${e.good ? 'kf--us' : 'kf--them'}${e.kind === 'pistol' ? ' kf--pistol' : ''}`;
 
-export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Match; t: G.Tournament; dispatch: React.Dispatch<Action> }) {
+/**
+ * Where playback of the current map had got to, kept apart from the (much bigger) run save so it can be written every
+ * round. After a reload the map resumes there instead of replaying rounds you've already seen.
+ */
+const SEEN_KEY = 'mm-seen';
+const seenKey = (t: G.Tournament, m: G.Match, mapIdx: number) => `${t.matches.length}:${mapIdx}:${m.form}`;
+const loadSeen = (key: string) => { try { const v = JSON.parse(localStorage.getItem(SEEN_KEY) ?? 'null'); return v?.key === key ? Number(v.n) || 0 : 0; } catch { return 0; } };
+const saveSeen = (key: string, n: number) => { try { localStorage.setItem(SEEN_KEY, JSON.stringify({ key, n })); } catch { /* storage unavailable */ } };
+
+export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; m: G.Match; t: G.Tournament; coach?: string | null; dispatch: React.Dispatch<Action> }) {
   const opp = G.rosterById.get(m.opponentId)!;
-  const [mapIdx, setMapIdx] = useState(0);
-  const [n, setN] = useState(0);
+  const [mapIdx, setMapIdx] = useState(() => Math.max(0, m.maps.length - 1));
+  const [n, setN] = useState(() => loadSeen(seenKey(t, m, Math.max(0, m.maps.length - 1))));
+  /** Pistol rounds (1 or 13) where you already answered the save-or-force question on this map. */
+  const [bought, setBought] = useState<number[]>([]);
   const [speed, setSpeed] = useState(loadSpeed);
   const game: G.MapGame | undefined = m.maps[mapIdx];
   const total = game?.rounds.length ?? 0;
@@ -103,12 +148,30 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
   const seriesDone = m.done && mapDone && mapIdx === m.maps.length - 1;
   const mapName = game?.map ?? m.next?.map ?? '';
   const vetoing = m.pool.length === 0;
+  const lastMap = mapIdx === m.maps.length - 1;
+  // After a lost pistol round, playback waits for your buy: save for the full buy, or force.
+  const buyQuestion = !!game && lastMap && !mapDone && (n === 1 || n === 13) && !game.rounds[n - 1] && !bought.includes(n)
+    && G.canCall(m, { kind: 'force', round: n });
 
   useEffect(() => {
-    if (!game || mapDone) return;
+    if (!game || mapDone || buyQuestion) return;
     const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230 / speed);
     return () => clearTimeout(tm);
-  }, [n, mapDone, mapIdx, !!game, speed]);
+  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion]);
+  useEffect(() => { if (game && lastMap) saveSeen(seenKey(t, m, mapIdx), Math.min(n, total)); }, [n, mapIdx, lastMap, total]);
+  useEffect(() => setBought([]), [mapIdx]);
+  const call = (kind: G.Call['kind']) => {
+    if (kind === 'force' || buyQuestion) setBought((b) => [...b, n]);
+    dispatch({ type: 'call', call: { kind, round: n } });
+    track('call', { kind, round: n, stage: m.stage });
+  };
+  const canTimeout = !!game && lastMap && !mapDone && n >= 1 && G.canCall(m, { kind: 'timeout', round: n });
+  useChatVote(buyQuestion ? `buy-${m.form}-${mapIdx}-${n}` : null,
+    [{ id: 'save', label: 'Save (eco)', aliases: ['save', 'eco'] }, { id: 'force', label: 'Force buy', aliases: ['force', 'force buy'] }],
+    (id) => (id === 'force' ? call('force') : setBought((b) => [...b, n])));
+  // The opponent's current run of rounds, which a timeout stops.
+  let theirRun = 0;
+  if (game) for (let i = Math.min(n, total) - 1; i >= 0 && !game.rounds[i]; i--) theirRun++;
 
   // pulse the map token of whoever made the highlight this round
   const shown = game ? game.events.filter((e) => e.round <= n) : [];
@@ -175,7 +238,7 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
       {vetoing ? (
         <VetoPanel m={m} opp={opp} mine={mine} dispatch={dispatch} />
       ) : !game ? (
-        m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} dispatch={dispatch} />
+        m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} dispatch={dispatch} />
       ) : !mapDone ? (
         <>
           <div className="killfeed" aria-live="polite">
@@ -184,6 +247,24 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
             ))}
             {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
+          {buyQuestion ? (
+            <div className="buy anim-in" role="group" aria-label="Buy after the lost pistol">
+              <strong>Pistol lost. Save or force?</strong>
+              <p>Saving means an eco now and a full buy after. A force buy gives you a real chance next round, but if it fails you're broke for the one after.</p>
+              <div className="buy__btns">
+                <button className="ghost-btn" onClick={() => setBought((b) => [...b, n])}>Save (eco)</button>
+                <button className="ghost-btn buy__force" onClick={() => call('force')}>Force buy</button>
+              </div>
+            </div>
+          ) : (
+            <div className="calls">
+              <button className="ghost-btn calls__timeout" onClick={() => call('timeout')} disabled={!canTimeout}
+                title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
+                Timeout
+              </button>
+              {theirRun >= 3 && <span className="calls__run">{opp.tag} have won {theirRun} in a row</span>}
+            </div>
+          )}
           <div className="playback">
             <div className="speed" role="group" aria-label="Playback speed">
               {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
@@ -212,10 +293,12 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
 }
 
 /** Before each map: the knife round. Win it and you pick the starting side; lose it and the opponent picks. */
-function KnifePanel({ k, opp, mine, mapNo, bestOf, dispatch }: {
-  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; dispatch: React.Dispatch<Action>;
+function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
+  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; voteKey: string; dispatch: React.Dispatch<Action>;
 }) {
   const left = G.otherSide(k.oppPick);
+  useChatVote(k.won ? voteKey : null, [{ id: 'T', label: 'T · attack', aliases: ['t', 'attack'] }, { id: 'CT', label: 'CT · defend', aliases: ['ct', 'defend'] }],
+    (id) => dispatch({ type: 'side', side: id as G.Side }));
   const title = k.how === 'our-pick' ? `Your pick: ${opp.org} choose sides`
     : k.how === 'their-pick' ? `${opp.org}'s pick: you choose sides`
       : k.won ? 'You won the knife!' : `${opp.org} won the knife`;
@@ -245,6 +328,9 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
   const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
   const t = G.vetoTurn(m.veto);
   const done = (map: string) => m.veto.steps.find((x) => x.map === map);
+  useChatVote(t?.team === 'us' ? `veto-${m.form}-${m.veto.steps.length}` : null,
+    G.MAPS.filter((map) => m.veto.left.includes(map)).map((map) => ({ id: map, label: map, aliases: [map, ...(map === 'Dust2' ? ['d2', 'dust'] : [])] })),
+    (map) => dispatch({ type: 'veto', map }));
   const pips = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n);
   return (
     <div className="veto anim-in">

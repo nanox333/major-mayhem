@@ -2,8 +2,9 @@ import React, { useEffect } from 'react';
 import { ROSTERS } from '../data/rosters';
 import { Stats, dailyStreak } from '../game/stats';
 import { dailyNumber, today } from '../game/state';
+import { ACHIEVEMENTS } from '../game/achievements';
 
-const REACHED = ['Out in qualification', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
+const REACHED = ['Out in the Swiss stage', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
 const nickById = new Map(ROSTERS.flatMap((r) => r.players.map((p) => [p.id, p.nick] as const)));
 
 export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => void }) {
@@ -25,6 +26,7 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
               <div><b>{Math.round((stats.titles / stats.runs) * 100)}%</b><small>Win rate</small></div>
               <div><b>{stats.bestStreak}</b><small>Best streak</small></div>
             </div>
+            {(stats.duels?.w || stats.duels?.l) ? <p>Draft duels: {stats.duels.w} won, {stats.duels.l} lost</p> : null}
             <h3>Finishes</h3>
             <ul className="bars">
               {[...REACHED].reverse().map((label, ri) => {
@@ -33,6 +35,13 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
               })}
             </ul>
             {most.length > 0 && (<><h3>Most drafted</h3><p>{most.map(([id, n]) => `${nickById.get(id) ?? id} ×${n}`).join(' · ')}</p></>)}
+            <h3>Achievements <span className="muted">{Object.keys(stats.ach ?? {}).length} of {ACHIEVEMENTS.length}</span></h3>
+            <ul className="achievements">
+              {ACHIEVEMENTS.map((a) => {
+                const when = stats.ach?.[a.id];
+                return <li key={a.id} className={when ? 'is-earned' : ''} title={when ? `Earned ${when}` : 'Not yet'}><b>{when ? '★' : '☆'} {a.name}</b><small>{a.desc}</small></li>;
+              })}
+            </ul>
             {dailies.length > 0 && (
               <>
                 <h3>Recent dailies</h3>

@@ -1,6 +1,6 @@
 // Balance and sanity check: simulated drafts are always completable, tournaments always finish,
 // and draft skill matters. Seeded, so the numbers are reproducible. Exits 1 on any failure.
-import { ROSTERS } from '../src/data/rosters';
+import { COACHES, ROSTERS } from '../src/data/rosters';
 import * as G from '../src/game/logic';
 
 const N = Number(process.env.RUNS ?? 3000);
@@ -27,10 +27,15 @@ function simulate(drafter: Drafter, seed: string) {
         picks = [...picks, { slot: o.s, rosterId: o.id, playerId: o.p.id }];
       }
       if (new Set(picks.map((p) => p.playerId)).size !== 5) { fails++; return; }
+      // Coach round: judged by rating, with the same kind of error as the players.
+      const coaches = G.makeCoachOffer(seen).map((id) => G.rosterById.get(id)!.coach!);
+      if (coaches.length !== 3) { fails++; return; }
+      const cv = (c: string) => COACHES[c].rating + (drafter === 'fan' ? (G.random() + G.random() + G.random() - 1.5) * 8 : 0);
+      const coach = drafter === 'random' ? coaches[G.rand(3)] : [...coaches].sort((a, b) => cv(b) - cv(a))[0];
       const mine = G.lineupFromPicks(picks);
       let t = G.newTournament(); let guard = 0;
       for (let st = G.nextStage(t); st && guard++ < 10; st = G.nextStage(t)) {
-        const m = G.playMatch(st, mine, G.pickOpponent(t, st, mine));
+        const m = G.playMatch(st, mine, G.pickOpponent(t, st, mine), G.bestOfFor(st, t), coach);
         if (m.maps.some((g) => g.rounds.length < 13) || (m.bestOf === 3 && m.maps.length < 2)) fails++;
         t = G.applyResult(t, m);
       }
@@ -50,7 +55,7 @@ console.log('random drafter', random);
 console.log('fan drafter', fan);
 console.log('expert drafter', expert);
 
-const powers = ROSTERS.map((r) => [r.org + ' ' + r.year, G.teamPower(G.naturalLineup(r)).total.toFixed(1)]).sort((a, b) => +b[1] - +a[1]);
+const powers = ROSTERS.map((r) => [r.org + ' ' + r.year, G.rosterPower(r).total.toFixed(1)]).sort((a, b) => +b[1] - +a[1]);
 console.log('strongest real rosters', powers.slice(0, 5), 'weakest', powers.slice(-3));
 
 // Rating sanity: average match rating by hidden game rating band should rise with the band.
@@ -75,6 +80,8 @@ if (random.fails || fan.fails || expert.fails) problems.push(`simulation failure
 if (fan.champ < 20 || fan.champ > 40) problems.push(`fan title rate ${fan.champ}% outside 20–40%`);
 if (expert.champ > 65) problems.push(`expert title rate ${expert.champ}% above 65%`);
 if (random.champ > 8) problems.push(`random title rate ${random.champ}% above 8%`);
+// The Swiss stage should be a real hurdle for a decent drafter without ending most runs.
+if (fan.qualOut < 5 || fan.qualOut > 25) problems.push(`fan Swiss exit rate ${fan.qualOut}% outside 5–25%`);
 if (fan.champ < random.champ * 4) problems.push(`draft skill barely matters: fan ${fan.champ}% vs random ${random.champ}%`);
 const top = bandAvg[bandAvg.length - 1][1], bottom = bandAvg[0][1];
 if (top <= bottom) problems.push('stronger players do not post better match ratings');
