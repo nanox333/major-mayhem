@@ -9,6 +9,10 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - Issue forms (bug, feature, roster data), a pull request template and discussion templates.
 - Dependabot updates for npm and GitHub Actions, CodeQL code scanning, label and milestone setup, and a release workflow.
 - A **Report incorrect data** link on every team in the draft, opening the roster-data form with the team filled in ([#13]).
+- **Rules versions:** each daily plays under the rules of its date, and saved runs and duel links keep theirs, so fixes never change a challenge already in progress. The fixes below start with Daily #3 (30 Sep 2026) ([#24]).
+
+### Changed
+- Achievement dates use the same local day as the daily, not UTC ([#26]).
 
 ### Fixed
 - **Scoreboards add up:** a player dies at most once per round, kills always equal the other side's deaths, and a clutch leaves the clutcher as the only survivor ([#12]).
@@ -60,6 +64,8 @@ The first tagged release, covering everything since the initial draft game.
 [#13]: https://github.com/nanox333/major-mayhem/issues/13
 [#14]: https://github.com/nanox333/major-mayhem/issues/14
 [#15]: https://github.com/nanox333/major-mayhem/issues/15
+[#24]: https://github.com/nanox333/major-mayhem/issues/24
 [#25]: https://github.com/nanox333/major-mayhem/issues/25
+[#26]: https://github.com/nanox333/major-mayhem/issues/26
 [#27]: https://github.com/nanox333/major-mayhem/issues/27
 [#63]: https://github.com/nanox333/major-mayhem/issues/63

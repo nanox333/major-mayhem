@@ -18,7 +18,13 @@ A running diary of what changed, what went wrong, and what we decided. Newest en
 
 **Smaller things.** Guess the pro now says its counts are from the game's data, not careers ([#14](https://github.com/nanox333/major-mayhem/issues/14)). Duel links reject unknown options ([#27](https://github.com/nanox333/major-mayhem/issues/27)). `npm run media` no longer builds `C:\C:\…` paths on Windows.
 
-**A caveat.** The simulation and role changes alter results for the same seed, so a daily that's already in progress would play out differently after deploy. Merging just after the daily rolls over avoids that. [#24](https://github.com/nanox333/major-mayhem/issues/24) (versioning dailies with their rules) is the proper fix.
+**Then we fixed the thing that made all this risky ([#24](https://github.com/nanox333/major-mayhem/issues/24)).** Every fix above changes what a seed produces, so deploying mid-day would have changed a daily people were already playing. Now there are **rules versions**. A daily plays under the version in force on its date, a saved run keeps the version it started with, and duel links carry theirs. v1 is launch; v2 starts tomorrow with this session's fixes. The old code paths stay behind the version check, and so do the old data values (`rolesV1`, `coachV1`).
+
+How do we know v1 really is untouched? We played Daily #1, Daily #2, four free runs, every roster's lineup and both Guess the pro answers on the original launch commit, and recorded fingerprints. A test now replays them under v1 with the new code, and they match exactly. The first attempt didn't: the corrected coaches had leaked into free play, and the test caught it. The only v1 difference left is text: the pistol line no longer says "You're saving" before you choose.
+
+**One daily date ([#26](https://github.com/nanox333/major-mayhem/issues/26)).** Dailies use the local calendar day, but achievements were stamped in UTC. Both use the local day now. We kept local midnight rather than switching to UTC, because switching would make some players skip or repeat a day.
+
+**Load time, measured before touching it.** The single-file build is 2.4 MB, 1.6 MB compressed. Images are 60% of it, sounds 15%, fonts 7%. Once the file has arrived, it parses and starts in about 50 ms, so load time is really download time: roughly a second on good 4G, several seconds on slow mobile. Numbers and a recommendation are on #24.
 
 **Next up.** v1.2, clearer decisions: stats visibility ([#64](https://github.com/nanox333/major-mayhem/issues/64)), veto explanations ([#65](https://github.com/nanox333/major-mayhem/issues/65)), playback controls ([#16](https://github.com/nanox333/major-mayhem/issues/16)).
 
