@@ -279,6 +279,20 @@ describe('pistols and clutches', () => {
       }
     }
   });
+  it('never narrates a buy the player did not make (#15)', () => {
+    for (let i = 0; i < 60; i++) {
+      const m = G.seeded(`narr-${i}`, () => G.playMatch('F', lineupOf(i % 10), ROSTERS[(i + 3) % 20].id));
+      for (const g of m.maps) for (const e of g.events) {
+        expect(e.text).not.toMatch(/You're saving/);
+        // no calls were made, so your side never forces
+        if (e.mine) expect(e.text).not.toMatch(/force buy/);
+      }
+    }
+    const lines = ['{p} deagles two on the force buy', '{t} win the force buy through {s}', '{p} wins the round with a gutsy anti-eco call', '{p} holds {s}'];
+    expect(G.fitting(lines, { ourForce: false, theirEco: false })).toEqual(['{p} holds {s}']);
+    expect(G.fitting(lines, { ourForce: true, theirEco: false })).toEqual(['{p} deagles two on the force buy', '{p} holds {s}']);
+    expect(G.fitting(lines, { ourForce: false, theirEco: true })).toEqual(lines.slice(1));
+  });
   it('credits clutches to one of your players in a round you won', () => {
     const clutches = Array.from({ length: 60 }, (_, i) => G.seeded(`c-${i}`, () => G.playMatch('F', lineupOf(3), ROSTERS[8].id)))
       .flatMap((m) => m.maps.flatMap((g) => g.events.filter((e) => e.kind === 'clutch').map((e) => ({ e, g }))));

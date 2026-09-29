@@ -353,6 +353,10 @@ export const CALLOUTS: Record<string, string[]> = {
   Dust2: ['Long A', 'Catwalk', 'Mid doors', 'Upper tunnels', 'B window', 'Pit', 'Xbox', 'Goose'],
   Train: ['Ivy', 'Connector', 'Popdog', 'Upper B', 'Lower hall', 'Heaven', 'Z-connector'],
 };
+export interface Buy { ourForce: boolean; theirEco: boolean }
+/** Lines that mention a force buy or an eco only fit rounds where that is actually happening. */
+export const fitting = (lines: string[], buy: Buy): string[] => lines.filter((l) =>
+  /force buy/.test(l) ? (l.startsWith('{t}') ? buy.theirEco : buy.ourForce) : /anti-eco/.test(l) ? buy.theirEco : true);
 const fill = (tpl: string, p: string, t: string, map: string) => {
   const spots = CALLOUTS[map] ?? ['mid'];
   return tpl.replace('{p}', p).replace('{t}', t).replace('{s}', spots[rand(spots.length)]);
@@ -456,6 +460,8 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     won ? a++ : b++;
     if (won) { ourRun++; theirRun = 0; } else { theirRun++; ourRun = 0; }
     const rn = rounds.length;
+    // Who is buying what this round, so the narration can't contradict the economy.
+    const buy: Buy = { ourForce: forced && ecoLeft === 2, theirEco: econ > 0 && ecoLeft > 0 };
     if (ecoLeft > 0) ecoLeft--;
     if (ecoLeft === 0) forced = false;
     let star: number | undefined, clutch: { who: number; vs: number } | undefined;
@@ -470,17 +476,20 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
         star = rand(5);
         const x = mine[star];
         impact[x.player.id] += 2.5;
-        events.push({ round: rn, text: fill(EVENT_TEXT[x.slot][rand(EVENT_TEXT[x.slot].length)], x.player.nick, oppOrg, map), playerId: x.player.id, mine: true, good: true });
+        const lines = fitting(EVENT_TEXT[x.slot], buy);
+        events.push({ round: rn, text: fill(lines[rand(lines.length)], x.player.nick, oppOrg, map), playerId: x.player.id, mine: true, good: true });
       } else {
         const y = oppL[rand(5)];
-        events.push({ round: rn, text: fill(OPP_TEXT[rand(OPP_TEXT.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
+        const lines = fitting(OPP_TEXT, buy);
+        events.push({ round: rn, text: fill(lines[rand(lines.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
       }
     }
     const t = tallyRound(won, kwM, dwM, kwO, dwO, star, clutch);
     for (let j = 0; j < 5; j++) { K[j] += t.ourKills[j]; D[j] += t.ourDeaths[j]; OK[j] += t.theirKills[j]; OD[j] += t.theirDeaths[j]; }
     if (rn === 1 || rn === 13) {
       econ = won ? 1 : -1; ecoLeft = 2; forced = false;
-      events.push({ round: rn, text: won ? `Pistol round to you. ${oppOrg} are on an eco.` : `${oppOrg} take the pistol round. You're saving.`, mine: true, good: won, kind: 'pistol' });
+      // The buy after a lost pistol is the player's call, narrated by the call event, so don't presume it here.
+      events.push({ round: rn, text: won ? `Pistol round to you. ${oppOrg} are on an eco.` : `${oppOrg} take the pistol round.`, mine: true, good: won, kind: 'pistol' });
     }
     if (rn === 12) halfLead = a - b;
     if (rn === 12) events.push({ round: rn, text: `Halftime ${a}–${b}. You switch to ${otherSide(start)}.`, mine: true, good: a >= b, kind: 'half' });
