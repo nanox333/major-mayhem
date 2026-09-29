@@ -94,12 +94,17 @@ describe('stats and sharing', () => {
     expect(twice.runs).toBe(2);
     expect(twice.daily['2026-10-01']).toEqual(once.daily['2026-10-01']);
   });
-  it('writes a share line with the daily number, the path and all five picks', () => {
+  it('writes a short spoiler-light grid: the daily number, the path and which picks were the best in their case (#73)', () => {
     const run = playThrough(fresh('daily', '2026-10-01'));
-    const text = shareText(run);
-    expect(text).toContain('Daily #4');
-    for (const p of G.lineupFromPicks(run.picks)) expect(text).toContain(p.player.nick);
-    expect(text.split('\n')[1]).toMatch(/^Q[🟩🟥]/u);
+    const lines = shareText(run, 'https://example.test/').split('\n');
+    expect(lines[0]).toContain('Daily #4');
+    expect(lines.length).toBeLessThanOrEqual(6);
+    expect(lines.some((l) => /^Swiss [🟩🟥]+$/u.test(l))).toBe(true);
+    expect(lines.find((l) => l.startsWith('Draft '))).toMatch(/^Draft [🎯⬜]+ {2}\(\d+\/\d+ best picks\)$/u);
+    expect(lines[lines.length - 1]).toBe('https://example.test/');
+    // Names stay out of it, and hard mode is marked in the title.
+    for (const p of G.lineupFromPicks(run.picks)) expect(lines.slice(1, -1).join('\n')).not.toContain(`${p.player.nick} ·`);
+    expect(shareText({ ...run, opts: { hard: true } }).split('\n')[0]).toContain('💀');
   });
 });
 

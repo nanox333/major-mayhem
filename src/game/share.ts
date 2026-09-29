@@ -1,5 +1,4 @@
 // Spoiler-light result text for sharing, in the style of daily puzzle games.
-import { ROLE_SHORT } from '../data/rosters';
 import * as G from './logic';
 import { Run, dailyDate, dailyNumber, squadOf } from './state';
 
@@ -7,7 +6,6 @@ const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF',
 
 export function shareText(run: Run, url?: string): string {
   const pl = G.placement(run.t);
-  const mine = G.lineupFromPicks(run.picks);
   const star = G.mvp(run.t, squadOf(run));
   const rating = G.seriesRatings(run.t.matches.flatMap((m) => m.maps))[star.player.id]?.rating;
   const { grade } = G.draftReview(run.picks);
@@ -17,11 +15,17 @@ export function shareText(run: Run, url?: string): string {
   const trophy = pl.key === 'CHAMP' || pl.key === 'DUEL-W' ? '🏆' : pl.key === 'F' ? '🥈' : pl.reached >= 2 ? '🎖️' : '💀';
   const m0 = run.t.matches[0];
   const title = duel && m0 ? `${m0.won ? 'Won' : 'Lost'} ${m0.score[0]}–${m0.score[1]}` : pl.key === 'CHAMP' ? 'Major Champions' : pl.label;
-  const path = run.t.matches.map((m) => `${STAGE_SHORT[m.stage]}${m.won ? '🟩' : '🟥'}`).join(' ');
+  const box = (won: boolean) => (won ? '🟩' : '🟥');
+  const swiss = run.t.matches.filter((m) => m.stage === 'QUAL').map((m) => box(m.won)).join('');
+  const knockout = run.t.matches.filter((m) => m.stage !== 'QUAL').map((m) => `${STAGE_SHORT[m.stage]} ${box(m.won)}`).join(' ');
+  // One target per pick that had alternatives: hit when it was the strongest choice in its case (#73).
+  const scored = G.draftReview(run.picks).rounds.filter((r) => r.best);
+  const hits = scored.filter((r) => r.value >= r.best!.value - 1e-9).length;
   const lines = [
-    `${head} ${trophy} ${title}`,
-    path,
-    [...mine.map((l) => `${ROLE_SHORT[l.slot]} ${l.player.nick}`), ...(run.coach ? [`Coach ${run.coach}`] : [])].join(' · '),
+    `${head} ${trophy} ${title}${run.opts?.hard ? ' 💀' : ''}`,
+    ...(swiss ? [`Swiss ${swiss}`] : []),
+    ...(knockout ? [knockout] : []),
+    ...(scored.length ? [`Draft ${scored.map((r) => (r.value >= r.best!.value - 1e-9 ? '🎯' : '⬜')).join('')}  (${hits}/${scored.length} best picks)`] : []),
     `MVP ${star.player.nick}${rating !== undefined ? ` ${rating.toFixed(2)}` : ''}${grade !== null ? ` · Draft ${Math.round(grade * 100)}%` : ''}`,
   ];
   if (url) lines.push(url);
