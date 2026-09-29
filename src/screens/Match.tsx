@@ -120,7 +120,9 @@ function Scoreboard({ game, opp, mine }: { game: G.MapGame; opp: Roster; mine: G
   );
 }
 
-const SPEEDS = [1, 2, 4];
+/** Playback speeds. "Tactical" is slow enough to read the feed and make calls as they come up (#16). */
+const SPEEDS = [0.35, 1, 2, 4];
+const speedLabel = (v: number) => (v < 1 ? 'Tactical' : `${v}×`);
 const loadSpeed = () => { try { const v = Number(localStorage.getItem('mm-speed')); return SPEEDS.includes(v) ? v : 1; } catch { return 1; } };
 const sideCls = (side: G.Side) => (side === 'T' ? 't' : 'ct');
 const KF_CLASS = (e: G.MatchEvent) =>
@@ -144,6 +146,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
   /** Pistol rounds (1 or 13) where you already answered the save-or-force question on this map. */
   const [bought, setBought] = useState<number[]>([]);
   const [speed, setSpeed] = useState(loadSpeed);
+  /** Paused playback waits for Resume or Next round (#16). */
+  const [paused, setPaused] = useState(false);
   const game: G.MapGame | undefined = m.maps[mapIdx];
   const total = game?.rounds.length ?? 0;
   const mapDone = !!game && n >= total;
@@ -156,12 +160,23 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     && G.canCall(m, { kind: 'force', round: n });
 
   useEffect(() => {
-    if (!game || mapDone || buyQuestion) return;
+    if (!game || mapDone || buyQuestion || paused) return;
     const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230 / speed);
     return () => clearTimeout(tm);
-  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion]);
+  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion, paused]);
+  // Space pauses and resumes, the right arrow steps one round while paused (desktop and streamers).
+  useEffect(() => {
+    if (!game || mapDone) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.closest('input, textarea, button, select')) return;
+      if (e.key === ' ') { e.preventDefault(); setPaused((p) => !p); }
+      if (e.key === 'ArrowRight' && paused && !buyQuestion) setN((x) => Math.min(x + 1, total));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [!!game, mapDone, paused, buyQuestion, total]);
   useEffect(() => { if (game && lastMap) saveSeen(seenKey(t, m, mapIdx), Math.min(n, total)); }, [n, mapIdx, lastMap, total]);
-  useEffect(() => setBought([]), [mapIdx]);
+  useEffect(() => { setBought([]); setPaused(false); }, [mapIdx]);
   const call = (kind: G.Call['kind']) => {
     if (kind === 'force' || buyQuestion) setBought((b) => [...b, n]);
     dispatch({ type: 'call', call: { kind, round: n } });
@@ -281,11 +296,14 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
               </div>
             )}
             <div className="playback">
+              <button className="ghost-btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? '▶ Resume' : '❚❚ Pause'}</button>
+              {paused && <button className="ghost-btn" disabled={buyQuestion} onClick={() => setN((x) => Math.min(x + 1, total))} title="Right arrow">Next round ›</button>}
               <div className="speed" role="group" aria-label="Playback speed">
-                {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+                {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{speedLabel(v)}</button>)}
               </div>
               <button className="ghost-btn" onClick={() => setN(total)}>Skip map</button>
             </div>
+            {paused && <p className="muted small playback__note">Paused after round {Math.min(n, total)}. Timeouts can still be called.</p>}
           </div>
           <div className="killfeed" aria-live="polite">
             {/* The opponent's run is news to act on (a timeout stops it), so it leads the feed rather than crowding the buttons. */}
