@@ -10,6 +10,7 @@ import { fmt } from '../ui/util';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
 import { reportError, track } from '../analytics';
 import { RosterList, Staff } from './Lobby';
+import { achievementById } from '../game/achievements';
 import { StageTrack } from './Match';
 
 export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s: Run; stats: Stats; dispatch: React.Dispatch<Action> }) {
@@ -35,6 +36,12 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </div>
         <div className="mvp-card__rating"><b>{fmt(ratings[star.player.id].rating)}</b><small>Event rating</small></div>
       </div>
+      {s.recorded && stats.lastNew?.length > 0 && (
+        <div className="new-ach anim-in" role="status">
+          <small>New achievement{stats.lastNew.length > 1 ? 's' : ''}</small>
+          {stats.lastNew.map((id) => <span key={id} title={achievementById.get(id)?.desc}>★ {achievementById.get(id)?.name ?? id}</span>)}
+        </div>
+      )}
       <ShareBar
         text={() => shareText(s, pageUrl())}
         image={{ draw: () => drawResultCard(s, siteHost()), name: cardFileName(s) }}

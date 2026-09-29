@@ -2,6 +2,7 @@
 import * as G from './logic';
 import { Run, dailyDate, dailyNumber, squadOf } from './state';
 import { shareText } from './share';
+import { newAchievements } from './achievements';
 
 export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null; share?: string; abandoned?: boolean }
 export interface Stats {
@@ -17,10 +18,14 @@ export interface Stats {
   drafted: Record<string, number>;
   /** First finished result for each daily, by date. */
   daily: Record<string, DailyResult>;
+  /** Achievements earned: id → date (YYYY-MM-DD). */
+  ach: Record<string, string>;
+  /** Achievements earned by the last finished run, for the results screen. */
+  lastNew: string[];
 }
 
 const KEY = 'major-mayhem-stats-v1';
-export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {} });
+export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [] });
 
 export function loadStats(): Stats {
   try {
@@ -49,6 +54,10 @@ export function addRun(st: Stats, run: Run): Stats {
   for (const p of run.picks) next.drafted[p.playerId] = (next.drafted[p.playerId] ?? 0) + 1;
   const date = dailyDate(run);
   if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade, share: shareText(run) };
+  const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0 }, st.ach ?? {});
+  const day = date ?? new Date().toISOString().slice(0, 10);
+  next.ach = { ...(st.ach ?? {}), ...Object.fromEntries(earned.map((id) => [id, day])) };
+  next.lastNew = earned;
   return next;
 }
 

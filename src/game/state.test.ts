@@ -4,6 +4,7 @@ import { COACHES, ROSTERS, rostersOn } from '../data/rosters';
 import { Run, dailyNumber, fresh, lineupFor, reducer, roundOf, validRun } from './state';
 import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats } from './stats';
 import { shareText } from './share';
+import { newAchievements } from './achievements';
 
 /** Plays your veto turns with the sensible choice. */
 function vetoAll(s: Run): Run {
@@ -254,5 +255,56 @@ describe('tactical calls', () => {
     const forced = reducer(s, { type: 'call', call: { kind: 'force', round: 1 } });
     expect(forced === s).toBe(!lostPistol);
     expect(reducer(s, { type: 'call', call: { kind: 'force', round: 5 } })).toBe(s);
+  });
+});
+
+describe('free-play modes', () => {
+  const offers = (s: Run, n = 12) => {
+    const seen: string[] = [];
+    for (let i = 0; i < n; i++) { const r = reducer({ ...s, seed: `${s.seed}-${i}` }, { type: 'spin' }); seen.push(...r.offer); }
+    return seen.map((id) => G.rosterById.get(id)!);
+  };
+  it('sets options only before the first case of a free run', () => {
+    const s = reducer(fresh('free'), { type: 'opts', opts: { pool: 'champions' } });
+    expect(s.opts).toEqual({ pool: 'champions' });
+    const spun = reducer(s, { type: 'spin' });
+    expect(reducer(spun, { type: 'opts', opts: {} })).toBe(spun);
+    expect(reducer(fresh('daily'), { type: 'opts', opts: { hard: true } }).opts).toBeUndefined();
+  });
+  it('draws from champions, underdogs or one era only', () => {
+    expect(offers(fresh('free', undefined, { pool: 'champions' })).every((r) => r.result === 'Champions')).toBe(true);
+    expect(offers(fresh('free', undefined, { pool: 'underdogs' })).every((r) => !['Champions', 'Runner-up'].includes(r.result))).toBe(true);
+    expect(offers(fresh('free', undefined, { era: 'cs2' })).every((r) => r.year >= 2024)).toBe(true);
+    expect(offers(fresh('free', undefined, { era: 'csgo' })).every((r) => r.year <= 2023)).toBe(true);
+  });
+  it('lets hard mode put anyone in any open slot', () => {
+    let s = reducer(fresh('free', undefined, { hard: true }), { type: 'spin' });
+    s = reducer(s, { type: 'team', id: s.offer[0] });
+    const p = G.rosterById.get(s.offer[0])!.players[0];
+    const off = ['IGL', 'AWP', 'ENTRY', 'LURK', 'SUP'].find((r) => !p.roles.includes(r as never))!;
+    expect(reducer(s, { type: 'draft', player: p, slot: off as never }).picks).toHaveLength(1);
+    expect(reducer({ ...s, opts: undefined }, { type: 'draft', player: p, slot: off as never }).picks).toHaveLength(0);
+  });
+  it('keeps the options when playing again, and drops them for a daily', () => {
+    const s = fresh('free', undefined, { era: 'cs2', hard: true });
+    expect(reducer(s, { type: 'reset' }).opts).toEqual({ era: 'cs2', hard: true });
+    expect(reducer(s, { type: 'reset', mode: 'daily' }).opts).toBeUndefined();
+  });
+});
+
+describe('achievements', () => {
+  const run = playThrough(fresh('daily', '2026-10-05'));
+  const asChamp: Run = { ...run, t: { ...run.t, status: 'champion' } };
+  it('awards on the finished run and never twice', () => {
+    const a = addRun(emptyStats(), asChamp);
+    expect(a.ach.champion).toBe('2026-10-05');
+    expect(a.lastNew).toContain('champion');
+    const b = addRun(a, { ...asChamp, seed: 'free-x', mode: 'free' });
+    expect(b.lastNew).not.toContain('champion');
+    expect(b.ach.champion).toBe('2026-10-05');
+  });
+  it('checks streaks through the lifetime stats', () => {
+    expect(newAchievements(run, { streak: 3, dailyStreak: 7 }, {})).toEqual(expect.arrayContaining(['dynasty', 'daily-3', 'daily-7']));
+    expect(newAchievements(run, { streak: 0, dailyStreak: 2 }, {})).not.toContain('daily-3');
   });
 });

@@ -601,7 +601,10 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
   // Skip rosters that include anyone on your team, so nobody faces themselves.
   const mineIds = new Set(mine.map((x) => x.player.id));
   const clean = rosters.filter((r) => !r.players.some((p) => mineIds.has(p.id)) && !t.used.includes(r.id));
-  const pool = clean.length >= 8 ? clean : rosters.filter((r) => !mine.some((x) => x.roster.id === r.id) && !t.used.includes(r.id));
+  // Smaller pools (era modes) can run short over a long run: fall back to rosters you drafted from, then to repeats.
+  const notUsed = rosters.filter((r) => !t.used.includes(r.id));
+  const pool = clean.length >= 8 ? clean
+    : [notUsed.filter((r) => !mine.some((x) => x.roster.id === r.id)), notUsed, rosters].find((x) => x.length)!;
   const ranked = pool
     .map((r) => ({ r, p: rosterPower(r).total }))
     .sort((x, y) => y.p - x.p);

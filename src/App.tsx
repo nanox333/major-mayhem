@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_ORDER } from './data/rosters';
 import * as G from './game/logic';
-import { Action, Phase, Run, currentLineup, dailyDate, dailyNumber, draftRounds, load, reducer, roundNumber, roundOf, save } from './game/state';
+import { Action, Phase, Run, currentLineup, dailyDate, dailyNumber, draftRounds, load, optsLabel, reducer, roundNumber, roundOf, save } from './game/state';
 import { abandonDaily, dailyStarted, loadStats, recordRun } from './game/stats';
 import { BoardHost } from './ui/Board';
 import { useRunTracking } from './ui/useTracking';
@@ -47,7 +47,8 @@ export default function App() {
   let title = s.step === 'players' ? (round === 'bench' ? 'Choose your bench player' : 'Choose your player')
     : s.step === 'teams' ? (round === 'coach' ? 'Pick a coach' : round === 'bench' ? 'Pick a team for the bench' : 'Pick a team') : 'Open a case';
   const date = dailyDate(s);
-  let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : ''}Draft · Round ${roundNumber(s)} of ${draftRounds(s)}${round === 'coach' ? ' · Coach' : round === 'bench' ? ' · Bench' : ''}`;
+  const tags = optsLabel(s.opts).map((x) => `${x} · `).join('');
+  let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : tags}Draft · Round ${roundNumber(s)} of ${draftRounds(s)}${round === 'coach' ? ' · Coach' : round === 'bench' ? ' · Bench' : ''}`;
   if (s.phase === 'ready') { title = 'Ready to rumble'; kicker = `Lobby · ${draftRounds(s)} of ${draftRounds(s)} drafted`; }
   if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `Major · Best of ${s.current?.bestOf ?? G.bestOfFor(stageNow!, s.t)}`; }
   if (s.phase === 'final') { title = 'Tournament over'; kicker = 'Results'; }

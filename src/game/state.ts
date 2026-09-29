@@ -6,6 +6,16 @@ import * as G from './logic';
 
 export type Phase = 'draft' | 'ready' | 'preview' | 'live' | 'final';
 export type Mode = 'free' | 'daily';
+/** Free-play options. Dailies always use the full pool with labels. */
+export interface Opts {
+  /** Only rosters from one era: CS:GO (to Paris 2023) or CS2 (from Copenhagen 2024). Opponents too, when there are enough. */
+  era?: 'csgo' | 'cs2';
+  /** Draft only from champions, or only from teams that didn't reach a final. */
+  pool?: 'champions' | 'underdogs';
+  /** No role labels, hints or rarity colors: draft on knowledge alone. */
+  hard?: boolean;
+}
+export const optsLabel = (o?: Opts) => [o?.era === 'csgo' ? 'CS:GO era' : o?.era === 'cs2' ? 'CS2 era' : '', o?.pool === 'champions' ? 'Champions only' : o?.pool === 'underdogs' ? 'Underdogs only' : '', o?.hard ? 'Hard mode' : ''].filter(Boolean);
 export interface Pending {
   stage: G.StageKey;
   oppId: string;
@@ -40,7 +50,13 @@ export interface Run {
   coachFrom?: string;
   /** Your bench player, who can sub in before any match. */
   bench?: G.Pick | null;
+  /** Free-play mode options. */
+  opts?: Opts;
 }
+
+/** Slots a player can go into: the roles they cover, or in hard mode any open slot (off-role costs as usual). */
+export const slotsFor = (s: Run, p: Player): Role[] =>
+  s.opts?.hard ? (G.draftedIds(s.picks).has(p.id) ? [] : G.openSlots(s.picks)) : G.eligibleSlots(p, s.picks);
 
 export type Round = 'player' | 'coach' | 'bench';
 /** Which kind of draft round is next: five players, then the coach, then the bench. */
@@ -67,7 +83,8 @@ export const today = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() 
 export const dailyNumber = (date: string) => Math.round((Date.parse(date + 'T00:00:00Z') - Date.parse('2026-09-28T00:00:00Z')) / 86400000) + 1;
 export const dailyDate = (s: Run) => (s.mode === 'daily' ? s.seed.replace('daily-', '') : null);
 
-export const fresh = (mode: Mode = 'free', date = today()): Run => ({
+export const fresh = (mode: Mode = 'free', date = today(), opts?: Opts): Run => ({
+  ...(mode === 'free' && opts && optsLabel(opts).length ? { opts } : {}),
   v: 3, mode, seed: mode === 'daily' ? `daily-${date}` : `free-${Math.random().toString(36).slice(2, 10)}`,
   phase: 'draft', step: 'spin', offer: [], offerKey: 0, rerollKey: 0, seen: [], team: null, picks: [], rerolls: 2,
   t: G.newTournament(), pending: null, current: null, recorded: false, extras: true, bench: null,
@@ -108,6 +125,7 @@ export function validRun(r: any): boolean {
     && (!r.bench || (pickOk(r.bench) && !r.picks.some((p: G.Pick) => p.playerId === r.bench.playerId)))
     && (!r.pending?.subOut || r.picks.some((p: G.Pick) => p.playerId === r.pending.subOut))
     && (!r.current?.subOut || r.picks.some((p: G.Pick) => p.playerId === r.current.subOut))
+    && (!r.opts || (typeof r.opts === 'object' && [undefined, 'csgo', 'cs2'].includes(r.opts.era) && [undefined, 'champions', 'underdogs'].includes(r.opts.pool)))
     && (!r.current || roster(r.current.opponentId))
     && Array.isArray(r.t?.matches) && r.t.matches.every((m: G.Match) => roster(m.opponentId));
 }
@@ -116,19 +134,36 @@ export const save = (r: Run) => { try { localStorage.setItem(KEY, JSON.stringify
 export type Action =
   | { type: 'spin' } | { type: 'reroll' } | { type: 'team'; id: string } | { type: 'back' }
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
-  | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode } | { type: 'recorded' }
+  | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode; opts?: Opts } | { type: 'recorded' }
+  | { type: 'opts'; opts: Opts }
   | { type: 'coach'; rosterId: string } | { type: 'bench'; player: Player } | { type: 'sub'; out: string | null } | { type: 'call'; call: G.Call };
 
 /** A daily draws only from rosters available on its date, so later data additions don't change it. */
-export const rostersFor = (s: Run) => { const date = dailyDate(s); return date ? rostersOn(date) : activeRosters(); };
-const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen, rostersFor(s)));
+const eraOf = (year: number) => (year >= 2024 ? 'cs2' : 'csgo');
+/** The rosters a run can face: a daily's pinned set, or free play's active rosters (one era, if chosen and big enough). */
+export const rostersFor = (s: Run) => {
+  const date = dailyDate(s);
+  if (date) return rostersOn(date);
+  const all = activeRosters();
+  const era = s.opts?.era ? all.filter((r) => eraOf(r.year) === s.opts!.era) : all;
+  return era.length >= 16 ? era : all;
+};
+/** The rosters the draft offers: the run's pool, narrowed further by the free-play options. */
+export const draftPoolFor = (s: Run) => {
+  const base = rostersFor(s);
+  const era = s.opts?.era ? base.filter((r) => eraOf(r.year) === s.opts!.era) : base;
+  const pool = s.opts?.pool === 'champions' ? era.filter((r) => r.result === 'Champions')
+    : s.opts?.pool === 'underdogs' ? era.filter((r) => r.result !== 'Champions' && r.result !== 'Runner-up') : era;
+  return pool.length >= 9 ? pool : era;
+};
+const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen, draftPoolFor(s)));
 const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) =>
   G.seeded(`${s.seed}:opp:${t.matches.length}`, () => G.pickOpponent(t, stage, squadOf(s), rostersFor(s)));
 /** The offer for whichever round is next. Coach and bench offers are seeded apart from the player rounds. */
 const offerForRound = (s: Run) => {
   const round = roundOf(s);
-  if (round === 'coach') return G.seeded(`${s.seed}:coach:${s.rerolls}`, () => G.makeCoachOffer(s.seen, rostersFor(s)));
-  if (round === 'bench') return G.seeded(`${s.seed}:bench:${s.rerolls}`, () => G.makeBenchOffer(s.picks, s.seen, rostersFor(s)));
+  if (round === 'coach') return G.seeded(`${s.seed}:coach:${s.rerolls}`, () => G.makeCoachOffer(s.seen, draftPoolFor(s)));
+  if (round === 'bench') return G.seeded(`${s.seed}:bench:${s.rerolls}`, () => G.makeBenchOffer(s.picks, s.seen, draftPoolFor(s)));
   return offerFor(s);
 };
 /** A found match: the opponent, plus everyone's match-day form (only for drafts with a bench). */
@@ -154,7 +189,7 @@ export function reducer(s: Run, a: Action): Run {
     case 'team': return { ...s, step: 'players', team: a.id };
     case 'back': return { ...s, step: 'teams', team: null };
     case 'draft': {
-      if (!s.team || !G.eligibleSlots(a.player, s.picks).includes(a.slot)) return s;
+      if (!s.team || !slotsFor(s, a.player).includes(a.slot)) return s;
       if (roundOf(s) !== 'player') return s;
       const picks = [...s.picks, { slot: a.slot, rosterId: s.team, playerId: a.player.id, offer: s.offer }];
       return { ...s, picks, team: null, offer: [], step: 'spin', phase: picks.length === 5 && !s.extras ? 'ready' : 'draft' };
@@ -215,7 +250,9 @@ export function reducer(s: Run, a: Action): Run {
       if (!stage) return { ...s, t, current: null, pending: null, phase: 'final' };
       return { ...s, t, current: null, phase: 'preview', pending: pendingFor(s, t, stage) };
     }
-    case 'reset': return fresh(a.mode);
+    // Play again keeps your free-play options; switching to a daily drops them.
+    case 'reset': return fresh(a.mode, today(), a.opts ?? ((a.mode ?? 'free') === 'free' ? s.opts : undefined));
+    case 'opts': return s.offerKey === 0 && s.mode === 'free' ? fresh('free', today(), a.opts) : s;
     case 'recorded': return { ...s, recorded: true };
   }
 }
