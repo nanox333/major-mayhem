@@ -9,12 +9,12 @@ import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
   const playoffs = t.matches.filter((m) => m.stage !== 'QUAL');
-  const nodes: { k: G.StageKey; label: string }[] = [{ k: 'QUAL', label: 'Qual' }, { k: 'QF', label: 'Quarter' }, { k: 'SF', label: 'Semi' }, { k: 'F', label: 'Final' }];
+  const nodes: { k: G.StageKey; label: string }[] = [{ k: 'QUAL', label: t.qual.need ? 'Swiss' : 'Qual' }, { k: 'QF', label: 'Quarter' }, { k: 'SF', label: 'Semi' }, { k: 'F', label: 'Final' }];
   return (
     <div className="track">
       {nodes.map((n) => {
-        const done = n.k === 'QUAL' ? q.w >= 2 : playoffs.some((m) => m.stage === n.k && m.won);
-        const lost = n.k === 'QUAL' ? q.l >= 2 : playoffs.some((m) => m.stage === n.k && !m.won);
+        const done = n.k === 'QUAL' ? q.w >= G.qualNeed(t) : playoffs.some((m) => m.stage === n.k && m.won);
+        const lost = n.k === 'QUAL' ? q.l >= G.qualNeed(t) : playoffs.some((m) => m.stage === n.k && !m.won);
         return (
           <div key={n.k} className={`track__node ${done ? 'is-done' : ''} ${lost ? 'is-lost' : ''} ${current === n.k ? 'is-current' : ''}`}>
             <i>{done ? '✓' : lost ? '✗' : n.k === 'QUAL' ? `${q.w}-${q.l}` : `Bo${G.BEST_OF[n.k]}`}</i>
@@ -38,7 +38,7 @@ export function PreviewScreen({ mine, pending, t, dispatch }: { mine: G.Lineup[]
         <div className="searching anim-in">
           <span className="searching__ring" />
           <strong>Searching for opponent</strong>
-          <small>{G.STAGE_NAME[pending.stage]} · Best of {G.BEST_OF[pending.stage]}</small>
+          <small>{G.STAGE_NAME[pending.stage]} · Best of {G.bestOfFor(pending.stage, t)}</small>
         </div>
       ) : (
         <div className="match-found anim-in">

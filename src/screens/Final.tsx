@@ -52,7 +52,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           const o = G.rosterById.get(m.opponentId)!;
           return (
             <li key={i} className={m.won ? 'w' : 'l'}>
-              <span>{m.stage === 'QUAL' ? 'Qual' : m.stage}</span>
+              <span>{m.stage === 'QUAL' ? (s.t.qual.need ? 'Swiss' : 'Qual') : m.stage}</span>
               <span className="history__opp">{o.org} {o.year}</span>
               <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
               <b>{m.score[0]}–{m.score[1]}</b>

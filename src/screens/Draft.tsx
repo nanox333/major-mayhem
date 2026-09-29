@@ -8,6 +8,7 @@ import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
+import { COUNTRY, draftHints } from '../game/synergy';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
@@ -134,6 +135,7 @@ function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action>
 
 function PlayerChoices({ roster, picks, dispatch }: { roster: Roster; picks: G.Pick[]; dispatch: React.Dispatch<Action> }) {
   const players = roster.players.filter((p) => G.eligibleSlots(p, picks).length > 0);
+  const drafted = picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
   const taken = roster.players.filter((p) => G.eligibleSlots(p, picks).length === 0);
   return (
     <div className="players-col">
@@ -156,9 +158,11 @@ function PlayerChoices({ roster, picks, dispatch }: { roster: Roster; picks: G.P
               <div className="agent__photo">
                 <Avatar player={p} roster={roster} className="agent__img" />
                 <span className="agent__main" title="Main role"><RoleIcon role={p.roles[0]} size={12} /> {ROLE_SHORT[p.roles[0]]}</span>
+                <span className="agent__flag" title={COUNTRY[p.country] ?? p.country}>{p.country}</span>
               </div>
               <div className="agent__body">
                 <a className="agent__name" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" title={`${p.nick} on Liquipedia`}>{p.nick}</a>
+                {draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}>{h.text}</span>)}
                 <div className="agent__slots">
                   {slots.map((slot) => (
                     <button key={slot} className={`slot-chip ${p.roles[0] === slot ? 'slot-chip--main' : ''}`} onClick={() => dispatch({ type: 'draft', player: p, slot })}>

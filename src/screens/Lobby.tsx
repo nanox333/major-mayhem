@@ -4,6 +4,7 @@ import * as G from '../game/logic';
 import { Action } from '../game/state';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
+import { Synergy, strength } from '../game/synergy';
 
 export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: Record<string, { k: number; d: number; rating: number }>; mvpId?: string }) {
   return (
@@ -29,17 +30,31 @@ export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: R
   );
 }
 
+/** The synergies behind a lineup's chemistry, strongest first, with their size as + / − marks. */
+export function SynergyList({ list }: { list: Synergy[] }) {
+  if (!list.length) return <p className="muted small">No synergies: five strangers from five different eras and countries.</p>;
+  return (
+    <ul className="synergies">
+      {list.map((x) => (
+        <li key={x.label} className={`syn syn--${x.kind} ${x.value < 0 ? 'is-bad' : ''}`}>
+          <b>{strength(x.value)}</b><span>{x.label}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ReadyScreen({ mine, dispatch }: { mine: G.Lineup[]; dispatch: React.Dispatch<Action> }) {
-  const orgs = new Set(mine.map((x) => x.roster.org));
   const offRoles = mine.filter((x) => x.player.roles[0] !== x.slot).length;
+  const power = G.teamPower(mine);
   return (
     <div className="stack">
       <RosterList mine={mine} />
       <div className="notes">
         <span>{offRoles === 0 ? 'Everyone on their main role' : `${offRoles} player${offRoles > 1 ? 's' : ''} off their main role`}</span>
-        <span>{orgs.size < 5 ? 'Shared history: small chemistry bonus' : 'Five different organizations'}</span>
       </div>
-      <p className="muted small">Qualification: two Bo1 wins to reach the playoffs, two losses and you're out. Quarterfinal, semifinal and grand final are best of three.</p>
+      <SynergyList list={power.synergies} />
+      <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.</p>
       <button className="cta cta--go" onClick={() => dispatch({ type: 'play' })}>Find match</button>
     </div>
   );

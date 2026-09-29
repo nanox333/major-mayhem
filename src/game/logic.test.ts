@@ -109,21 +109,37 @@ describe('maps', () => {
 });
 
 describe('tournament', () => {
-  it('goes qualification (2 wins) → QF → SF → F', () => {
+  it('goes Swiss (3 wins) → QF → SF → F', () => {
     let t = G.newTournament();
     const path: (G.StageKey | null)[] = [];
-    for (const won of [true, false, true, true, true, true]) { path.push(G.nextStage(t)); t = G.applyResult(t, fakeMatch(G.nextStage(t)!, won)); }
-    expect(path).toEqual(['QUAL', 'QUAL', 'QUAL', 'QF', 'SF', 'F']);
+    for (const won of [true, false, true, false, true, true, true, true]) { path.push(G.nextStage(t)); t = G.applyResult(t, fakeMatch(G.nextStage(t)!, won)); }
+    expect(path).toEqual(['QUAL', 'QUAL', 'QUAL', 'QUAL', 'QUAL', 'QF', 'SF', 'F']);
     expect(t.status).toBe('champion');
     expect(G.nextStage(t)).toBeNull();
     expect(G.placement(t).key).toBe('CHAMP');
   });
-  it('knocks you out after two qualification losses or any playoff loss', () => {
-    let t = G.applyResult(G.applyResult(G.newTournament(), fakeMatch('QUAL', false)), fakeMatch('QUAL', false));
+  it('knocks you out after three Swiss losses or any playoff loss', () => {
+    let t = [false, false].reduce((acc, won) => G.applyResult(acc, fakeMatch('QUAL', won)), G.newTournament());
+    expect(t.status).toBe('running');
+    t = G.applyResult(t, fakeMatch('QUAL', false));
     expect(t.status).toBe('eliminated');
-    expect(G.placement(t).key).toBe('QUAL');
-    t = [true, true, true, false].reduce((acc, won) => G.applyResult(acc, fakeMatch(G.nextStage(acc)!, won)), G.newTournament());
+    expect(G.placement(t)).toMatchObject({ key: 'QUAL', label: 'Swiss Stage (0–3)' });
+    t = [true, true, true, true, false].reduce((acc, won) => G.applyResult(acc, fakeMatch(G.nextStage(acc)!, won)), G.newTournament());
     expect(G.placement(t).key).toBe('SF');
+  });
+  it('plays Swiss matches that can send you through or out as Bo3, the rest as Bo1', () => {
+    const at = (w: number, l: number): G.Tournament => ({ ...G.newTournament(), qual: { w, l, need: 3 } });
+    expect([at(0, 0), at(1, 0), at(0, 1), at(1, 1)].map((t) => G.bestOfFor('QUAL', t))).toEqual([1, 1, 1, 1]);
+    expect([at(2, 0), at(0, 2), at(2, 1), at(1, 2), at(2, 2)].map((t) => G.bestOfFor('QUAL', t))).toEqual([3, 3, 3, 3, 3]);
+    expect(G.bestOfFor('QF', at(3, 0))).toBe(3);
+  });
+  it('keeps the old two-win qualification for runs saved before the Swiss stage', () => {
+    const old: G.Tournament = { matches: [], qual: { w: 0, l: 0 }, status: 'running', used: [] };
+    let t = [true, true].reduce((acc, won) => G.applyResult(acc, fakeMatch('QUAL', won)), old);
+    expect(G.nextStage(t)).toBe('QF');
+    expect(G.bestOfFor('QUAL', old)).toBe(1);
+    t = [false, false].reduce((acc, won) => G.applyResult(acc, fakeMatch('QUAL', won)), old);
+    expect(t.status).toBe('eliminated');
   });
   it('never picks an opponent that shares a player with your team, or a repeat opponent', () => {
     for (let i = 0; i < 200; i++) {
@@ -131,7 +147,7 @@ describe('tournament', () => {
         const mine = ROLE_ORDER.map((slot, k) => { const r = ROSTERS[G.rand(ROSTERS.length)]; return { slot, roster: r, player: r.players[k] }; });
         const ids = new Set(mine.map((x) => x.player.id));
         let t = G.newTournament();
-        for (const stage of ['QUAL', 'QUAL', 'QF', 'SF', 'F'] as G.StageKey[]) {
+        for (const stage of ['QUAL', 'QUAL', 'QUAL', 'QF', 'SF', 'F'] as G.StageKey[]) {
           const opp = G.rosterById.get(G.pickOpponent(t, stage, mine))!;
           expect(opp.players.some((p) => ids.has(p.id))).toBe(false);
           expect(t.used).not.toContain(opp.id);

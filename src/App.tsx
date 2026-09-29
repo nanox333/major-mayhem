@@ -46,7 +46,7 @@ export default function App() {
   const date = dailyDate(s);
   let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : ''}Draft · Round ${round} of 5`;
   if (s.phase === 'ready') { title = 'Ready to rumble'; kicker = 'Lobby · 5 of 5 drafted'; }
-  if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `Major · Best of ${G.BEST_OF[stageNow!]}`; }
+  if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `Major · Best of ${s.current?.bestOf ?? G.bestOfFor(stageNow!, s.t)}`; }
   if (s.phase === 'final') { title = 'Tournament over'; kicker = 'Results'; }
 
   const showBoard = s.phase !== 'final';

@@ -113,7 +113,7 @@ export function reducer(s: Run, a: Action): Run {
     case 'start': {
       if (!s.pending) return s;
       const { stage, oppId } = s.pending;
-      const m = G.seeded(`${s.seed}:match:${s.t.matches.length}`, () => G.startMatch(stage, G.lineupFromPicks(s.picks), oppId));
+      const m = G.seeded(`${s.seed}:match:${s.t.matches.length}`, () => G.startMatch(stage, G.lineupFromPicks(s.picks), oppId, G.bestOfFor(stage, s.t)));
       return { ...s, phase: 'live', current: m };
     }
     case 'veto': {

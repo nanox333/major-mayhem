@@ -3,7 +3,7 @@ import { ROSTERS } from '../data/rosters';
 import { Stats, dailyStreak } from '../game/stats';
 import { dailyNumber, today } from '../game/state';
 
-const REACHED = ['Out in qualification', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
+const REACHED = ['Out in the Swiss stage', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
 const nickById = new Map(ROSTERS.flatMap((r) => r.players.map((p) => [p.id, p.nick] as const)));
 
 export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => void }) {
