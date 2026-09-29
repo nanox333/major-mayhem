@@ -35,6 +35,8 @@ Everyone plays the same daily, so data changes must not change a daily that has 
 - New rosters get `{ since: '<tomorrow>' }` in `src/data/rosters.ts`. A unit test fails if the launch set changes.
 - Retire a roster with `{ until: '<today>' }`; never delete one (old saves and past dailies point at it).
 - Balance changes must keep `npm run check` inside its targets. Say in the PR how the numbers moved.
+- **Anything that changes how a seed plays out** (the simulation, draft offers, roles, coaches, ratings) goes behind a **rules version**. Add one to `RULES` in `src/data/rosters.ts` starting tomorrow, keep the old behaviour behind `G.rules() < n`, and keep old data values next to the new ones (like `rolesV1` / `coachV1`). A daily plays under its date's rules, and a saved run keeps its own. `src/game/rules.test.ts` replays v1 against fingerprints recorded from the launch code. If it fails, your change leaked into an old version: don't update the fingerprints.
+- The daily date is the player's local calendar day (`today()` in `src/game/state.ts`). Use it everywhere, never UTC.
 
 ### Images
 

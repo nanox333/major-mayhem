@@ -1,4 +1,4 @@
-import { COACHES, ROSTERS, ROLE_ORDER, Role, Roster, Player } from '../data/rosters';
+import { COACHES, ROSTERS, ROLE_ORDER, Role, Roster, Player, LATEST_RULES, applyRoles } from '../data/rosters';
 import { Synergy, chemistryOf, coachBonus, synergies } from './synergy';
 
 export const rosterById = new Map(ROSTERS.map((r) => [r.id, r]));
@@ -26,6 +26,24 @@ export function seeded<T>(seed: string, fn: () => T): T {
   const prev = rng;
   rng = mulberry32(hash(seed));
   try { return fn(); } finally { rng = prev; }
+}
+
+// ---------- rules versions ----------
+// The active rules version (see RULES in data/rosters.ts). The game sets it to the current run's version; the
+// simulation and role data follow it, so an old daily replays exactly as it first played.
+let activeRules = LATEST_RULES;
+export const rules = () => activeRules;
+export function setRules(v: number) {
+  if (v === activeRules) return;
+  activeRules = v;
+  applyRoles(v);
+  for (const id of [...natural.keys()]) if (!registered.has(id)) natural.delete(id); // lineups depend on roles
+}
+/** Runs `fn` under rules `v`, then restores the previous version. */
+export function withRules<T>(v: number, fn: () => T): T {
+  const prev = activeRules;
+  setRules(v);
+  try { return fn(); } finally { setRules(prev); }
 }
 
 export const rand = (n: number) => Math.floor(random() * n);
@@ -132,6 +150,8 @@ export function lineupFromPicks(picks: Pick[]): Lineup[] {
 
 /** Best slot assignment for a real roster (brute force over 120 permutations, cached per roster). */
 const natural = new Map<string, Lineup[]>();
+/** Made-up teams (duel challengers): their lineups are fixed, so a rules change keeps them. */
+const registered = new Set<string>();
 /**
  * Adds a made-up team (a friend's drafted five, for a duel) that plays like a roster. Its lineup keeps each player's
  * own roster, so map comfort and synergies work as they do for a drafted team.
@@ -139,6 +159,7 @@ const natural = new Map<string, Lineup[]>();
 export function registerTeam(r: Roster, lineup: Lineup[]) {
   rosterById.set(r.id, r);
   natural.set(r.id, lineup);
+  registered.add(r.id);
 }
 export function naturalLineup(r: Roster): Lineup[] {
   let l = natural.get(r.id);
@@ -355,7 +376,7 @@ export const CALLOUTS: Record<string, string[]> = {
 };
 export interface Buy { ourForce: boolean; theirEco: boolean }
 /** Lines that mention a force buy or an eco only fit rounds where that is actually happening. */
-export const fitting = (lines: string[], buy: Buy): string[] => lines.filter((l) =>
+export const fitting = (lines: string[], buy: Buy): string[] => activeRules < 2 ? lines : lines.filter((l) =>
   /force buy/.test(l) ? (l.startsWith('{t}') ? buy.theirEco : buy.ourForce) : /anti-eco/.test(l) ? buy.theirEco : true);
 const fill = (tpl: string, p: string, t: string, map: string) => {
   const spots = CALLOUTS[map] ?? ['mid'];
@@ -379,6 +400,26 @@ function dead(n: number, weights: number[], keep?: number): number[] {
   const left = [0, 1, 2, 3, 4].filter((i) => i !== keep), out: number[] = [];
   while (out.length < n && left.length) { const k = weighted(weights, left); out.push(k); left.splice(left.indexOf(k), 1); }
   return out;
+}
+
+/** Rules v1 tallies: kills and deaths handed out independently, with replacement. Kept so v1 dailies replay exactly. */
+function spreadV1(n: number, weights: number[], out: number[], forced?: number) {
+  for (let i = 0; i < n; i++) {
+    if (forced !== undefined && i < 1) { out[forced]++; continue; }
+    let r = random() * weights.reduce((a, b) => a + b, 0);
+    let k = 0;
+    while (r > weights[k] && k < 4) { r -= weights[k]; k++; }
+    out[k]++;
+  }
+}
+function tallyRoundV1(won: boolean, kw: number[], dw: number[], okw: number[], odw: number[], star?: number): RoundTally {
+  const t: RoundTally = { ourKills: [0, 0, 0, 0, 0], ourDeaths: [0, 0, 0, 0, 0], theirKills: [0, 0, 0, 0, 0], theirDeaths: [0, 0, 0, 0, 0] };
+  const ours = won ? 3 + rand(3) : rand(5), theirs = won ? rand(5) : 3 + rand(3);
+  spreadV1(Math.min(5, ours), kw, t.ourKills, star);
+  spreadV1(Math.min(5, ours), odw, t.theirDeaths);
+  spreadV1(Math.min(5, theirs), okw, t.theirKills);
+  spreadV1(Math.min(5, theirs), dw, t.ourDeaths);
+  return t;
 }
 
 export interface RoundTally { ourKills: number[]; ourDeaths: number[]; theirKills: number[]; theirDeaths: number[] }
@@ -484,7 +525,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
         events.push({ round: rn, text: fill(lines[rand(lines.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
       }
     }
-    const t = tallyRound(won, kwM, dwM, kwO, dwO, star, clutch);
+    const t = activeRules < 2 ? tallyRoundV1(won, kwM, dwM, kwO, dwO, star) : tallyRound(won, kwM, dwM, kwO, dwO, star, clutch);
     for (let j = 0; j < 5; j++) { K[j] += t.ourKills[j]; D[j] += t.ourDeaths[j]; OK[j] += t.theirKills[j]; OD[j] += t.theirDeaths[j]; }
     if (rn === 1 || rn === 13) {
       econ = won ? 1 : -1; ecoLeft = 2; forced = false;

@@ -1,7 +1,7 @@
 // Run state: the draft, the tournament, and the reducer that moves between them.
 // Every random step runs under a seed derived from the run seed, so the daily challenge deals
 // everyone the same cases and a reloaded run can't be rerolled by refreshing the page.
-import { COACHES, Player, ROLE_ORDER, Role, Roster, activeRosters, rostersOn } from '../data/rosters';
+import { COACHES, LATEST_RULES, Player, ROLE_ORDER, Role, Roster, activeRosters, rostersOn, rulesOn } from '../data/rosters';
 import * as G from './logic';
 import { DUEL_ID, Duel, duelRosters, registerDuel } from './duel';
 
@@ -55,7 +55,10 @@ export interface Run {
   opts?: Opts;
   /** A draft duel: the challenger's team, which this run drafts against. */
   duel?: Duel;
+  /** The rules version this run plays under (#24); runs saved before versions existed are v1. */
+  rules?: number;
 }
+export const rulesOf = (s: Pick<Run, 'rules'>) => s.rules ?? 1;
 
 /** Slots a player can go into: the roles they cover, or in hard mode any open slot (off-role costs as usual). */
 export const slotsFor = (s: Run, p: Player): Role[] =>
@@ -81,6 +84,11 @@ export const currentLineup = (s: Run) => lineupFor(s, s.current?.subOut, s.curre
 export const squadOf = (s: Run): G.Lineup[] => { const b = benchLineup(s); return b ? [...G.lineupFromPicks(s.picks), b] : G.lineupFromPicks(s.picks); };
 
 const pad = (n: number) => String(n).padStart(2, '0');
+/**
+ * The daily's date: the browser's local calendar day, so it rolls over at local midnight (#26). Friends in other time
+ * zones stay on the same challenge through duel links, which carry the date, and rules follow the date too (#24).
+ * Every "what day is it" in the game uses this, never UTC.
+ */
 export const today = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 /** Daily #1 is the day the game shipped. */
 export const dailyNumber = (date: string) => Math.round((Date.parse(date + 'T00:00:00Z') - Date.parse('2026-09-28T00:00:00Z')) / 86400000) + 1;
@@ -91,6 +99,8 @@ export const fresh = (mode: Mode = 'free', date = today(), opts?: Opts): Run => 
   v: 3, mode, seed: mode === 'daily' ? `daily-${date}` : `free-${Math.random().toString(36).slice(2, 10)}`,
   phase: 'draft', step: 'spin', offer: [], offerKey: 0, rerollKey: 0, seen: [], team: null, picks: [], rerolls: 2,
   t: G.newTournament(), pending: null, current: null, recorded: false, extras: true, bench: null,
+  // A daily plays under the rules of its date; everything else starts on the latest.
+  rules: mode === 'daily' ? rulesOn(date) : LATEST_RULES,
 });
 
 export const KEY = 'major-mayhem-run-v2';
@@ -98,7 +108,10 @@ export const KEY = 'major-mayhem-run-v2';
 /** A duel run: the challenger's seed and options (so the same cases), then one showmatch against their team. */
 export function freshDuel(d: Duel): Run {
   registerDuel(d);
-  return { ...fresh('free', today(), d.opts), mode: 'duel', seed: d.seed, duel: d, t: { ...G.newTournament(), duel: true } };
+  // The friend drafts under the challenger's rules, so the cases match. Links from before versions existed are v1,
+  // or the daily's version when they carry a date.
+  const rules = d.rules ?? (d.date ? rulesOn(d.date) : 1);
+  return { ...fresh('free', today(), d.opts), mode: 'duel', seed: d.seed, duel: d, t: { ...G.newTournament(), duel: true }, rules };
 }
 
 export function load(): Run {
@@ -111,7 +124,9 @@ export function load(): Run {
     if (r.v === 2) Object.assign(r, { v: 3, mode: 'free', seed: `free-${Math.random().toString(36).slice(2, 10)}`, recorded: r.phase === 'final' });
     // A match saved before map vetoes existed can't be continued: replay it from the match-found screen.
     if (r.current && !('veto' in r.current)) Object.assign(r, { current: null, phase: r.pending ? 'preview' : r.phase });
-    return validRun(r) ? (r as Run) : fresh();
+    if (!validRun(r)) return fresh();
+    G.setRules(rulesOf(r));
+    return r as Run;
   } catch { return fresh(); }
 }
 
@@ -136,6 +151,7 @@ export function validRun(r: any): boolean {
     && (!r.pending?.subOut || r.picks.some((p: G.Pick) => p.playerId === r.pending.subOut))
     && (!r.current?.subOut || r.picks.some((p: G.Pick) => p.playerId === r.current.subOut))
     && (!r.opts || (typeof r.opts === 'object' && [undefined, 'csgo', 'cs2'].includes(r.opts.era) && [undefined, 'champions', 'underdogs'].includes(r.opts.pool)))
+    && (r.rules === undefined || (Number.isInteger(r.rules) && r.rules >= 1 && r.rules <= LATEST_RULES))
     && (!r.current || roster(r.current.opponentId))
     && Array.isArray(r.t?.matches) && r.t.matches.every((m: G.Match) => roster(m.opponentId));
 }
@@ -201,7 +217,18 @@ const pendingFor = (s: Run, t: G.Tournament, stage: G.StageKey): Pending => {
   return { stage, oppId, form: G.seeded(`${s.seed}:form:${t.matches.length}`, () => G.rollForm(ids)), subOut: null };
 };
 
+/**
+ * Every step runs under the run's own rules version, and the resulting run's version stays active afterwards,
+ * so the screens show the same roles the simulation uses.
+ */
 export function reducer(s: Run, a: Action): Run {
+  G.setRules(rulesOf(s));
+  const next = reduce(s, a);
+  G.setRules(rulesOf(next));
+  return next;
+}
+
+function reduce(s: Run, a: Action): Run {
   switch (a.type) {
     case 'spin': {
       const offer = offerForRound(s);

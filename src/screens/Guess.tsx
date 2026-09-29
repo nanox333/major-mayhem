@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { ROLE_LABEL, rostersOn } from '../data/rosters';
 import { dailyNumber, today } from '../game/state';
-import { BEST_LABEL, Clue, GuessDay, MAX_GUESSES, Pro, addGuess, answerFor, compare, guessShare, guessStreak, loadGuesses, pros, saveGuesses, suggest } from '../game/guess';
+import { BEST_LABEL, Clue, GuessDay, MAX_GUESSES, Pro, addGuess, answerFor, compare, guessShare, guessStreak, loadGuesses, prosOn, saveGuesses, suggest } from '../game/guess';
 import { COUNTRY } from '../game/synergy';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
@@ -18,7 +18,7 @@ const HEADS: [Clue['key'], string, string?][] = [['country', 'Nation'], ['role',
 
 export function GuessScreen() {
   const date = today();
-  const all = useMemo(() => pros(rostersOn(date)), [date]);
+  const all = useMemo(() => prosOn(date), [date]);
   const answer = useMemo(() => answerFor(date), [date]);
   const [store, setStore] = useState(loadGuesses);
   const day: GuessDay = store[date] ?? { guesses: [], done: false, won: false };

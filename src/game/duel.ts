@@ -1,6 +1,6 @@
 // Draft duels: send your drafted team as a link; your friend drafts from the same cases, then the two teams play a
 // best-of-three showmatch. Everything travels in the link: no server.
-import { COACHES, ROLE_ORDER, Role, Roster, rostersOn } from '../data/rosters';
+import { COACHES, LATEST_RULES, ROLE_ORDER, Role, Roster, rostersOn } from '../data/rosters';
 import * as G from './logic';
 
 export interface Duel {
@@ -17,6 +17,8 @@ export interface Duel {
   coach?: string | null;
   /** The challenger's bench player: [roster id, player id]. */
   bench?: [string, string] | null;
+  /** The rules version the challenger drafted under (#24). Missing on links from before versions existed. */
+  rules?: number;
 }
 
 export const DUEL_ID = 'duel-challenger';
@@ -24,7 +26,7 @@ const MAX_NAME = 24;
 
 export const cleanName = (s: string) => s.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, MAX_NAME) || 'A friend';
 
-export function duelFrom(run: { seed: string; mode: string; opts?: Duel['opts']; picks: G.Pick[]; coach?: string | null; bench?: G.Pick | null }, name: string): Duel {
+export function duelFrom(run: { seed: string; mode: string; opts?: Duel['opts']; picks: G.Pick[]; coach?: string | null; bench?: G.Pick | null; rules?: number }, name: string): Duel {
   const byRole = ROLE_ORDER.map((slot) => run.picks.find((p) => p.slot === slot)!);
   return {
     v: 1, name: cleanName(name), seed: run.seed,
@@ -33,6 +35,7 @@ export function duelFrom(run: { seed: string; mode: string; opts?: Duel['opts'];
     picks: byRole.map((p) => [p.slot, p.rosterId, p.playerId]),
     coach: run.coach ?? null,
     bench: run.bench ? [run.bench.rosterId, run.bench.playerId] : null,
+    rules: run.rules ?? 1,
   };
 }
 
@@ -63,7 +66,8 @@ export function decodeDuel(code: string): Duel | null {
       && (d.coach == null || d.coach in COACHES)
       && (d.bench == null || (player(d.bench[0], d.bench[1]) && !d.picks.some((p) => p[2] === d.bench![1])))
       && (d.date === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d.date))
-      && validOpts(d.opts);
+      && validOpts(d.opts)
+      && (d.rules === undefined || (Number.isInteger(d.rules) && d.rules >= 1 && d.rules <= LATEST_RULES));
     return ok ? { ...d, name: cleanName(d.name), ...(d.opts ? { opts: cleanOpts(d.opts) } : {}) } : null;
   } catch { return null; }
 }
