@@ -8,6 +8,16 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - Community files: contributing guide, code of conduct, security policy, support page, roadmap.
 - Issue forms (bug, feature, roster data), a pull request template and discussion templates.
 - Dependabot updates for npm and GitHub Actions, CodeQL code scanning, label and milestone setup, and a release workflow.
+- A **Report incorrect data** link on every team in the draft, opening the roster-data form with the team filled in ([#13]).
+
+### Fixed
+- **Scoreboards add up:** a player dies at most once per round, kills always equal the other side's deaths, and a clutch leaves the clutcher as the only survivor ([#12]).
+- **Narration follows your buy:** a lost pistol no longer says "You're saving" before you choose, and force-buy or anti-eco lines only appear when that's happening ([#15]).
+- **Free-play filters stay true:** a filter that leaves too few teams (today, CS2 + Champions) can't be chosen, instead of quietly drafting from the whole era ([#63]).
+- **Guess the pro** labels Majors, best finish and first year as counts from this game, not careers ([#14]).
+- **Roster data:** Vitality's coach at Paris 2023 is zonic; Fnatic 2013 and LDLC 2014 get their coaches; the three "unverified" champions are checked against Wikipedia ([#25]). IGL labels corrected for Liquid 2024 (Twistzz), G2 2018 (shox) and AVANGAR 2019 ([#13]).
+- Duel links accept only known free-play options ([#27]).
+- `npm run media` works on Windows.
 
 ## [1.0.0] - 2026-09-29
 
@@ -46,3 +56,10 @@ The first tagged release, covering everything since the initial draft game.
 [#9]: https://github.com/nanox333/major-mayhem/pull/9
 [#10]: https://github.com/nanox333/major-mayhem/pull/10
 [#11]: https://github.com/nanox333/major-mayhem/pull/11
+[#12]: https://github.com/nanox333/major-mayhem/issues/12
+[#13]: https://github.com/nanox333/major-mayhem/issues/13
+[#14]: https://github.com/nanox333/major-mayhem/issues/14
+[#15]: https://github.com/nanox333/major-mayhem/issues/15
+[#25]: https://github.com/nanox333/major-mayhem/issues/25
+[#27]: https://github.com/nanox333/major-mayhem/issues/27
+[#63]: https://github.com/nanox333/major-mayhem/issues/63
