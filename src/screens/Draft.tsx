@@ -6,7 +6,7 @@ import { Stats } from '../game/stats';
 import { pageUrl } from '../game/share';
 import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
-import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
+import { Avatar, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
 import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
@@ -135,7 +135,7 @@ function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action
                 <div className="case-item__meta"><span>Coach · {r.org} {r.year}</span><span className="grade">{r.result}</span></div>
               </div>
             </div>
-            {knows.length > 0 && <span className="hint hint--good">Coached {knows.map((p) => p.nick).join(', ')}</span>}
+            {knows.length > 0 && <span className="hint hint--good"><i aria-hidden="true">+</i> <Sr>Bonus: </Sr>Coached {knows.map((p) => p.nick).join(', ')}</span>}
             <div className="case-item__event">{r.event}</div>
           </button>
         );
@@ -231,7 +231,7 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
                   <a className="agent__ref" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" aria-label={`${p.nick} on Liquipedia`} title="Liquipedia">↗</a>
                 </span>
                 {!hard && <span className="agent__role muted small">Main role: {ROLE_LABEL[p.roles[0]]}</span>}
-                {!hard && draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}>{h.text}</span>)}
+                {!hard && draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}><i aria-hidden="true">{h.good ? '+' : '−'}</i> <Sr>{h.good ? 'Bonus: ' : 'Penalty: '}</Sr>{h.text}</span>)}
                 <div className="agent__slots">
                   {bench && <button className="slot-chip slot-chip--main" data-sfx="draft" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Draft as Bench</button>}
                   {!bench && slots.map((slot) => {

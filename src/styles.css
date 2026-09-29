@@ -379,7 +379,13 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .report__maps { margin: 8px 0; }
 .report__rounds { list-style: none; margin: 8px 0 4px; padding: 0; display: flex; flex-wrap: wrap; gap: 3px; }
 .report__rounds li { width: 20px; height: 22px; display: grid; place-items: center; font-size: .66rem; font-weight: 700; color: #0b0e12; }
-.report__rounds li.w { background: var(--go); } .report__rounds li.l { background: var(--loss); }
+/* Won rounds are solid, lost rounds striped, so the strip reads without telling green from red. */
+.report__rounds li.w { background: var(--go); }
+.report__rounds li.l { background: repeating-linear-gradient(135deg, var(--loss) 0 3px, #8c3a38 3px 6px); color: #fff; }
+.rmark { font-style: normal; font-size: .7em; }
+.kf small i { font-style: normal; }
+.kf--us small i { color: var(--go); } .kf--them small i { color: var(--loss); }
+.hint i { font-style: normal; font-weight: 800; }
 .report__rounds li.swap { margin-left: 8px; }
 .report__table { width: 100%; border-collapse: collapse; margin: 10px 0 0; font-size: .85rem; font-variant-numeric: tabular-nums; }
 .report__table th, .report__table td { padding: 4px 6px; border-top: 1px solid var(--line); text-align: right; }
@@ -658,18 +664,42 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .guess__box input { width: 100%; box-sizing: border-box; padding: 11px 12px; background: #0f1419; border: 1px solid var(--line); color: #fff; font: inherit; font-weight: 600; font-size: 1.05rem; }
 .guess__box input:focus { border-color: var(--t); outline: none; }
 .guess__suggest { list-style: none; margin: 2px 0 0; padding: 0; border: 1px solid var(--line); background: var(--panel); }
-.guess__suggest button { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 12px; background: none; border: 0; color: #e8eaed; font: inherit; cursor: pointer; text-align: left; }
+.guess__suggest button { width: 100%; min-height: 44px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 12px; background: none; border: 0; color: #e8eaed; font: inherit; cursor: pointer; text-align: left; }
 .guess__suggest button.is-on, .guess__suggest button:hover { background: rgba(224,163,59,.12); }
 .guess__suggest small { color: var(--muted); }
-.guess__grid { display: grid; gap: 4px; overflow-x: auto; }
-.guess__row { display: grid; grid-template-columns: minmax(84px, 1.3fr) repeat(5, minmax(56px, 1fr)) minmax(96px, 1.6fr); gap: 4px; min-width: 560px; }
-.guess__row > span { padding: 7px 6px; background: #141920; border: 1px solid var(--line); font-weight: 700; font-size: .85rem; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.guess__row--head > span { background: none; border: 0; color: var(--muted); font-family: var(--f-head); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; padding: 0 4px; }
+.guess__empty { margin: 6px 0 0; padding: 10px 12px; border: 1px dashed #4a5462; background: var(--panel); color: #cfd6de; font-size: .95rem; }
+/* Legend: each result is a symbol and a shape as well as a colour (solid = match, dashed = close, plain = no match). */
+.guess .spin-stage__hint { max-width: none; text-align: left; }
+.guess__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .92rem; color: #cfd6de; }
+.guess__legend li { display: inline-flex; align-items: center; gap: 8px; }
+.clue-key { flex: none; display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 6px; border: 1px solid var(--line); background: #141920; font-weight: 800; font-size: .85rem; }
+.guess__grid { display: grid; gap: 4px; }
+.guess__row { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(5, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 4px; }
+.guess__row > span { min-width: 0; padding: 8px 8px; background: #141920; border: 1px solid var(--line); font-weight: 700; font-size: .92rem; text-align: center; overflow-wrap: anywhere; }
+.guess__row--head > span { background: none; border: 0; color: var(--muted); font-family: var(--f-head); font-size: .74rem; letter-spacing: .06em; padding: 0 4px; }
 .guess__who { text-align: left !important; }
 .guess__who.is-hit { color: var(--go); }
-.clue--hit { background: rgba(79,179,79,.25) !important; border-color: var(--go) !important; color: #fff; }
-.clue--near { background: rgba(224,163,59,.22) !important; border-color: var(--t) !important; color: #fff; }
-.clue--miss { color: #aab3be; }
+.guess__row > .clue { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.clue__label { display: none; }
+.clue__mark { font-style: normal; font-weight: 800; flex: none; color: var(--muted); }
+.clue--hit .clue__mark, .guess__who .clue__mark { color: #7fd67f; }
+.clue--near .clue__mark { color: var(--t); }
+.guess__row > .clue--hit, .clue-key.clue--hit { background: rgba(79,179,79,.24); border-color: var(--go); box-shadow: inset 0 0 0 1px var(--go); color: #fff; }
+.guess__row > .clue--near, .clue-key.clue--near { background: rgba(224,163,59,.16); border: 1px dashed var(--t); color: #fff; }
+.guess__row > .clue--miss, .clue-key.clue--miss { color: #aab3be; }
+/* Phones: each guess is a card of labelled clues, so nothing scrolls sideways (#19). */
+@media (max-width: 640px) {
+  .guess__row--head { display: none; }
+  .guess__row { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; padding: 8px; border: 1px solid var(--line); background: #10151b; }
+  .guess__row > span { padding: 6px 8px; }
+  .guess__row > .guess__who { grid-column: 1 / -1; padding: 0 0 2px; border: 0; background: none; font-family: var(--f-head); font-size: 1.2rem; }
+  .guess__row > .clue { position: relative; grid-column: span 2; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 1px; padding-right: 24px; text-align: left; }
+  .clue-best, .clue-first { grid-column: span 3 !important; }
+  .clue-orgs { grid-column: 1 / -1 !important; }
+  .clue__label { display: block; color: var(--muted); font-family: var(--f-head); font-size: .72rem; letter-spacing: .06em; }
+  .clue--hit .clue__label, .clue--near .clue__label { color: #cfd6de; }
+  .clue .clue__mark { position: absolute; top: 5px; right: 8px; }
+}
 .guess__answer { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); background: var(--panel); }
 .guess__answer.is-won { border-color: var(--go); }
 .guess__answer small { display: block; font-family: var(--f-head); font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--t); font-size: .72rem; }

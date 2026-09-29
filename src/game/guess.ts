@@ -66,7 +66,7 @@ export interface Clue { key: 'country' | 'role' | 'majors' | 'best' | 'first' | 
 const REGION: Record<string, string> = { RU: 'CIS', UA: 'CIS', KZ: 'CIS', BY: 'CIS', SE: 'Nordic', DK: 'Nordic', NO: 'Nordic', FI: 'Nordic', EE: 'Baltic', LV: 'Baltic', LT: 'Baltic' };
 const dir = (guess: number, answer: number) => (answer > guess ? 'up' : 'down') as 'up' | 'down';
 
-/** How a guess compares with the answer: hit (green), near (yellow) or miss, with ↑/↓ for numbers. */
+/** How a guess compares with the answer: hit, near or miss, with ↑/↓ for numbers (the UI adds a symbol and a description to each). */
 export function compare(g: Pro, a: Pro): Clue[] {
   const region = (c: string) => REGION[c];
   const sharedOrgs = g.orgs.filter((o) => a.orgs.includes(o));
@@ -79,6 +79,28 @@ export function compare(g: Pro, a: Pro): Clue[] {
     { key: 'orgs', text: sharedOrgs.length ? sharedOrgs.join(', ') : g.orgs.slice(0, 2).join(', '), state: sharedOrgs.length === a.orgs.length && g.orgs.length === a.orgs.length ? 'hit' : sharedOrgs.length ? 'near' : 'miss' },
   ];
 }
+
+/** A symbol for each clue state, so a result never depends on colour alone (#22). */
+export const CLUE_MARK: Record<ClueState, string> = { hit: '✓', near: '≈', miss: '✗' };
+export const CLUE_LABEL: Record<Clue['key'], string> = { country: 'Nation', role: 'Role', majors: 'Majors', best: 'Best finish', first: 'First year', orgs: 'Teams' };
+
+/** What a clue says, in words: "Same region", "Answer has more Majors". Used for screen readers and hover text. */
+export function clueMeaning(c: Clue): string {
+  const up = c.dir === 'up';
+  switch (c.key) {
+    case 'country': return c.state === 'hit' ? 'Same nation' : c.state === 'near' ? 'Same region' : 'Different region';
+    case 'role': return c.state === 'hit' ? 'Their main role' : c.state === 'near' ? 'A role they also played' : 'Not a role they played';
+    case 'majors': return c.state === 'hit' ? 'Same number of Majors' : `Answer has ${up ? 'more' : 'fewer'} Majors`;
+    case 'best': return c.state === 'hit' ? 'Same best finish' : `Answer finished ${up ? 'higher' : 'lower'}`;
+    case 'first': {
+      const when = up ? 'later' : 'earlier';
+      return c.state === 'hit' ? 'Same first year' : c.state === 'near' ? `A year off; answer's first year is ${when}` : `Answer's first year is ${when}`;
+    }
+    case 'orgs': return c.state === 'hit' ? 'Same teams' : c.state === 'near' ? 'Shares a team' : 'No shared team';
+  }
+}
+/** A clue as one sentence, for `aria-label`: "Nation: Sweden. Same region." */
+export const describeClue = (c: Clue, shown: string = c.text) => `${CLUE_LABEL[c.key]}: ${shown}. ${clueMeaning(c)}.`;
 
 export interface GuessDay { guesses: string[]; done: boolean; won: boolean }
 const KEY = 'major-mayhem-guess-v1';
@@ -118,4 +140,14 @@ export function suggest(all: Map<string, Pro>, text: string, exclude: string[], 
   if (!q) return [];
   const list = [...all.values()].filter((p) => !exclude.includes(p.id) && p.id.includes(q));
   return list.sort((a, b) => Number(!a.id.startsWith(q)) - Number(!b.id.startsWith(q)) || a.nick.localeCompare(b.nick)).slice(0, n);
+}
+
+export type SearchState = { kind: 'idle' } | { kind: 'results'; options: Pro[] } | { kind: 'none' } | { kind: 'guessed'; nick: string };
+/** What the guess box has to say about the text typed: suggestions, nothing yet, no such player, or someone already guessed (#22). */
+export function searchState(all: Map<string, Pro>, text: string, exclude: string[]): SearchState {
+  if (!text.replace(/[^a-z0-9]/gi, '')) return { kind: 'idle' };
+  const options = suggest(all, text, exclude);
+  if (options.length) return { kind: 'results', options };
+  const seen = suggest(all, text, [], 1)[0];
+  return seen ? { kind: 'guessed', nick: seen.nick } : { kind: 'none' };
 }

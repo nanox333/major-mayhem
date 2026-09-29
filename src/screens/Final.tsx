@@ -5,7 +5,7 @@ import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
-import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
+import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
 import { play } from '../ui/sound';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
@@ -87,11 +87,11 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           return (
             <li key={i} className={m.won ? 'w' : 'l'}>
               {/* Each row opens the saved report for that match (#66). */}
-              <button className="history__row" onClick={() => setReport(i)} aria-label={`Match report: ${o.org} ${o.year}, ${m.score[0]}–${m.score[1]}`}>
+              <button className="history__row" onClick={() => setReport(i)} aria-label={`Match report: ${m.won ? 'won' : 'lost'} ${m.score[0]}–${m.score[1]} against ${o.org} ${o.year}`}>
                 <span>{m.stage === 'QUAL' ? (s.t.qual.need ? 'Swiss' : 'Qual') : m.stage === 'DUEL' ? 'BO3' : m.stage}</span>
                 <span className="history__opp">{o.org} {o.year}</span>
                 <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
-                <b>{m.score[0]}–{m.score[1]} ›</b>
+                <b>{m.won ? '✓' : '✗'} {m.score[0]}–{m.score[1]} ›</b>
               </button>
             </li>
           );
@@ -233,7 +233,7 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
   const table = (rows: G.MapGame['stats']['mine'], label: string) => (
     <table className="report__table">
       <thead><tr><th>{label}</th><th>K</th><th>D</th><th>Rating</th></tr></thead>
-      <tbody>{[...rows].sort((a, b) => b.rating - a.rating).map((p) => <tr key={p.id}><td>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td>{fmt(p.rating)}</td></tr>)}</tbody>
+      <tbody>{[...rows].sort((a, b) => b.rating - a.rating).map((p) => <tr key={p.id}><td>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td>{fmt(p.rating)}<RatingMark r={p.rating} /></td></tr>)}</tbody>
     </table>
   );
   return (
@@ -258,7 +258,7 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
               );
             })}
           </ol>
-          <p className="muted small">Green won, red lost; a gap marks halftime and each overtime swap. T timeout, F force buy, ★ clutch.</p>
+          <p className="muted small">Solid green won, striped red lost; a gap marks halftime and each overtime swap. T timeout, F force buy, ★ clutch.</p>
           {table(g.stats.mine, 'Your team')}
           {table(g.stats.opp, opp.tag)}
           {g.events.filter((e) => e.kind === 'call' || e.kind === 'clutch' || e.kind === 'half' || e.kind === 'ot').length > 0 && (
@@ -297,7 +297,7 @@ function DraftReview({ picks }: { picks: G.Pick[] }) {
     <section className="review anim-in" aria-label="Pick strength">
       <div className="review__head">
         <span>Pick strength</span>
-        <b className={grade >= 0.98 ? 'hi' : grade < 0.92 ? 'lo' : ''}>{Math.round(grade * 100)}%</b>
+        <b className={grade >= 0.98 ? 'hi' : grade < 0.92 ? 'lo' : ''}>{Math.round(grade * 100)}%{grade >= 0.98 ? <><i className="rmark" aria-hidden="true"> ▲</i><Sr> high</Sr></> : grade < 0.92 ? <><i className="rmark" aria-hidden="true"> ▼</i><Sr> low</Sr></> : null}</b>
       </div>
       <p className="muted small">
         How strong each pick was on its own: hidden game ratings adjusted for role fit, against the strongest individual

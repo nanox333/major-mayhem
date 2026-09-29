@@ -15,6 +15,8 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Match reports:** every match in your results opens a report with map scores, a round-by-round strip (timeouts, force buys, clutches) and both scoreboards ([#66]).
 - **Team review** on the results screen: role fit, chemistry, who stood out, maps, calls and one suggestion for next time ([#18]).
 - The map veto shows who has the **comfort edge** on each map, what your click does and whose turn is next, the veto so far and the final map order ([#65]).
+- **Guess the pro without relying on colour:** every clue has a mark (✓ match, ≈ close, ✗ no match) and a description for screen readers ("Nation: Sweden. Same region."), with a legend above the guesses. Searching for a player who isn't there says "No players found", and one you already guessed says so ([#22]).
+- **Symbols next to colours** on won and lost maps and matches, above- and below-average ratings, killfeed lines, draft bonuses and penalties, and the round strip in match reports (lost rounds are striped) ([#22], [#38]).
 
 ### Changed
 - Achievement dates use the same local day as the daily, not UTC ([#26]).
@@ -80,7 +82,9 @@ The first tagged release, covering everything since the initial draft game.
 [#14]: https://github.com/nanox333/major-mayhem/issues/14
 [#15]: https://github.com/nanox333/major-mayhem/issues/15
 [#24]: https://github.com/nanox333/major-mayhem/issues/24
+[#22]: https://github.com/nanox333/major-mayhem/issues/22
 [#25]: https://github.com/nanox333/major-mayhem/issues/25
 [#26]: https://github.com/nanox333/major-mayhem/issues/26
 [#27]: https://github.com/nanox333/major-mayhem/issues/27
+[#38]: https://github.com/nanox333/major-mayhem/issues/38
 [#63]: https://github.com/nanox333/major-mayhem/issues/63
