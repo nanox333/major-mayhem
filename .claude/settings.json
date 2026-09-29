@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl https://bo3.gg/*)",
+      "Bash(curl -sS https://bo3.gg/*)",
+      "Bash(node scripts/fetch-bo3-photos.mjs:*)"
+    ]
+  }
+}
