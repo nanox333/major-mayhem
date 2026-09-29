@@ -1,11 +1,9 @@
-// Fetches missing player photos and team logos from bo3.gg's public pages with headless Chromium.
+// Fetches missing player photos and team logos from bo3.gg's public pages (server-rendered, so no browser needed).
 // Certificate checking stays ON: run with NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt behind the agent proxy.
-// Only entries that are missing from assets-src/ are fetched. A photo is kept only if the page's own player
-// name matches the nick (or the real name in the page title); everything else is listed in shots/bo3-review.json.
+// Only entries missing from assets-src/ are fetched. A photo is kept only if the page title names the player
+// (nick, with the real name in brackets); everything else is listed in shots/bo3-review.json for a human.
 import fs from 'fs';
-import { createRequire } from 'module';
-const require = createRequire(import.meta.url);
-const { chromium } = require(process.env.PLAYWRIGHT_PATH || '/opt/node22/lib/node_modules/playwright');
+import { execFile } from 'child_process';
 
 const BO3 = 'assets-src/major-mayhem-bo3.json';
 const pid = (n) => n.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -25,62 +23,51 @@ const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 fs.mkdirSync('shots', { recursive: true });
 const review = [];
-const browser = await chromium.launch({ headless: true, proxy: process.env.HTTPS_PROXY ? { server: process.env.HTTPS_PROXY } : undefined });
-const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-const page = await ctx.newPage();
-
-const grab = async (url) => {
-  const r = await page.goto(url, { waitUntil: 'networkidle', timeout: 45000 });
-  return r && r.status() < 400;
-};
-const dataOf = async (src) => {
-  const r = await ctx.request.get(src);
-  if (!r.ok()) return null;
-  const type = r.headers()['content-type'] || 'image/webp';
-  return `data:${type.split(';')[0]};base64,${(await r.body()).toString('base64')}`;
-};
+// plain curl (normal certificate checking; bo3.gg serves the rendered page to it, but only a JS shell to fetch())
+const curl = (url) => new Promise((res) => execFile('curl', ['-sS', '--fail', '--max-time', '40', url], { encoding: 'buffer', maxBuffer: 64 << 20 }, (e, out) => res(e ? null : out)));
+const html = async (url) => { const b = await curl(url); return b ? b.toString('utf8') : null; };
+const img = async (url) => { const b = await curl(url); return b && b.length > 500 ? `data:image/webp;base64,${b.toString('base64')}` : null; };
+const titleOf = (h) => (h.match(/<title>([^<]*)/)?.[1] || '').replace(/&amp;/g, '&').trim();
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 for (const nick of nicks.filter(wanted)) {
   const url = `https://bo3.gg/players/${slug(nick)}`;
   try {
-    if (BO3_WRONG.has(nick) || !(await grab(url))) { review.push({ nick, why: 'no page' }); continue; }
-    const info = await page.evaluate(() => {
-      const h1 = document.querySelector('h1')?.textContent?.trim() || '';
-      const imgs = [...document.querySelectorAll('img')].map((i) => ({ src: i.currentSrc || i.src, alt: i.alt || '', w: i.naturalWidth, h: i.naturalHeight }));
-      return { title: document.title, h1, imgs };
-    });
-    const label = norm(info.h1 + ' ' + info.title);
-    if (!label.includes(norm(nick))) { review.push({ nick, why: 'name mismatch', h1: info.h1, title: info.title }); continue; }
-    // the player photo is the large image whose alt text names the player
-    const cand = info.imgs.filter((i) => i.src && norm(i.alt).includes(norm(nick)) && i.w >= 200 && !/logo|flag/i.test(i.src));
-    if (!cand.length) { review.push({ nick, why: 'no photo on page', h1: info.h1 }); continue; }
-    const data = await dataOf(cand[0].src);
-    if (!data) { review.push({ nick, why: 'photo download failed', src: cand[0].src }); continue; }
-    bo3.players[nick] = { page: url, name: info.h1 || nick, data };
-    console.log('photo', nick, '->', info.h1, cand[0].w + 'x' + cand[0].h);
+    await sleep(1500);
+    const h = BO3_WRONG.has(nick) ? null : await html(url);
+    if (!h) { review.push({ nick, why: 'no page' }); continue; }
+    const title = titleOf(h);
+    if (!norm(title.split('(')[0]).includes(norm(nick)) && norm(title.split('(')[0]) !== norm(nick)) { review.push({ nick, why: 'name mismatch', title }); continue; }
+    const ids = [...new Set([...h.matchAll(/uploads\/player\/(\d+)\/image\/([^"'\\ ?&)]+)/g)].map((m) => m[0]))];
+    if (ids.length !== 1) { review.push({ nick, why: ids.length ? 'several player images' : 'no photo on page', title, ids }); continue; }
+    const data = await img(`https://image-proxy.bo3.gg/${ids[0]}?w=400&h=400`);
+    if (!data) { review.push({ nick, why: 'photo download failed', title }); continue; }
+    bo3.players[nick] = { page: url, name: title.replace(/\s+CS2 Stats.*$/, ''), data };
+    console.log('photo', nick, '->', title);
   } catch (e) {
     review.push({ nick, why: String(e.message).slice(0, 120) });
   }
 }
 
+const teamSlugs = (o) => [...new Set([slug(o), slug(o.replace(/ (Esports|eSports|Gaming|Team)$/i, '')), slug(o.replace(/^Team /i, '')), slug(o.replace(/\.com/i, ''))])];
 for (const org of orgs.filter(wanted)) {
-  const url = `https://bo3.gg/teams/${slug(org)}`;
   try {
-    if (!(await grab(url))) { review.push({ org, why: 'no page' }); continue; }
-    const info = await page.evaluate(() => ({ h1: document.querySelector('h1')?.textContent?.trim() || '', title: document.title, imgs: [...document.querySelectorAll('img')].map((i) => ({ src: i.currentSrc || i.src, alt: i.alt || '', w: i.naturalWidth })) }));
-    if (!norm(info.h1 + info.title).includes(norm(org).slice(0, 6))) { review.push({ org, why: 'name mismatch', h1: info.h1 }); continue; }
-    const cand = info.imgs.filter((i) => i.src && norm(i.alt).includes(norm(org).slice(0, 6)) && i.w >= 40);
-    if (!cand.length) { review.push({ org, why: 'no logo on page' }); continue; }
-    const data = await dataOf(cand[0].src);
-    if (!data) { review.push({ org, why: 'logo download failed' }); continue; }
-    bo3.teams[org] = { page: url, data };
-    console.log('logo', org, cand[0].w + 'px');
+    let found = null;
+    for (const sl of teamSlugs(org)) { await sleep(1500); const h = await html(`https://bo3.gg/teams/${sl}`); if (h) { found = { h, url: `https://bo3.gg/teams/${sl}` }; break; } }
+    if (!found) { review.push({ org, why: 'no page', tried: teamSlugs(org) }); continue; }
+    const title = titleOf(found.h);
+    if (!norm(title).includes(norm(org).slice(0, 5))) { review.push({ org, why: 'name mismatch', title }); continue; }
+    const ids = [...new Set([...found.h.matchAll(/uploads\/team\/(\d+)\/image\/([^"'\\ ?&)]+)/g)].map((m) => m[0]))];
+    if (ids.length !== 1) { review.push({ org, why: ids.length ? 'several team images' : 'no logo on page', title, ids }); continue; }
+    const data = await img(`https://image-proxy.bo3.gg/${ids[0]}`);
+    if (!data) { review.push({ org, why: 'logo download failed', title }); continue; }
+    bo3.teams[org] = { page: found.url, data };
+    console.log('logo', org, '->', title);
   } catch (e) {
     review.push({ org, why: String(e.message).slice(0, 120) });
   }
 }
 
-await browser.close();
 bo3.retrieved = new Date().toISOString();
 fs.writeFileSync(BO3, JSON.stringify(bo3));
 fs.writeFileSync('shots/bo3-review.json', JSON.stringify(review, null, 1));
