@@ -1,5 +1,6 @@
 // Guess the pro: a second daily. Everyone gets the same hidden player each day and has eight guesses; each guess
-// shows how it compares on nation, role, Majors played, best finish, first Major and teams.
+// shows how it compares on nation, role, Majors, best finish, first year and teams. Majors, best finish and first
+// year describe the rosters included in the game, not a player's whole career (#14), and the UI labels them so.
 import { ROSTERS, Roster, Role, rostersOn } from '../data/rosters';
 import * as G from './logic';
 import { dailyNumber } from './state';

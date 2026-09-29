@@ -10,7 +10,11 @@ import { ShareBar } from './Final';
 import { track } from '../analytics';
 import { play } from '../ui/sound';
 
-const HEADS: [Clue['key'], string][] = [['country', 'Nation'], ['role', 'Role'], ['majors', 'Majors'], ['best', 'Best'], ['first', 'First'], ['orgs', 'Teams']];
+// Majors, best finish and first year count only the Major rosters in this game, not whole careers (#14).
+const HEADS: [Clue['key'], string, string?][] = [['country', 'Nation'], ['role', 'Role'],
+  ['majors', 'Majors*', 'Major rosters of theirs included in this game, not their whole career'],
+  ['best', 'Best*', 'Best finish among the rosters included in this game'],
+  ['first', 'First*', 'Year of their earliest roster included in this game'], ['orgs', 'Teams']];
 
 export function GuessScreen() {
   const date = today();
@@ -40,6 +44,7 @@ export function GuessScreen() {
       <p className="spin-stage__hint">
         One pro from Major history, the same for everyone today. You have {MAX_GUESSES} guesses: each shows how your pick compares.
         Green is a match, yellow is close (same region, a role they also played, a year off, a shared team), and arrows point toward the answer.
+        * Majors, best finish and first year count only the Major rosters in this game, not whole careers.
       </p>
       {!day.done && (
         <div className="guess__box">
@@ -66,7 +71,7 @@ export function GuessScreen() {
       )}
       {day.guesses.length > 0 && (
         <div className="guess__grid" role="table" aria-label="Your guesses">
-          <div className="guess__row guess__row--head" role="row"><span role="columnheader">Player</span>{HEADS.map(([k, h]) => <span key={k} role="columnheader">{h}</span>)}</div>
+          <div className="guess__row guess__row--head" role="row"><span role="columnheader">Player</span>{HEADS.map(([k, h, tip]) => <span key={k} role="columnheader" title={tip}>{h}</span>)}</div>
           {[...day.guesses].reverse().map((id) => {
             const p = all.get(id)!;
             return (
@@ -88,7 +93,7 @@ export function GuessScreen() {
           <div>
             <small>{day.won ? `Got it in ${day.guesses.length}` : 'Today\'s pro was'}</small>
             <strong>{answer.nick}</strong>
-            <span>{COUNTRY[answer.country] ?? answer.country} · {ROLE_LABEL[answer.role]} · {answer.majors} Major{answer.majors === 1 ? '' : 's'} in the game · best finish {BEST_LABEL[answer.best].toLowerCase()}</span>
+            <span>{COUNTRY[answer.country] ?? answer.country} · {ROLE_LABEL[answer.role]} · {answer.majors} Major{answer.majors === 1 ? '' : 's'} in the game · best finish here {BEST_LABEL[answer.best].toLowerCase()}</span>
             <span className="guess__teams">{answer.rosters.map((r) => <span key={r.id}><TeamBadge roster={r} size={14} /> {r.org} {r.year}</span>)}</span>
           </div>
         </div>
