@@ -6,7 +6,7 @@ A Counter-Strike take on LoLdle's *Worlds Mayhem*. Spin for three historical Maj
 
 **Daily challenge:** everyone gets the same cases each day (Daily #1 was 28 Sep 2026). At the end, copy a spoiler-light result to share. Dailies are deterministic, so resetting one after opening a case records it as abandoned rather than allowing a replay with hindsight. That only holds within one browser (clearing site data gets round it), so leaderboards or prizes would need results checked on a server. The results screen also reveals the hidden ratings in a **draft review**: each pick against the strongest pick in that round's case. **Lifetime stats** (titles, finishes, streaks, most-drafted players, recent dailies) live behind the chart button.
 
-React 18 + TypeScript + Vite. The build is a single self-contained HTML file (`dist/index.html`) with React bundled in, so it works offline. Only the Google Fonts stylesheet is external, and system fonts stand in without it.
+React 18 + TypeScript + Vite. The build is a single self-contained HTML file (`dist/index.html`) with React and the fonts (Latin subsets of Saira Stencil One, Saira Condensed and Rajdhani, SIL OFL, in `src/fonts/`) bundled in, so it works offline and makes no third-party requests.
 
 ## Run it
 

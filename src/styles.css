@@ -1,4 +1,15 @@
 /* Layout: CS2-style console — one panel with a stepper; left column is the draft/match screen, right is the Dust 2 radar. Single dark look by design. */
+
+/* Fonts are bundled (Latin subsets, SIL OFL; licences in assets-src/fonts) and inlined into the single-file build, so the game looks the same offline. Other scripts fall back to system fonts glyph by glyph. */
+@font-face { font-family: 'Saira Stencil One'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/saira-stencil-one-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 500; font-display: swap; src: url('./fonts/saira-condensed-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url('./fonts/saira-condensed-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url('./fonts/saira-condensed-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 800; font-display: swap; src: url('./fonts/saira-condensed-latin-800-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-style: normal; font-weight: 500; font-display: swap; src: url('./fonts/rajdhani-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-style: normal; font-weight: 600; font-display: swap; src: url('./fonts/rajdhani-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Rajdhani'; font-style: normal; font-weight: 700; font-display: swap; src: url('./fonts/rajdhani-latin-700-normal.woff2') format('woff2'); }
+
 :root {
   --bg: #0b0e12;
   --panel: #151a21;
@@ -357,6 +368,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .modal__card h3 { margin: .3rem 0 .4rem; font-family: var(--f-head); font-weight: 800; font-size: 1.4rem; letter-spacing: .06em; text-transform: uppercase; color: var(--t); }
 .modal__card p, .modal__card li { font-size: .95rem; color: #cfd6de; }
 .modal__card ol { padding-left: 1.2rem; }
+.modal__card:focus { outline: none; }
 .modal__close { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border: 0; background: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; }
 .sources { list-style: none; padding: 0; margin: 0; display: grid; gap: 2px; }
 .sources li { display: flex; flex-wrap: wrap; gap: 8px; font-size: .82rem !important; }
@@ -409,7 +421,6 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
   .history li { grid-template-columns: 34px minmax(0, 1fr) 40px; }
   .history__maps { display: none; }
   .stepper__item { letter-spacing: .06em; font-size: .7rem; }
-  .masthead { gap: 6px; }
 }
 
 /* ---------- stats, sharing, draft review ---------- */
@@ -474,8 +485,13 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .speed button { padding: .45rem .7rem; border: 0; background: var(--panel); color: #cfd6de; cursor: pointer; font-family: var(--f-head); font-weight: 700; font-size: .82rem; font-variant-numeric: tabular-nums; }
 .speed button + button { border-left: 1px solid var(--line); }
 .speed button.is-on { background: var(--t); color: #1d1204; }
+/* On phones the logo is wider than the space between the buttons (it clipped below ~440px), so the toolbar takes its own row above it. */
 @media (max-width: 520px) {
-  .logo { font-size: clamp(1.5rem, 6.6vw, 2rem); }
+  .masthead { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "help right" "brand brand"; gap: 8px 6px; }
+  .masthead__help { grid-area: help; justify-self: start; }
+  .masthead__right { grid-area: right; justify-self: end; }
+  .brand { grid-area: brand; }
+  .logo { font-size: clamp(1.9rem, 9vw, 2.4rem); }
   .hud__org { display: none; }
   .hud__tag { display: inline; }
   .page:not(.phase-draft) .tagline { display: none; }

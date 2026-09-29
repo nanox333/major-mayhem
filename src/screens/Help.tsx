@@ -1,15 +1,13 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { ROSTERS, CREDITS } from '../data/rosters';
+import { Modal } from '../ui/Modal';
 
 export function HelpModal({ onClose }: { onClose: () => void }) {
-  useEffect(() => { const k = (e: KeyboardEvent) => e.key === 'Escape' && onClose(); addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, [onClose]);
   const events = Array.from(new Map(ROSTERS.map((r) => [r.event, r])).values());
   const players = new Set(ROSTERS.flatMap((r) => r.players.map((p) => p.id))).size;
   const orgs = new Set(ROSTERS.map((r) => r.org)).size;
   return (
-    <div className="modal" role="dialog" aria-modal="true" aria-label="How to play" onClick={onClose}>
-      <div className="modal__card" onClick={(e) => e.stopPropagation()}>
-        <button className="modal__close" onClick={onClose} aria-label="Close">×</button>
+    <Modal label="How to play" onClose={onClose}>
         <h3>How to play</h3>
         <ol>
           <li><b>Open a case</b> to reveal three real rosters from Counter-Strike Major history. The card color shows how that roster finished: gold for champions, red for runner-up, pink for semifinalists, purple for quarterfinalists.</li>
@@ -38,7 +36,6 @@ export function HelpModal({ onClose }: { onClose: () => void }) {
             <li key={c.id}><span>{c.file}</span> <span className="muted">{c.source === 'bo3.gg' ? 'bo3.gg' : `${c.author} · ${c.license}`}</span> <a href={c.page} target="_blank" rel="noreferrer">{c.source === 'bo3.gg' ? 'bo3.gg' : 'Commons'}</a></li>
           ))}
         </ul>
-      </div>
-    </div>
+    </Modal>
   );
 }
