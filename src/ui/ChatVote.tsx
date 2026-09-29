@@ -125,6 +125,7 @@ export function TwitchButton({ onClick }: { onClick: () => void }) {
   return (
     <button className={`hud-btn twitch-btn is-${api?.status ?? 'off'}`} onClick={onClick} aria-label="Twitch chat votes" title={`Twitch chat votes${STATE_WORD[api?.status ?? 'off']}`} aria-description={STATE_WORD[api?.status ?? 'off'].replace(/^: /, '') || undefined}>
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true"><path d="M4 3h16v11l-4 4h-4l-3 3v-3H4z" /><path d="M11 7v4M15 7v4" /></svg>
+      <span className="hud-btn__label">Twitch</span>
     </button>
   );
 }
