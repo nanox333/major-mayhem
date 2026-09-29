@@ -24,7 +24,15 @@ export interface Stats {
   lastNew: string[];
   /** Draft duel showmatches won and lost. */
   duels: { w: number; l: number };
+  /**
+   * Major runs and titles split by mode, so like can be compared with like (#67). Only counted for runs finished
+   * since this was added (`since`); `runs`/`titles` above stay the all-time totals. Free play is keyed by its options.
+   */
+  byMode?: { since: string; daily: ModeTally; free: Record<string, ModeTally> };
 }
+export interface ModeTally { runs: number; titles: number }
+/** A key for free-play options, e.g. "cs2+hard", or "all" with none. */
+export const optsKey = (o?: { era?: string; pool?: string; hard?: boolean }) => [o?.era, o?.pool, o?.hard ? 'hard' : undefined].filter(Boolean).join('+') || 'all';
 
 const KEY = 'major-mayhem-stats-v1';
 export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [], duels: { w: 0, l: 0 } });
@@ -37,6 +45,12 @@ export function loadStats(): Stats {
   } catch { return emptyStats(); }
 }
 const saveStats = (s: Stats) => { try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage unavailable */ } };
+
+/** Which parts of the stats screen have something to show. Each is independent (#64). */
+export const statsSections = (s: Stats) => {
+  const runs = s.runs > 0, duels = (s.duels?.w ?? 0) + (s.duels?.l ?? 0) > 0, dailies = Object.keys(s.daily).length > 0;
+  return { runs, duels, dailies, empty: !runs && !duels && !dailies };
+};
 
 /** Pure: the stats after adding one finished run. */
 export function addRun(st: Stats, run: Run): Stats {
@@ -55,6 +69,11 @@ export function addRun(st: Stats, run: Run): Stats {
   };
   for (const p of run.picks) next.drafted[p.playerId] = (next.drafted[p.playerId] ?? 0) + 1;
   const date = dailyDate(run);
+  const bm = st.byMode ?? { since: date ?? today(), daily: { runs: 0, titles: 0 }, free: {} };
+  const bump = (t: ModeTally = { runs: 0, titles: 0 }) => ({ runs: t.runs + 1, titles: t.titles + (champ ? 1 : 0) });
+  next.byMode = date
+    ? { ...bm, daily: bump(bm.daily) }
+    : { ...bm, free: { ...bm.free, [optsKey(run.opts)]: bump(bm.free[optsKey(run.opts)]) } };
   if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade, share: shareText(run) };
   const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0 }, st.ach ?? {});
   // The same local date the daily uses (#26), not UTC, so both agree around midnight.
