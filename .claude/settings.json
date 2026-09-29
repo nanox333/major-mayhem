@@ -4,8 +4,6 @@
       "Bash(curl https://bo3.gg/*)",
       "Bash(curl -sS https://bo3.gg/*)",
       "Bash(node scripts/fetch-bo3-photos.mjs:*)",
-      "Bash(node /tmp/claude-0/-home-user-major-mayhem/f9de3b75-9768-56bd-9242-ca3a42f48189/scratchpad/*:*)",
-      "Bash(node /tmp/claude-0/-home-user-major-mayhem/f9de3b75-9768-56bd-9242-ca3a42f48189/scratchpad/dbg.mjs)",
       "Bash(NODE_EXTRA_CA_CERTS=/root/.ccr/ca-bundle.crt node scripts/fetch-bo3-photos.mjs:*)"
     ]
   }
