@@ -3,9 +3,10 @@
 // everyone the same cases and a reloaded run can't be rerolled by refreshing the page.
 import { COACHES, Player, ROLE_ORDER, Role, activeRosters, rostersOn } from '../data/rosters';
 import * as G from './logic';
+import { DUEL_ID, Duel, duelRosters, registerDuel } from './duel';
 
 export type Phase = 'draft' | 'ready' | 'preview' | 'live' | 'final';
-export type Mode = 'free' | 'daily';
+export type Mode = 'free' | 'daily' | 'duel';
 /** Free-play options. Dailies always use the full pool with labels. */
 export interface Opts {
   /** Only rosters from one era: CS:GO (to Paris 2023) or CS2 (from Copenhagen 2024). Opponents too, when there are enough. */
@@ -52,6 +53,8 @@ export interface Run {
   bench?: G.Pick | null;
   /** Free-play mode options. */
   opts?: Opts;
+  /** A draft duel: the challenger's team, which this run drafts against. */
+  duel?: Duel;
 }
 
 /** Slots a player can go into: the roles they cover, or in hard mode any open slot (off-role costs as usual). */
@@ -92,11 +95,18 @@ export const fresh = (mode: Mode = 'free', date = today(), opts?: Opts): Run => 
 
 export const KEY = 'major-mayhem-run-v2';
 
+/** A duel run: the challenger's seed and options (so the same cases), then one showmatch against their team. */
+export function freshDuel(d: Duel): Run {
+  registerDuel(d);
+  return { ...fresh('free', today(), d.opts), mode: 'duel', seed: d.seed, duel: d, t: { ...G.newTournament(), duel: true } };
+}
+
 export function load(): Run {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return fresh();
     const r = JSON.parse(raw);
+    if (r.duel) registerDuel(r.duel);
     // v2 saves predate daily mode: carry them over as free runs.
     if (r.v === 2) Object.assign(r, { v: 3, mode: 'free', seed: `free-${Math.random().toString(36).slice(2, 10)}`, recorded: r.phase === 'final' });
     // A match saved before map vetoes existed can't be continued: replay it from the match-found screen.
@@ -135,7 +145,7 @@ export type Action =
   | { type: 'spin' } | { type: 'reroll' } | { type: 'team'; id: string } | { type: 'back' }
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
   | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode; opts?: Opts } | { type: 'recorded' }
-  | { type: 'opts'; opts: Opts }
+  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel }
   | { type: 'coach'; rosterId: string } | { type: 'bench'; player: Player } | { type: 'sub'; out: string | null } | { type: 'call'; call: G.Call };
 
 /** A daily draws only from rosters available on its date, so later data additions don't change it. */
@@ -144,6 +154,8 @@ const eraOf = (year: number) => (year >= 2024 ? 'cs2' : 'csgo');
 export const rostersFor = (s: Run) => {
   const date = dailyDate(s);
   if (date) return rostersOn(date);
+  const pinned = s.duel ? duelRosters(s.duel) : null;
+  if (pinned) return pinned;
   const all = activeRosters();
   const era = s.opts?.era ? all.filter((r) => eraOf(r.year) === s.opts!.era) : all;
   return era.length >= 16 ? era : all;
@@ -157,7 +169,7 @@ export const draftPoolFor = (s: Run) => {
   return pool.length >= 9 ? pool : era;
 };
 const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen, draftPoolFor(s)));
-const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) =>
+const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) => stage === 'DUEL' ? DUEL_ID :
   G.seeded(`${s.seed}:opp:${t.matches.length}`, () => G.pickOpponent(t, stage, squadOf(s), rostersFor(s)));
 /** The offer for whichever round is next. Coach and bench offers are seeded apart from the player rounds. */
 const offerForRound = (s: Run) => {
@@ -253,6 +265,7 @@ export function reducer(s: Run, a: Action): Run {
     // Play again keeps your free-play options; switching to a daily drops them.
     case 'reset': return fresh(a.mode, today(), a.opts ?? ((a.mode ?? 'free') === 'free' ? s.opts : undefined));
     case 'opts': return s.offerKey === 0 && s.mode === 'free' ? fresh('free', today(), a.opts) : s;
+    case 'duel': return freshDuel(a.duel);
     case 'recorded': return { ...s, recorded: true };
   }
 }

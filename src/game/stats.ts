@@ -22,10 +22,12 @@ export interface Stats {
   ach: Record<string, string>;
   /** Achievements earned by the last finished run, for the results screen. */
   lastNew: string[];
+  /** Draft duel showmatches won and lost. */
+  duels: { w: number; l: number };
 }
 
 const KEY = 'major-mayhem-stats-v1';
-export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [] });
+export const emptyStats = (): Stats => ({ v: 1, runs: 0, titles: 0, reached: [0, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [], duels: { w: 0, l: 0 } });
 
 export function loadStats(): Stats {
   try {
@@ -78,6 +80,15 @@ export function addAbandon(st: Stats, run: Run): Stats {
 
 export function abandonDaily(run: Run): Stats {
   const next = addAbandon(loadStats(), run);
+  saveStats(next);
+  return next;
+}
+
+/** A duel doesn't count as a Major run: it only adds to the duel record. */
+export function recordDuel(run: Run): Stats {
+  const st = loadStats();
+  const won = run.t.status === 'champion';
+  const next = { ...st, duels: { w: st.duels.w + (won ? 1 : 0), l: st.duels.l + (won ? 0 : 1) }, lastNew: [] };
   saveStats(next);
   return next;
 }

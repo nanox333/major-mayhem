@@ -4,6 +4,7 @@ import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
 import { RoleIcon, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
+import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
@@ -65,7 +66,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
   useEffect(() => { setFound(false); const tm = setTimeout(() => setFound(true), reduceMotion() ? 0 : 1500); return () => clearTimeout(tm); }, [pending.oppId]);
   return (
     <div className="stack">
-      <StageTrack t={t} current={pending.stage} />
+      {pending.stage !== 'DUEL' && <StageTrack t={t} current={pending.stage} />}
       {!found ? (
         <div className="searching anim-in">
           <span className="searching__ring" />
@@ -165,6 +166,9 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     track('call', { kind, round: n, stage: m.stage });
   };
   const canTimeout = !!game && lastMap && !mapDone && n >= 1 && G.canCall(m, { kind: 'timeout', round: n });
+  useChatVote(buyQuestion ? `buy-${m.form}-${mapIdx}-${n}` : null,
+    [{ id: 'save', label: 'Save (eco)', aliases: ['save', 'eco'] }, { id: 'force', label: 'Force buy', aliases: ['force', 'force buy'] }],
+    (id) => (id === 'force' ? call('force') : setBought((b) => [...b, n])));
   // The opponent's current run of rounds, which a timeout stops.
   let theirRun = 0;
   if (game) for (let i = Math.min(n, total) - 1; i >= 0 && !game.rounds[i]; i--) theirRun++;
@@ -234,7 +238,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
       {vetoing ? (
         <VetoPanel m={m} opp={opp} mine={mine} dispatch={dispatch} />
       ) : !game ? (
-        m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} dispatch={dispatch} />
+        m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} dispatch={dispatch} />
       ) : !mapDone ? (
         <>
           <div className="killfeed" aria-live="polite">
@@ -289,10 +293,12 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
 }
 
 /** Before each map: the knife round. Win it and you pick the starting side; lose it and the opponent picks. */
-function KnifePanel({ k, opp, mine, mapNo, bestOf, dispatch }: {
-  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; dispatch: React.Dispatch<Action>;
+function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
+  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; voteKey: string; dispatch: React.Dispatch<Action>;
 }) {
   const left = G.otherSide(k.oppPick);
+  useChatVote(k.won ? voteKey : null, [{ id: 'T', label: 'T · attack', aliases: ['t', 'attack'] }, { id: 'CT', label: 'CT · defend', aliases: ['ct', 'defend'] }],
+    (id) => dispatch({ type: 'side', side: id as G.Side }));
   const title = k.how === 'our-pick' ? `Your pick: ${opp.org} choose sides`
     : k.how === 'their-pick' ? `${opp.org}'s pick: you choose sides`
       : k.won ? 'You won the knife!' : `${opp.org} won the knife`;
@@ -322,6 +328,9 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
   const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
   const t = G.vetoTurn(m.veto);
   const done = (map: string) => m.veto.steps.find((x) => x.map === map);
+  useChatVote(t?.team === 'us' ? `veto-${m.form}-${m.veto.steps.length}` : null,
+    G.MAPS.filter((map) => m.veto.left.includes(map)).map((map) => ({ id: map, label: map, aliases: [map, ...(map === 'Dust2' ? ['d2', 'dust'] : [])] })),
+    (map) => dispatch({ type: 'veto', map }));
   const pips = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n);
   return (
     <div className="veto anim-in">

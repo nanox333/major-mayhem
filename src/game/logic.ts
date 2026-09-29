@@ -132,6 +132,14 @@ export function lineupFromPicks(picks: Pick[]): Lineup[] {
 
 /** Best slot assignment for a real roster (brute force over 120 permutations, cached per roster). */
 const natural = new Map<string, Lineup[]>();
+/**
+ * Adds a made-up team (a friend's drafted five, for a duel) that plays like a roster. Its lineup keeps each player's
+ * own roster, so map comfort and synergies work as they do for a drafted team.
+ */
+export function registerTeam(r: Roster, lineup: Lineup[]) {
+  rosterById.set(r.id, r);
+  natural.set(r.id, lineup);
+}
 export function naturalLineup(r: Roster): Lineup[] {
   let l = natural.get(r.id);
   if (!l) natural.set(r.id, (l = bestLineup(r)));
@@ -168,11 +176,12 @@ export const rosterPower = (r: Roster) => teamPower(naturalLineup(r), r.coach);
 
 // ---------- tournament ----------
 
-export type StageKey = 'QUAL' | 'QF' | 'SF' | 'F';
-export const STAGE_NAME: Record<StageKey, string> = { QUAL: 'Swiss Stage', QF: 'Quarterfinal', SF: 'Semifinal', F: 'Grand Final' };
+/** DUEL is a draft duel's one-off showmatch against a friend's drafted team. */
+export type StageKey = 'QUAL' | 'QF' | 'SF' | 'F' | 'DUEL';
+export const STAGE_NAME: Record<StageKey, string> = { QUAL: 'Swiss Stage', QF: 'Quarterfinal', SF: 'Semifinal', F: 'Grand Final', DUEL: 'Showmatch' };
 export const MAPS = ['Mirage', 'Inferno', 'Nuke', 'Ancient', 'Anubis', 'Dust2', 'Train'];
 /** Swiss matches are Bo1 unless they decide advancement or elimination (see bestOfFor); every playoff match is a Bo3. */
-export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3 };
+export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3, DUEL: 3 };
 
 export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' | 'pistol' | 'clutch' | 'call' }
 export interface PlayerStat { id: string; nick: string; k: number; d: number; rating: number }
@@ -508,7 +517,8 @@ export function playNextMap(m: Match, mine: Lineup[], start: Side, coach?: strin
   const opp = rosterById.get(m.opponentId)!;
   const oppL = naturalLineup(opp);
   const A = teamPower(mine, coach).total;
-  const B = rosterPower(opp).total - OPP_HANDICAP + STAGE_BOOST[m.stage];
+  // A friend's drafted team is a dream team too: no handicap in a showmatch.
+  const B = rosterPower(opp).total - (m.stage === 'DUEL' ? 0 : OPP_HANDICAP) + STAGE_BOOST[m.stage];
   const g = { ...playMap(m.next.map, start, mine, oppL, opp.org, A, B, m.form, calls, coach ? COACHES[coach]?.rating ?? 75 : 70), knife: m.next };
   const impact = { ...m.impact };
   for (const [id, v] of Object.entries(g.impact!)) impact[id] = (impact[id] ?? 0) + v;
@@ -576,6 +586,8 @@ export interface Tournament {
   qual: { w: number; l: number; need?: number };
   status: 'running' | 'eliminated' | 'champion';
   used: string[];
+  /** A draft duel: a single showmatch instead of a Major. */
+  duel?: boolean;
 }
 
 export const newTournament = (): Tournament => ({ matches: [], qual: { w: 0, l: 0, need: 3 }, status: 'running', used: [] });
@@ -584,6 +596,7 @@ export const qualNeed = (t: Tournament) => t.qual.need ?? 2;
 /** What stage the next match belongs to, or null if the run is over. */
 export function nextStage(t: Tournament): StageKey | null {
   if (t.status !== 'running') return null;
+  if (t.duel) return t.matches.length ? null : 'DUEL';
   if (t.qual.w < qualNeed(t)) return 'QUAL';
   const playoff = t.matches.filter((m) => m.stage !== 'QUAL').length;
   return (['QF', 'SF', 'F'] as StageKey[])[playoff] ?? null;
@@ -609,7 +622,7 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
     .map((r) => ({ r, p: rosterPower(r).total }))
     .sort((x, y) => y.p - x.p);
   const n = ranked.length;
-  const range: Record<StageKey, [number, number]> = { QUAL: [0.35, 1], QF: [0.15, 0.6], SF: [0.05, 0.35], F: [0, 0.18] };
+  const range: Record<StageKey, [number, number]> = { QUAL: [0.35, 1], QF: [0.15, 0.6], SF: [0.05, 0.35], F: [0, 0.18], DUEL: [0, 1] };
   // Swiss pairs teams on the same record: winners meet stronger teams, strugglers weaker ones.
   const swiss: Record<number, [number, number]> = { [-2]: [0.35, 1], [-1]: [0.25, 0.9], 0: [0.1, 0.75], 1: [0.05, 0.5], 2: [0, 0.35] };
   const [lo, hi] = stage === 'QUAL' && qualNeed(t) === 3 ? swiss[Math.max(-2, Math.min(2, t.qual.w - t.qual.l))] : range[stage];
@@ -619,11 +632,12 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
 
 /** Real rosters are tuned down slightly: your dream team is the star of the show. Tuned with `npm run check`. */
 export const OPP_HANDICAP = 2.5;
-export const STAGE_BOOST: Record<StageKey, number> = { QUAL: 1.5, QF: 0, SF: 0.8, F: 1.6 };
+export const STAGE_BOOST: Record<StageKey, number> = { QUAL: 1.5, QF: 0, SF: 0.8, F: 1.6, DUEL: 0 };
 
 export function applyResult(t: Tournament, m: Match): Tournament {
   const next: Tournament = { ...t, matches: [...t.matches, m], used: [...t.used, m.opponentId], qual: { ...t.qual } };
-  if (m.stage === 'QUAL') {
+  if (m.stage === 'DUEL') next.status = m.won ? 'champion' : 'eliminated';
+  else if (m.stage === 'QUAL') {
     m.won ? next.qual.w++ : next.qual.l++;
     if (next.qual.l >= qualNeed(next)) next.status = 'eliminated';
   } else if (!m.won) next.status = 'eliminated';
@@ -633,6 +647,7 @@ export function applyResult(t: Tournament, m: Match): Tournament {
 
 export function placement(t: Tournament): { key: string; label: string; reached: number } {
   // reached: 0 qual, 1 QF, 2 SF, 3 F, 4 champion
+  if (t.duel) return t.status === 'champion' ? { key: 'DUEL-W', label: 'Won the showmatch', reached: 4 } : { key: 'DUEL-L', label: 'Lost the showmatch', reached: 0 };
   if (t.status === 'champion') return { key: 'CHAMP', label: 'Major Champions', reached: 4 };
   const last = t.matches[t.matches.length - 1];
   if (!last || last.stage === 'QUAL') return { key: 'QUAL', label: t.qual.need ? `Swiss Stage (${t.qual.w}–${t.qual.l})` : 'Qualification Stage', reached: 0 };

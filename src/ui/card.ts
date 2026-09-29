@@ -8,7 +8,7 @@ import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 const W = 1080, H = 1350;
 const C = { bg: '#0b0e12', panel: '#151a21', line: '#2a323d', text: '#e8eaed', cream: '#f1e5c8', muted: '#8b95a3', gold: '#e0a33b', ct: '#5e98d9', win: '#4fb34f', loss: '#d9534f', silver: '#d4d7da' };
 const F = { logo: '"Saira Stencil One", Impact, sans-serif', head: '"Saira Condensed", "Arial Narrow", sans-serif', body: 'Rajdhani, "Arial Narrow", system-ui, sans-serif' };
-const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF', F: 'F' };
+const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF', F: 'F', DUEL: 'BO3' };
 
 const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
   if (!src) return resolve(null);

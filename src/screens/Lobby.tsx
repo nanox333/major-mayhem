@@ -2,6 +2,7 @@ import React from 'react';
 import { ROLE_LABEL } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, benchLineup } from '../game/state';
+import { challengerLineup } from '../game/duel';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
 import { Synergy, strength } from '../game/synergy';
@@ -44,6 +45,19 @@ export function SynergyList({ list }: { list: Synergy[] }) {
   );
 }
 
+/** The team you're drafting against in a duel. */
+function Challenger({ s }: { s: Run }) {
+  const d = s.duel!;
+  const lineup = challengerLineup(d);
+  return (
+    <div className="challenger">
+      <small>Your opponent: {d.name}'s team, best of three</small>
+      <ul>{lineup.map((l) => <li key={l.player.id}><RoleIcon role={l.slot} size={12} /> {l.player.nick} <span className="muted">{l.roster.org} {l.roster.year}</span></li>)}</ul>
+      {d.coach && <span className="muted small">Coach {d.coach}</span>}
+    </div>
+  );
+}
+
 /** The coach and the bench player, under the five starters. */
 export function Staff({ s, stats }: { s: Run; stats?: Record<string, { k: number; d: number; rating: number }> }) {
   const bench = benchLineup(s);
@@ -82,8 +96,9 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
         <span>{offRoles === 0 ? 'Everyone on their main role' : `${offRoles} player${offRoles > 1 ? 's' : ''} off their main role`}</span>
       </div>
       <SynergyList list={power.synergies} />
-      <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>
-      <button className="cta cta--go" onClick={() => dispatch({ type: 'play' })}>Find match</button>
+      {s.duel && <Challenger s={s} />}
+      {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
+      <button className="cta cta--go" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button>
     </div>
   );
 }

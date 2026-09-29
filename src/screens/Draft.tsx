@@ -9,6 +9,7 @@ import { ShareBar } from './Final';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
 import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
+import { useChatVote } from '../ui/ChatVote';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
@@ -113,6 +114,8 @@ function useReroll(dispatch: React.Dispatch<Action>) {
 function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
   const { out, reroll } = useReroll(dispatch);
   const drafted = s.picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
+  useChatVote(`coach-${s.offerKey}-${s.rerollKey}`, s.offer.map((id) => { const c = G.rosterById.get(id)!.coach!; return { id, label: c, aliases: [c] }; }),
+    (id) => dispatch({ type: 'coach', rosterId: id }));
   return (
     <div className={`teams-col ${out ? 'is-out' : ''}`}>
       {s.offer.map((id, i) => {
@@ -144,6 +147,10 @@ function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action>
   const bench = roundOf(s) === 'bench';
   const hard = !!s.opts?.hard;
   const taken = G.draftedIds(s.picks);
+  useChatVote(`team-${s.offerKey}-${s.rerollKey}-${bench}`, s.offer.map((id) => {
+    const r = G.rosterById.get(id)!;
+    return { id, label: `${r.tag} ${r.year}`, aliases: [r.org, r.tag, `${r.tag} ${r.year}`, `${r.org} ${r.year}`] };
+  }), (id) => dispatch({ type: 'team', id }));
   return (
     <div className={`teams-col ${out ? 'is-out' : ''}`}>
       {s.offer.map((id, i) => {
@@ -182,6 +189,13 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
   const players = roster.players.filter(can);
   const drafted = picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
   const taken = roster.players.filter((p) => !can(p));
+  // Chat votes on the player; the slot is their main role when it's open, else the first open one they cover.
+  useChatVote(`player-${roster.id}-${picks.length}-${bench}`, players.map((p) => ({ id: p.id, label: p.nick, aliases: [p.nick] })), (id) => {
+    const p = players.find((x) => x.id === id)!;
+    if (bench) return dispatch({ type: 'bench', player: p });
+    const slots = slotsFor(s, p);
+    dispatch({ type: 'draft', player: p, slot: slots.includes(p.roles[0]) ? p.roles[0] : slots[0] });
+  });
   return (
     <div className="players-col">
       <div className={`team-heading rar-${hard ? 'milspec' : rarity(roster)}`}>

@@ -5,6 +5,7 @@ import { Run, dailyNumber, fresh, lineupFor, reducer, roundOf, validRun } from '
 import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats } from './stats';
 import { shareText } from './share';
 import { newAchievements } from './achievements';
+import { DUEL_ID, decodeDuel, duelCode, duelFrom, duelLink, encodeDuel } from './duel';
 
 /** Plays your veto turns with the sensible choice. */
 function vetoAll(s: Run): Run {
@@ -306,5 +307,37 @@ describe('achievements', () => {
   it('checks streaks through the lifetime stats', () => {
     expect(newAchievements(run, { streak: 3, dailyStreak: 7 }, {})).toEqual(expect.arrayContaining(['dynasty', 'daily-3', 'daily-7']));
     expect(newAchievements(run, { streak: 0, dailyStreak: 2 }, {})).not.toContain('daily-3');
+  });
+});
+
+describe('draft duels', () => {
+  const challenger = draftThrough(fresh('free', undefined, { era: 'csgo' }));
+  const d = duelFrom(challenger, 'Kristián ⚡');
+  it('round-trips a team through a link, names included', () => {
+    const back = decodeDuel(encodeDuel(d))!;
+    expect(back).toEqual(d);
+    expect(back.name).toBe('Kristián ⚡');
+    expect(duelCode(duelLink('https://x.test/', d).split('https://x.test/')[1])).toBe(encodeDuel(d));
+  });
+  it('rejects broken or foreign links', () => {
+    expect(decodeDuel('not-a-duel')).toBeNull();
+    expect(decodeDuel(encodeDuel({ ...d, picks: d.picks.map((p, i) => (i === 0 ? [p[0], p[1], 'nobody'] : p)) as typeof d.picks }))).toBeNull();
+    expect(decodeDuel(encodeDuel({ ...d, coach: 'nobody' }))).toBeNull();
+  });
+  it('opens the same first case, then plays one showmatch against the challenger', () => {
+    let s = reducer(fresh('free'), { type: 'duel', duel: d });
+    expect(s.mode).toBe('duel');
+    const theirFirstCase = reducer({ ...fresh('free', undefined, { era: 'csgo' }), seed: challenger.seed }, { type: 'spin' }).offer;
+    expect(reducer(s, { type: 'spin' }).offer).toEqual(theirFirstCase);
+    s = playThrough(s);
+    expect(s.t.matches).toHaveLength(1);
+    expect(s.t.matches[0].stage).toBe('DUEL');
+    expect(s.t.matches[0].opponentId).toBe(DUEL_ID);
+    expect(['DUEL-W', 'DUEL-L']).toContain(G.placement(s.t).key);
+    expect(shareText(s)).toContain('draft duel vs Kristián ⚡');
+  });
+  it('survives a reload: the challenger is registered before the save is checked', () => {
+    const s = reducer(reducer(draftThrough(reducer(fresh('free'), { type: 'duel', duel: d })), { type: 'play' }), { type: 'start' });
+    expect(validRun(JSON.parse(JSON.stringify(s)))).toBe(true);
   });
 });

@@ -26,6 +26,7 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
               <div><b>{Math.round((stats.titles / stats.runs) * 100)}%</b><small>Win rate</small></div>
               <div><b>{stats.bestStreak}</b><small>Best streak</small></div>
             </div>
+            {(stats.duels?.w || stats.duels?.l) ? <p>Draft duels: {stats.duels.w} won, {stats.duels.l} lost</p> : null}
             <h3>Finishes</h3>
             <ul className="bars">
               {[...REACHED].reverse().map((label, ri) => {
