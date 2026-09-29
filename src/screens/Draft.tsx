@@ -50,15 +50,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}>Play Daily #{todayN} instead</button>
         )}
         {s.offerKey === 0 && s.mode === 'free' && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
-        {s.picks.length === 0 && s.mode === 'free' && doneToday && (
-          <div className="daily-done">
-            <small>Daily #{todayN} {doneToday.abandoned ? 'abandoned' : 'done'}</small>
-            <strong>{doneToday.placement}</strong>
-            <span>{doneToday.abandoned ? 'Reset after it started, so it has no result.' : `MVP ${doneToday.mvp}${doneToday.grade !== null ? ` · Draft ${Math.round(doneToday.grade * 100)}%` : ''}`}</span>
-            {doneToday.share && !doneToday.abandoned && <ShareBar text={() => [doneToday.share, pageUrl()].filter(Boolean).join('\n')} props={{ mode: 'daily', daily: todayN, from: 'daily-done' }} />}
-            <NextDaily />
-          </div>
-        )}
+        {s.picks.length === 0 && s.mode === 'free' && doneToday && <DailyDone d={doneToday} n={todayN} />}
       </div>
     );
   }
@@ -67,6 +59,19 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
     return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <TeamChoices s={s} dispatch={dispatch} />;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
+}
+
+/** Today's finished (or abandoned) daily: result, share buttons and the countdown. */
+function DailyDone({ d, n }: { d: NonNullable<Stats['daily'][string]>; n: number }) {
+  return (
+    <div className="daily-done">
+      <small>Daily #{n} {d.abandoned ? 'abandoned' : 'done'}</small>
+      <strong>{d.placement}</strong>
+      <span>{d.abandoned ? 'Reset after it started, so it has no result.' : `MVP ${d.mvp}${d.grade !== null ? ` · Draft ${Math.round(d.grade * 100)}%` : ''}`}</span>
+      {d.share && !d.abandoned && <ShareBar text={() => [d.share, pageUrl()].filter(Boolean).join('\n')} props={{ mode: 'daily', daily: n, from: 'daily-done' }} />}
+      <NextDaily />
+    </div>
+  );
 }
 
 /** The first screen: today's daily is the big action, the other modes sit beneath it (#68). */
@@ -97,6 +102,7 @@ function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
         {best && <span>Best finish: {best}</span>}
         {!streak && !best && <span>Draft five pros, then win the Major.</span>}
       </p>
+      {done && <DailyDone d={done} n={todayN} />}
       <div className="home__cards">
         <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => dispatch({ type: 'reset', mode: 'free' })}>
           <strong>Free play</strong><small>Any era, champions or underdogs, hard mode</small>
