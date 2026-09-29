@@ -3,7 +3,7 @@
 // embedded as data URLs, so the canvas never gets tainted.
 import { ROLE_LABEL, Roster, Player } from '../data/rosters';
 import * as G from '../game/logic';
-import { Run, dailyDate, dailyNumber } from '../game/state';
+import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 
 const W = 1080, H = 1350;
 const C = { bg: '#0b0e12', panel: '#151a21', line: '#2a323d', text: '#e8eaed', cream: '#f1e5c8', muted: '#8b95a3', gold: '#e0a33b', ct: '#5e98d9', win: '#4fb34f', loss: '#d9534f', silver: '#d4d7da' };
@@ -56,7 +56,7 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
   const pl = G.placement(run.t);
   const champ = pl.key === 'CHAMP';
   const mine = G.lineupFromPicks(run.picks);
-  const star = G.mvp(run.t, mine);
+  const star = G.mvp(run.t, squadOf(run));
   const ratings = G.seriesRatings(run.t.matches.flatMap((m) => m.maps));
   const { grade } = G.draftReview(run.picks);
   const date = dailyDate(run);
@@ -99,9 +99,9 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
   });
 
   // lineup
-  const top = 430, rowH = 138;
+  const top = 430, rowH = 128;
   for (const [i, l] of mine.entries()) {
-    const y = top + i * (rowH + 12);
+    const y = top + i * (rowH + 10);
     const isMvp = l.player.id === star.player.id;
     rounded(ctx, 60, y, W - 120, rowH, 10);
     ctx.fillStyle = isMvp ? 'rgba(224,163,59,.12)' : C.panel; ctx.fill();
@@ -111,36 +111,41 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
 
     ctx.textAlign = 'left';
     ctx.fillStyle = C.gold; ctx.font = `700 24px ${F.head}`; spaced(ctx, 3);
-    ctx.fillText(ROLE_LABEL[l.slot].toUpperCase(), 228, y + 40);
+    ctx.fillText(ROLE_LABEL[l.slot].toUpperCase(), 228, y + 36);
     spaced(ctx, 0); fit(ctx, l.player.nick, 700, 50, F.head, 440);
-    ctx.fillStyle = C.text; ctx.fillText(l.player.nick, 228, y + 88);
+    ctx.fillStyle = C.text; ctx.fillText(l.player.nick, 228, y + 82);
     const nickW = ctx.measureText(l.player.nick).width;
     if (isMvp) {
       ctx.font = `700 24px ${F.head}`; spaced(ctx, 2);
       const tw = ctx.measureText('★ MVP').width + 20;
-      rounded(ctx, 228 + nickW + 16, y + 58, tw, 34, 6); ctx.fillStyle = C.gold; ctx.fill();
-      ctx.fillStyle = C.bg; ctx.fillText('★ MVP', 228 + nickW + 26, y + 84);
+      rounded(ctx, 228 + nickW + 16, y + 52, tw, 34, 6); ctx.fillStyle = C.gold; ctx.fill();
+      ctx.fillStyle = C.bg; ctx.fillText('★ MVP', 228 + nickW + 26, y + 78);
       spaced(ctx, 0);
     }
     const logo = await loadImage(l.roster.logo);
     let tx = 228;
-    if (logo) { ctx.drawImage(logo, tx, y + 101, 24, 24); tx += 32; }
+    if (logo) { ctx.drawImage(logo, tx, y + 94, 24, 24); tx += 32; }
     ctx.fillStyle = C.muted; ctx.font = `700 26px ${F.body}`;
-    ctx.fillText(`${l.roster.org} ${l.roster.year}`, tx, y + 122);
+    ctx.fillText(`${l.roster.org} ${l.roster.year}`, tx, y + 115);
 
     const st = ratings[l.player.id];
     if (st) {
       ctx.textAlign = 'right';
       ctx.fillStyle = C.muted; ctx.font = `700 26px ${F.body}`;
-      ctx.fillText(`${st.k}–${st.d}`, W - 90, y + 52);
+      ctx.fillText(`${st.k}–${st.d}`, W - 90, y + 48);
       ctx.fillStyle = st.rating >= 1.1 ? C.win : st.rating < 0.9 ? C.loss : C.text;
       ctx.font = `700 54px ${F.head}`;
-      ctx.fillText(st.rating.toFixed(2), W - 90, y + 106);
+      ctx.fillText(st.rating.toFixed(2), W - 90, y + 100);
     }
   }
 
-  // footer
+  // coach and bench
   ctx.textAlign = 'center';
+  const bench = run.bench ? G.rosterById.get(run.bench.rosterId)?.players.find((p) => p.id === run.bench!.playerId) : undefined;
+  const staff = [run.coach ? `Coach ${run.coach}` : '', bench ? `Bench ${bench.nick}` : ''].filter(Boolean).join('   ·   ');
+  if (staff) { ctx.fillStyle = C.muted; spaced(ctx, 2); ctx.font = `700 28px ${F.head}`; ctx.fillText(staff.toUpperCase(), W / 2, 1152); }
+
+  // footer
   const mvpRating = ratings[star.player.id]?.rating;
   const foot = [`MVP ${star.player.nick}${mvpRating !== undefined ? ` ${mvpRating.toFixed(2)}` : ''}`, grade !== null ? `DRAFT ${Math.round(grade * 100)}%` : ''].filter(Boolean).join('   ·   ');
   ctx.fillStyle = C.gold; spaced(ctx, 3); fit(ctx, foot, 700, 36, F.head, 960);

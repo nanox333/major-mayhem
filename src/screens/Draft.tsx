@@ -1,14 +1,14 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, dailyDate, dailyNumber, today } from '../game/state';
+import { Action, Run, dailyDate, dailyNumber, roundOf, today } from '../game/state';
 import { Stats } from '../game/stats';
 import { pageUrl } from '../game/share';
 import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
-import { COUNTRY, draftHints } from '../game/synergy';
+import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
@@ -23,7 +23,9 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
-          {s.picks.length === 0 ? 'Each case holds three real rosters from a Major. Pick a team, then one player from it.' : `Still to fill: ${open.map((r) => ROLE_LABEL[r]).join(', ')}.`}
+          {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
+            : roundOf(s) === 'bench' ? 'Round 7: the bench. Pick anyone from the case, any role. Before each match you can sub them in for a starter who\'s off form.'
+              : s.picks.length === 0 ? 'Each case holds three real rosters from a Major. Pick a team, then one player from it.' : `Still to fill: ${open.map((r) => ROLE_LABEL[r]).join(', ')}.`}
         </p>
         {s.picks.length === 0 && s.mode === 'daily' && (
           <p className="muted small">
@@ -52,9 +54,9 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   }
   if (s.step === 'teams') {
     if (reelFor === s.offerKey && !reduceMotion()) return <CaseReel land={s.offer[0]} onDone={() => setReelFor(null)} />;
-    return <TeamChoices s={s} dispatch={dispatch} />;
+    return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <TeamChoices s={s} dispatch={dispatch} />;
   }
-  return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} picks={s.picks} dispatch={dispatch} /> : null;
+  return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} picks={s.picks} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
 }
 
 /** CS-style case roulette: a strip of teams slides past a marker and stops on the first team in the offer. */
@@ -96,13 +98,50 @@ function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
   );
 }
 
-function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
+function useReroll(dispatch: React.Dispatch<Action>) {
   const [out, setOut] = useState(false);
   const reroll = () => {
     if (reduceMotion()) return dispatch({ type: 'reroll' });
     setOut(true);
     setTimeout(() => { dispatch({ type: 'reroll' }); setOut(false); }, 160);
   };
+  return { out, reroll };
+}
+
+/** The coach round: three coaches, each shown with the Major they coached at. */
+function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
+  const { out, reroll } = useReroll(dispatch);
+  const drafted = s.picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
+  return (
+    <div className={`teams-col ${out ? 'is-out' : ''}`}>
+      {s.offer.map((id, i) => {
+        const r = G.rosterById.get(id)!;
+        const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
+        return (
+          <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}>
+            <div className="case-item__top">
+              <TeamBadge roster={r} size={44} />
+              <div className="case-item__id">
+                <div className="case-item__name">{r.coach}</div>
+                <div className="case-item__meta"><span>Coach · {r.org} {r.year}</span><span className="grade">{r.result}</span></div>
+              </div>
+            </div>
+            {knows.length > 0 && <span className="hint hint--good">Coached {knows.map((p) => p.nick).join(', ')}</span>}
+            <div className="case-item__event">{r.event}</div>
+          </button>
+        );
+      })}
+      <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
+        <button className="ghost-btn" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
+      </div>
+    </div>
+  );
+}
+
+function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
+  const { out, reroll } = useReroll(dispatch);
+  const bench = roundOf(s) === 'bench';
+  const taken = G.draftedIds(s.picks);
   return (
     <div className={`teams-col ${out ? 'is-out' : ''}`}>
       {s.offer.map((id, i) => {
@@ -118,7 +157,7 @@ function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action>
             </div>
             <ul className="case-item__roster">
               {r.players.map((p) => {
-                const ok = G.eligibleSlots(p, s.picks).length > 0;
+                const ok = bench ? !taken.has(p.id) : G.eligibleSlots(p, s.picks).length > 0;
                 return <li key={p.id} className={ok ? '' : 'is-off'}><RoleIcon role={p.roles[0]} size={11} />{p.nick}</li>;
               })}
             </ul>
@@ -133,10 +172,12 @@ function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action>
   );
 }
 
-function PlayerChoices({ roster, picks, dispatch }: { roster: Roster; picks: G.Pick[]; dispatch: React.Dispatch<Action> }) {
-  const players = roster.players.filter((p) => G.eligibleSlots(p, picks).length > 0);
+function PlayerChoices({ roster, picks, bench, dispatch }: { roster: Roster; picks: G.Pick[]; bench?: boolean; dispatch: React.Dispatch<Action> }) {
+  const draftedIds = G.draftedIds(picks);
+  const can = (p: Roster['players'][number]) => (bench ? !draftedIds.has(p.id) : G.eligibleSlots(p, picks).length > 0);
+  const players = roster.players.filter(can);
   const drafted = picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
-  const taken = roster.players.filter((p) => G.eligibleSlots(p, picks).length === 0);
+  const taken = roster.players.filter((p) => !can(p));
   return (
     <div className="players-col">
       <div className={`team-heading rar-${rarity(roster)}`}>
@@ -164,7 +205,8 @@ function PlayerChoices({ roster, picks, dispatch }: { roster: Roster; picks: G.P
                 <a className="agent__name" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" title={`${p.nick} on Liquipedia`}>{p.nick}</a>
                 {draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}>{h.text}</span>)}
                 <div className="agent__slots">
-                  {slots.map((slot) => (
+                  {bench && <button className="slot-chip slot-chip--main" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Bench</button>}
+                  {!bench && slots.map((slot) => (
                     <button key={slot} className={`slot-chip ${p.roles[0] === slot ? 'slot-chip--main' : ''}`} onClick={() => dispatch({ type: 'draft', player: p, slot })}>
                       <RoleIcon role={slot} size={12} /> {ROLE_SHORT[slot]}
                     </button>
@@ -175,7 +217,7 @@ function PlayerChoices({ roster, picks, dispatch }: { roster: Roster; picks: G.P
           );
         })}
       </div>
-      {taken.length > 0 && <p className="muted small">Unavailable: {taken.map((p) => p.nick).join(', ')} (already drafted or no open slot).</p>}
+      {taken.length > 0 && <p className="muted small">Unavailable: {taken.map((p) => p.nick).join(', ')} ({bench ? 'already drafted' : 'already drafted or no open slot'}).</p>}
     </div>
   );
 }

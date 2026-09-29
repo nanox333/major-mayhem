@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as G from '../game/logic';
-import { Run, dailyDate, dailyNumber } from '../game/state';
+import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { Props, track } from '../analytics';
 
 /**
@@ -31,7 +31,7 @@ export function useRunTracking(s: Run) {
     if (p.phase !== 'final' && s.phase === 'final') {
       const pl = G.placement(s.t);
       const { grade } = G.draftReview(s.picks);
-      const mvp = G.mvp(s.t, G.lineupFromPicks(s.picks));
+      const mvp = G.mvp(s.t, squadOf(s));
       track('run_finish', { ...base, placement: pl.key, reached: pl.reached, mvp: mvp.player.nick, ...(grade !== null ? { grade: Math.round(grade * 100) } : {}) });
     }
   }, [s]);

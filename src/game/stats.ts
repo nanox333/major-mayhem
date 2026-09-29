@@ -1,6 +1,6 @@
 // Lifetime stats, kept in this browser next to the run save.
 import * as G from './logic';
-import { Run, dailyDate, dailyNumber } from './state';
+import { Run, dailyDate, dailyNumber, squadOf } from './state';
 import { shareText } from './share';
 
 export interface DailyResult { placement: string; reached: number; mvp: string; grade: number | null; share?: string; abandoned?: boolean }
@@ -34,7 +34,7 @@ const saveStats = (s: Stats) => { try { localStorage.setItem(KEY, JSON.stringify
 /** Pure: the stats after adding one finished run. */
 export function addRun(st: Stats, run: Run): Stats {
   const pl = G.placement(run.t);
-  const mine = G.lineupFromPicks(run.picks);
+  const mine = squadOf(run);
   const champ = pl.key === 'CHAMP';
   const next: Stats = {
     ...st,

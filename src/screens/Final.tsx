@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, dailyDate, dailyNumber } from '../game/state';
+import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
@@ -9,12 +9,12 @@ import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
 import { reportError, track } from '../analytics';
-import { RosterList } from './Lobby';
+import { RosterList, Staff } from './Lobby';
 import { StageTrack } from './Match';
 
 export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s: Run; stats: Stats; dispatch: React.Dispatch<Action> }) {
   const pl = G.placement(s.t);
-  const star = G.mvp(s.t, mine);
+  const star = G.mvp(s.t, squadOf(s));
   const champ = pl.key === 'CHAMP';
   const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps));
   const date = dailyDate(s);
@@ -47,6 +47,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </p>
       )}
       <RosterList mine={mine} stats={ratings} mvpId={star.player.id} />
+      <Staff s={s} stats={ratings} />
       <ul className="history">
         {s.t.matches.map((m, i) => {
           const o = G.rosterById.get(m.opponentId)!;

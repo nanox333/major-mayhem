@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as G from './logic';
-import { ROSTERS, rostersOn } from '../data/rosters';
-import { Run, dailyNumber, fresh, reducer, validRun } from './state';
+import { COACHES, ROSTERS, rostersOn } from '../data/rosters';
+import { Run, dailyNumber, fresh, lineupFor, reducer, roundOf, validRun } from './state';
 import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats } from './stats';
 import { shareText } from './share';
 
@@ -12,17 +12,30 @@ function vetoAll(s: Run): Run {
   return s;
 }
 
-/** Plays a whole run through the reducer, always taking the first eligible chip. */
-function playThrough(start: Run): Run {
+/** Drafts through the reducer, always taking the first eligible chip, then the first coach and bench player offered. */
+function draftThrough(start: Run, rounds = Infinity): Run {
   let s = start;
-  while (s.phase === 'draft') {
+  for (let n = 0; s.phase === 'draft' && n < rounds; n++) {
     s = reducer(s, { type: 'spin' });
+    const round = roundOf(s);
+    if (round === 'coach') { s = reducer(s, { type: 'coach', rosterId: s.offer[0] }); continue; }
+    if (round === 'bench') {
+      s = reducer(s, { type: 'team', id: s.offer[0] });
+      const taken = G.draftedIds(s.picks);
+      s = reducer(s, { type: 'bench', player: G.rosterById.get(s.offer[0])!.players.find((p) => !taken.has(p.id))! });
+      continue;
+    }
     const r = G.rosterById.get(s.offer.find((id) => G.rosterEligible(G.rosterById.get(id)!, s.picks))!)!;
     s = reducer(s, { type: 'team', id: r.id });
     const p = r.players.find((p) => G.eligibleSlots(p, s.picks).length)!;
     s = reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
   }
-  s = reducer(s, { type: 'play' });
+  return s;
+}
+
+/** Plays a whole run through the reducer with sensible defaults. */
+function playThrough(start: Run): Run {
+  let s = reducer(draftThrough(start), { type: 'play' });
   while (s.phase !== 'final') {
     s = reducer(s, { type: 'start' });
     s = vetoAll(s);
@@ -104,17 +117,7 @@ describe('daily streak', () => {
 });
 
 describe('knife round', () => {
-  const toLive = () => {
-    let s = fresh('daily', '2026-10-01');
-    while (s.phase === 'draft') {
-      s = reducer(s, { type: 'spin' });
-      const r = G.rosterById.get(s.offer.find((id) => G.rosterEligible(G.rosterById.get(id)!, s.picks))!)!;
-      s = reducer(s, { type: 'team', id: r.id });
-      const p = r.players.find((p) => G.eligibleSlots(p, s.picks).length)!;
-      s = reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
-    }
-    return vetoAll(reducer(reducer(s, { type: 'play' }), { type: 'start' }));
-  };
+  const toLive = () => vetoAll(reducer(reducer(draftThrough(fresh('daily', '2026-10-01')), { type: 'play' }), { type: 'start' }));
   it('lets you pick only the side left to you after losing the knife', () => {
     const s = toLive();
     const k = s.current!.next!;
@@ -183,5 +186,73 @@ describe('abandoning a daily', () => {
     expect(replay.daily['2026-10-01'].abandoned).toBe(true);
     expect(addAbandon(replay, started())).toBe(replay);
     expect(dailyStreak(replay.daily, '2026-10-01').current).toBe(0);
+  });
+});
+
+describe('coach, bench and form', () => {
+  it('drafts five players, then a coach, then a bench player', () => {
+    let s = fresh('free');
+    const rounds: string[] = [];
+    while (s.phase === 'draft') {
+      rounds.push(roundOf(s));
+      const before = s.picks.length + (s.coach ? 1 : 0) + (s.bench ? 1 : 0);
+      s = draftThrough({ ...s }, 1);
+      expect(s.picks.length + (s.coach ? 1 : 0) + (s.bench ? 1 : 0)).toBe(before + 1);
+    }
+    expect(rounds).toEqual(['player', 'player', 'player', 'player', 'player', 'coach', 'bench']);
+    expect(s.coach && s.coach in COACHES).toBe(true);
+    expect(s.picks.some((p) => p.playerId === s.bench!.playerId)).toBe(false);
+    expect(s.phase).toBe('ready');
+  });
+  it('keeps five-round drafts for runs saved before the coach and bench', () => {
+    const { extras, ...old } = fresh('free');
+    let s: Run = { ...old, bench: undefined };
+    s = draftThrough(s);
+    expect(s.coach).toBeUndefined();
+    expect(s.phase).toBe('ready');
+  });
+  it('rolls match-day form and lets the bench player sub in for one match', () => {
+    let s = reducer(draftThrough(fresh('daily', '2026-10-03')), { type: 'play' });
+    const ids = [...s.picks.map((p) => p.playerId), s.bench!.playerId];
+    expect(Object.keys(s.pending!.form!).sort()).toEqual(ids.sort());
+    const out = s.picks[1].playerId;
+    s = reducer(s, { type: 'sub', out });
+    expect(reducer(s, { type: 'sub', out: 'nobody' })).toBe(s);
+    s = reducer(s, { type: 'start' });
+    const playing = lineupFor(s, s.current!.subOut, s.current!.playerForm).map((x) => x.player.id);
+    expect(playing).toContain(s.bench!.playerId);
+    expect(playing).not.toContain(out);
+    expect(playing[1]).toBe(s.bench!.playerId); // in the subbed player's slot
+  });
+});
+
+describe('tactical calls', () => {
+  const firstMap = () => {
+    let s = reducer(draftThrough(fresh('daily', '2026-10-04')), { type: 'play' });
+    s = vetoAll(reducer(s, { type: 'start' }));
+    return reducer(s, { type: 'side', side: G.autoSide(s.current!.next!) });
+  };
+  it('replays the map from the call on, leaving the rounds before it untouched', () => {
+    const s = firstMap();
+    const g = s.current!.maps[0];
+    const at = 6;
+    const after = reducer(s, { type: 'call', call: { kind: 'timeout', round: at } });
+    const g2 = after.current!.maps[0];
+    expect(g2.rounds.slice(0, at)).toEqual(g.rounds.slice(0, at));
+    expect(g2.calls!.timeouts).toEqual([at]);
+    expect(g2.events.some((e) => e.kind === 'call')).toBe(true);
+    // The same call always gives the same map.
+    expect(reducer(s, { type: 'call', call: { kind: 'timeout', round: at } }).current).toEqual(after.current);
+  });
+  it('allows one timeout per half, and a force buy only after a lost pistol', () => {
+    const s = firstMap();
+    const one = reducer(s, { type: 'call', call: { kind: 'timeout', round: 3 } });
+    expect(reducer(one, { type: 'call', call: { kind: 'timeout', round: 8 } })).toBe(one);
+    const g = one.current!.maps[0];
+    if (g.rounds.length > 14) expect(reducer(one, { type: 'call', call: { kind: 'timeout', round: 14 } })).not.toBe(one);
+    const lostPistol = !s.current!.maps[0].rounds[0];
+    const forced = reducer(s, { type: 'call', call: { kind: 'force', round: 1 } });
+    expect(forced === s).toBe(!lostPistol);
+    expect(reducer(s, { type: 'call', call: { kind: 'force', round: 5 } })).toBe(s);
   });
 });

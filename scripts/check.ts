@@ -1,6 +1,6 @@
 // Balance and sanity check: simulated drafts are always completable, tournaments always finish,
 // and draft skill matters. Seeded, so the numbers are reproducible. Exits 1 on any failure.
-import { ROSTERS } from '../src/data/rosters';
+import { COACHES, ROSTERS } from '../src/data/rosters';
 import * as G from '../src/game/logic';
 
 const N = Number(process.env.RUNS ?? 3000);
@@ -27,10 +27,15 @@ function simulate(drafter: Drafter, seed: string) {
         picks = [...picks, { slot: o.s, rosterId: o.id, playerId: o.p.id }];
       }
       if (new Set(picks.map((p) => p.playerId)).size !== 5) { fails++; return; }
+      // Coach round: judged by rating, with the same kind of error as the players.
+      const coaches = G.makeCoachOffer(seen).map((id) => G.rosterById.get(id)!.coach!);
+      if (coaches.length !== 3) { fails++; return; }
+      const cv = (c: string) => COACHES[c].rating + (drafter === 'fan' ? (G.random() + G.random() + G.random() - 1.5) * 8 : 0);
+      const coach = drafter === 'random' ? coaches[G.rand(3)] : [...coaches].sort((a, b) => cv(b) - cv(a))[0];
       const mine = G.lineupFromPicks(picks);
       let t = G.newTournament(); let guard = 0;
       for (let st = G.nextStage(t); st && guard++ < 10; st = G.nextStage(t)) {
-        const m = G.playMatch(st, mine, G.pickOpponent(t, st, mine), G.bestOfFor(st, t));
+        const m = G.playMatch(st, mine, G.pickOpponent(t, st, mine), G.bestOfFor(st, t), coach);
         if (m.maps.some((g) => g.rounds.length < 13) || (m.bestOf === 3 && m.maps.length < 2)) fails++;
         t = G.applyResult(t, m);
       }

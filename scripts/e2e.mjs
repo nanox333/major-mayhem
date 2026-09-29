@@ -20,7 +20,8 @@ async function run(viewport, tag) {
   await p.locator('.ghost-btn', { hasText: 'Play Daily' }).click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
-  for (let r = 0; r < 5; r++) {
+  // Five players, then the coach (round 6) and the bench player (round 7).
+  for (let r = 0; r < 7; r++) {
     await cta('Open case');
     if (r === 0) { await p.waitForTimeout(1200); await p.screenshot({ path: `shots/${tag}-1a-reel.png` }); }
     await p.waitForSelector('.case-item', { timeout: 6000 });
@@ -29,11 +30,17 @@ async function run(viewport, tag) {
     if (r === 1) { await p.click('.reroll-row .ghost-btn'); await p.waitForTimeout(600); }
     const cards = await p.$$('.case-item');
     if (cards.length !== 3) throw new Error('expected 3 teams, got ' + cards.length);
+    if (r === 5) {
+      if (!(await p.$('.case-item--coach'))) throw new Error('round 6 is not the coach round');
+      await p.screenshot({ path: `shots/${tag}-2b-coach.png`, fullPage: true });
+    }
     await cards[r % 3].click();
     await p.waitForTimeout(500);
     if (r === 0) await p.screenshot({ path: `shots/${tag}-2-players.png`, fullPage: true });
+    if (r === 5) continue; // picking a coach is one click
     const chips = await p.$$('.slot-chip');
     if (!chips.length) throw new Error('no eligible player in round ' + r);
+    if (r === 6 && !(await chips[0].textContent()).includes('Bench')) throw new Error('round 7 is not the bench round');
     await chips[0].click();
     await p.waitForTimeout(300);
   }
@@ -44,7 +51,13 @@ async function run(viewport, tag) {
   let n = 0, shotSb = false, shotKnife = false, shotHalf = false;
   while (!(await p.$('.final')) && n++ < 12) {
     await p.waitForSelector('button.cta', { timeout: 6000 });
-    if (n === 1) await p.screenshot({ path: `shots/${tag}-4-preview.png`, fullPage: true });
+    if (n === 1) {
+      // Match-day form: sub the bench player in for the first starter, then check it shows.
+      await p.waitForSelector('.subs');
+      await p.locator('.subs__btns .ghost-btn', { hasText: 'Sub out' }).first().click();
+      await p.waitForSelector('.subs__btns .is-on:has-text("Sub out")');
+      await p.screenshot({ path: `shots/${tag}-4-preview.png`, fullPage: true });
+    }
     await cta('Accept');
     // Map veto: take the first open map on each of our turns until the first map is set up.
     await p.waitForSelector('.veto');
@@ -61,10 +74,21 @@ async function run(viewport, tag) {
       if (!shotKnife) { await p.screenshot({ path: `shots/${tag}-5a-knife.png`, fullPage: true }); shotKnife = true; }
       const sides = p.locator('.side-btn');
       if (await sides.count()) await sides.nth(g % 2).click(); else await cta('Go live');
-      if (g === 0 && n === 1) { await p.waitForTimeout(3200); await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true }); }
+      // After a lost pistol, playback waits for a buy: save.
+      const answerBuy = async () => { const save = p.locator('.buy .ghost-btn', { hasText: 'Save' }); if (await save.count()) await save.click(); };
+      if (g === 0 && n === 1) {
+        await p.waitForTimeout(3200); await answerBuy();
+        await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true });
+        // A tactical timeout shows up in the killfeed and can't be called twice in a half.
+        await p.waitForSelector('.calls__timeout:not([disabled])', { timeout: 6000 });
+        await p.click('.calls__timeout');
+        await p.waitForSelector('.kf:has-text("Tactical timeout")', { timeout: 4000 });
+        if (!(await p.$('.calls__timeout[disabled]'))) throw new Error('second timeout allowed in the same half');
+      }
       if (g === 0 && n === 1 && !shotHalf) {
         await p.locator('.speed button', { hasText: '4×' }).click();
-        await p.waitForSelector('.kf--half', { timeout: 15000 });
+        for (let i = 0; i < 80 && !(await p.$('.kf--half:has-text("Halftime")')); i++) { await answerBuy(); await p.waitForTimeout(200); }
+        await p.waitForSelector('.kf--half:has-text("Halftime")', { timeout: 2000 });
         await p.screenshot({ path: `shots/${tag}-5b-halftime.png`, fullPage: true }); shotHalf = true;
       }
       const skip = p.locator('.ghost-btn', { hasText: 'Skip' }); if (await skip.count()) await skip.click();

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_ORDER } from './data/rosters';
 import * as G from './game/logic';
-import { Action, Phase, dailyDate, dailyNumber, load, reducer, save } from './game/state';
+import { Action, Phase, Run, currentLineup, dailyDate, dailyNumber, draftRounds, load, reducer, roundNumber, roundOf, save } from './game/state';
 import { abandonDaily, dailyStarted, loadStats, recordRun } from './game/stats';
 import { BoardHost } from './ui/Board';
 import { useRunTracking } from './ui/useTracking';
@@ -34,7 +34,9 @@ export default function App() {
   }, [s.phase, s.recorded]);
 
   const mine = useMemo(() => (s.picks.length === 5 ? G.lineupFromPicks(s.picks) : null), [s.picks]);
-  const round = Math.min(5, s.picks.length + 1);
+  // The five on the server for the match being played: the bench player may be in, and everyone has match-day form.
+  const playing = useMemo(() => (mine && s.current ? currentLineup(s) : mine), [mine, s.current?.subOut, s.current?.playerForm, s.bench]);
+  const round = roundOf(s);
   const stageNow = (s.pending ?? s.current)?.stage;
 
   const steps: { k: Phase[]; label: string }[] = [
@@ -42,10 +44,11 @@ export default function App() {
   ];
   const stepIdx = steps.findIndex((x) => x.k.includes(s.phase));
 
-  let title = s.step === 'players' ? 'Choose your player' : s.step === 'teams' ? 'Pick a team' : 'Open a case';
+  let title = s.step === 'players' ? (round === 'bench' ? 'Choose your bench player' : 'Choose your player')
+    : s.step === 'teams' ? (round === 'coach' ? 'Pick a coach' : round === 'bench' ? 'Pick a team for the bench' : 'Pick a team') : 'Open a case';
   const date = dailyDate(s);
-  let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : ''}Draft · Round ${round} of 5`;
-  if (s.phase === 'ready') { title = 'Ready to rumble'; kicker = 'Lobby · 5 of 5 drafted'; }
+  let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : ''}Draft · Round ${roundNumber(s)} of ${draftRounds(s)}${round === 'coach' ? ' · Coach' : round === 'bench' ? ' · Bench' : ''}`;
+  if (s.phase === 'ready') { title = 'Ready to rumble'; kicker = `Lobby · ${draftRounds(s)} of ${draftRounds(s)} drafted`; }
   if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `Major · Best of ${s.current?.bestOf ?? G.bestOfFor(stageNow!, s.t)}`; }
   if (s.phase === 'final') { title = 'Tournament over'; kicker = 'Results'; }
 
@@ -80,18 +83,18 @@ export default function App() {
             <span className="kicker">{kicker}</span>
             <h2 className="console__title">{title}</h2>
           </div>
-          {s.phase === 'draft' && <DraftPips picks={s.picks} />}
+          {s.phase === 'draft' && <DraftPips s={s} />}
         </div>
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${s.phase}`}>
           <section className="console__main">
             {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} />}
-            {s.phase === 'ready' && mine && <ReadyScreen mine={mine} dispatch={dispatch} />}
-            {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} pending={s.pending} t={s.t} dispatch={dispatch} />}
-            {s.phase === 'live' && mine && s.current && <LiveScreen key={s.t.matches.length} mine={mine} m={s.current} t={s.t} dispatch={dispatch} />}
+            {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
+            {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
+            {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>
-          {showBoard && <BoardHost s={s} mine={mine} />}
+          {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
       </main>
 
@@ -106,12 +109,15 @@ export default function App() {
   );
 }
 
-function DraftPips({ picks }: { picks: G.Pick[] }) {
+function DraftPips({ s }: { s: Run }) {
+  const filled = s.picks.length + (s.coach ? 1 : 0) + (s.bench ? 1 : 0);
   return (
-    <div className="pips" aria-label={`${picks.length} of 5 slots filled`}>
+    <div className="pips" aria-label={`${filled} of ${draftRounds(s)} drafted`}>
       {ROLE_ORDER.map((r) => (
-        <span key={r} className={`pip ${picks.some((p) => p.slot === r) ? 'is-full' : ''}`} title={ROLE_LABEL[r]}><RoleIcon role={r} size={13} /></span>
+        <span key={r} className={`pip ${s.picks.some((p) => p.slot === r) ? 'is-full' : ''}`} title={ROLE_LABEL[r]}><RoleIcon role={r} size={13} /></span>
       ))}
+      {s.extras && <span className={`pip pip--extra ${s.coach ? 'is-full' : ''}`} title={s.coach ? `Coach: ${s.coach}` : 'Coach'}>C</span>}
+      {s.extras && <span className={`pip pip--extra ${s.bench ? 'is-full' : ''}`} title="Bench">B</span>}
     </div>
   );
 }
