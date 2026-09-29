@@ -18,7 +18,12 @@ const nicks = [...new Set(rosters.rosters.flatMap((r) => r.players.map((p) => p.
 const orgs = [...new Set(rosters.rosters.map((r) => r.org))].filter((o) => !haveLogo.has(o));
 const only = process.argv.slice(2);
 const wanted = (n) => !only.length || only.includes(n);
-const slug = (n) => n.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slug = (n) => n.toLowerCase().replace(/[^a-z0-9_]+/g, '-').replace(/^-|-$/g, ''); // bo3.gg keeps underscores
+// slugs that can't be derived from the nick / org name (bo3.gg's own URLs)
+const PLAYER_SLUG = { saffee: 'saffe', frozen: 'frozen-david-cernansky', xertioN: 'xertionic', 910: 'player-910', kNg: 'kngv' };
+const TEAM_SLUG = { 'Luminosity Gaming': 'luminosity-cs-go', AVANGAR: 'avangar-cs-go', 'Team LDLC.com': 'ldlc-cs-go', 'Copenhagen Flames': 'cph-flames', 'LGB eSports': 'lgb-cs-go', 'SK Gaming': 'sk', 'NRG Esports': 'nrg' };
+// team page titles use short names ("SK", "NRG")
+const TEAM_TITLE = { 'SK Gaming': 'SK', 'NRG Esports': 'NRG', 'Luminosity Gaming': 'Luminosity', 'Team LDLC.com': 'LDLC', 'LGB eSports': 'LGB' };
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 fs.mkdirSync('shots', { recursive: true });
@@ -31,7 +36,7 @@ const titleOf = (h) => (h.match(/<title>([^<]*)/)?.[1] || '').replace(/&amp;/g, 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 for (const nick of nicks.filter(wanted)) {
-  const url = `https://bo3.gg/players/${slug(nick)}`;
+  const url = `https://bo3.gg/players/${PLAYER_SLUG[nick] || slug(nick)}`;
   try {
     await sleep(1500);
     const h = BO3_WRONG.has(nick) ? null : await html(url);
@@ -49,16 +54,20 @@ for (const nick of nicks.filter(wanted)) {
   }
 }
 
-const teamSlugs = (o) => [...new Set([slug(o), slug(o.replace(/ (Esports|eSports|Gaming|Team)$/i, '')), slug(o.replace(/^Team /i, '')), slug(o.replace(/\.com/i, ''))])];
+const teamSlugs = (o) => [...new Set([...(TEAM_SLUG[o] ? [TEAM_SLUG[o]] : []), slug(o), slug(o.replace(/ (Esports|eSports|Gaming|Team)$/i, '')), slug(o.replace(/^Team /i, '')), slug(o.replace(/\.com/i, ''))])];
 for (const org of orgs.filter(wanted)) {
   try {
     let found = null;
     for (const sl of teamSlugs(org)) { await sleep(1500); const h = await html(`https://bo3.gg/teams/${sl}`); if (h) { found = { h, url: `https://bo3.gg/teams/${sl}` }; break; } }
     if (!found) { review.push({ org, why: 'no page', tried: teamSlugs(org) }); continue; }
     const title = titleOf(found.h);
-    if (!norm(title).includes(norm(org).slice(0, 5))) { review.push({ org, why: 'name mismatch', title }); continue; }
-    const ids = [...new Set([...found.h.matchAll(/uploads\/team\/(\d+)\/image\/([^"'\\ ?&)]+)/g)].map((m) => m[0]))];
-    if (ids.length !== 1) { review.push({ org, why: ids.length ? 'several team images' : 'no logo on page', title, ids }); continue; }
+    if (!norm(title).startsWith(norm(TEAM_TITLE[org] || org).slice(0, 5))) { review.push({ org, why: 'name mismatch', title }); continue; }
+    // the page also shows opponents' logos; the team's own logo is the image that appears most often
+    const count = {};
+    for (const m of found.h.matchAll(/uploads\/team\/(\d+)\/image\/([^"'\\ ?&)]+)/g)) count[m[0]] = (count[m[0]] || 0) + 1;
+    const ids = Object.entries(count).sort((a, b) => b[1] - a[1]);
+    if (!ids.length || (ids[1] && ids[1][1] === ids[0][1])) { review.push({ org, why: ids.length ? 'logo ambiguous' : 'no logo on page', title, ids }); continue; }
+    ids[0] = ids[0][0];
     const data = await img(`https://image-proxy.bo3.gg/${ids[0]}`);
     if (!data) { review.push({ org, why: 'logo download failed', title }); continue; }
     bo3.teams[org] = { page: found.url, data };
