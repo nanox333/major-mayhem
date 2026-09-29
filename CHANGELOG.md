@@ -11,8 +11,16 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - A **Report incorrect data** link on every team in the draft, opening the roster-data form with the team filled in ([#13]).
 - **Rules versions:** each daily plays under the rules of its date, and saved runs and duel links keep theirs, so fixes never change a challenge already in progress. The fixes below start with Daily #3 (30 Sep 2026) ([#24]).
 
+- **Playback controls:** Pause, Next round and a slow **Tactical** speed; Space and → work on desktop ([#16]).
+- **Match reports:** every match in your results opens a report with map scores, a round-by-round strip (timeouts, force buys, clutches) and both scoreboards ([#66]).
+- **Team review** on the results screen: role fit, chemistry, who stood out, maps, calls and one suggestion for next time ([#18]).
+- The map veto shows who has the **comfort edge** on each map, what your click does and whose turn is next, the veto so far and the final map order ([#65]).
+
 ### Changed
 - Achievement dates use the same local day as the daily, not UTC ([#26]).
+- **Draft cards:** one "Draft as …" button per slot, with the role fit written underneath; the name no longer doubles as the Liquipedia link; unavailable players say exactly why; subs show the role they take and the fit ([#17]).
+- "Draft review" is now **Pick strength**, with a note on what it does and doesn't measure ([#18]).
+- **Your stats:** duels and abandoned dailies show without a finished Major; achievements are always listed; "Win rate" is now **Title rate** with its count, and new runs are also counted by mode ([#64], [#67]).
 
 ### Fixed
 - **Scoreboards add up:** a player dies at most once per round, kills always equal the other side's deaths, and a clutch leaves the clutcher as the only survivor ([#12]).
@@ -61,6 +69,13 @@ The first tagged release, covering everything since the initial draft game.
 [#10]: https://github.com/nanox333/major-mayhem/pull/10
 [#11]: https://github.com/nanox333/major-mayhem/pull/11
 [#12]: https://github.com/nanox333/major-mayhem/issues/12
+[#16]: https://github.com/nanox333/major-mayhem/issues/16
+[#17]: https://github.com/nanox333/major-mayhem/issues/17
+[#18]: https://github.com/nanox333/major-mayhem/issues/18
+[#64]: https://github.com/nanox333/major-mayhem/issues/64
+[#65]: https://github.com/nanox333/major-mayhem/issues/65
+[#66]: https://github.com/nanox333/major-mayhem/issues/66
+[#67]: https://github.com/nanox333/major-mayhem/issues/67
 [#13]: https://github.com/nanox333/major-mayhem/issues/13
 [#14]: https://github.com/nanox333/major-mayhem/issues/14
 [#15]: https://github.com/nanox333/major-mayhem/issues/15
