@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
-import { RoleIcon, TeamBadge } from '../ui/art';
+import { RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 import { play } from '../ui/sound';
+import { Tip } from '../ui/tips';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -32,7 +33,7 @@ export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageK
 function FormTag({ v }: { v?: number }) {
   const label = G.formLabel(v);
   if (label === 'Normal') return null;
-  return <em className={`form form--${label.toLowerCase()}`} title={`${label} form today`}>{v! > 2 ? '▲▲' : v! > 0 ? '▲' : '▼'}</em>;
+  return <em className={`form form--${label.toLowerCase()}`} title={`${label} form today`} role="img" aria-label={`${label} form today`}>{v! > 2 ? '▲▲' : v! > 0 ? '▲' : '▼'}</em>;
 }
 
 /** Before a match: everyone's form, and which starter (if any) the bench player replaces. */
@@ -63,6 +64,7 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
         ))}
       </div>
       {out && <p className={`subs__tradeoff small ${!hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`}>{tradeoff(out)}.</p>}
+      <Tip id="form" title="Match-day form">The arrows show how each player is playing today: ▲▲ hot, ▲ good, ▼ cold. Your bench player can replace one starter for this match only, and takes that starter's role.</Tip>
     </div>
   );
 }
@@ -100,8 +102,10 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
             </div>
           </div>
           <SubPanel s={s} pending={pending} dispatch={dispatch} />
-          <div className="accept-bar"><span /></div>
-          <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
+          <div className="action-bar">
+            <div className="accept-bar"><span /></div>
+            <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
+          </div>
         </div>
       )}
     </div>
@@ -113,15 +117,15 @@ function Scoreboard({ game, opp, mine }: { game: G.MapGame; opp: Roster; mine: G
   const teamOf = (id: string) => mine.find((x) => x.player.id === id)?.roster;
   return (
     <div className="sb anim-in">
-      <div className="sb__head"><span>{game.map}</span><b className={game.won ? 'w' : 'l'}>{game.score[0]}–{game.score[1]}</b></div>
+      <div className="sb__head"><span>{game.map}</span><b className={game.won ? 'w' : 'l'}>{game.won ? '✓' : '✗'} {game.score[0]}–{game.score[1]}<Sr> {game.won ? 'won' : 'lost'}</Sr></b></div>
       <table>
         <thead><tr><th>Your team</th><th>K</th><th>D</th><th>Rating</th></tr></thead>
         <tbody>{rows(game.stats.mine).map((p) => (
-          <tr key={p.id}><td><span className="sb__tag">{teamOf(p.id)?.tag}</span>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td className={ratingClass(p.rating)}>{fmt(p.rating)}</td></tr>
+          <tr key={p.id}><td><span className="sb__tag">{teamOf(p.id)?.tag}</span>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td className={ratingClass(p.rating)}>{fmt(p.rating)}<RatingMark r={p.rating} /></td></tr>
         ))}</tbody>
         <thead><tr className="ct"><th>{opp.org} {opp.year}</th><th>K</th><th>D</th><th>Rating</th></tr></thead>
         <tbody>{rows(game.stats.opp).map((p) => (
-          <tr key={p.id} className="ct"><td>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td className={ratingClass(p.rating)}>{fmt(p.rating)}</td></tr>
+          <tr key={p.id} className="ct"><td>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td className={ratingClass(p.rating)}>{fmt(p.rating)}<RatingMark r={p.rating} /></td></tr>
         ))}</tbody>
       </table>
     </div>
@@ -137,6 +141,10 @@ const KF_CLASS = (e: G.MatchEvent) =>
   e.kind === 'half' || e.kind === 'ot' || e.kind === 'call' ? 'kf--half'
     : e.kind === 'clutch' ? 'kf--clutch'
       : `${e.good ? 'kf--us' : 'kf--them'}${e.kind === 'pistol' ? ' kf--pistol' : ''}`;
+
+/** Who a killfeed line favours, as a mark and in words, so the green or red border isn't the only signal (#22). Neutral lines get none. */
+const kfMark = (e: G.MatchEvent) => (e.kind === 'half' || e.kind === 'ot' || e.kind === 'call' ? null : e.good
+  ? <><i aria-hidden="true"> ▲</i><Sr> for you</Sr></> : <><i aria-hidden="true"> ▼</i><Sr> against you</Sr></>);
 
 /**
  * Where playback of the current map had got to, kept apart from the (much bigger) run save so it can be written every
@@ -235,7 +243,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
 
   return (
     <div className="stack">
-      <div className="hud">
+      <div className={`hud ${vetoing ? 'hud--veto' : ''}`}>
         <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{vetoing ? ' · Map veto' : `${m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · ${mapName}${ot ? ' · OT' : ''}`}</div>
         <div className="hud__score">
           <div className={`hud__team hud__team--${sideCls(side)}`}><i className="side-chip">{side}</i><span className="hud__org">Your team</span><span className="hud__tag">You</span>{m.bestOf === 3 && <em>{mapsWon}</em>}</div>
@@ -269,7 +277,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
               const name = g?.map ?? (i === m.maps.length && m.next ? m.next.map : m.pool[i]);
               return (
                 <span key={i} className={`maps__pill ${i === mapIdx ? 'is-now' : ''} ${played ? (g.won ? 'w' : 'l') : ''}`}>
-                  {i === 2 && !g ? `Decider · ${name}` : name}{played ? ` ${g.score[0]}–${g.score[1]}` : ''}
+                  {played && <>{g.won ? '✓' : '✗'} </>}{i === 2 && !g ? `Decider · ${name}` : name}{played ? ` ${g.score[0]}–${g.score[1]}` : ''}{played && <Sr> {g.won ? 'won' : 'lost'}</Sr>}
                 </span>
               );
             })}
@@ -313,11 +321,12 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
             </div>
             {paused && <p className="muted small playback__note">Paused after round {Math.min(n, total)}. Timeouts can still be called.</p>}
           </div>
+          {!buyQuestion && <Tip id="calls" title="Timeouts and buys">You get one timeout per half: it stops the opponent's run and lifts your next three rounds. After a lost pistol you choose whether to save or force buy. You can pause, step through rounds and slow the playback whenever you like.</Tip>}
           <div className="killfeed" aria-live="polite">
             {/* The opponent's run is news to act on (a timeout stops it), so it leads the feed rather than crowding the buttons. */}
             {nudge && <div className="kf kf--run"><small>Run</small>{opp.tag} have won {theirRun} in a row. A timeout stops it.</div>}
             {shown.slice(nudge ? -2 : -3).reverse().map((e) => (
-              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}</small>{e.text}</div>
+              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}{kfMark(e)}</small>{e.text}</div>
             ))}
             {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
@@ -328,14 +337,17 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
             <div className={`result-stamp ${m.won ? 'w' : 'l'}`}>{m.won ? 'Victory' : 'Defeat'} {m.score[0]}–{m.score[1]}</div>
           )}
           <Scoreboard game={game} opp={opp} mine={mine} />
+          <Tip id="rating" title="Match rating">1.00 is an average map. ▲ marks a rating well above that and ▼ well below. Stronger players tend to rate higher, but anyone can have a bad map.</Tip>
           {seriesDone && m.bestOf === 3 && (
             <p className="muted small">Series ratings: {mine.map((x) => `${x.player.nick} ${fmt(series[x.player.id].rating)}`).join(' · ')}</p>
           )}
-          {seriesDone ? (
-            <button className="cta cta--orange" onClick={() => dispatch({ type: 'next' })}>{next ? 'Next match' : 'See results'}</button>
-          ) : (
-            <button className="cta cta--orange" onClick={() => { setMapIdx((i) => i + 1); setN(0); }}>Next map</button>
-          )}
+          <div className="action-bar">
+            {seriesDone ? (
+              <button className="cta cta--orange" onClick={() => dispatch({ type: 'next' })}>{next ? 'Next match' : 'See results'}</button>
+            ) : (
+              <button className="cta cta--orange" onClick={() => { setMapIdx((i) => i + 1); setN(0); }}>Next map</button>
+            )}
+          </div>
         </>
       )}
     </div>
@@ -358,6 +370,7 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
       <small className="knife__kicker">{bestOf === 3 ? `Map ${mapNo} · ` : ''}{k.map} · {label}</small>
       <strong className="knife__title">{title}</strong>
       <p className="knife__advice">{G.sideAdvice(k, mine)} Whoever leads at halftime carries momentum into the second half.</p>
+      <Tip id="knife" title="The knife round">It decides who picks the starting side: T attacks and CT defends, and sides swap at halftime. Rounds 1 and 13 are pistol rounds, and the team that loses one is on an eco for the next two rounds.</Tip>
       {k.won ? (
         <div className="knife__pick">
           <button className="side-btn side-btn--t" onClick={() => dispatch({ type: 'side', side: 'T' })}><b>T</b><span>Start attacking</span></button>

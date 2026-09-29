@@ -3,7 +3,7 @@ import { ROLE_LABEL } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, benchLineup } from '../game/state';
 import { challengerLineup } from '../game/duel';
-import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
+import { Avatar, RatingMark, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
 import { Synergy, strength } from '../game/synergy';
 
@@ -23,7 +23,7 @@ export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: R
             <span className="lobby__slot" title={main ? 'Main role' : 'Playing an off-role (small penalty)'}>
               <RoleIcon role={l.slot} size={14} /> {ROLE_LABEL[l.slot]}{!main && <i className="offrole">off-role</i>}
             </span>
-            {st && <span className="lobby__stat"><small>{st.k}–{st.d}</small><b className={ratingClass(st.rating)}>{fmt(st.rating)}</b></span>}
+            {st && <span className="lobby__stat"><small>{st.k}–{st.d}</small><b className={ratingClass(st.rating)}>{fmt(st.rating)}<RatingMark r={st.rating} /></b></span>}
           </li>
         );
       })}
@@ -78,7 +78,7 @@ export function Staff({ s, stats }: { s: Run; stats?: Record<string, { k: number
           <span className="lobby__avatar"><Avatar player={bench.player} roster={bench.roster} /></span>
           <span className="lobby__who"><strong>{bench.player.nick}</strong><small><TeamBadge roster={bench.roster} size={14} /> {bench.roster.org} {bench.roster.year}</small></span>
           <span className="lobby__slot"><RoleIcon role={bench.player.roles[0]} size={14} /> Bench</span>
-          {st && <span className="lobby__stat"><small>{st.k}–{st.d}</small><b className={ratingClass(st.rating)}>{fmt(st.rating)}</b></span>}
+          {st && <span className="lobby__stat"><small>{st.k}–{st.d}</small><b className={ratingClass(st.rating)}>{fmt(st.rating)}<RatingMark r={st.rating} /></b></span>}
         </li>
       )}
     </ul>
@@ -98,7 +98,7 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
       <SynergyList list={power.synergies} />
       {s.duel && <Challenger s={s} />}
       {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
-      <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button>
+      <div className="action-bar"><button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button></div>
     </div>
   );
 }

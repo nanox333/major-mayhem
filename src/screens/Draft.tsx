@@ -6,12 +6,13 @@ import { Stats } from '../game/stats';
 import { pageUrl } from '../game/share';
 import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
-import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
+import { Avatar, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
 import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
+import { ThreeSteps, Tip } from '../ui/tips';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
@@ -24,6 +25,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
     const doneToday = stats.daily[today()];
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
+        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><ThreeSteps compact /></Tip>}
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
           {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
@@ -36,14 +38,14 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
             {played && ` You already finished this one (${played.placement}); replays don't change your record.`}
           </p>
         )}
-        <button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button>
+        <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button></div>
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'daily' && (
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
         )}
-        {s.offerKey === 0 && s.mode === 'free' && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'free' && !doneToday && (
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}>Play Daily #{todayN} instead</button>
         )}
+        {s.offerKey === 0 && s.mode === 'free' && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
         {s.picks.length === 0 && s.mode === 'free' && doneToday && (
           <div className="daily-done">
             <small>Daily #{todayN} {doneToday.abandoned ? 'abandoned' : 'done'}</small>
@@ -135,7 +137,7 @@ function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action
                 <div className="case-item__meta"><span>Coach · {r.org} {r.year}</span><span className="grade">{r.result}</span></div>
               </div>
             </div>
-            {knows.length > 0 && <span className="hint hint--good">Coached {knows.map((p) => p.nick).join(', ')}</span>}
+            {knows.length > 0 && <span className="hint hint--good"><i aria-hidden="true">+</i> <Sr>Bonus: </Sr>Coached {knows.map((p) => p.nick).join(', ')}</span>}
             <div className="case-item__event">{r.event}</div>
           </button>
         );
@@ -215,6 +217,9 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
           </div>
         </div>
       </div>
+      {!bench && (hard
+        ? <Tip id="fit" title="Hard mode">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
+        : <Tip id="fit" title="Roles and fit">Each player has a main role. Draft them there for the best fit: another role they cover costs a little, and an off-role costs more. The line under each Draft button says which. The + and − chips are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
       <div className="players-grid">
         {players.map((p, i) => {
           const slots = slotsFor(s, p);
@@ -231,7 +236,7 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
                   <a className="agent__ref" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" aria-label={`${p.nick} on Liquipedia`} title="Liquipedia">↗</a>
                 </span>
                 {!hard && <span className="agent__role muted small">Main role: {ROLE_LABEL[p.roles[0]]}</span>}
-                {!hard && draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}>{h.text}</span>)}
+                {!hard && draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}><i aria-hidden="true">{h.good ? '+' : '−'}</i> <Sr>{h.good ? 'Bonus: ' : 'Penalty: '}</Sr>{h.text}</span>)}
                 <div className="agent__slots">
                   {bench && <button className="slot-chip slot-chip--main" data-sfx="draft" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Draft as Bench</button>}
                   {!bench && slots.map((slot) => {

@@ -4,6 +4,16 @@ import radars from '../data/radars.json';
 
 const RADARS = radars as Record<string, string>;
 
+/** Visually hidden text: read by screen readers, invisible on screen. */
+export const Sr = ({ children }: { children: React.ReactNode }) => <span className="sr">{children}</span>;
+
+/** A ▲ or ▼ after a rating well above or below average (1.00), so the green or red isn't the only signal (#22). */
+export function RatingMark({ r }: { r: number }) {
+  if (r >= 1.1) return <><i className="rmark" aria-hidden="true"> ▲</i><Sr> above average</Sr></>;
+  if (r < 0.9) return <><i className="rmark" aria-hidden="true"> ▼</i><Sr> below average</Sr></>;
+  return null;
+}
+
 /** Small line icons for each role (drawn for this game). */
 export function RoleIcon({ role, size = 14 }: { role: Role; size?: number }) {
   const common = { width: size, height: size, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, 'aria-hidden': true };

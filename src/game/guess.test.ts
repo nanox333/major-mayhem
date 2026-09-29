@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { rostersOn } from '../data/rosters';
-import { MAX_GUESSES, addGuess, answerFor, compare, guessShare, guessStreak, pros, suggest } from './guess';
+import { CLUE_LABEL, CLUE_MARK, Clue, MAX_GUESSES, addGuess, answerFor, clueMeaning, compare, describeClue, guessShare, guessStreak, pros, searchState, suggest } from './guess';
 
 describe('guess the pro', () => {
   const all = pros();
@@ -54,5 +54,31 @@ describe('guess the pro', () => {
     const list = suggest(all, 'ni', []);
     expect(list[0].id.startsWith('ni')).toBe(true);
     expect(suggest(all, 'niko', ['niko']).some((p) => p.id === 'niko')).toBe(false);
+  });
+  it('gives every clue state a symbol and a description, so colour is never the only signal (#22)', () => {
+    expect(new Set(Object.values(CLUE_MARK)).size).toBe(3);
+    const keys = Object.keys(CLUE_LABEL) as Clue['key'][];
+    for (const key of keys) {
+      // The three states read differently for a clue, and each sentence names its column.
+      const said = (['hit', 'near', 'miss'] as const).map((state) => describeClue({ key, text: 'x', state } as Clue));
+      for (const s of said) expect(s.startsWith(`${CLUE_LABEL[key]}: x. `)).toBe(true);
+      if (key === 'majors' || key === 'best') expect(said[0]).not.toBe(said[2]);
+      else expect(new Set(said).size).toBe(3);
+    }
+    expect(clueMeaning({ key: 'country', text: 'SE', state: 'near' })).toBe('Same region');
+    expect(clueMeaning({ key: 'majors', text: '3', state: 'miss', dir: 'up' })).toMatch(/more/);
+    expect(clueMeaning({ key: 'majors', text: '3', state: 'miss', dir: 'down' })).toMatch(/fewer/);
+    expect(clueMeaning({ key: 'first', text: '2016', state: 'near', dir: 'up' })).toMatch(/year off.*later/);
+    // A real comparison describes all six columns.
+    const real = compare(all.get('dev1ce')!, all.get('zywoo')!);
+    expect(real.map((c) => describeClue(c))).toHaveLength(6);
+  });
+  it('says what the search found, including nothing and already guessed (#22)', () => {
+    expect(searchState(all, '', [])).toEqual({ kind: 'idle' });
+    expect(searchState(all, ' - ', [])).toEqual({ kind: 'idle' });
+    const found = searchState(all, 'niko', []);
+    expect(found.kind === 'results' && found.options.some((p) => p.id === 'niko')).toBe(true);
+    expect(searchState(all, 'qqqqzz', [])).toEqual({ kind: 'none' });
+    expect(searchState(all, 'niko', ['niko'])).toMatchObject({ kind: 'guessed', nick: expect.stringMatching(/niko/i) });
   });
 });

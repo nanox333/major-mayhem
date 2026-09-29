@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { ROLE_LABEL, ROLE_ORDER } from './data/rosters';
 import * as G from './game/logic';
-import { Action, Phase, Run, currentLineup, dailyDate, dailyNumber, draftRounds, load, optsLabel, reducer, roundNumber, roundOf, save, today } from './game/state';
+import { Action, Phase, currentLineup, dailyDate, dailyNumber, draftRounds, load, optsLabel, reducer, roundNumber, roundOf, save, today } from './game/state';
 import { abandonDaily, dailyStarted, loadStats, recordDuel, recordRun } from './game/stats';
 import { Duel, decodeDuel, duelCode } from './game/duel';
 import { BoardHost } from './ui/Board';
@@ -9,12 +8,12 @@ import { Modal } from './ui/Modal';
 import { play, useSoundOn } from './ui/sound';
 import { track } from './analytics';
 import { useRunTracking } from './ui/useTracking';
-import { RoleIcon } from './ui/art';
+import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
 import { LiveScreen, PreviewScreen } from './screens/Match';
 import { FinalScreen } from './screens/Final';
-import { HelpModal } from './screens/Help';
+import { HelpModal, HelpTab } from './screens/Help';
 import { StatsModal } from './screens/Stats';
 import { ChatVoteBar, ChatVoteProvider, TwitchButton, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
@@ -32,7 +31,7 @@ function Game() {
     if ((a.type === 'reset' || a.type === 'duel') && dailyStarted(latest.current)) setStats(abandonDaily(latest.current));
     rawDispatch(a);
   }, []);
-  const [help, setHelp] = useState(false);
+  const [help, setHelp] = useState<HelpTab | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [twitch, setTwitch] = useState(false);
   const [stats, setStats] = useState(loadStats);
@@ -75,37 +74,42 @@ function Game() {
   if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
 
   const showBoard = s.phase !== 'final' && view === 'draft';
+  // The very first screen keeps the tagline; once a case is open, phones drop it to leave room for the draft.
+  const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
 
   return (
-    <div className={`page phase-${s.phase}`}>
+    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''}`}>
       <header className="masthead">
-        <div className="masthead__left">
-          <button className="hud-btn" onClick={() => setHelp(true)} aria-label="How to play and data sources">?</button>
-          <SoundButton />
-        </div>
         <div className="brand">
           <h1 className="logo">Major Mayhem</h1>
           <p className="tagline">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p>
         </div>
-        <div className="masthead__right">
+        <div className="utility" role="group" aria-label="Help, sound, chat votes, stats and new run">
+          <button className="hud-btn" onClick={() => setHelp('play')} aria-label="How to play and data sources"><span aria-hidden="true">?</span><HudLabel>How to play</HudLabel></button>
+          <SoundButton />
           <TwitchButton onClick={() => setTwitch(true)} />
-          <button className="hud-btn" onClick={() => setShowStats(true)} aria-label="Your stats"><StatsIcon /></button>
+          <button className="hud-btn" onClick={() => setShowStats(true)} aria-label="Your stats"><StatsIcon /><HudLabel>Stats</HudLabel></button>
           <NewRunButton abandon={dailyStarted(s)} onConfirm={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
         </div>
       </header>
 
-      <nav className="tabs" aria-label="Game">
-        <button className={view === 'draft' ? 'is-on' : ''} aria-pressed={view === 'draft'} onClick={() => setView('draft')}>Draft a Major</button>
-        <button className={view === 'guess' ? 'is-on' : ''} aria-pressed={view === 'guess'} onClick={() => setView('guess')}>Guess the pro</button>
-      </nav>
-
-      {view === 'draft' && (
-        <nav className="stepper" aria-label="Progress">
-          {steps.map((x, i) => (
-            <span key={x.label} className={`stepper__item ${i === stepIdx ? 'is-on' : ''} ${i < stepIdx ? 'is-done' : ''}`}>{x.label}</span>
-          ))}
+      {/* Two different things, drawn differently: the game switch is a row of buttons, the progress trail is a numbered path you can't click. */}
+      <div className="navbar">
+        <nav className="tabs" aria-label="Game">
+          <button className={view === 'draft' ? 'is-on' : ''} aria-pressed={view === 'draft'} onClick={() => setView('draft')}>Draft a Major</button>
+          <button className={view === 'guess' ? 'is-on' : ''} aria-pressed={view === 'guess'} onClick={() => setView('guess')}>Guess the pro</button>
         </nav>
-      )}
+        {view === 'draft' && (
+          <ol className="trail" role="list" aria-label="Progress">
+            {steps.map((x, i) => (
+              <li key={x.label} className={`trail__step ${i === stepIdx ? 'is-on' : ''} ${i < stepIdx ? 'is-done' : ''}`} aria-current={i === stepIdx ? 'step' : undefined}>
+                <span className="trail__n" aria-hidden="true">{i < stepIdx ? '✓' : i + 1}</span>
+                <span className="trail__label">{x.label}</span>
+              </li>
+            ))}
+          </ol>
+        )}
+      </div>
 
       <main className="console">
         <div className="console__head">
@@ -116,8 +120,8 @@ function Game() {
             <span className="kicker">{kicker}</span>
             <h2 className="console__title">{title}</h2>
           </div>
-          {view === 'draft' && s.phase === 'draft' && <DraftPips s={s} />}
         </div>
+        {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${view === 'guess' ? 'guess' : s.phase}`}>
           {view === 'guess' ? <section className="console__main"><GuessScreen /></section> : <section className="console__main">
@@ -133,18 +137,21 @@ function Game() {
       </main>
 
       <footer className="foot">
-        Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons, credited under “?”. Logos are trademarks of their teams.
+        Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.
         Player strength is hidden; match ratings are simulated. Fan project, not affiliated with Valve or any team.
       </footer>
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
-      {help && <HelpModal onClose={() => setHelp(false)} />}
+      {help && <HelpModal tab={help} onClose={() => setHelp(null)} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>
   );
 }
+
+/** The words beside a header icon: shown where there's room (desktop), hidden on phones, where the icon and its accessible name carry it. */
+const HudLabel = ({ children }: { children: React.ReactNode }) => <span className="hud-btn__label">{children}</span>;
 
 /** The master sound switch; on by default, and remembered. */
 function SoundButton() {
@@ -156,20 +163,8 @@ function SoundButton() {
         <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
         {on ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /> : <path d="M16 9.5l5 5M21 9.5l-5 5" />}
       </svg>
+      <HudLabel>Sound</HudLabel>
     </button>
-  );
-}
-
-function DraftPips({ s }: { s: Run }) {
-  const filled = s.picks.length + (s.coach ? 1 : 0) + (s.bench ? 1 : 0);
-  return (
-    <div className="pips" aria-label={`${filled} of ${draftRounds(s)} drafted`}>
-      {ROLE_ORDER.map((r) => (
-        <span key={r} className={`pip ${s.picks.some((p) => p.slot === r) ? 'is-full' : ''}`} title={ROLE_LABEL[r]}><RoleIcon role={r} size={13} /></span>
-      ))}
-      {s.extras && <span className={`pip pip--extra ${s.coach ? 'is-full' : ''}`} title={s.coach ? `Coach: ${s.coach}` : 'Coach'}>C</span>}
-      {s.extras && <span className={`pip pip--extra ${s.bench ? 'is-full' : ''}`} title="Bench">B</span>}
-    </div>
   );
 }
 
@@ -179,7 +174,7 @@ function NewRunButton({ onConfirm, abandon }: { onConfirm: () => void; abandon: 
   return ask ? (
     <button className="hud-btn hud-btn--wide" onClick={() => { setAsk(false); onConfirm(); }} title={abandon ? "Today's daily will count as abandoned" : undefined}>{abandon ? 'Abandon daily?' : 'New run?'}</button>
   ) : (
-    <button className="hud-btn" onClick={() => setAsk(true)} aria-label="Start a new run">↺</button>
+    <button className="hud-btn" onClick={() => setAsk(true)} aria-label="Start a new run"><span aria-hidden="true">↺</span><HudLabel>New run</HudLabel></button>
   );
 }
 

@@ -15,8 +15,16 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Match reports:** every match in your results opens a report with map scores, a round-by-round strip (timeouts, force buys, clutches) and both scoreboards ([#66]).
 - **Team review** on the results screen: role fit, chemistry, who stood out, maps, calls and one suggestion for next time ([#18]).
 - The map veto shows who has the **comfort edge** on each map, what your click does and whose turn is next, the veto so far and the final map order ([#65]).
+- **Guess the pro without relying on colour:** every clue has a mark (✓ match, ≈ close, ✗ no match) and a description for screen readers ("Nation: Sweden. Same region."), with a legend above the guesses. Searching for a player who isn't there says "No players found", and one you already guessed says so ([#22]).
+- **Symbols next to colours** on won and lost maps and matches, above- and below-average ratings, killfeed lines, draft bonuses and penalties, and the round strip in match reports (lost rounds are striped) ([#22], [#38]).
 
 ### Changed
+- **On a phone, the main button stays in reach:** Open case, Find match, Accept, Next map and Play again are pinned to the bottom of the screen instead of sitting a screen or two down. Players are rows with their Draft buttons beside the face, both teams show side by side before a match, the header is smaller, the map veto is about a third shorter with the note on comfort under the list, and every button is at least 44 px tall. Guess the pro shows each guess as a card of labelled clues rather than a table that scrolls sideways ([#19]).
+- **Desktop layout:** the page is wider, the three teams in a case sit side by side with their whole rosters, and the radar is small while you draft and large during a match. A **team strip** above the choices shows your seven slots filling up: a photo and name once drafted, an icon while open, and on a phone seven icons you can tap to see the pick ([#20], [#69]).
+- **A shorter way in:** a three-step introduction (draft your team, win the Major, compare and share) on the first screen, then a short tip the first time each mechanic comes up: roles and fit, match-day form, the knife round, timeouts and buys, and match ratings. A dismissed tip stays dismissed, anyone who has already finished a run or a daily isn't shown them, and "Show the first-time tips again" in the help brings them back ([#21]).
+- **The help is two screens:** *How to play* (the three steps, then twelve short topics you can open) and *Sources and credits*, kept apart from the rules ([#21]).
+- **Navigation:** the game switch (Draft a Major / Guess the pro) is a row of buttons, clearly apart from the numbered progress trail (Draft, Lobby, Major, Results), and the header buttons carry words on wide screens ([#20]).
+- **Typography:** small labels and buttons use a plain, sentence-case face instead of tiny wide-spaced capitals; paragraphs use the system font at a comfortable size; decision text (teams, players, buttons) is larger; the striped texture behind text is gone ([#20]).
 - Achievement dates use the same local day as the daily, not UTC ([#26]).
 - **Draft cards:** one "Draft as …" button per slot, with the role fit written underneath; the name no longer doubles as the Liquipedia link; unavailable players say exactly why; subs show the role they take and the fit ([#17]).
 - "Draft review" is now **Pick strength**, with a note on what it does and doesn't measure ([#18]).
@@ -73,6 +81,7 @@ The first tagged release, covering everything since the initial draft game.
 [#17]: https://github.com/nanox333/major-mayhem/issues/17
 [#18]: https://github.com/nanox333/major-mayhem/issues/18
 [#64]: https://github.com/nanox333/major-mayhem/issues/64
+[#69]: https://github.com/nanox333/major-mayhem/issues/69
 [#65]: https://github.com/nanox333/major-mayhem/issues/65
 [#66]: https://github.com/nanox333/major-mayhem/issues/66
 [#67]: https://github.com/nanox333/major-mayhem/issues/67
@@ -80,7 +89,12 @@ The first tagged release, covering everything since the initial draft game.
 [#14]: https://github.com/nanox333/major-mayhem/issues/14
 [#15]: https://github.com/nanox333/major-mayhem/issues/15
 [#24]: https://github.com/nanox333/major-mayhem/issues/24
+[#19]: https://github.com/nanox333/major-mayhem/issues/19
+[#20]: https://github.com/nanox333/major-mayhem/issues/20
+[#21]: https://github.com/nanox333/major-mayhem/issues/21
+[#22]: https://github.com/nanox333/major-mayhem/issues/22
 [#25]: https://github.com/nanox333/major-mayhem/issues/25
 [#26]: https://github.com/nanox333/major-mayhem/issues/26
 [#27]: https://github.com/nanox333/major-mayhem/issues/27
+[#38]: https://github.com/nanox333/major-mayhem/issues/38
 [#63]: https://github.com/nanox333/major-mayhem/issues/63

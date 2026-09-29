@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { ROLE_LABEL, rostersOn } from '../data/rosters';
+import { ROLE_LABEL } from '../data/rosters';
 import { dailyNumber, today } from '../game/state';
-import { BEST_LABEL, Clue, GuessDay, MAX_GUESSES, Pro, addGuess, answerFor, compare, guessShare, guessStreak, loadGuesses, prosOn, saveGuesses, suggest } from '../game/guess';
+import { BEST_LABEL, CLUE_MARK, Clue, GuessDay, MAX_GUESSES, Pro, addGuess, answerFor, compare, describeClue, guessShare, guessStreak, loadGuesses, prosOn, saveGuesses, searchState } from '../game/guess';
 import { COUNTRY } from '../game/synergy';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
@@ -15,6 +15,11 @@ const HEADS: [Clue['key'], string, string?][] = [['country', 'Nation'], ['role',
   ['majors', 'Majors*', 'Major rosters of theirs included in this game, not their whole career'],
   ['best', 'Best*', 'Best finish among the rosters included in this game'],
   ['first', 'First*', 'Year of their earliest roster included in this game'], ['orgs', 'Teams']];
+const HEAD = Object.fromEntries(HEADS.map(([k, h]) => [k, h])) as Record<Clue['key'], string>;
+
+/** What a clue shows in its cell, and its full name for the description (a nation is shown as its code, described by name). */
+const shownFor = (c: Clue) => (c.key === 'role' ? ROLE_LABEL[c.text as keyof typeof ROLE_LABEL] : c.text);
+const namedFor = (c: Clue) => (c.key === 'country' ? COUNTRY[c.text] ?? c.text : shownFor(c));
 
 export function GuessScreen() {
   const date = today();
@@ -24,7 +29,9 @@ export function GuessScreen() {
   const day: GuessDay = store[date] ?? { guesses: [], done: false, won: false };
   const [text, setText] = useState('');
   const [active, setActive] = useState(0);
-  const options = suggest(all, text, day.guesses);
+  const found = searchState(all, text, day.guesses);
+  const options = found.kind === 'results' ? found.options : [];
+  const spoken = found.kind === 'results' ? `${options.length} player${options.length === 1 ? '' : 's'} found` : found.kind === 'none' ? 'No players found' : found.kind === 'guessed' ? `${found.nick} was already guessed` : '';
 
   const guess = (p: Pro) => {
     const next = addGuess(day, p.id, answer);
@@ -42,30 +49,42 @@ export function GuessScreen() {
   return (
     <div className="guess stack">
       <p className="spin-stage__hint">
-        One pro from Major history, the same for everyone today. You have {MAX_GUESSES} guesses: each shows how your pick compares.
-        Green is a match, yellow is close (same region, a role they also played, a year off, a shared team), and arrows point toward the answer.
-        * Majors, best finish and first year count only the Major rosters in this game, not whole careers.
+        One pro from Major history, the same for everyone today. You have {MAX_GUESSES} guesses: each shows how your pick compares with the answer.
       </p>
+      {/* Every result has a symbol as well as a colour, and each clue is described in words for screen readers (#22). */}
+      <ul className="guess__legend" aria-label="What the marks mean">
+        <li><span className="clue-key clue--hit" aria-hidden="true">{CLUE_MARK.hit}</span> Match</li>
+        <li><span className="clue-key clue--near" aria-hidden="true">{CLUE_MARK.near}</span> Close</li>
+        <li><span className="clue-key clue--miss" aria-hidden="true">{CLUE_MARK.miss}</span> No match</li>
+        <li><span className="clue-key" aria-hidden="true">↑ ↓</span> Answer is higher / lower</li>
+      </ul>
+      <p className="muted small">Close means the same region, a role they also played, a year off, or a shared team. * Majors, best finish and first year count only the Major rosters in this game, not whole careers.</p>
       {!day.done && (
         <div className="guess__box">
           <input value={text} onChange={(e) => { setText(e.target.value); setActive(0); }} placeholder={`Guess ${day.guesses.length + 1} of ${MAX_GUESSES}: type a player`}
             aria-label="Type a player's name" autoComplete="off" spellCheck={false}
+            role="combobox" aria-autocomplete="list" aria-expanded={options.length > 0} aria-controls="guess-options"
+            aria-activedescendant={options.length ? `guess-option-${active}` : undefined}
             onKeyDown={(e) => {
               if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(a + 1, options.length - 1)); }
               if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(a - 1, 0)); }
               if (e.key === 'Enter' && options[active]) guess(options[active]);
+              if (e.key === 'Escape' && text) { e.preventDefault(); setText(''); setActive(0); }
             }} />
+          <div className="sr" role="status" aria-live="polite">{spoken}</div>
           {options.length > 0 && (
-            <ul className="guess__suggest" role="listbox">
+            <ul className="guess__suggest" id="guess-options" role="listbox" aria-label="Matching players">
               {options.map((p, i) => (
-                <li key={p.id} role="option" aria-selected={i === active}>
-                  <button className={i === active ? 'is-on' : ''} data-sfx="none" onClick={() => guess(p)}>
+                <li key={p.id} role="presentation">
+                  <button role="option" id={`guess-option-${i}`} aria-selected={i === active} tabIndex={-1} className={i === active ? 'is-on' : ''} data-sfx="none" onClick={() => guess(p)}>
                     <b>{p.nick}</b><small>{p.country} · {p.orgs.slice(-1)[0]}</small>
                   </button>
                 </li>
               ))}
             </ul>
           )}
+          {found.kind === 'none' && <p className="guess__empty">No players found for “{text.trim()}”. Check the spelling, or try part of a nickname.</p>}
+          {found.kind === 'guessed' && <p className="guess__empty">You've already guessed {found.nick}. Try someone else.</p>}
           {hint && <p className="muted small">Hint: one of their teams was {hint}.</p>}
         </div>
       )}
@@ -74,14 +93,20 @@ export function GuessScreen() {
           <div className="guess__row guess__row--head" role="row"><span role="columnheader">Player</span>{HEADS.map(([k, h, tip]) => <span key={k} role="columnheader" title={tip}>{h}</span>)}</div>
           {[...day.guesses].reverse().map((id) => {
             const p = all.get(id)!;
+            const right = id === answer.id;
             return (
               <div className="guess__row anim-in" role="row" key={id}>
-                <span className={`guess__who ${id === answer.id ? 'is-hit' : ''}`} role="cell">{p.nick}</span>
-                {compare(p, answer).map((c) => (
-                  <span key={c.key} role="cell" className={`clue clue--${c.state}`} title={c.key === 'country' ? COUNTRY[c.text] : c.key === 'role' ? ROLE_LABEL[c.text as keyof typeof ROLE_LABEL] : undefined}>
-                    {c.key === 'role' ? ROLE_LABEL[c.text as keyof typeof ROLE_LABEL] : c.text}{c.dir ? (c.dir === 'up' ? ' ↑' : ' ↓') : ''}
-                  </span>
-                ))}
+                <span className={`guess__who ${right ? 'is-hit' : ''}`} role="cell" aria-label={right ? `${p.nick}, correct` : undefined}>{p.nick}{right && <i className="clue__mark" aria-hidden="true"> {CLUE_MARK.hit}</i>}</span>
+                {compare(p, answer).map((c) => {
+                  const said = describeClue(c, namedFor(c));
+                  return (
+                    <span key={c.key} role="cell" className={`clue clue--${c.state} clue-${c.key}`} aria-label={said} title={said}>
+                      <small className="clue__label" aria-hidden="true">{HEAD[c.key]}</small>
+                      <span className="clue__val" aria-hidden="true">{shownFor(c)}{c.dir ? (c.dir === 'up' ? ' ↑' : ' ↓') : ''}</span>
+                      <i className="clue__mark" aria-hidden="true">{CLUE_MARK[c.state]}</i>
+                    </span>
+                  );
+                })}
               </div>
             );
           })}
