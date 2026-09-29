@@ -356,33 +356,55 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
     G.MAPS.filter((map) => m.veto.left.includes(map)).map((map) => ({ id: map, label: map, aliases: [map, ...(map === 'Dust2' ? ['d2', 'dust'] : [])] })),
     (map) => dispatch({ type: 'veto', map }));
   const pips = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n);
+  const who = (team: G.Team) => (team === 'us' ? 'You' : opp.tag);
+  const next = G.vetoNextTurn(m.veto);
+  const EDGE_TEXT = { us: '▲ Your edge', them: `▼ ${opp.tag} edge`, even: '= Even' } as const;
+  // What the click does, and what follows it (#65).
+  const consequence = !t ? '' : t.action === 'ban'
+    ? `Banning removes a map for both teams.${next ? ` Then ${next.team === 'us' ? 'you' : opp.tag} ${next.action}${next.team === 'us' ? '' : 's'}.` : ' The map left over is played.'}`
+    : `Picking makes it a map in the series; ${opp.tag} will choose the starting side on it.${next ? ` Then ${next.team === 'us' ? 'you' : opp.tag} ${next.action}${next.team === 'us' ? '' : 's'}.` : ''}`;
   return (
     <div className="veto anim-in">
       <small className="knife__kicker">Map veto · Best of {m.bestOf}</small>
       <strong className="knife__title">{t ? `Your turn: ${t.action} a map` : 'Veto done'}</strong>
       <p className="knife__advice">
-        {m.bestOf === 3 ? 'Ban, ban, pick, pick, ban, ban; the last map is the decider. ' : 'Bans alternate until one map is left. '}
-        Comfort comes from each player's original lineup: ban their best maps, {m.bestOf === 3 ? 'pick yours.' : 'keep yours.'}
+        {t ? consequence : null}{' '}
+        {m.bestOf === 3 ? 'Order: ban, ban, pick, pick, ban, ban; the last map is the decider.' : 'Bans alternate until one map is left.'}
+      </p>
+      <p className="veto__note muted small">
+        Comfort is a game value worked out from each player's original lineup, not historical map statistics. It's one
+        input among players, form, sides and luck, so an edge is not a win chance.
       </p>
       <ul className="veto__maps">
         {G.MAPS.map((map) => {
           const st = done(map);
           const mineC = G.comfortPips(G.comfort(mine, map)), theirC = G.comfortPips(G.comfort(oppL, map));
+          const edge = G.comfortEdge(mine, oppL, map).who;
           const state = st ? `${st.action === 'ban' ? 'is-banned' : 'is-picked'} by-${st.team}` : '';
           return (
             <li key={map} className={`veto__map ${state}`}>
-              <button disabled={!!st || !t} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
+              <button disabled={!!st || !t} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => dispatch({ type: 'veto', map })}
+                aria-label={`${t?.action ?? ''} ${map}: ${EDGE_TEXT[edge].slice(2)}, you ${mineC} of 5, ${opp.tag} ${theirC} of 5`}>
                 <span className="veto__name">{map}<small>{G.sideLean(map)}</small></span>
-                <span className="veto__comfort" title="Map comfort (game values)">
+                <span className="veto__comfort">
                   <span className="us">You {pips(mineC)}</span>
                   <span className="them">{opp.tag} {pips(theirC)}</span>
+                  <span className={`veto__edge edge-${edge}`}>{EDGE_TEXT[edge]}</span>
                 </span>
-                <span className="veto__state">{st ? `${st.team === 'us' ? 'You' : opp.tag} ${st.action === 'ban' ? 'banned' : 'picked'}` : t ? (t.action === 'ban' ? 'Ban' : 'Pick') : ''}</span>
+                <span className="veto__state">{st ? `${who(st.team)} ${st.action === 'ban' ? 'banned' : 'picked'}` : t ? (t.action === 'ban' ? 'Ban' : 'Pick') : ''}</span>
               </button>
             </li>
           );
         })}
       </ul>
+      {m.veto.steps.length > 0 && (
+        <ol className="veto__history muted small" aria-label="Veto so far">
+          {m.veto.steps.map((s, i) => <li key={i}>{who(s.team)} {s.action === 'ban' ? 'banned' : 'picked'} {s.map}</li>)}
+        </ol>
+      )}
+      {!t && (
+        <p className="veto__order"><b>Maps:</b> {G.vetoMaps(m.veto).map((x, i) => `${i + 1}. ${x.map} (${x.by === 'decider' ? 'decider' : `${who(x.by)} picked`})`).join(' · ')}</p>
+      )}
     </div>
   );
 }

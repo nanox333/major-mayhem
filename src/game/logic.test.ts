@@ -221,6 +221,21 @@ describe('map veto', () => {
       if (!m.done) { m = G.playNextMap(m, us, G.autoSide(m.next!)); if (!m.done) expect(m.next!.how).toBe('knife'); }
     });
   });
+  it('explains comfort edges from the underlying values, and lists the maps to be played (#65)', () => {
+    const us = lineupOf(0), them = lineupOf(7);
+    for (const map of G.MAPS) {
+      const e = G.comfortEdge(us, them, map);
+      expect(e.diff).toBeCloseTo(G.comfort(us, map) - G.comfort(them, map));
+      expect(e.who).toBe(Math.abs(e.diff) < G.EDGE_EVEN ? 'even' : e.diff > 0 ? 'us' : 'them');
+    }
+    let m = vetoed('SF', us, ROSTERS[7].id);
+    expect(G.vetoTurn(m.veto)).toBeNull();
+    const maps = G.vetoMaps(m.veto);
+    expect(maps).toHaveLength(3);
+    expect(maps.map((x) => x.by)).toEqual([...m.veto.steps.filter((s) => s.action === 'pick').map((s) => s.team), 'decider']);
+    m = G.startMatch('SF', us, ROSTERS[7].id);
+    expect(G.vetoNextTurn(m.veto)).toEqual(m.veto.order[1]);
+  });
   it('ignores a ban out of turn or on a map that is gone', () => {
     const m = G.startMatch('QUAL', us, oppId);
     const after = G.applyVeto(m, us, 'Nuke');
