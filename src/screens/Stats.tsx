@@ -5,7 +5,7 @@ import { Stats, dailyStreak, statsSections } from '../game/stats';
 import { dailyNumber, today } from '../game/state';
 import { ACHIEVEMENTS } from '../game/achievements';
 
-const REACHED = ['Out in the Swiss stage', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
+export const REACHED = ['Out in the Swiss stage', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
 const MODE_WORD: Record<string, string> = { all: 'all teams', csgo: 'CS:GO', cs2: 'CS2', champions: 'champions', underdogs: 'underdogs', hard: 'hard' };
 const modeLabel = (key: string) => key.split('+').map((k) => MODE_WORD[k] ?? k).join(', ');
 const nickById =new Map(ROSTERS.flatMap((r) => r.players.map((p) => [p.id, p.nick] as const)));

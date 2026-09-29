@@ -2,7 +2,8 @@ import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, poolCheck, roundOf, slotsFor, today } from '../game/state';
-import { Stats } from '../game/stats';
+import { Stats, dailyStreak } from '../game/stats';
+import { REACHED } from './Stats';
 import { pageUrl } from '../game/share';
 import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
@@ -14,8 +15,8 @@ import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
 import { ThreeSteps, Tip } from '../ui/tips';
 
-export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
-  s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
+export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, onTwitch }: {
+  s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
 }) {
   if (s.step === 'spin') {
     const open = G.openSlots(s.picks);
@@ -23,6 +24,9 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
     const played = date ? stats.daily[date] : undefined;
     const todayN = dailyNumber(today());
     const doneToday = stats.daily[today()];
+    if (s.picks.length === 0 && s.offerKey === 0 && s.mode !== 'duel') {
+      return <Home s={s} dispatch={dispatch} setReelFor={setReelFor} stats={stats} onGuess={onGuess} onTwitch={onTwitch} />;
+    }
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
         {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><ThreeSteps compact /></Tip>}
@@ -63,6 +67,53 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
     return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <TeamChoices s={s} dispatch={dispatch} />;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
+}
+
+/** The first screen: today's daily is the big action, the other modes sit beneath it (#68). */
+function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
+  s: Run; dispatch: React.Dispatch<Action>; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
+}) {
+  const todayN = dailyNumber(today());
+  const done = stats.daily[today()];
+  const played = done && !done.abandoned;
+  const { current: streak } = dailyStreak(stats.daily, today());
+  const best = stats.runs > 0 ? REACHED[stats.reached.reduce((b, n, i) => (n > 0 ? i : b), 0)] : null;
+  const free = s.mode === 'free';
+  const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); };
+  const playDaily = () => {
+    if (s.mode !== 'daily') dispatch({ type: 'reset', mode: 'daily' });
+    setReelFor(1);
+    dispatch({ type: 'spin' });
+  };
+  return (
+    <div className="spin-stage home anim-in">
+      <button className="home__daily" data-sfx="open" onClick={playDaily}>
+        <small>{played ? 'Played ✓' : 'Same cases for everyone'}</small>
+        <strong>{played ? `Replay Daily #${todayN}` : `Play Daily #${todayN}`}</strong>
+        <span>{played ? `${done.placement}. Replays don't change your record.` : <NextDaily />}</span>
+      </button>
+      <p className="daily-meta">
+        {streak > 0 && <span>🔥 {streak}-day streak</span>}
+        {best && <span>Best finish: {best}</span>}
+        {!streak && !best && <span>Draft five pros, then win the Major.</span>}
+      </p>
+      <div className="home__cards">
+        <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => dispatch({ type: 'reset', mode: 'free' })}>
+          <strong>Free play</strong><small>Any era, champions or underdogs, hard mode</small>
+        </button>
+        <button className="home__card" onClick={onGuess}>
+          <strong>Guess the pro</strong><small>A second daily: eight guesses</small>
+        </button>
+      </div>
+      {free && (
+        <>
+          <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />
+          <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={openCase}>Open case</button></div>
+        </>
+      )}
+      <button type="button" className="link-btn" onClick={onTwitch}>Twitch chat votes ›</button>
+    </div>
+  );
 }
 
 /** CS-style case roulette: a strip of teams slides past a marker and stops on the first team in the offer. */
