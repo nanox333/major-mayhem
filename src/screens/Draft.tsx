@@ -36,14 +36,14 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
             {played && ` You already finished this one (${played.placement}); replays don't change your record.`}
           </p>
         )}
-        <button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button>
+        <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button></div>
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'daily' && (
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
         )}
-        {s.offerKey === 0 && s.mode === 'free' && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'free' && !doneToday && (
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}>Play Daily #{todayN} instead</button>
         )}
+        {s.offerKey === 0 && s.mode === 'free' && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
         {s.picks.length === 0 && s.mode === 'free' && doneToday && (
           <div className="daily-done">
             <small>Daily #{todayN} {doneToday.abandoned ? 'abandoned' : 'done'}</small>

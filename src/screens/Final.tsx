@@ -106,7 +106,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
         </p>
       )}
-      <div className="final__actions">
+      <div className="final__actions action-bar">
         <button className="cta cta--orange" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
       </div>
     </div>

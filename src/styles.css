@@ -81,7 +81,7 @@ button { font: inherit; color: inherit; }
 .console {
   background: linear-gradient(180deg, rgba(28,35,44,.96), rgba(18,23,30,.97)); border: 1px solid var(--line);
   clip-path: polygon(var(--cut) 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%, 0 var(--cut));
-  box-shadow: 0 20px 50px rgba(0,0,0,.45); overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,.45); overflow: clip; /* clip, not hidden: hidden makes a scroll container and stops the sticky action bar sticking */
 }
 .console__head {
   display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line);
@@ -715,6 +715,81 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 /* Where the board sits under the column (tablet and phone), the feed keeps a fixed height so the board doesn't jump as lines arrive. */
 @media (max-width: 860px) {
   .killfeed { min-height: 172px; }
+}
+
+/* ---------- phones and touch (#19) ---------- */
+/* The screen's main button lives in an action bar. Where the board and lists push it below the fold (tablet and phone), the bar
+   sticks to the bottom of the screen so "Open case", "Accept" or "Find match" is always in reach. */
+.action-bar { display: grid; justify-items: center; gap: 8px; }
+@media (max-width: 860px) {
+  .action-bar { position: sticky; bottom: 0; z-index: 5; margin-inline: -10px; padding: 22px 10px calc(10px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, rgba(20, 26, 34, 0), rgba(20, 26, 34, .97) 30%); }
+  .action-bar .cta { width: min(100%, 420px); }
+}
+/* At least 44px to tap, on phones and on any touch screen. */
+@media (max-width: 520px), (pointer: coarse) {
+  .hud-btn { width: 44px; height: 44px; }
+  .hud-btn--wide { width: auto; }
+  .ghost-btn, .back-btn, .seg button, .speed button, .tabs button, .subs__btns .ghost-btn { min-height: 44px; }
+  .speed button { min-width: 44px; }
+  .challenge input, .twitch-form input, .twitch-form select { min-height: 44px; }
+  .modal__close { top: 2px; right: 4px; width: 44px; height: 44px; }
+  .slot-chip { min-height: 44px; }
+  .agent__ref { padding: 12px; margin: -12px -6px -12px 0; }
+  .src-links { flex-wrap: wrap; gap: 0 14px; }
+  .src-links a { display: inline-block; padding: 10px 0; white-space: nowrap; }
+  .side-btn { min-height: 64px; }
+}
+@media (max-width: 520px) {
+  /* Header: no tagline once a case is open, a smaller logo, and one row of buttons above it. */
+  .page { padding-block: 8px 24px; gap: 8px; }
+  .masthead { gap: 4px 6px; }
+  .logo { font-size: clamp(1.6rem, 8vw, 2rem); }
+  .logo::after { margin-top: 3px; height: 3px; }
+  .tagline { display: none; }
+  .page.is-start .tagline { display: block; margin-top: 4px; font-size: .92rem; }
+  .tabs { margin: 0; }
+  .tabs button { flex: 1; padding-inline: 8px; }
+  .console__head { padding: 8px 12px; gap: 8px; }
+  .kicker { font-size: .7rem; letter-spacing: .14em; }
+  .console__title { font-size: 1.3rem; }
+  .spin-stage { min-height: 0; gap: 12px; padding: 4px 0 0; }
+  .case-art { width: 96px; height: 68px; }
+  .case-art::before { top: 22px; } .case-art span { top: 16px; }
+  .modes { width: 100%; }
+  .modes__row { grid-template-columns: 1fr; gap: 2px; }
+  .modes__row > span { text-align: left; }
+
+  /* Players: a row per player, so the Draft buttons are next to the face instead of below two rows of photos. */
+  .players-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .agent { flex-direction: row; clip-path: none; }
+  .agent:hover { transform: none; }
+  .agent__photo { flex: none; width: 84px; height: auto; min-height: 100px; }
+  .agent__main { display: none; }
+  .agent__flag { left: 4px; right: auto; top: 4px; }
+  .agent__body { flex: 1; min-width: 0; justify-items: stretch; gap: 4px; padding: 8px 10px 10px; }
+  .agent__name { justify-self: start; }
+  .agent__role { margin-top: 0; }
+  .agent__slots { display: grid; justify-content: stretch; }
+  .slot-chip--draft { width: 100%; align-items: flex-start; }
+
+  /* Before a match: both teams side by side, so Accept isn't a screen further down. */
+  .versus { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px; }
+  .versus__vs { display: none; }
+  .versus__side { padding: 8px; }
+  .match-found { padding: 10px; }
+  .match-found__title { font-size: 1.25rem; }
+  .subs__btns { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .subs__btns .ghost-btn { padding: 6px 8px; }
+
+  /* The map veto: a two-line row per map (name and action, then comfort) instead of a tall card. */
+  .veto__map button { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name state" "comfort comfort"; gap: 2px 8px; padding: 8px 10px; min-height: 56px; }
+  .veto__name { grid-area: name; grid-auto-flow: column; justify-content: start; align-items: baseline; gap: 8px; }
+  .veto__state { grid-area: state; grid-column: auto; text-align: right; align-self: center; }
+  .veto__comfort { grid-area: comfort; display: flex; flex-wrap: wrap; gap: 0 12px; }
+  /* The map list comes straight after the instruction; the long note about comfort follows it. */
+  .veto__note { order: 1; margin: 6px 0 0; }
+  .hud--veto .hud__score, .hud--veto .rounds { display: none; }
+  .veto .knife__title { font-size: 1.4rem; }
 }
 /* On a phone the board is what's pushed off-screen, so the feed shows just the latest line and the controls tighten up. */
 @media (max-width: 520px) {

@@ -98,7 +98,7 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
       <SynergyList list={power.synergies} />
       {s.duel && <Challenger s={s} />}
       {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
-      <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button>
+      <div className="action-bar"><button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button></div>
     </div>
   );
 }

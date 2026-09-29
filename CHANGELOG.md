@@ -19,6 +19,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Symbols next to colours** on won and lost maps and matches, above- and below-average ratings, killfeed lines, draft bonuses and penalties, and the round strip in match reports (lost rounds are striped) ([#22], [#38]).
 
 ### Changed
+- **On a phone, the main button stays in reach:** Open case, Find match, Accept, Next map and Play again are pinned to the bottom of the screen instead of sitting a screen or two down. Players are rows with their Draft buttons beside the face, both teams show side by side before a match, the header is smaller, the map veto is about a third shorter with the note on comfort under the list, and every button is at least 44 px tall. Guess the pro shows each guess as a card of labelled clues rather than a table that scrolls sideways ([#19]).
 - Achievement dates use the same local day as the daily, not UTC ([#26]).
 - **Draft cards:** one "Draft as …" button per slot, with the role fit written underneath; the name no longer doubles as the Liquipedia link; unavailable players say exactly why; subs show the role they take and the fit ([#17]).
 - "Draft review" is now **Pick strength**, with a note on what it does and doesn't measure ([#18]).
@@ -82,6 +83,7 @@ The first tagged release, covering everything since the initial draft game.
 [#14]: https://github.com/nanox333/major-mayhem/issues/14
 [#15]: https://github.com/nanox333/major-mayhem/issues/15
 [#24]: https://github.com/nanox333/major-mayhem/issues/24
+[#19]: https://github.com/nanox333/major-mayhem/issues/19
 [#22]: https://github.com/nanox333/major-mayhem/issues/22
 [#25]: https://github.com/nanox333/major-mayhem/issues/25
 [#26]: https://github.com/nanox333/major-mayhem/issues/26

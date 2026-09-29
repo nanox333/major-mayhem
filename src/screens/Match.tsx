@@ -100,8 +100,10 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
             </div>
           </div>
           <SubPanel s={s} pending={pending} dispatch={dispatch} />
-          <div className="accept-bar"><span /></div>
-          <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
+          <div className="action-bar">
+            <div className="accept-bar"><span /></div>
+            <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
+          </div>
         </div>
       )}
     </div>
@@ -239,7 +241,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
 
   return (
     <div className="stack">
-      <div className="hud">
+      <div className={`hud ${vetoing ? 'hud--veto' : ''}`}>
         <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{vetoing ? ' · Map veto' : `${m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · ${mapName}${ot ? ' · OT' : ''}`}</div>
         <div className="hud__score">
           <div className={`hud__team hud__team--${sideCls(side)}`}><i className="side-chip">{side}</i><span className="hud__org">Your team</span><span className="hud__tag">You</span>{m.bestOf === 3 && <em>{mapsWon}</em>}</div>
@@ -335,11 +337,13 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
           {seriesDone && m.bestOf === 3 && (
             <p className="muted small">Series ratings: {mine.map((x) => `${x.player.nick} ${fmt(series[x.player.id].rating)}`).join(' · ')}</p>
           )}
-          {seriesDone ? (
-            <button className="cta cta--orange" onClick={() => dispatch({ type: 'next' })}>{next ? 'Next match' : 'See results'}</button>
-          ) : (
-            <button className="cta cta--orange" onClick={() => { setMapIdx((i) => i + 1); setN(0); }}>Next map</button>
-          )}
+          <div className="action-bar">
+            {seriesDone ? (
+              <button className="cta cta--orange" onClick={() => dispatch({ type: 'next' })}>{next ? 'Next match' : 'See results'}</button>
+            ) : (
+              <button className="cta cta--orange" onClick={() => { setMapIdx((i) => i + 1); setN(0); }}>Next map</button>
+            )}
+          </div>
         </>
       )}
     </div>

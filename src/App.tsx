@@ -75,9 +75,11 @@ function Game() {
   if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
 
   const showBoard = s.phase !== 'final' && view === 'draft';
+  // The very first screen keeps the tagline; once a case is open, phones drop it to leave room for the draft.
+  const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
 
   return (
-    <div className={`page phase-${s.phase}`}>
+    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''}`}>
       <header className="masthead">
         <div className="masthead__left">
           <button className="hud-btn" onClick={() => setHelp(true)} aria-label="How to play and data sources">?</button>
