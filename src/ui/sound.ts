@@ -1,8 +1,36 @@
 import { useSyncExternalStore } from 'react';
-import { SFX_NAMES, Sfx, SfxOpts, renderSfx } from './sfx';
+import { Bank, SFX_NAMES, Sfx, SfxOpts, renderSfx } from './sfx';
 
 // Sound: a master switch (remembered in the browser, on by default), the audio context, and `play`. Browsers only allow sound
-// after a click or key press, so the context is created on the first one and nothing plays before that.
+// after a click or key press, so the context is created on the first one and nothing plays before that. The samples themselves
+// (src/sounds/*.mp3, inlined into the build) are decoded at page load, which needs no gesture, so even the first click has sound.
+
+const files = import.meta.glob('../sounds/*.mp3', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const bank = new Map<string, AudioBuffer>();
+
+/** Cuts the digital silence an mp3 encoder puts at the front, so an effect starts on its first sound. */
+function trimStart(c: BaseAudioContext, b: AudioBuffer): AudioBuffer {
+  const data = b.getChannelData(0);
+  let i = 0;
+  while (i < data.length && Math.abs(data[i]) < 0.002) i++;
+  const from = Math.max(0, i - Math.round(b.sampleRate * 0.001));
+  if (from === 0) return b;
+  const out = c.createBuffer(b.numberOfChannels, b.length - from, b.sampleRate);
+  for (let ch = 0; ch < b.numberOfChannels; ch++) out.copyToChannel(b.getChannelData(ch).subarray(from), ch);
+  return out;
+}
+
+/** Decodes every sample into the bank, keyed by file name without its extension. A sample that won't decode is just silent. */
+async function loadBank() {
+  if (typeof OfflineAudioContext === 'undefined') return;
+  const decoder = new OfflineAudioContext(1, 1, 44100);
+  await Promise.all(Object.entries(files).map(async ([path, url]) => {
+    try {
+      const data = await (await fetch(url)).arrayBuffer();
+      bank.set(path.replace(/^.*\//, '').replace(/\.mp3$/, ''), trimStart(decoder, await decoder.decodeAudioData(data)));
+    } catch { /* silent */ }
+  }));
+}
 
 const KEY = 'mm-sound';
 const readOn = () => { try { return localStorage.getItem(KEY) !== '0'; } catch { return true; } };
@@ -51,7 +79,7 @@ export function play(name: Sfx, o: SfxOpts & { delay?: number } = {}): () => voi
   const gap = MIN_GAP[name] ?? 0;
   if (!o.delay && gap && now - (lastPlayed.get(name) ?? -Infinity) < gap) return noop;
   lastPlayed.set(name, now);
-  return voice(c, master, (bus, t) => renderSfx(c, bus, name, t, o), o.delay ?? 0);
+  return voice(c, master, (bus, t) => renderSfx(c, bus, name, t, o, bank as Bank), o.delay ?? 0);
 }
 
 /** Schedules the reel's ticks at the given ms offsets, starting `delay` ms from now. */
@@ -59,7 +87,7 @@ export function playTicks(offsets: number[], delay = 0): () => void {
   const c = ready();
   if (!c || !master || offsets.length === 0) return noop;
   return voice(c, master, (bus, t) => {
-    offsets.forEach((ms, i) => renderSfx(c, bus, 'tick', t + ms / 1000, { pitch: 1 + ((i * 7) % 5) * 0.035 }));
+    offsets.forEach((ms, i) => renderSfx(c, bus, 'tick', t + ms / 1000, { pitch: 1 + ((i * 7) % 5) * 0.035 }, bank as Bank));
     return offsets[offsets.length - 1] / 1000 + 0.1;
   }, delay);
 }
@@ -93,6 +121,7 @@ let started = false;
 export function initSound() {
   if (started || typeof document === 'undefined') return;
   started = true;
+  void loadBank();
   const unlock = () => {
     lastGesture = performance.now();
     const c = context();

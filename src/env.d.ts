@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 /** Hosting config baked in at build time from site.config.json (see scripts/site-plugin.ts). */
 declare const __SITE__: {
   url: string;
