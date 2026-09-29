@@ -109,8 +109,13 @@ async function run(viewport, tag) {
       }
       if (g === 0 && n === 1 && !shotHalf) {
         await p.locator('.speed button', { hasText: '4×' }).click();
-        for (let i = 0; i < 80 && !(await p.$('.kf--half:has-text("Halftime")')); i++) { await answerBuy(); await p.waitForTimeout(200); }
-        await p.waitForSelector('.kf--half:has-text("Halftime")', { timeout: 2000 });
+        // At 4× a round takes ~60 ms and the feed only keeps the last few lines, so poll quickly (and answer the buy question if it comes up).
+        let sawHalf = false;
+        for (let i = 0; i < 400 && !sawHalf; i++) {
+          sawHalf = !!(await p.$('.kf--half:has-text("Halftime")'));
+          if (!sawHalf) { await answerBuy(); await p.waitForTimeout(25); }
+        }
+        if (!sawHalf) throw new Error('no halftime line in the killfeed');
         await p.screenshot({ path: `shots/${tag}-5b-halftime.png`, fullPage: true }); shotHalf = true;
       }
       const skip = p.locator('.ghost-btn', { hasText: 'Skip' }); if (await skip.count()) await skip.click();

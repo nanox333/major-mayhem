@@ -293,7 +293,8 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .hud__meta { text-align: center; font-family: var(--f-head); font-weight: 700; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
 .hud__score { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 10px; }
 .hud__team { display: flex; align-items: center; gap: 6px; min-width: 0; font-family: var(--f-head); font-weight: 700; font-size: .95rem; text-transform: uppercase; letter-spacing: .04em; }
-.hud__team span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A long team name wraps onto a second line rather than being cut off ("FAZE CL…"); the score digits are taller than two lines, so the bar doesn't grow. */
+.hud__team span { min-width: 0; overflow-wrap: anywhere; line-height: 1.05; text-wrap: balance; }
 .hud__team--t { color: var(--t); }
 .hud__team--ct { color: var(--ct); }
 .hud__score > .hud__team:last-child { justify-content: flex-end; text-align: right; }
@@ -307,16 +308,20 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .pop { animation: pop .42s cubic-bezier(.22,1,.36,1); }
 .rounds { display: flex; gap: 2px; }
 .rounds i { flex: 1 1 0; min-width: 0; }
-.rounds i { height: 8px; background: #222a33; }
+.rounds i { height: 10px; background: #222a33; }
 .rounds i.t { background: var(--t); } .rounds i.ct { background: var(--ct); }
 .rounds i:nth-child(12) { margin-right: 4px; }
 .rounds i.lost { opacity: .45; }
+/* Pistol rounds (1 and 13) carry a white notch on top, played or not; a round with a clutch gets a white dot. */
+.rounds i.pistol { box-shadow: inset 0 3px 0 rgba(255, 255, 255, .85); }
+.rounds i.clutch::after { content: ''; display: block; width: 4px; height: 4px; margin: 4px auto 0; border-radius: 50%; background: #fff; }
 .maps { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
 .maps__pill { padding: 2px 8px; font-family: var(--f-head); font-weight: 700; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--line); }
 .maps__pill.is-now { color: #fff; border-color: #56606c; }
 .maps__pill.w { color: #fff; background: rgba(224,163,59,.25); border-color: var(--t); }
 .maps__pill.l { color: #fff; background: rgba(94,152,217,.22); border-color: var(--ct); }
-.killfeed { display: grid; gap: 5px; min-height: 118px; align-content: start; }
+/* The feed is the last thing in its column, so it can grow downward freely; the responsive rules at the end hold space for it where the board sits underneath. */
+.killfeed { display: grid; gap: 5px; align-content: start; }
 .kf { display: grid; gap: 1px; padding: 6px 10px; background: rgba(0,0,0,.45); border-right: 3px solid; font-weight: 600; animation: kf-in .28s ease-out both; }
 .kf small { font-family: var(--f-head); font-size: .65rem; letter-spacing: .12em; color: var(--muted); }
 .kf--us { border-color: var(--go); } .kf--them { border-color: var(--loss); } .kf--idle { border-color: var(--line); color: var(--muted); }
@@ -481,7 +486,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .side-btn--t { color: var(--t); border-color: var(--t); } .side-btn--ct { color: var(--ct); border-color: var(--ct); }
 .side-btn:hover { filter: brightness(1.25); } .side-btn:active { transform: translateY(1px); }
 .side-btn:focus-visible, .speed button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
-.playback { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 8px; }
+.playback { display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .speed { display: inline-flex; border: 1px solid var(--line); }
 .speed button { padding: .45rem .7rem; border: 0; background: var(--panel); color: #cfd6de; cursor: pointer; font-family: var(--f-head); font-weight: 700; font-size: .82rem; font-variant-numeric: tabular-nums; }
 .speed button + button { border-left: 1px solid var(--line); }
@@ -555,7 +560,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .subs__btns .ghost-btn { font-size: .8rem; padding: 6px 10px; }
 .subs__btns .is-on { border-color: var(--t); color: #fff; background: rgba(224,163,59,.15); }
 .calls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.calls__run { color: #f0a19e; font-family: var(--f-head); font-weight: 700; letter-spacing: .04em; font-size: .9rem; }
+.kf--run { border-color: var(--loss); background: linear-gradient(90deg, rgba(217, 83, 79, .22), rgba(0, 0, 0, .45)); color: #f0a19e; font-family: var(--f-head); font-weight: 700; letter-spacing: .04em; }
 .buy { border: 1px solid var(--loss); background: rgba(217,83,79,.08); padding: 12px 14px; display: grid; gap: 6px; }
 .buy p { margin: 0; color: #cfd6de; font-size: .92rem; }
 .buy__btns { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -640,3 +645,20 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .guess__answer > div > span { display: block; color: #cfd6de; font-size: .9rem; }
 .guess__photo { width: 72px; height: 72px; flex: none; overflow: hidden; border: 1px solid var(--line); }
 .guess__teams { display: flex !important; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; color: var(--muted) !important; font-size: .8rem !important; }
+
+/* ---------- live match layout ---------- */
+/* Timeout, speed and skip share one row under the score; the killfeed comes after, so a new line never moves a button. */
+.controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.controls > :only-child { margin-inline: auto; }
+/* Where the board sits under the column (tablet and phone), the feed keeps a fixed height so the board doesn't jump as lines arrive. */
+@media (max-width: 860px) {
+  .killfeed { min-height: 172px; }
+}
+/* On a phone the board is what's pushed off-screen, so the feed shows just the latest line and the controls tighten up. */
+@media (max-width: 520px) {
+  .killfeed { min-height: 82px; }
+  .killfeed .kf:nth-child(n + 2) { display: none; }
+  .controls { gap: 6px 8px; }
+  .controls .ghost-btn { padding: .5rem .75rem; letter-spacing: .08em; }
+  .controls .speed button { padding: .45rem .55rem; }
+}

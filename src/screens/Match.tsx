@@ -174,6 +174,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
   // The opponent's current run of rounds, which a timeout stops.
   let theirRun = 0;
   if (game) for (let i = Math.min(n, total) - 1; i >= 0 && !game.rounds[i]; i--) theirRun++;
+  // The run only makes the feed while a timeout is there to answer it; once it's called, the feed shows the timeout instead.
+  const nudge = theirRun >= 3 && canTimeout;
 
   // pulse the map token of whoever made the highlight this round
   const shown = game ? game.events.filter((e) => e.round <= n) : [];
@@ -227,10 +229,13 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
         </div>
         <div className="rounds" aria-hidden="true">
           {Array.from({ length: Math.max(24, total) }, (_, i) => {
-            if (!game || i >= n) return <i key={i} />;
+            // Pistol rounds are notched, before and after they're played; a clutch gets a dot once it has happened.
+            const pistol = i === 0 || i === 12 ? ' pistol' : '';
+            if (!game || i >= n) return <i key={i} className={pistol || undefined} />;
             // Coloured by the side that won the round, like the in-game round history; your losses are dimmed.
             const ours = G.sideAt(i, game.start);
-            return <i key={i} className={game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`} />;
+            const clutch = game.events.some((e) => e.kind === 'clutch' && e.round === i + 1) ? ' clutch' : '';
+            return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}`} />;
           })}
         </div>
         {m.bestOf === 3 && !vetoing && (
@@ -255,13 +260,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
         m.next && <KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} dispatch={dispatch} />
       ) : !mapDone ? (
         <>
-          <div className="killfeed" aria-live="polite">
-            {shown.slice(-3).reverse().map((e) => (
-              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}</small>{e.text}</div>
-            ))}
-            {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
-          </div>
-          {buyQuestion ? (
+          {/* Everything you can press sits above the killfeed, so the feed can grow downward without moving a button. */}
+          {buyQuestion && (
             <div className="buy anim-in" role="group" aria-label="Buy after the lost pistol">
               <strong>Pistol lost. Save or force?</strong>
               <p>Saving means an eco now and a full buy after. A force buy gives you a real chance next round, but if it fails you're broke for the one after.</p>
@@ -270,20 +270,30 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
                 <button className="ghost-btn buy__force" data-sfx="call" onClick={() => call('force')}>Force buy</button>
               </div>
             </div>
-          ) : (
-            <div className="calls">
-              <button className="ghost-btn calls__timeout" data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
-                title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
-                Timeout
-              </button>
-              {theirRun >= 3 && <span className="calls__run">{opp.tag} have won {theirRun} in a row</span>}
-            </div>
           )}
-          <div className="playback">
-            <div className="speed" role="group" aria-label="Playback speed">
-              {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+          <div className="controls">
+            {!buyQuestion && (
+              <div className="calls">
+                <button className="ghost-btn calls__timeout" data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
+                  title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
+                  Timeout
+                </button>
+              </div>
+            )}
+            <div className="playback">
+              <div className="speed" role="group" aria-label="Playback speed">
+                {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+              </div>
+              <button className="ghost-btn" onClick={() => setN(total)}>Skip map</button>
             </div>
-            <button className="ghost-btn" onClick={() => setN(total)}>Skip to end of map</button>
+          </div>
+          <div className="killfeed" aria-live="polite">
+            {/* The opponent's run is news to act on (a timeout stops it), so it leads the feed rather than crowding the buttons. */}
+            {nudge && <div className="kf kf--run"><small>Run</small>{opp.tag} have won {theirRun} in a row. A timeout stops it.</div>}
+            {shown.slice(nudge ? -2 : -3).reverse().map((e) => (
+              <div key={`${mapIdx}-${e.round}-${e.text}`} className={`kf ${KF_CLASS(e)}`}><small>R{e.round}</small>{e.text}</div>
+            ))}
+            {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
         </>
       ) : (
