@@ -1,6 +1,6 @@
 // Lifetime stats, kept in this browser next to the run save.
 import * as G from './logic';
-import { Run, dailyDate, dailyNumber, squadOf } from './state';
+import { Run, dailyDate, dailyNumber, squadOf, today } from './state';
 import { shareText } from './share';
 import { newAchievements } from './achievements';
 
@@ -57,7 +57,8 @@ export function addRun(st: Stats, run: Run): Stats {
   const date = dailyDate(run);
   if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade, share: shareText(run) };
   const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0 }, st.ach ?? {});
-  const day = date ?? new Date().toISOString().slice(0, 10);
+  // The same local date the daily uses (#26), not UTC, so both agree around midnight.
+  const day = date ?? today();
   next.ach = { ...(st.ach ?? {}), ...Object.fromEntries(earned.map((id) => [id, day])) };
   next.lastNew = earned;
   return next;
