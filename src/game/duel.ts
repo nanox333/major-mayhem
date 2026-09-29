@@ -42,6 +42,15 @@ const fromB64 = (s: string) => new TextDecoder().decode(Uint8Array.from(atob(s.r
 
 export const encodeDuel = (d: Duel) => toB64(JSON.stringify(d));
 
+/** A link's free-play options: only the known values, or none at all (#27). */
+const validOpts = (o: unknown) => o === undefined || (typeof o === 'object' && o !== null && !Array.isArray(o)
+  && [undefined, 'csgo', 'cs2'].includes((o as Duel['opts'])!.era)
+  && [undefined, 'champions', 'underdogs'].includes((o as Duel['opts'])!.pool)
+  && [undefined, true, false].includes((o as Duel['opts'])!.hard));
+/** Keeps only the known keys, so nothing else from a hand-edited link reaches the run. */
+const cleanOpts = (o: NonNullable<Duel['opts']>): NonNullable<Duel['opts']> =>
+  ({ ...(o.era ? { era: o.era } : {}), ...(o.pool ? { pool: o.pool } : {}), ...(o.hard ? { hard: true } : {}) });
+
 /** Reads a duel from a link, or null if it's malformed or names teams, players or a coach this version doesn't have. */
 export function decodeDuel(code: string): Duel | null {
   try {
@@ -53,8 +62,9 @@ export function decodeDuel(code: string): Duel | null {
       && new Set(d.picks.map((p) => p[2])).size === 5
       && (d.coach == null || d.coach in COACHES)
       && (d.bench == null || (player(d.bench[0], d.bench[1]) && !d.picks.some((p) => p[2] === d.bench![1])))
-      && (d.date === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d.date));
-    return ok ? { ...d, name: cleanName(d.name) } : null;
+      && (d.date === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d.date))
+      && validOpts(d.opts);
+    return ok ? { ...d, name: cleanName(d.name), ...(d.opts ? { opts: cleanOpts(d.opts) } : {}) } : null;
   } catch { return null; }
 }
 
