@@ -4,6 +4,7 @@
       "Bash(curl https://bo3.gg/*)",
       "Bash(curl -sS https://bo3.gg/*)",
       "Bash(node scripts/fetch-bo3-photos.mjs:*)"
+      "Bash(node /tmp/claude-0/-home-user-major-mayhem/f9de3b75-9768-56bd-9242-ca3a42f48189/scratchpad/*:*)"
     ]
   }
 }
