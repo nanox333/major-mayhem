@@ -1,0 +1,5 @@
+# The maintainer reviews everything. Paths listed separately are the ones where a mistake reaches players directly.
+*                              @nanox333
+/src/data/                     @nanox333
+/src/game/                     @nanox333
+/.github/workflows/            @nanox333

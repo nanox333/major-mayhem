@@ -7,6 +7,8 @@
 [**Play it**](https://nanox333.github.io/major-mayhem/) · [Dev log](DEVLOG.md) · [Open issues](https://github.com/nanox333/major-mayhem/issues) · [How it works](docs/HOW-IT-WORKS.md)
 
 [![CI](https://github.com/nanox333/major-mayhem/actions/workflows/ci.yml/badge.svg)](https://github.com/nanox333/major-mayhem/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/nanox333/major-mayhem/actions/workflows/codeql.yml/badge.svg)](https://github.com/nanox333/major-mayhem/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/nanox333/major-mayhem?sort=semver)](https://github.com/nanox333/major-mayhem/releases)
 
 </div>
 
@@ -52,6 +54,10 @@ The build is one self-contained HTML file with React and the fonts inside, so it
 - **Known gaps** are tracked as [issues](https://github.com/nanox333/major-mayhem/issues). The [dev log](DEVLOG.md) says what changed lately and why.
 
 More detail is in [How it works](docs/HOW-IT-WORKS.md) (data sources, how a result is worked out, every file) and [HOSTING.md](HOSTING.md) (domain, analytics, moving hosts).
+
+## Contributing
+
+Bug reports, roster corrections and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md), the [roadmap](docs/ROADMAP.md) and the [changelog](CHANGELOG.md). Questions and ideas go in [Discussions](https://github.com/nanox333/major-mayhem/discussions). Security problems: [SECURITY.md](SECURITY.md). This is a one-person fan project, built with [Claude Code](https://claude.ai/code).
 
 ## Licence
 
