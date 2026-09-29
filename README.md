@@ -1,5 +1,11 @@
 # Major Mayhem
 
+[![CI](https://github.com/nanox333/major-mayhem/actions/workflows/ci.yml/badge.svg)](https://github.com/nanox333/major-mayhem/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/nanox333/major-mayhem/actions/workflows/codeql.yml/badge.svg)](https://github.com/nanox333/major-mayhem/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/nanox333/major-mayhem?sort=semver)](https://github.com/nanox333/major-mayhem/releases)
+[![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE)
+[![Play](https://img.shields.io/badge/play-nanox333.github.io-e0a33b)](https://nanox333.github.io/major-mayhem/)
+
 A Counter-Strike take on LoLdle's *Worlds Mayhem*. Spin for three historical Major rosters, draft one player per round into IGL, AWPer, Entry, Lurker and Support/Anchor, then a coach and a bench player, and run your dream team through a simulated Major: a Swiss stage (3 wins to advance, 3 losses and you're out), quarterfinal, semifinal and grand final.
 
 **Modes:** the daily challenge; free play, optionally limited to one era (CS:GO or CS2), to champions or underdogs, or on hard mode without role labels; **draft duels**, where a friend opens your challenge link, drafts from the same cases and their team plays yours in a best-of-three; **Twitch chat votes**, where a streamer's chat picks teams, players, the coach, map bans and sides (read-only, anonymous connection; no login); and **Guess the pro**, a second daily where everyone hunts the same pro in eight guesses. **Achievements** (21) are kept with the lifetime stats. **Sound** is on by default and starts after your first click: case-opening ticks that follow the reel as it slows, a chime that grows with the rarity of the team you land on, pick and veto sounds, a match-found chime, a blip for every round, stingers for clutches and halftime, win and lose jingles, a champion fanfare and an achievement bell. The speaker button at the top left mutes it (remembered in the browser). The sounds are dry, tactical recordings (mechanical clicks, plate thuds with a metal clang, bells and pitched confirmations) from Kenney's CC0 packs, layered and varied per event in `src/ui/sfx.ts`; credits are in the game's “?” panel and `assets-src/sounds/CREDITS.md`.
@@ -46,6 +52,10 @@ Team power = average (rating × role fit) + role balance (players on their main 
 All randomness goes through a seeded generator. Each case, opponent and match is seeded from the run seed plus the step, so a daily deals the same cases to everyone and reloading a run can't reroll it.
 
 **Balance** (`npm run check`, 3,000 runs per drafter, each also picking a coach): a random drafter wins under 1% of Majors, a "fan" drafter who judges ratings with about ±4 error wins about 31% and goes out in the Swiss stage about 12% of the time, and an expert who knows every hidden rating wins about 52%. The check fails if the fan drifts outside 20–40% or out of the Swiss stage outside 5–25%, the expert goes above 65% or the random drafter above 8%. Synergies, form, subs and calls aren't used by the simulated drafters, so a real player who uses them does a little better.
+
+## Contributing
+
+Bug reports, roster corrections and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md), the [roadmap](docs/ROADMAP.md) and the [changelog](CHANGELOG.md). Questions and ideas go in [Discussions](https://github.com/nanox333/major-mayhem/discussions). Security problems: [SECURITY.md](SECURITY.md). This is a one-person fan project, built with [Claude Code](https://claude.ai/code).
 
 ## Files
 

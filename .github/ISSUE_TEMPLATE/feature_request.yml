@@ -1,0 +1,26 @@
+name: Feature request
+description: Suggest a new feature or an improvement.
+labels: ["enhancement", "triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would this improve?
+      description: The problem or moment in the game this is about.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+    validations:
+      required: true
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Does it touch any of these?
+      description: These need a short design note, because they change fairness or balance.
+      options:
+        - label: How dailies are generated or scored
+        - label: Match balance (win rates checked by `npm run check`)
+        - label: Saved data (old saves must keep loading)

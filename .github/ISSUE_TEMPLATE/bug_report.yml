@@ -1,0 +1,39 @@
+name: Bug report
+description: Something in the game is broken or behaves wrongly.
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting. Runs are seeded, so a daily number or duel link usually lets us replay exactly what you saw.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: run
+    attributes:
+      label: Daily number, duel link or share text
+      placeholder: "Major Mayhem Daily #2 …"
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where in the game?
+      options: [Draft, Map veto / knife round, Live match, Results, Stats / achievements, Duel, Guess the pro, Something else]
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: "iPhone 15, Safari 18"
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Error details or console output
+      description: If the error screen appeared, paste what "Error details" shows.
+      render: text
