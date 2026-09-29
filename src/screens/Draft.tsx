@@ -226,24 +226,48 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
                 <span className="agent__flag" title={COUNTRY[p.country] ?? p.country}>{p.country}</span>
               </div>
               <div className="agent__body">
-                <a className="agent__name" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" title={`${p.nick} on Liquipedia`}>{p.nick}</a>
+                {/* The name is just the name; the reference link is a separate, smaller control, so it can't be mistaken for drafting (#17). */}
+                <span className="agent__name">{p.nick}
+                  <a className="agent__ref" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" aria-label={`${p.nick} on Liquipedia`} title="Liquipedia">↗</a>
+                </span>
+                {!hard && <span className="agent__role muted small">Main role: {ROLE_LABEL[p.roles[0]]}</span>}
                 {!hard && draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}>{h.text}</span>)}
                 <div className="agent__slots">
-                  {bench && <button className="slot-chip slot-chip--main" data-sfx="draft" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Bench</button>}
-                  {!bench && slots.map((slot) => (
-                    <button key={slot} className={`slot-chip ${!hard && p.roles[0] === slot ? 'slot-chip--main' : ''}`} data-sfx="draft" onClick={() => dispatch({ type: 'draft', player: p, slot })}>
-                      <RoleIcon role={slot} size={12} /> {ROLE_SHORT[slot]}
-                    </button>
-                  ))}
+                  {bench && <button className="slot-chip slot-chip--main" data-sfx="draft" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Draft as Bench</button>}
+                  {!bench && slots.map((slot) => {
+                    const note = G.fitNote(p, slot);
+                    return (
+                      <button key={slot} className={`slot-chip slot-chip--draft ${!hard && note.kind === 'main' ? 'slot-chip--main' : ''}`} data-sfx="draft" onClick={() => dispatch({ type: 'draft', player: p, slot })}
+                        aria-label={`Draft ${p.nick} as ${ROLE_LABEL[slot]}${hard ? '' : `, ${note.text}`}`}>
+                        <span><RoleIcon role={slot} size={12} /> Draft as {ROLE_SHORT[slot]}</span>
+                        {!hard && <small className={`fit fit--${note.kind}`}>{note.text}</small>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           );
         })}
       </div>
-      {taken.length > 0 && <p className="muted small">Unavailable: {taken.map((p) => p.nick).join(', ')} ({bench ? 'already drafted' : 'already drafted or no open slot'}).</p>}
+      {taken.length > 0 && (
+        <ul className="unavailable muted small" aria-label="Unavailable players">
+          {taken.map((p) => <li key={p.id}><b>{p.nick}</b>: {unavailableReason(p, s, draftedIds)}</li>)}
+        </ul>
+      )}
     </div>
   );
+}
+
+/** Why a player can't be picked, exactly (#17). Hard mode doesn't name their roles. */
+function unavailableReason(p: Roster['players'][number], s: Run, drafted: Set<string>): string {
+  if (drafted.has(p.id)) {
+    const pk = s.picks.find((x) => x.playerId === p.id);
+    return pk ? `already on your team as ${ROLE_LABEL[pk.slot]}` : 'already on your team';
+  }
+  if (s.opts?.hard) return 'no open slot left';
+  const filled = p.roles.map((r) => ROLE_LABEL[r]).join(' and ');
+  return `plays ${filled}, and ${p.roles.length > 1 ? 'those slots are' : 'that slot is'} already filled`;
 }
 
 /** Opens the roster-data issue form with this roster filled in (#13). */

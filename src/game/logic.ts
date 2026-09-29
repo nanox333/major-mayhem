@@ -136,6 +136,13 @@ export function matchLineup(base: Lineup[], bench: Lineup | null, subOut: string
 
 // ---------- strength ----------
 
+/** What playing `p` in `slot` means, in words, for draft and substitution buttons (#17). */
+export function fitNote(p: Player, slot: Role): { kind: 'main' | 'secondary' | 'off'; text: string } {
+  const f = fit(p, slot);
+  return f === 1 ? { kind: 'main', text: 'main role' }
+    : f > 0.9 ? { kind: 'secondary', text: 'secondary role, small penalty' }
+      : { kind: 'off', text: 'off-role, big penalty' };
+}
 export const fit = (p: Player, slot: Role) => (p.roles[0] === slot ? 1 : p.roles.includes(slot) ? 0.965 : 0.86);
 
 export interface Lineup { slot: Role; player: Player; roster: Roster }
@@ -299,6 +306,24 @@ export function vetoChoice(v: Veto, team: Team, mine: Lineup[], oppL: Lineup[]):
   const edge = (map: string) => (comfort(mine, map) - comfort(oppL, map)) * (team === 'us' ? 1 : -1);
   const t = vetoTurn(v)!;
   return [...v.left].sort((a, b) => (t.action === 'pick' ? edge(b) - edge(a) : edge(a) - edge(b)))[0];
+}
+
+/** How far apart two comfort values must be before one side has an edge (comfort runs from about -1.5 to 1.5). */
+export const EDGE_EVEN = 0.25;
+/**
+ * Who has the comfort edge on a map, from the underlying values rather than rounded pips (#65). Comfort is one input
+ * among many (players, form, sides, luck), so this says who is more comfortable, never who will win.
+ */
+export function comfortEdge(mine: Lineup[], oppL: Lineup[], map: string): { who: 'us' | 'them' | 'even'; diff: number } {
+  const diff = comfort(mine, map) - comfort(oppL, map);
+  return { who: Math.abs(diff) < EDGE_EVEN ? 'even' : diff > 0 ? 'us' : 'them', diff };
+}
+/** The turn after the current one, so the veto can say what happens next. */
+export const vetoNextTurn = (v: Veto) => (v.steps.length + 1 < v.order.length ? v.order[v.steps.length + 1] : null);
+/** The maps that will be played, in order: picks first (by whoever picked them), then the decider. */
+export function vetoMaps(v: Veto): { map: string; by: Team | 'decider' }[] {
+  const picks = v.steps.filter((s) => s.action === 'pick').map((s) => ({ map: s.map, by: s.team as Team | 'decider' }));
+  return vetoTurn(v) ? picks : [...picks, ...v.left.map((map) => ({ map, by: 'decider' as const }))];
 }
 
 // ---------- sides ----------

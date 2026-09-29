@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Roster } from '../data/rosters';
+import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
 import { RoleIcon, TeamBadge } from '../ui/art';
@@ -40,6 +40,13 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
   const bench = benchLineup(s);
   if (!bench || !pending.form) return null;
   const starters = G.lineupFromPicks(s.picks);
+  const hard = !!s.opts?.hard;
+  // What a sub means before you accept it: the role the bench player takes and how well it fits (#17).
+  const tradeoff = (l: G.Lineup) => {
+    const note = G.fitNote(bench.player, l.slot);
+    return `${bench.player.nick} plays ${ROLE_LABEL[l.slot]} for ${l.player.nick}${hard ? '' : `: ${note.text}`}`;
+  };
+  const out = starters.find((l) => l.player.id === pending.subOut);
   return (
     <div className="subs anim-in">
       <div className="subs__head">
@@ -50,11 +57,12 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
         <button className={`ghost-btn ${!pending.subOut ? 'is-on' : ''}`} aria-pressed={!pending.subOut} onClick={() => dispatch({ type: 'sub', out: null })}>Keep starters</button>
         {starters.map((l) => (
           <button key={l.player.id} className={`ghost-btn ${pending.subOut === l.player.id ? 'is-on' : ''}`} aria-pressed={pending.subOut === l.player.id}
-            onClick={() => dispatch({ type: 'sub', out: l.player.id })}>
-            Sub out {l.player.nick} <FormTag v={pending.form![l.player.id]} />
+            onClick={() => dispatch({ type: 'sub', out: l.player.id })} title={tradeoff(l)}>
+            Sub out {l.player.nick} <small>({ROLE_SHORT[l.slot]})</small> <FormTag v={pending.form![l.player.id]} />
           </button>
         ))}
       </div>
+      {out && <p className={`subs__tradeoff small ${!hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`}>{tradeoff(out)}.</p>}
     </div>
   );
 }
@@ -120,7 +128,9 @@ function Scoreboard({ game, opp, mine }: { game: G.MapGame; opp: Roster; mine: G
   );
 }
 
-const SPEEDS = [1, 2, 4];
+/** Playback speeds. "Tactical" is slow enough to read the feed and make calls as they come up (#16). */
+const SPEEDS = [0.35, 1, 2, 4];
+const speedLabel = (v: number) => (v < 1 ? 'Tactical' : `${v}×`);
 const loadSpeed = () => { try { const v = Number(localStorage.getItem('mm-speed')); return SPEEDS.includes(v) ? v : 1; } catch { return 1; } };
 const sideCls = (side: G.Side) => (side === 'T' ? 't' : 'ct');
 const KF_CLASS = (e: G.MatchEvent) =>
@@ -144,6 +154,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
   /** Pistol rounds (1 or 13) where you already answered the save-or-force question on this map. */
   const [bought, setBought] = useState<number[]>([]);
   const [speed, setSpeed] = useState(loadSpeed);
+  /** Paused playback waits for Resume or Next round (#16). */
+  const [paused, setPaused] = useState(false);
   const game: G.MapGame | undefined = m.maps[mapIdx];
   const total = game?.rounds.length ?? 0;
   const mapDone = !!game && n >= total;
@@ -156,12 +168,23 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     && G.canCall(m, { kind: 'force', round: n });
 
   useEffect(() => {
-    if (!game || mapDone || buyQuestion) return;
+    if (!game || mapDone || buyQuestion || paused) return;
     const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230 / speed);
     return () => clearTimeout(tm);
-  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion]);
+  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion, paused]);
+  // Space pauses and resumes, the right arrow steps one round while paused (desktop and streamers).
+  useEffect(() => {
+    if (!game || mapDone) return;
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.closest('input, textarea, button, select')) return;
+      if (e.key === ' ') { e.preventDefault(); setPaused((p) => !p); }
+      if (e.key === 'ArrowRight' && paused && !buyQuestion) setN((x) => Math.min(x + 1, total));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [!!game, mapDone, paused, buyQuestion, total]);
   useEffect(() => { if (game && lastMap) saveSeen(seenKey(t, m, mapIdx), Math.min(n, total)); }, [n, mapIdx, lastMap, total]);
-  useEffect(() => setBought([]), [mapIdx]);
+  useEffect(() => { setBought([]); setPaused(false); }, [mapIdx]);
   const call = (kind: G.Call['kind']) => {
     if (kind === 'force' || buyQuestion) setBought((b) => [...b, n]);
     dispatch({ type: 'call', call: { kind, round: n } });
@@ -281,11 +304,14 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
               </div>
             )}
             <div className="playback">
+              <button className="ghost-btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? '▶ Resume' : '❚❚ Pause'}</button>
+              {paused && <button className="ghost-btn" disabled={buyQuestion} onClick={() => setN((x) => Math.min(x + 1, total))} title="Right arrow">Next round ›</button>}
               <div className="speed" role="group" aria-label="Playback speed">
-                {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{v}×</button>)}
+                {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{speedLabel(v)}</button>)}
               </div>
               <button className="ghost-btn" onClick={() => setN(total)}>Skip map</button>
             </div>
+            {paused && <p className="muted small playback__note">Paused after round {Math.min(n, total)}. Timeouts can still be called.</p>}
           </div>
           <div className="killfeed" aria-live="polite">
             {/* The opponent's run is news to act on (a timeout stops it), so it leads the feed rather than crowding the buttons. */}
@@ -356,33 +382,55 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
     G.MAPS.filter((map) => m.veto.left.includes(map)).map((map) => ({ id: map, label: map, aliases: [map, ...(map === 'Dust2' ? ['d2', 'dust'] : [])] })),
     (map) => dispatch({ type: 'veto', map }));
   const pips = (n: number) => '●'.repeat(n) + '○'.repeat(5 - n);
+  const who = (team: G.Team) => (team === 'us' ? 'You' : opp.tag);
+  const next = G.vetoNextTurn(m.veto);
+  const EDGE_TEXT = { us: '▲ Your edge', them: `▼ ${opp.tag} edge`, even: '= Even' } as const;
+  // What the click does, and what follows it (#65).
+  const consequence = !t ? '' : t.action === 'ban'
+    ? `Banning removes a map for both teams.${next ? ` Then ${next.team === 'us' ? 'you' : opp.tag} ${next.action}${next.team === 'us' ? '' : 's'}.` : ' The map left over is played.'}`
+    : `Picking makes it a map in the series; ${opp.tag} will choose the starting side on it.${next ? ` Then ${next.team === 'us' ? 'you' : opp.tag} ${next.action}${next.team === 'us' ? '' : 's'}.` : ''}`;
   return (
     <div className="veto anim-in">
       <small className="knife__kicker">Map veto · Best of {m.bestOf}</small>
       <strong className="knife__title">{t ? `Your turn: ${t.action} a map` : 'Veto done'}</strong>
       <p className="knife__advice">
-        {m.bestOf === 3 ? 'Ban, ban, pick, pick, ban, ban; the last map is the decider. ' : 'Bans alternate until one map is left. '}
-        Comfort comes from each player's original lineup: ban their best maps, {m.bestOf === 3 ? 'pick yours.' : 'keep yours.'}
+        {t ? consequence : null}{' '}
+        {m.bestOf === 3 ? 'Order: ban, ban, pick, pick, ban, ban; the last map is the decider.' : 'Bans alternate until one map is left.'}
+      </p>
+      <p className="veto__note muted small">
+        Comfort is a game value worked out from each player's original lineup, not historical map statistics. It's one
+        input among players, form, sides and luck, so an edge is not a win chance.
       </p>
       <ul className="veto__maps">
         {G.MAPS.map((map) => {
           const st = done(map);
           const mineC = G.comfortPips(G.comfort(mine, map)), theirC = G.comfortPips(G.comfort(oppL, map));
+          const edge = G.comfortEdge(mine, oppL, map).who;
           const state = st ? `${st.action === 'ban' ? 'is-banned' : 'is-picked'} by-${st.team}` : '';
           return (
             <li key={map} className={`veto__map ${state}`}>
-              <button disabled={!!st || !t} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
+              <button disabled={!!st || !t} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => dispatch({ type: 'veto', map })}
+                aria-label={`${t?.action ?? ''} ${map}: ${EDGE_TEXT[edge].slice(2)}, you ${mineC} of 5, ${opp.tag} ${theirC} of 5`}>
                 <span className="veto__name">{map}<small>{G.sideLean(map)}</small></span>
-                <span className="veto__comfort" title="Map comfort (game values)">
+                <span className="veto__comfort">
                   <span className="us">You {pips(mineC)}</span>
                   <span className="them">{opp.tag} {pips(theirC)}</span>
+                  <span className={`veto__edge edge-${edge}`}>{EDGE_TEXT[edge]}</span>
                 </span>
-                <span className="veto__state">{st ? `${st.team === 'us' ? 'You' : opp.tag} ${st.action === 'ban' ? 'banned' : 'picked'}` : t ? (t.action === 'ban' ? 'Ban' : 'Pick') : ''}</span>
+                <span className="veto__state">{st ? `${who(st.team)} ${st.action === 'ban' ? 'banned' : 'picked'}` : t ? (t.action === 'ban' ? 'Ban' : 'Pick') : ''}</span>
               </button>
             </li>
           );
         })}
       </ul>
+      {m.veto.steps.length > 0 && (
+        <ol className="veto__history muted small" aria-label="Veto so far">
+          {m.veto.steps.map((s, i) => <li key={i}>{who(s.team)} {s.action === 'ban' ? 'banned' : 'picked'} {s.map}</li>)}
+        </ol>
+      )}
+      {!t && (
+        <p className="veto__order"><b>Maps:</b> {G.vetoMaps(m.veto).map((x, i) => `${i + 1}. ${x.map} (${x.by === 'decider' ? 'decider' : `${who(x.by)} picked`})`).join(' · ')}</p>
+      )}
     </div>
   );
 }

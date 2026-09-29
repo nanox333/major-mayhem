@@ -14,6 +14,8 @@ import { reportError, track } from '../analytics';
 import { RosterList, Staff } from './Lobby';
 import { achievementById } from '../game/achievements';
 import { StageTrack } from './Match';
+import { teamReview } from '../game/review';
+import { Modal } from '../ui/Modal';
 
 export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s: Run; stats: Stats; dispatch: React.Dispatch<Action> }) {
   const pl = G.placement(s.t);
@@ -27,6 +29,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
     const t = setTimeout(() => play(champ ? 'champion' : pl.key === 'DUEL-W' ? 'mapWin' : 'mapLose'), 350);
     return () => clearTimeout(t);
   }, []);
+  const [report, setReport] = useState<number | null>(null);
   const newAch = s.recorded ? stats.lastNew?.length ?? 0 : 0;
   useEffect(() => {
     if (!newAch) return;
@@ -83,14 +86,19 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           const o = G.rosterById.get(m.opponentId)!;
           return (
             <li key={i} className={m.won ? 'w' : 'l'}>
-              <span>{m.stage === 'QUAL' ? (s.t.qual.need ? 'Swiss' : 'Qual') : m.stage === 'DUEL' ? 'BO3' : m.stage}</span>
-              <span className="history__opp">{o.org} {o.year}</span>
-              <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
-              <b>{m.score[0]}–{m.score[1]}</b>
+              {/* Each row opens the saved report for that match (#66). */}
+              <button className="history__row" onClick={() => setReport(i)} aria-label={`Match report: ${o.org} ${o.year}, ${m.score[0]}–${m.score[1]}`}>
+                <span>{m.stage === 'QUAL' ? (s.t.qual.need ? 'Swiss' : 'Qual') : m.stage === 'DUEL' ? 'BO3' : m.stage}</span>
+                <span className="history__opp">{o.org} {o.year}</span>
+                <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
+                <b>{m.score[0]}–{m.score[1]} ›</b>
+              </button>
             </li>
           );
         })}
       </ul>
+      {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
+      <TeamReviewCard mine={mine} s={s} />
       <DraftReview picks={s.picks} />
       {stats.runs > 0 && (
         <p className="muted small">
@@ -206,16 +214,96 @@ function ChallengeBar({ s }: { s: Run }) {
 const canShareLink = () => { try { return matchMedia('(pointer: coarse)').matches && typeof navigator.share === 'function'; } catch { return false; } };
 
 /** Reveals the hidden game ratings: what you took vs the strongest pick on the board that round. */
+/**
+ * A finished match, read from the saved record (#66): nothing is re-simulated, so reopening it can't change a result.
+ * Older saves without some details just show less.
+ */
+function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
+  const opp = G.rosterById.get(m.opponentId)!;
+  const [i, setI] = useState(0);
+  const g = m.maps[i];
+  const marks = (r: number) => {
+    const out: string[] = [];
+    if (r === 0 || r === 12) out.push('pistol');
+    if (g.calls?.timeouts.includes(r)) out.push('timeout');
+    if (g.calls?.force.includes(r)) out.push('force buy');
+    if (g.events.some((e) => e.kind === 'clutch' && e.round === r + 1)) out.push('clutch');
+    return out;
+  };
+  const table = (rows: G.MapGame['stats']['mine'], label: string) => (
+    <table className="report__table">
+      <thead><tr><th>{label}</th><th>K</th><th>D</th><th>Rating</th></tr></thead>
+      <tbody>{[...rows].sort((a, b) => b.rating - a.rating).map((p) => <tr key={p.id}><td>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td>{fmt(p.rating)}</td></tr>)}</tbody>
+    </table>
+  );
+  return (
+    <Modal label="Match report" onClose={onClose}>
+      <h3>{G.STAGE_NAME[m.stage]} vs {opp.org} {opp.year}: {m.won ? 'won' : 'lost'} {m.score[0]}–{m.score[1]}</h3>
+      {m.maps.length > 1 && (
+        <div className="seg report__maps" role="tablist" aria-label="Maps">
+          {m.maps.map((x, k) => <button key={k} role="tab" aria-selected={k === i} className={k === i ? 'is-on' : ''} onClick={() => setI(k)}>{x.map} {x.score[0]}–{x.score[1]}</button>)}
+        </div>
+      )}
+      {g && (
+        <>
+          <p className="muted small">{g.map}: {g.won ? 'won' : 'lost'} {g.score[0]}–{g.score[1]}, starting on {g.start}{g.rounds.length > 24 ? ', after overtime' : ''}.</p>
+          <ol className="report__rounds" aria-label="Rounds">
+            {g.rounds.map((won, r) => {
+              const tags = marks(r);
+              return (
+                <li key={r} className={`${won ? 'w' : 'l'}${r === 12 || (r >= 24 && (r - 24) % 3 === 0) ? ' swap' : ''}`} title={`Round ${r + 1}: ${won ? 'won' : 'lost'}${tags.length ? ` · ${tags.join(', ')}` : ''}`}>
+                  <span className="sr">Round {r + 1} {won ? 'won' : 'lost'}{tags.length ? `, ${tags.join(', ')}` : ''}</span>
+                  {tags.includes('timeout') ? 'T' : tags.includes('force buy') ? 'F' : tags.includes('clutch') ? '★' : ''}
+                </li>
+              );
+            })}
+          </ol>
+          <p className="muted small">Green won, red lost; a gap marks halftime and each overtime swap. T timeout, F force buy, ★ clutch.</p>
+          {table(g.stats.mine, 'Your team')}
+          {table(g.stats.opp, opp.tag)}
+          {g.events.filter((e) => e.kind === 'call' || e.kind === 'clutch' || e.kind === 'half' || e.kind === 'ot').length > 0 && (
+            <ul className="report__events small">
+              {g.events.filter((e) => e.kind === 'call' || e.kind === 'clutch' || e.kind === 'half' || e.kind === 'ot').map((e, k) => <li key={k}><span className="muted">R{e.round}</span> {e.text}</li>)}
+            </ul>
+          )}
+        </>
+      )}
+    </Modal>
+  );
+}
+
+/** The team as a whole (#18): role balance, chemistry, who stood out, maps and calls, and one thing to try next. */
+function TeamReviewCard({ mine, s }: { mine: G.Lineup[]; s: Run }) {
+  const r = teamReview(mine, s.coach, s.t);
+  return (
+    <section className="review anim-in" aria-label="Team review">
+      <div className="review__head"><span>Team review</span></div>
+      <ul className="review__facts">
+        <li><b>Roles</b> {r.roles.main} in their main role{r.roles.secondary ? `, ${r.roles.secondary} in a secondary role` : ''}{r.roles.off ? `, ${r.roles.off} off-role` : ''}</li>
+        <li><b>Chemistry</b> {r.synergies.length ? r.synergies.join(' · ') : 'none'}</li>
+        {r.strongest && <li><b>Stood out</b> {r.strongest.nick} ({fmt(r.strongest.rating)}){r.weakest ? `; quietest: ${r.weakest.nick} (${fmt(r.weakest.rating)})` : ''}</li>}
+        <li><b>Maps</b> {r.maps.won} won, {r.maps.lost} lost{r.maps.bestMap ? ` · best on ${r.maps.bestMap}` : ''}{r.maps.worstMap ? ` · struggled on ${r.maps.worstMap}` : ''}</li>
+        <li><b>Calls</b> {r.calls.timeouts} timeout{r.calls.timeouts === 1 ? '' : 's'}{r.calls.forces ? `, ${r.calls.forces} force buy${r.calls.forces === 1 ? '' : 's'} (${r.calls.forcesWon} won)` : ', no force buys'}</li>
+      </ul>
+      <p className="review__tip"><b>Next run:</b> {r.suggestion}</p>
+    </section>
+  );
+}
+
 function DraftReview({ picks }: { picks: G.Pick[] }) {
   const { rounds, grade } = G.draftReview(picks);
   if (grade === null) return null;
   return (
-    <section className="review anim-in" aria-label="Draft review">
+    <section className="review anim-in" aria-label="Pick strength">
       <div className="review__head">
-        <span>Draft review</span>
+        <span>Pick strength</span>
         <b className={grade >= 0.98 ? 'hi' : grade < 0.92 ? 'lo' : ''}>{Math.round(grade * 100)}%</b>
       </div>
-      <p className="muted small">Hidden game ratings, adjusted for role fit, against the strongest pick in that round's case.</p>
+      <p className="muted small">
+        How strong each pick was on its own: hidden game ratings adjusted for role fit, against the strongest individual
+        option in that round's case. It doesn't measure chemistry, the coach, map calls or luck, so a high score and an
+        early exit can go together. The team review covers the rest.
+      </p>
       <ol className="review__list">
         {rounds.map((r, i) => {
           const top = !r.best || r.best.player.id === r.player.id || r.value >= r.best.value - 0.01;
@@ -224,8 +312,8 @@ function DraftReview({ picks }: { picks: G.Pick[] }) {
               <span className="review__round">R{i + 1}</span>
               <span className="review__pick"><RoleIcon role={r.slot} size={12} /> <b>{r.player.nick}</b> <em>{Math.round(r.value)}</em></span>
               <span className="review__best">
-                {top ? 'Best on the board' : (
-                  <>Best: <TeamBadge roster={r.best!.roster} size={14} /> <b>{r.best!.player.nick}</b> {ROLE_SHORT[r.best!.slot]} <em>{Math.round(r.best!.value)}</em></>
+                {top ? 'Strongest individual option' : (
+                  <>Strongest option: <TeamBadge roster={r.best!.roster} size={14} /> <b>{r.best!.player.nick}</b> {ROLE_SHORT[r.best!.slot]} <em>{Math.round(r.best!.value)}</em></>
                 )}
               </span>
             </li>

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as G from './logic';
 import { COACHES, ROSTERS, rostersOn } from '../data/rosters';
 import { Opts, Run, dailyNumber, fresh, lineupFor, poolCheck, reducer, roundOf, validRun } from './state';
-import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats } from './stats';
+import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats, statsSections } from './stats';
 import { shareText } from './share';
 import { newAchievements } from './achievements';
 import { DUEL_ID, decodeDuel, duelCode, duelFrom, duelLink, encodeDuel } from './duel';
@@ -188,6 +188,23 @@ describe('abandoning a daily', () => {
     expect(replay.daily['2026-10-01'].abandoned).toBe(true);
     expect(addAbandon(replay, started())).toBe(replay);
     expect(dailyStreak(replay.daily, '2026-10-01').current).toBe(0);
+  });
+  it('splits runs and titles by mode from when it starts counting, keeping all-time totals (#67)', () => {
+    const legacy = { ...emptyStats(), runs: 4, titles: 1 };
+    let st = addRun(legacy, playThrough(fresh('daily', '2026-10-01')));
+    st = addRun(st, playThrough(fresh('free', undefined, { era: 'cs2', hard: true })));
+    st = addRun(st, playThrough(fresh('free')));
+    expect(st.runs).toBe(7);
+    expect(st.byMode!.since).toBe('2026-10-01');
+    expect(st.byMode!.daily.runs).toBe(1);
+    expect(Object.keys(st.byMode!.free).sort()).toEqual(['all', 'cs2+hard']);
+    const tallied = st.byMode!.daily.titles + Object.values(st.byMode!.free).reduce((n, t) => n + t.titles, 0);
+    expect(st.titles).toBe(1 + tallied);
+  });
+  it('shows duels and abandoned dailies without a finished Major run (#64)', () => {
+    expect(statsSections(emptyStats())).toEqual({ runs: false, duels: false, dailies: false, empty: true });
+    expect(statsSections({ ...emptyStats(), duels: { w: 0, l: 1 } })).toMatchObject({ runs: false, duels: true, empty: false });
+    expect(statsSections(addAbandon(emptyStats(), started()))).toMatchObject({ runs: false, dailies: true, empty: false });
   });
 });
 
