@@ -67,7 +67,10 @@ export interface RosterFile {
   rosters: {
     org: string; year: number; event: string; dates: string; result: string; wiki: string;
     coach?: string; source?: string; since?: string; until?: string;
-    players: { nick: string; id?: string; roles: string[]; rating: number }[];
+    /** The coach rules v1 used (null: none), when a later correction changed it. */
+    coachV1?: string | null;
+    /** `rolesV1`: the roles rules v1 used, when a later correction changed them (see RULES). */
+    players: { nick: string; id?: string; roles: string[]; rolesV1?: string[]; rating: number }[];
   }[];
 }
 export const DATA = data as RosterFile;
@@ -91,9 +94,14 @@ export const CREDITS = {
 /** Coach ratings: invented game values, like player ratings. */
 export const COACHES: Record<string, { rating: number }> = DATA.coaches;
 
+/** Players whose roles were corrected after launch: [player, latest roles, roles under rules v1]. */
+const CORRECTED: [Player, Role[], Role[]][] = [];
+/** Rosters whose coach was corrected after launch: [roster, latest coach, coach under rules v1]. */
+const RECOACHED: [Roster, string | undefined, string | undefined][] = [];
+
 export const ROSTERS: Roster[] = DATA.rosters.map((r) => {
   const o = DATA.orgs[r.org] ?? { tag: r.org.slice(0, 3).toUpperCase(), color: '#c9a45c' };
-  return {
+  const roster: Roster = {
     id: rosterId(r.org, r.year, r.event), org: r.org, tag: o.tag, color: o.color, year: r.year, event: r.event, dates: r.dates, result: r.result,
     sourceUrl: WIKI + r.wiki,
     liquipediaUrl: lq(r.event),
@@ -105,14 +113,36 @@ export const ROSTERS: Roster[] = DATA.rosters.map((r) => {
     players: r.players.map((p) => {
       const id = p.id ?? pid(p.nick);
       // Photos are keyed by nick; a player with an explicit id (a nick shared with someone else) has none.
-      return { id, nick: p.nick, roles: p.roles as Role[], rating: p.rating, country: DATA.players[id]?.country ?? '', portrait: p.id ? undefined : PHOTOS[id]?.src };
+      const player: Player = { id, nick: p.nick, roles: p.roles as Role[], rating: p.rating, country: DATA.players[id]?.country ?? '', portrait: p.id ? undefined : PHOTOS[id]?.src };
+      if (p.rolesV1) CORRECTED.push([player, p.roles as Role[], p.rolesV1 as Role[]]);
+      return player;
     }),
   };
+  if (r.coachV1 !== undefined) RECOACHED.push([roster, r.coach, r.coachV1 ?? undefined]);
+  return roster;
 });
 
 export const playerLiquipedia = (nick: string) => lq(nick);
 
 /** The rosters a daily on `date` (YYYY-MM-DD) draws from: later data additions and retirements don't change it. */
 export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.since <= date) && (!r.until || date <= r.until));
+/**
+ * Rules versions (#24). A daily plays under the rules in force on its date, and a saved run keeps the version it
+ * started with, so fixing the simulation or correcting data never changes a challenge that has already begun.
+ * - v1: the launch simulation and data.
+ * - v2 (from 2026-09-30): one death per player per round, consistent clutches and narration (#12, #15); corrected
+ *   IGL labels (#13).
+ * To add a version: append it here with tomorrow's date, keep the old behaviour behind `rules() < n` in the code, and
+ * put any changed roles in `rolesV1`-style fields.
+ */
+export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }] as const;
+export const LATEST_RULES: number = RULES[RULES.length - 1].v;
+export const rulesOn = (date: string): number => [...RULES].reverse().find((r) => r.from <= date)?.v ?? 1;
+/** Puts every corrected role and coach back as it was under rules `v`. */
+export function applyRoles(v: number) {
+  for (const [p, latest, v1] of CORRECTED) p.roles = v >= 2 ? latest : v1;
+  for (const [r, latest, v1] of RECOACHED) r.coach = v >= 2 ? latest : v1;
+}
+
 /** Free play draws from every roster that isn't retired. */
 export const activeRosters = () => ROSTERS.filter((r) => !r.until);

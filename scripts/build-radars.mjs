@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 // Turns the radar images in assets-src/radars/ (supplied by the player) into square, transparent WebPs
 // in src/data/radars.json, keyed by map name.
 // Generated, not committed: runs with `npm run media`, skipped when the output is newer than its inputs.
@@ -20,7 +21,7 @@ const MAPS = {
 };
 const files = Object.keys(MAPS).map((k) => `${DIR}/${k}.png`).filter((f) => fs.existsSync(f));
 const mtime = (f) => fs.statSync(f).mtimeMs;
-const inputs = [...files, new URL(import.meta.url).pathname];
+const inputs = [...files, fileURLToPath(import.meta.url)];
 if (!process.argv.includes('--force') && fs.existsSync(OUT) && inputs.every((f) => mtime(f) < mtime(OUT))) {
   console.log('radars.json is up to date');
   process.exit(0);

@@ -773,6 +773,9 @@
   "YNk": {
    "rating": 74
   },
+  "cArn": {
+   "rating": 80
+  },
   "dastan": {
    "rating": 80
   },
@@ -1812,6 +1815,10 @@
     {
      "nick": "AdreN",
      "roles": [
+      "SUP",
+      "ENTRY"
+     ],
+     "rolesV1": [
       "IGL",
       "SUP"
      ],
@@ -3673,6 +3680,10 @@
     {
      "nick": "NBK-",
      "roles": [
+      "SUP",
+      "IGL"
+     ],
+     "rolesV1": [
       "IGL",
       "SUP"
      ],
@@ -3688,6 +3699,11 @@
     {
      "nick": "shox",
      "roles": [
+      "IGL",
+      "LURK",
+      "ENTRY"
+     ],
+     "rolesV1": [
       "LURK",
       "ENTRY"
      ],
@@ -4081,6 +4097,10 @@
     {
      "nick": "jks",
      "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rolesV1": [
       "IGL",
       "LURK"
      ],
@@ -4104,6 +4124,11 @@
     {
      "nick": "Twistzz",
      "roles": [
+      "IGL",
+      "ENTRY",
+      "SUP"
+     ],
+     "rolesV1": [
       "ENTRY",
       "SUP"
      ],
@@ -4228,7 +4253,6 @@
    "dates": "Nov 28–30, 2013",
    "result": "Champions",
    "wiki": "DreamHack_Winter_2013",
-   "source": "unverified",
    "players": [
     {
      "nick": "pronax",
@@ -4270,7 +4294,9 @@
      "rating": 78
     }
    ],
-   "since": "2026-09-30"
+   "since": "2026-09-30",
+   "coach": "cArn",
+   "coachV1": null
   },
   {
    "org": "Team LDLC.com",
@@ -4279,7 +4305,6 @@
    "dates": "Nov 27–29, 2014",
    "result": "Champions",
    "wiki": "DreamHack_Winter_2014",
-   "source": "unverified",
    "players": [
     {
      "nick": "Happy",
@@ -4322,7 +4347,9 @@
      "rating": 82
     }
    ],
-   "since": "2026-09-30"
+   "since": "2026-09-30",
+   "coach": "MoMan",
+   "coachV1": null
   },
   {
    "org": "Team Vitality",
@@ -4331,8 +4358,7 @@
    "dates": "May 8–21, 2023",
    "result": "Champions",
    "wiki": "BLAST.tv_Paris_Major_2023",
-   "coach": "XTQZZZ",
-   "source": "unverified",
+   "coach": "zonic",
    "players": [
     {
      "nick": "apEX",
@@ -4374,7 +4400,8 @@
      "rating": 86
     }
    ],
-   "since": "2026-09-30"
+   "since": "2026-09-30",
+   "coachV1": "XTQZZZ"
   }
  ]
 }

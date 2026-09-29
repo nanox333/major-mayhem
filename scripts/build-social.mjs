@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 // Builds the icons and the link-preview image into public/ (generated, not committed): favicons, home-screen
 // icons and a 1200×630 preview for Discord, X, WhatsApp and Reddit. It uses the game's own fonts (assets-src/fonts,
 // SIL Open Font License), colors, a map radar and player photos, so it needs `build-media` and `build-radars` first.
@@ -11,7 +12,7 @@ const FONTS = {
   body: { file: 'assets-src/fonts/Rajdhani-Bold.ttf', family: 'Rajdhani Bold' },
 };
 const OUTPUTS = ['favicon.svg', 'favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'og.png'].map((f) => `${OUT}/${f}`);
-const INPUTS = ['src/data/media.json', 'src/data/radars.json', 'site.config.json', new URL(import.meta.url).pathname, ...Object.values(FONTS).map((f) => f.file)];
+const INPUTS = ['src/data/media.json', 'src/data/radars.json', 'site.config.json', fileURLToPath(import.meta.url), ...Object.values(FONTS).map((f) => f.file)];
 const mtime = (f) => fs.statSync(f).mtimeMs;
 if (!process.argv.includes('--force') && OUTPUTS.every((f) => fs.existsSync(f)) && INPUTS.every((i) => OUTPUTS.every((o) => mtime(i) < mtime(o)))) {
   console.log('social images are up to date');
