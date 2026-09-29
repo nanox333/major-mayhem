@@ -211,6 +211,7 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
           <div className="src-links">
             <a href={roster.liquipediaUrl} target="_blank" rel="noreferrer">Liquipedia</a>
             <a href={roster.sourceUrl} target="_blank" rel="noreferrer">Source: Wikipedia</a>
+            <a href={reportUrl(roster)} target="_blank" rel="noreferrer">Report incorrect data</a>
           </div>
         </div>
       </div>
@@ -244,6 +245,10 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
     </div>
   );
 }
+
+/** Opens the roster-data issue form with this roster filled in (#13). */
+const reportUrl = (r: { org: string; year: number; event: string }) =>
+  `https://github.com/nanox333/major-mayhem/issues/new?template=roster_data.yml&roster=${encodeURIComponent(`${r.org} ${r.year} (${r.event})`)}`;
 
 /** Free-play options, chosen before the first case. */
 function ModePicker({ opts, dispatch }: { opts: Opts; dispatch: React.Dispatch<Action> }) {
