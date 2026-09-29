@@ -1,7 +1,7 @@
 // Run state: the draft, the tournament, and the reducer that moves between them.
 // Every random step runs under a seed derived from the run seed, so the daily challenge deals
 // everyone the same cases and a reloaded run can't be rerolled by refreshing the page.
-import { Player, Role } from '../data/rosters';
+import { Player, ROLE_ORDER, Role, activeRosters, rostersOn } from '../data/rosters';
 import * as G from './logic';
 
 export type Phase = 'draft' | 'ready' | 'preview' | 'live' | 'final';
@@ -51,9 +51,28 @@ export function load(): Run {
     if (r.v === 2) Object.assign(r, { v: 3, mode: 'free', seed: `free-${Math.random().toString(36).slice(2, 10)}`, recorded: r.phase === 'final' });
     // A match saved before map vetoes existed can't be continued: replay it from the match-found screen.
     if (r.current && !('veto' in r.current)) Object.assign(r, { current: null, phase: r.pending ? 'preview' : r.phase });
-    const ok = r.v === 3 && r.picks.every((p: G.Pick) => G.rosterById.has(p.rosterId)) && r.offer.every((id: string) => G.rosterById.has(id));
-    return ok ? (r as Run) : fresh();
+    return validRun(r) ? (r as Run) : fresh();
   } catch { return fresh(); }
+}
+
+/**
+ * Checks that everything a save points at still exists in the roster data, so a renamed or removed player or team
+ * starts a new run instead of crashing the page on every load.
+ */
+export function validRun(r: any): boolean {
+  const roster = (id: unknown) => typeof id === 'string' && G.rosterById.has(id);
+  const pickOk = (p: G.Pick) => roster(p.rosterId) && ROLE_ORDER.includes(p.slot)
+    && G.rosterById.get(p.rosterId)!.players.some((x) => x.id === p.playerId)
+    && (!p.offer || p.offer.every(roster));
+  return r?.v === 3
+    && Array.isArray(r.picks) && r.picks.length <= 5 && r.picks.every(pickOk)
+    && new Set(r.picks.map((p: G.Pick) => p.slot)).size === r.picks.length
+    && Array.isArray(r.offer) && r.offer.every(roster)
+    && (r.team === null || roster(r.team))
+    && (r.picks.length === 5 || !['ready', 'preview', 'live', 'final'].includes(r.phase))
+    && (!r.pending || roster(r.pending.oppId))
+    && (!r.current || roster(r.current.opponentId))
+    && Array.isArray(r.t?.matches) && r.t.matches.every((m: G.Match) => roster(m.opponentId));
 }
 export const save = (r: Run) => { try { localStorage.setItem(KEY, JSON.stringify(r)); } catch { /* storage unavailable: play on */ } };
 
@@ -62,9 +81,11 @@ export type Action =
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
   | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode } | { type: 'recorded' };
 
-const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen));
+/** A daily draws only from rosters available on its date, so later data additions don't change it. */
+export const rostersFor = (s: Run) => { const date = dailyDate(s); return date ? rostersOn(date) : activeRosters(); };
+const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen, rostersFor(s)));
 const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) =>
-  G.seeded(`${s.seed}:opp:${t.matches.length}`, () => G.pickOpponent(t, stage, G.lineupFromPicks(s.picks)));
+  G.seeded(`${s.seed}:opp:${t.matches.length}`, () => G.pickOpponent(t, stage, G.lineupFromPicks(s.picks), rostersFor(s)));
 
 export function reducer(s: Run, a: Action): Run {
   switch (a.type) {

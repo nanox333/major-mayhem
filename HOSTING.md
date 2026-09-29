@@ -37,7 +37,13 @@ Same idea: import the repo, build command `npm run build`, publish directory `di
 
 ### Staying on GitHub Pages
 
-Works as it is now (`.github/workflows/pages.yml`), as long as the repo is public or on a paid plan.
+Works as it is now: the `deploy` job in `.github/workflows/ci.yml` publishes `main` after every check passes, as long
+as the repo is public or on a paid plan.
+
+**If you move to Cloudflare Pages, Netlify or Vercel,** delete that `deploy` job (and the "Package the site" step
+before it), or it will fail on every push to `main` once the repo is private. Those hosts build every push to
+`main` themselves and don't wait for CI, so keep `main` protected (Settings → Branches → require the CI check)
+to keep the "only deploy what passed" guarantee.
 
 ## 2. Custom domain
 

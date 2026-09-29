@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as G from './logic';
-import { Run, dailyNumber, fresh, reducer } from './state';
-import { addRun, dailyStreak, emptyStats } from './stats';
+import { ROSTERS, rostersOn } from '../data/rosters';
+import { Run, dailyNumber, fresh, reducer, validRun } from './state';
+import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats } from './stats';
 import { shareText } from './share';
 
 /** Plays your veto turns with the sensible choice. */
@@ -127,5 +128,60 @@ describe('knife round', () => {
     const side = G.autoSide(s.current!.next!);
     expect(reducer(s, { type: 'side', side }).current).toEqual(reducer(s, { type: 'side', side }).current);
     expect(reducer(s, { type: 'next' })).toBe(s);
+  });
+});
+
+describe('saves', () => {
+  const finished = () => playThrough(fresh('free'));
+  it('accepts a real run', () => {
+    expect(validRun(finished())).toBe(true);
+    expect(validRun(fresh())).toBe(true);
+  });
+  it('rejects saves that point at players, teams or opponents that no longer exist', () => {
+    const run = finished();
+    const clone = () => JSON.parse(JSON.stringify(run));
+    const gonePlayer = clone(); gonePlayer.picks[0].playerId = 'retired-player';
+    const goneTeam = clone(); goneTeam.picks[1].rosterId = 'gone-2014-nowhere';
+    const goneOpp = clone(); goneOpp.t.matches[0].opponentId = 'gone-2014-nowhere';
+    const goneOffer = clone(); goneOffer.offer = ['gone-2014-nowhere'];
+    for (const bad of [gonePlayer, goneTeam, goneOpp, goneOffer, { ...clone(), v: 1 }, null]) expect(validRun(bad)).toBe(false);
+  });
+});
+
+describe('dailies and data changes', () => {
+  it('only draws from rosters available on the daily date', () => {
+    const date = '2026-10-01';
+    const pool = new Set(rostersOn(date).map((r) => r.id));
+    let s = fresh('daily', date);
+    for (let i = 0; i < 5; i++) {
+      s = reducer(s, { type: 'spin' });
+      expect(s.offer.every((id) => pool.has(id))).toBe(true);
+      const r = G.rosterById.get(s.offer.find((id) => G.rosterEligible(G.rosterById.get(id)!, s.picks))!)!;
+      s = reducer(s, { type: 'team', id: r.id });
+      const p = r.players.find((p) => G.eligibleSlots(p, s.picks).length)!;
+      s = reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
+    }
+  });
+  it('keeps the launch roster set fixed: new rosters need a `since` date so past dailies stay the same', () => {
+    // Adding a roster without `since` changes every daily that has already been played. Give it { since: '<tomorrow>' }.
+    expect(ROSTERS.filter((r) => !r.since).length).toBe(46);
+    expect(rostersOn('2026-09-28').length).toBe(46);
+  });
+});
+
+describe('abandoning a daily', () => {
+  const started = () => reducer(fresh('daily', '2026-10-01'), { type: 'spin' });
+  it('counts once a case is opened, and not for free play or before the first case', () => {
+    expect(dailyStarted(fresh('daily', '2026-10-01'))).toBe(false);
+    expect(dailyStarted(started())).toBe(true);
+    expect(dailyStarted(reducer(fresh('free'), { type: 'spin' }))).toBe(false);
+  });
+  it('records an abandoned daily that a replay cannot overwrite, and streaks skip it', () => {
+    const st = addAbandon(emptyStats(), started());
+    expect(st.daily['2026-10-01']).toMatchObject({ placement: 'Abandoned', abandoned: true });
+    const replay = addRun(st, playThrough(fresh('daily', '2026-10-01')));
+    expect(replay.daily['2026-10-01'].abandoned).toBe(true);
+    expect(addAbandon(replay, started())).toBe(replay);
+    expect(dailyStreak(replay.daily, '2026-10-01').current).toBe(0);
   });
 });
