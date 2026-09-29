@@ -245,6 +245,40 @@ describe('pistols and clutches', () => {
       expect(pistols.every((e) => e.good === g.rounds[e.round - 1])).toBe(true);
     }
   });
+  it('never lets a player die more than once per round, and kills always match the other side\'s deaths', () => {
+    const w = [1, 2, 3, 4, 5];
+    for (let i = 0; i < 400; i++) {
+      const t = G.seeded(`tally-${i}`, () => G.tallyRound(i % 2 === 0, w, w, w, w, i % 3 === 0 ? i % 5 : undefined));
+      for (const d of [...t.ourDeaths, ...t.theirDeaths]) expect(d).toBeLessThanOrEqual(1);
+      const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+      expect(sum(t.ourKills)).toBe(sum(t.theirDeaths));
+      expect(sum(t.theirKills)).toBe(sum(t.ourDeaths));
+      // the winner keeps someone alive
+      expect(sum(i % 2 === 0 ? t.ourDeaths : t.theirDeaths)).toBeLessThan(5);
+    }
+  });
+  it('leaves the clutcher as the only survivor, with the last kills', () => {
+    const w = [1, 1, 1, 1, 1];
+    for (let i = 0; i < 100; i++) {
+      const who = i % 5, vs = 2 + (i % 3);
+      const t = G.seeded(`clutch-${i}`, () => G.tallyRound(true, w, w, w, w, who, { who, vs }));
+      expect(t.ourDeaths).toEqual([0, 1, 2, 3, 4].map((j) => (j === who ? 0 : 1)));
+      expect(t.theirDeaths).toEqual([1, 1, 1, 1, 1]);
+      expect(t.ourKills[who]).toBeGreaterThanOrEqual(vs);
+    }
+  });
+  it('keeps whole-map scoreboards possible: deaths per player never exceed rounds played', () => {
+    for (let i = 0; i < 80; i++) {
+      const m = G.seeded(`board-${i}`, () => G.playMatch('F', lineupOf(i % 10), ROSTERS[(i + 5) % 20].id));
+      for (const g of m.maps) {
+        const r = g.rounds.length;
+        for (const s of [...g.stats.mine, ...g.stats.opp]) expect(s.d).toBeLessThanOrEqual(r);
+        const total = (l: { k: number; d: number }[], f: 'k' | 'd') => l.reduce((x, s) => x + s[f], 0);
+        expect(total(g.stats.mine, 'k')).toBe(total(g.stats.opp, 'd'));
+        expect(total(g.stats.opp, 'k')).toBe(total(g.stats.mine, 'd'));
+      }
+    }
+  });
   it('credits clutches to one of your players in a round you won', () => {
     const clutches = Array.from({ length: 60 }, (_, i) => G.seeded(`c-${i}`, () => G.playMatch('F', lineupOf(3), ROSTERS[8].id)))
       .flatMap((m) => m.maps.flatMap((g) => g.events.filter((e) => e.kind === 'clutch').map((e) => ({ e, g }))));

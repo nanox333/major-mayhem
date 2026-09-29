@@ -358,15 +358,52 @@ const fill = (tpl: string, p: string, t: string, map: string) => {
   return tpl.replace('{p}', p).replace('{t}', t).replace('{s}', spots[rand(spots.length)]);
 };
 
-/** Hand out n kills (or deaths) to five players, weighted by skill and luck. */
-function spread(n: number, weights: number[], out: number[], forced?: number) {
-  for (let i = 0; i < n; i++) {
-    if (forced !== undefined && i < 1) { out[forced]++; continue; }
-    let r = random() * weights.reduce((a, b) => a + b, 0);
-    let k = 0;
-    while (r > weights[k] && k < 4) { r -= weights[k]; k++; }
-    out[k]++;
+/** Pick one index by weight from `from`. */
+function weighted(weights: number[], from: number[]): number {
+  let r = random() * from.reduce((s, i) => s + weights[i], 0);
+  for (const i of from) { if (r <= weights[i]) return i; r -= weights[i]; }
+  return from[from.length - 1];
+}
+
+/** Hand out n kills to five players, weighted by skill and luck. One player can get several kills in a round. */
+function spread(n: number, weights: number[], out: number[], from = [0, 1, 2, 3, 4]) {
+  for (let i = 0; i < n && from.length; i++) out[weighted(weights, from)]++;
+}
+
+/** Pick n distinct players to die this round, weighted by risk. A player dies at most once per round. */
+function dead(n: number, weights: number[], keep?: number): number[] {
+  const left = [0, 1, 2, 3, 4].filter((i) => i !== keep), out: number[] = [];
+  while (out.length < n && left.length) { const k = weighted(weights, left); out.push(k); left.splice(left.indexOf(k), 1); }
+  return out;
+}
+
+export interface RoundTally { ourKills: number[]; ourDeaths: number[]; theirKills: number[]; theirDeaths: number[] }
+
+/**
+ * Kills and deaths for one round. Kills always equal the other side's deaths, nobody dies twice, and a round
+ * is won by the side that ends with someone alive. A clutch (`clutch` = player index, `vs` = enemies left)
+ * leaves that player as the only survivor, and they take the last `vs` kills.
+ */
+export function tallyRound(won: boolean, kw: number[], dw: number[], okw: number[], odw: number[], star?: number, clutch?: { who: number; vs: number }): RoundTally {
+  const ourKills = [0, 0, 0, 0, 0], theirKills = [0, 0, 0, 0, 0], ourDeaths = [0, 0, 0, 0, 0], theirDeaths = [0, 0, 0, 0, 0];
+  if (clutch) {
+    // Four teammates fall; before that they took 5 - vs of the enemy with them. The clutcher finishes the rest.
+    for (const i of dead(4, dw, clutch.who)) ourDeaths[i] = 1;
+    spread(4, okw, theirKills);
+    ourKills[clutch.who] += clutch.vs;
+    spread(5 - clutch.vs, kw, ourKills, [0, 1, 2, 3, 4].filter((i) => i !== clutch.who));
+    for (const i of dead(5, odw)) theirDeaths[i] = 1;
+  } else {
+    // Winners usually wipe the other side; losers take a few with them (and never all five).
+    const ours = won ? 3 + rand(3) : rand(5), theirs = won ? rand(5) : 3 + rand(3);
+    const oursDead = dead(Math.min(5, theirs), dw), theirsDead = dead(Math.min(5, ours), odw);
+    oursDead.forEach((i) => (ourDeaths[i] = 1));
+    theirsDead.forEach((i) => (theirDeaths[i] = 1));
+    const n = theirsDead.length;
+    if (star !== undefined && n > 0) { ourKills[star]++; spread(n - 1, kw, ourKills); } else spread(n, kw, ourKills);
+    spread(oursDead.length, okw, theirKills);
   }
+  return { ourKills, ourDeaths, theirKills, theirDeaths };
 }
 
 /** A made-up but consistent match rating: ~1.00 is average, 1.30+ is a big game. */
@@ -421,12 +458,13 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     const rn = rounds.length;
     if (ecoLeft > 0) ecoLeft--;
     if (ecoLeft === 0) forced = false;
-    let star: number | undefined;
+    let star: number | undefined, clutch: { who: number; vs: number } | undefined;
     if (won && random() < 0.05) {
       star = rand(5);
+      clutch = { who: star, vs: 2 + rand(3) };
       const x = mine[star];
       impact[x.player.id] += 5;
-      events.push({ round: rn, text: `${x.player.nick} clutches a 1v${2 + rand(3)}!`, playerId: x.player.id, mine: true, good: true, kind: 'clutch' });
+      events.push({ round: rn, text: `${x.player.nick} clutches a 1v${clutch.vs}!`, playerId: x.player.id, mine: true, good: true, kind: 'clutch' });
     } else if (random() < 0.22) {
       if (won) {
         star = rand(5);
@@ -438,13 +476,8 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
         events.push({ round: rn, text: fill(OPP_TEXT[rand(OPP_TEXT.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
       }
     }
-    // kills this round: winners usually wipe the other side, losers take a few with them
-    const ourKills = won ? 3 + rand(3) : rand(5);
-    const theirKills = won ? rand(5) : 3 + rand(3);
-    spread(Math.min(5, ourKills), kwM, K, star);
-    spread(Math.min(5, ourKills), dwO, OD);
-    spread(Math.min(5, theirKills), kwO, OK);
-    spread(Math.min(5, theirKills), dwM, D);
+    const t = tallyRound(won, kwM, dwM, kwO, dwO, star, clutch);
+    for (let j = 0; j < 5; j++) { K[j] += t.ourKills[j]; D[j] += t.ourDeaths[j]; OK[j] += t.theirKills[j]; OD[j] += t.theirDeaths[j]; }
     if (rn === 1 || rn === 13) {
       econ = won ? 1 : -1; ecoLeft = 2; forced = false;
       events.push({ round: rn, text: won ? `Pistol round to you. ${oppOrg} are on an eco.` : `${oppOrg} take the pistol round. You're saving.`, mine: true, good: won, kind: 'pistol' });
