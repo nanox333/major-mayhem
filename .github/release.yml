@@ -1,0 +1,17 @@
+# Categories for GitHub's automatically generated release notes.
+changelog:
+  exclude:
+    labels: ["skip-changelog"]
+  categories:
+    - title: Gameplay
+      labels: ["gameplay"]
+    - title: Fixes
+      labels: ["bug", "correctness"]
+    - title: Interface and accessibility
+      labels: ["ui", "accessibility"]
+    - title: Data, photos and logos
+      labels: ["data"]
+    - title: Engineering
+      labels: ["engineering", "dependencies"]
+    - title: Other changes
+      labels: ["*"]

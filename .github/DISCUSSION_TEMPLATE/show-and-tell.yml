@@ -1,0 +1,14 @@
+body:
+  - type: textarea
+    id: result
+    attributes:
+      label: Your run
+      description: Paste your share text or duel link, and tell us how it went.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: story
+    attributes:
+      label: The story
+      description: Best pick, worst pick, the clutch that won it.

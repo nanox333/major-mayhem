@@ -1,0 +1,34 @@
+name: Repo setup
+
+# Creates or updates the labels and milestones defined in .github/labels.json. Safe to re-run.
+on:
+  push:
+    branches: [main]
+    paths: [.github/labels.json]
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  labels-and-milestones:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Labels
+        run: |
+          jq -c '.labels[]' .github/labels.json | while read -r l; do
+            gh label create "$(jq -r .name <<<"$l")" --color "$(jq -r .color <<<"$l")" --description "$(jq -r .description <<<"$l")" --force
+          done
+      - name: Milestones
+        run: |
+          existing=$(gh api "repos/$GH_REPO/milestones?state=all&per_page=100" --jq '.[].title')
+          jq -c '.milestones[]' .github/labels.json | while read -r m; do
+            title=$(jq -r .title <<<"$m")
+            if grep -Fxq "$title" <<<"$existing"; then echo "exists: $title"; continue; fi
+            gh api "repos/$GH_REPO/milestones" -f title="$title" -f description="$(jq -r .description <<<"$m")" --silent
+            echo "created: $title"
+          done
