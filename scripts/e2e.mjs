@@ -38,7 +38,7 @@ async function run(viewport, tag) {
   await p.goto('http://game.local/');
   await p.evaluate(() => localStorage.clear()); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
-  await p.waitForSelector('button.cta');
+  await p.waitForSelector('.home__daily');
   await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
@@ -275,6 +275,7 @@ async function twitch() {
   await p.locator('.twitch-form button.cta').click();
   await p.waitForSelector('.twitch-status.is-live');
   await p.keyboard.press('Escape');
+  await p.locator('.home__card', { hasText: 'Free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.chatvote', { timeout: 8000 });
   const second = (await p.locator('.case-item__name').nth(1).textContent()).trim();
@@ -300,7 +301,7 @@ async function sound() {
   });
   const heard = async (act, wait = 300) => { const before = await p.evaluate(() => window.__osc); await act(); await p.waitForTimeout(wait); return (await p.evaluate(() => window.__osc)) - before; };
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.waitForSelector('button.cta'); await p.waitForTimeout(400);
+  await p.waitForSelector('.home__daily'); await p.waitForTimeout(400);
   if ((await p.evaluate(() => window.__ctxs.length)) !== 0) throw new Error('an audio context was created before any click');
   if (!(await heard(() => p.locator('.home__card', { hasText: 'Free play' }).click()))) throw new Error('a button click made no sound');
   if (!(await p.evaluate(() => window.__ctxs[0]))) throw new Error('the audio context was created before user activation');

@@ -73,9 +73,12 @@ function Game() {
   const [view, setView] = useState<'draft' | 'guess'>('draft');
   if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
 
-  const showBoard = s.phase !== 'final' && view === 'draft';
   // The very first screen keeps the tagline; once a case is open, phones drop it to leave room for the draft.
   const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
+  // The home screen (choose a game) has no team or map to show yet, so it gets the whole width.
+  const home = start && s.mode !== 'duel';
+  const showBoard = s.phase !== 'final' && view === 'draft' && !home;
+  if (home) { title = 'Choose your game'; kicker = 'Major Mayhem'; }
 
   return (
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''}`}>
@@ -121,7 +124,7 @@ function Game() {
             <h2 className="console__title">{title}</h2>
           </div>
         </div>
-        {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
+        {view === 'draft' && s.phase === 'draft' && !home && <TeamStrip s={s} />}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${view === 'guess' ? 'guess' : s.phase}`}>
           {view === 'guess' ? <section className="console__main"><GuessScreen /></section> : <section className="console__main">
