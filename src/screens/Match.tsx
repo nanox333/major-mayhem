@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Roster } from '../data/rosters';
+import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
 import { RoleIcon, TeamBadge } from '../ui/art';
@@ -40,6 +40,13 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
   const bench = benchLineup(s);
   if (!bench || !pending.form) return null;
   const starters = G.lineupFromPicks(s.picks);
+  const hard = !!s.opts?.hard;
+  // What a sub means before you accept it: the role the bench player takes and how well it fits (#17).
+  const tradeoff = (l: G.Lineup) => {
+    const note = G.fitNote(bench.player, l.slot);
+    return `${bench.player.nick} plays ${ROLE_LABEL[l.slot]} for ${l.player.nick}${hard ? '' : `: ${note.text}`}`;
+  };
+  const out = starters.find((l) => l.player.id === pending.subOut);
   return (
     <div className="subs anim-in">
       <div className="subs__head">
@@ -50,11 +57,12 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
         <button className={`ghost-btn ${!pending.subOut ? 'is-on' : ''}`} aria-pressed={!pending.subOut} onClick={() => dispatch({ type: 'sub', out: null })}>Keep starters</button>
         {starters.map((l) => (
           <button key={l.player.id} className={`ghost-btn ${pending.subOut === l.player.id ? 'is-on' : ''}`} aria-pressed={pending.subOut === l.player.id}
-            onClick={() => dispatch({ type: 'sub', out: l.player.id })}>
-            Sub out {l.player.nick} <FormTag v={pending.form![l.player.id]} />
+            onClick={() => dispatch({ type: 'sub', out: l.player.id })} title={tradeoff(l)}>
+            Sub out {l.player.nick} <small>({ROLE_SHORT[l.slot]})</small> <FormTag v={pending.form![l.player.id]} />
           </button>
         ))}
       </div>
+      {out && <p className={`subs__tradeoff small ${!hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`}>{tradeoff(out)}.</p>}
     </div>
   );
 }

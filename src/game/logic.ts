@@ -136,6 +136,13 @@ export function matchLineup(base: Lineup[], bench: Lineup | null, subOut: string
 
 // ---------- strength ----------
 
+/** What playing `p` in `slot` means, in words, for draft and substitution buttons (#17). */
+export function fitNote(p: Player, slot: Role): { kind: 'main' | 'secondary' | 'off'; text: string } {
+  const f = fit(p, slot);
+  return f === 1 ? { kind: 'main', text: 'main role' }
+    : f > 0.9 ? { kind: 'secondary', text: 'secondary role, small penalty' }
+      : { kind: 'off', text: 'off-role, big penalty' };
+}
 export const fit = (p: Player, slot: Role) => (p.roles[0] === slot ? 1 : p.roles.includes(slot) ? 0.965 : 0.86);
 
 export interface Lineup { slot: Role; player: Player; roster: Roster }

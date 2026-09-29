@@ -54,6 +54,14 @@ describe('draft', () => {
     expect(G.eligibleSlots(p, picks)).toEqual([]);
     for (const q of r.players.slice(1)) expect(G.eligibleSlots(q, picks)).not.toContain(p.roles[0]);
   });
+  it('describes role fit in words that match the penalty (#17)', () => {
+    const p = { id: 'x', nick: 'x', roles: ['AWP', 'SUP'], rating: 80, country: '' } as unknown as Parameters<typeof G.fit>[0];
+    expect(G.fitNote(p, 'AWP').kind).toBe('main');
+    expect(G.fitNote(p, 'SUP').kind).toBe('secondary');
+    expect(G.fitNote(p, 'ENTRY').kind).toBe('off');
+    expect(G.fit(p, 'SUP')).toBeLessThan(1);
+    expect(G.fit(p, 'ENTRY')).toBeLessThan(G.fit(p, 'SUP'));
+  });
   it('penalizes off-role picks', () => {
     const p = ROSTERS[0].players[0];
     const off = ROLE_ORDER.find((s) => !p.roles.includes(s))!;
