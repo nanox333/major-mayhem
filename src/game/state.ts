@@ -1,7 +1,7 @@
 // Run state: the draft, the tournament, and the reducer that moves between them.
 // Every random step runs under a seed derived from the run seed, so the daily challenge deals
 // everyone the same cases and a reloaded run can't be rerolled by refreshing the page.
-import { COACHES, Player, ROLE_ORDER, Role, activeRosters, rostersOn } from '../data/rosters';
+import { COACHES, Player, ROLE_ORDER, Role, Roster, activeRosters, rostersOn } from '../data/rosters';
 import * as G from './logic';
 import { DUEL_ID, Duel, duelRosters, registerDuel } from './duel';
 
@@ -160,13 +160,28 @@ export const rostersFor = (s: Run) => {
   const era = s.opts?.era ? all.filter((r) => eraOf(r.year) === s.opts!.era) : all;
   return era.length >= 16 ? era : all;
 };
-/** The rosters the draft offers: the run's pool, narrowed further by the free-play options. */
+/** The fewest rosters a free-play filter needs for a full draft (five players, coach and bench) to stay inside it. */
+export const MIN_POOL = 9;
+/** Narrows rosters by the free-play options. */
+export const narrowPool = (base: Roster[], o?: Opts) => {
+  const era = o?.era ? base.filter((r) => eraOf(r.year) === o.era) : base;
+  return o?.pool === 'champions' ? era.filter((r) => r.result === 'Champions')
+    : o?.pool === 'underdogs' ? era.filter((r) => r.result !== 'Champions' && r.result !== 'Runner-up') : era;
+};
+/** How many rosters a free-play filter leaves, and whether that's enough to draft from. */
+export const poolCheck = (o?: Opts) => {
+  const n = narrowPool(activeRosters(), o).length;
+  return { n, ok: n >= MIN_POOL };
+};
+/**
+ * The rosters the draft offers: the run's pool, narrowed further by the free-play options. Too-small filters
+ * can't be chosen (#63), so a selected restriction is never silently widened. Old saves from before that check
+ * keep the era they asked for rather than breaking.
+ */
 export const draftPoolFor = (s: Run) => {
   const base = rostersFor(s);
-  const era = s.opts?.era ? base.filter((r) => eraOf(r.year) === s.opts!.era) : base;
-  const pool = s.opts?.pool === 'champions' ? era.filter((r) => r.result === 'Champions')
-    : s.opts?.pool === 'underdogs' ? era.filter((r) => r.result !== 'Champions' && r.result !== 'Runner-up') : era;
-  return pool.length >= 9 ? pool : era;
+  const pool = narrowPool(base, s.opts);
+  return pool.length >= MIN_POOL ? pool : narrowPool(base, { era: s.opts?.era });
 };
 const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen, draftPoolFor(s)));
 const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) => stage === 'DUEL' ? DUEL_ID :
@@ -264,7 +279,7 @@ export function reducer(s: Run, a: Action): Run {
     }
     // Play again keeps your free-play options; switching to a daily drops them.
     case 'reset': return fresh(a.mode, today(), a.opts ?? ((a.mode ?? 'free') === 'free' ? s.opts : undefined));
-    case 'opts': return s.offerKey === 0 && s.mode === 'free' ? fresh('free', today(), a.opts) : s;
+    case 'opts': return s.offerKey === 0 && s.mode === 'free' && poolCheck(a.opts).ok ? fresh('free', today(), a.opts) : s;
     case 'duel': return freshDuel(a.duel);
     case 'recorded': return { ...s, recorded: true };
   }

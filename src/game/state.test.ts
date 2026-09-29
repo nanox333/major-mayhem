@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as G from './logic';
 import { COACHES, ROSTERS, rostersOn } from '../data/rosters';
-import { Run, dailyNumber, fresh, lineupFor, reducer, roundOf, validRun } from './state';
+import { Opts, Run, dailyNumber, fresh, lineupFor, poolCheck, reducer, roundOf, validRun } from './state';
 import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats } from './stats';
 import { shareText } from './share';
 import { newAchievements } from './achievements';
@@ -278,6 +278,27 @@ describe('free-play modes', () => {
     expect(offers(fresh('free', undefined, { era: 'cs2' })).every((r) => r.year >= 2024)).toBe(true);
     expect(offers(fresh('free', undefined, { era: 'csgo' })).every((r) => r.year <= 2023)).toBe(true);
   });
+  it('refuses filters that leave too few teams, and never widens a chosen one (#63)', () => {
+    const combos: Opts[] = [{}, { era: 'csgo' }, { era: 'cs2' }, { pool: 'champions' }, { pool: 'underdogs' },
+      { era: 'csgo', pool: 'champions' }, { era: 'csgo', pool: 'underdogs' }, { era: 'cs2', pool: 'champions' }, { era: 'cs2', pool: 'underdogs' }];
+    const inside = (o: Opts) => (r: { year: number; result: string }) =>
+      (!o.era || (o.era === 'cs2') === (r.year >= 2024))
+      && (o.pool !== 'champions' || r.result === 'Champions')
+      && (o.pool !== 'underdogs' || !['Champions', 'Runner-up'].includes(r.result));
+    for (const o of combos) {
+      const s = reducer(fresh('free'), { type: 'opts', opts: o });
+      if (!poolCheck(o).ok) { expect(s.opts ?? {}).toEqual({}); continue; }
+      // a full draft (players, coach, bench) stays inside the filter on several seeds
+      for (let i = 0; i < 4; i++) {
+        const done = draftThrough({ ...s, seed: `pool-${JSON.stringify(o)}-${i}` });
+        expect(done.phase).not.toBe('draft');
+        const used = [...done.picks, ...(done.bench ? [done.bench] : [])].map((p) => G.rosterById.get(p.rosterId)!);
+        expect(used.every(inside(o))).toBe(true);
+      }
+    }
+    // the case from the issue: CS2 + Champions is too small today, so it can't be selected
+    expect(poolCheck({ era: 'cs2', pool: 'champions' }).ok).toBe(false);
+  });
   it('lets hard mode put anyone in any open slot', () => {
     let s = reducer(fresh('free', undefined, { hard: true }), { type: 'spin' });
     s = reducer(s, { type: 'team', id: s.offer[0] });
@@ -318,6 +339,18 @@ describe('draft duels', () => {
     expect(back).toEqual(d);
     expect(back.name).toBe('Kristián ⚡');
     expect(duelCode(duelLink('https://x.test/', d).split('https://x.test/')[1])).toBe(encodeDuel(d));
+  });
+  it('accepts only known free-play options in a link, and drops extra keys (#27)', () => {
+    const bad = (opts: unknown) => decodeDuel(encodeDuel({ ...d, opts } as typeof d));
+    expect(bad({ era: 'cs3' })).toBeNull();
+    expect(bad({ pool: 'everyone' })).toBeNull();
+    expect(bad({ hard: 'yes' })).toBeNull();
+    expect(bad('cs2')).toBeNull();
+    expect(bad(null)).toBeNull();
+    expect(bad([1])).toBeNull();
+    expect(bad({ era: 'cs2', hard: true, extra: '<script>' })!.opts).toEqual({ era: 'cs2', hard: true });
+    expect(bad({ hard: false })!.opts).toEqual({});
+    expect(bad(undefined)!.opts).toBeUndefined();
   });
   it('rejects broken or foreign links', () => {
     expect(decodeDuel('not-a-duel')).toBeNull();

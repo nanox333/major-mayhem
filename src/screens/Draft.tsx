@@ -1,7 +1,7 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Opts, Run, dailyDate, dailyNumber, roundOf, slotsFor, today } from '../game/state';
+import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, poolCheck, roundOf, slotsFor, today } from '../game/state';
 import { Stats } from '../game/stats';
 import { pageUrl } from '../game/share';
 import { NextDaily } from '../ui/Countdown';
@@ -248,14 +248,19 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
 /** Free-play options, chosen before the first case. */
 function ModePicker({ opts, dispatch }: { opts: Opts; dispatch: React.Dispatch<Action> }) {
   const set = (o: Opts) => dispatch({ type: 'opts', opts: { ...opts, ...o } });
-  const choice = <K extends keyof Opts>(key: K, value: Opts[K], label: string) => (
-    <button className={opts[key] === value ? 'is-on' : ''} aria-pressed={opts[key] === value} onClick={() => set({ [key]: value } as Opts)}>{label}</button>
-  );
+  // A filter that leaves too few teams can't be chosen, rather than quietly widening once the draft starts (#63).
+  const choice = <K extends keyof Opts>(key: K, value: Opts[K], label: string) => {
+    const { n, ok } = poolCheck({ ...opts, [key]: value });
+    const why = ok ? undefined : `Only ${n} team${n === 1 ? '' : 's'} match with your other settings; a full draft needs ${MIN_POOL}.`;
+    return <button className={opts[key] === value ? 'is-on' : ''} aria-pressed={opts[key] === value} disabled={!ok} title={why} aria-description={why} onClick={() => set({ [key]: value } as Opts)}>{label}</button>;
+  };
+  const blocked = ([{ era: 'csgo' }, { era: 'cs2' }, { pool: 'champions' }, { pool: 'underdogs' }] as Opts[]).some((o) => !poolCheck({ ...opts, ...o }).ok);
   return (
     <div className="modes" aria-label="Free-play mode">
       <div className="modes__row"><span>Era</span><div className="seg">{choice('era', undefined, 'All')}{choice('era', 'csgo', 'CS:GO')}{choice('era', 'cs2', 'CS2')}</div></div>
       <div className="modes__row"><span>Teams</span><div className="seg">{choice('pool', undefined, 'All')}{choice('pool', 'champions', 'Champions')}{choice('pool', 'underdogs', 'Underdogs')}</div></div>
       <div className="modes__row"><span>Hard</span><div className="seg">{choice('hard', undefined, 'Off')}{choice('hard', true, 'No role labels')}</div></div>
+      {blocked && <p className="muted small">Greyed-out options leave fewer than {MIN_POOL} teams with your other settings, too few for a full draft.</p>}
     </div>
   );
 }
