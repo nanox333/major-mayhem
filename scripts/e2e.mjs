@@ -39,12 +39,12 @@ async function run(viewport, tag) {
   await p.evaluate(() => localStorage.clear()); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
   await p.waitForSelector('button.cta');
-  await p.locator('.ghost-btn', { hasText: 'Play Daily' }).click();
+  await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   // Five players, then the coach (round 6) and the bench player (round 7).
   for (let r = 0; r < 7; r++) {
-    await cta('Open case');
+    if (r > 0) await cta('Open case'); // the Play Daily button already opened the first case
     if (r === 0) { await p.waitForTimeout(1200); await p.screenshot({ path: `shots/${tag}-1a-reel.png` }); }
     await p.waitForSelector('.case-item', { timeout: 6000 });
     await p.waitForTimeout(500);
@@ -166,7 +166,7 @@ async function run(viewport, tag) {
   // After today's daily, the start screen shows the result instead of offering a replay.
   await p.locator('button.cta', { hasText: 'Play again' }).click();
   await p.waitForSelector('.daily-done');
-  if (await p.locator('.ghost-btn', { hasText: 'Play Daily' }).count()) throw new Error('daily replay still offered after finishing it');
+  if (await p.locator('.home__daily', { hasText: 'Replay' }).count() === 0) throw new Error('a finished daily should show as played on the start screen');
   console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', (await p.textContent('.daily-done .next-daily')).trim());
   await p.screenshot({ path: `shots/${tag}-10-daily-done.png`, fullPage: true });
   const sw = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
@@ -302,7 +302,7 @@ async function sound() {
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.waitForSelector('button.cta'); await p.waitForTimeout(400);
   if ((await p.evaluate(() => window.__ctxs.length)) !== 0) throw new Error('an audio context was created before any click');
-  if (!(await heard(() => p.locator('.ghost-btn', { hasText: 'Play Daily' }).click()))) throw new Error('a button click made no sound');
+  if (!(await heard(() => p.locator('.home__card', { hasText: 'Free play' }).click()))) throw new Error('a button click made no sound');
   if (!(await p.evaluate(() => window.__ctxs[0]))) throw new Error('the audio context was created before user activation');
   const reel = await heard(() => p.locator('button.cta', { hasText: 'Open case' }).click({ force: true }), 3300);
   if (reel < 25) throw new Error(`the case reel should tick and chime, heard ${reel} notes`);

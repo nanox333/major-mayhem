@@ -627,6 +627,21 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .buy__btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .buy__force { border-color: var(--t); color: var(--t); }
 
+/* ---------- home: daily first (#68) ---------- */
+.home { gap: 12px; }
+.home__daily { display: grid; justify-items: center; gap: 2px; width: min(420px, 100%); padding: 18px 20px; border: 1px solid var(--t); color: #1d1204; background: linear-gradient(180deg, #f2bb55, #d8912a); cursor: pointer; animation: cta-glow 1.6s ease-in-out infinite; }
+.home__daily:hover { filter: brightness(1.08); }
+.home__daily small { font-family: var(--f-body); font-weight: 700; font-size: .8rem; }
+.home__daily strong { font-family: var(--f-head); font-weight: 800; font-size: 1.7rem; text-transform: uppercase; letter-spacing: .04em; line-height: 1.1; }
+.home__daily span { font-size: .88rem; }
+.home__daily .next-daily { color: #3a2608; }
+.home__cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: min(420px, 100%); }
+.home__card { display: grid; gap: 2px; padding: 10px 12px; text-align: left; border: 1px solid var(--line); background: var(--panel); color: #cfd6de; cursor: pointer; }
+.home__card:hover { border-color: var(--t); }
+.home__card.is-on { border-color: var(--t); background: rgba(224,163,59,.12); box-shadow: inset 0 -2px 0 var(--t); }
+.home__card strong { font-family: var(--f-head); font-size: 1.05rem; color: #fff; }
+.home__card small { color: var(--muted); font-size: .78rem; }
+
 /* ---------- free-play modes ---------- */
 .modes { display: grid; gap: 6px; width: min(420px, 100%); margin: 4px auto 0; }
 .modes__row { display: grid; grid-template-columns: 56px 1fr; align-items: center; gap: 8px; }
