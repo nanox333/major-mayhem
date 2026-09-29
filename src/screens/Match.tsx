@@ -3,6 +3,7 @@ import { Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending } from '../game/state';
 import { RoleIcon, TeamBadge } from '../ui/art';
+import { track } from '../analytics';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
@@ -127,7 +128,7 @@ export function LiveScreen({ mine, m, t, dispatch }: { mine: G.Lineup[]; m: G.Ma
   const mapsLost = Math.min(mapIdx + (mapDone ? 1 : 0), m.maps.length) - mapsWon;
   const next = seriesDone ? G.nextStage(G.applyResult(t, m)) : null;
   const series = G.seriesRatings(m.maps);
-  const setSpeedSaved = (v: number) => { setSpeed(v); try { localStorage.setItem('mm-speed', String(v)); } catch { /* storage unavailable */ } };
+  const setSpeedSaved = (v: number) => { setSpeed(v); track('speed', { speed: v }); try { localStorage.setItem('mm-speed', String(v)); } catch { /* storage unavailable */ } };
   const ot = total > 24 && n > 24;
 
   return (

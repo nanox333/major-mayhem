@@ -1,0 +1,15 @@
+{
+  "url": "https://nanox333.github.io/major-mayhem/",
+  "name": "Major Mayhem",
+  "shortName": "Mayhem",
+  "title": "Major Mayhem: draft a CS Major dream team",
+  "description": "Draft a five-player dream team from Counter-Strike Major history, then play it through a simulated Major. New daily challenge every day.",
+  "themeColor": "#0b0e12",
+  "accent": "#e0a33b",
+  "analytics": {
+    "provider": "",
+    "siteId": "",
+    "host": ""
+  },
+  "sentryLoader": ""
+}

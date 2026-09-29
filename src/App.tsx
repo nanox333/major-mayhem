@@ -4,6 +4,7 @@ import * as G from './game/logic';
 import { Action, Phase, dailyDate, dailyNumber, load, reducer, save } from './game/state';
 import { abandonDaily, dailyStarted, loadStats, recordRun } from './game/stats';
 import { BoardHost } from './ui/Board';
+import { useRunTracking } from './ui/useTracking';
 import { RoleIcon } from './ui/art';
 import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
@@ -26,6 +27,7 @@ export default function App() {
   const [stats, setStats] = useState(loadStats);
   const [reelFor, setReelFor] = useState<number | null>(null);
   useEffect(() => save(s), [s]);
+  useRunTracking(s);
   // Count each finished run once, even across reloads.
   useEffect(() => {
     if (s.phase === 'final' && !s.recorded) { setStats(recordRun(s)); dispatch({ type: 'recorded' }); }

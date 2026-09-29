@@ -9,7 +9,7 @@ fs.mkdirSync('shots', { recursive: true });
 const b = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 const problems = [];
 async function run(viewport, tag) {
-  const p = await b.newPage({ viewport });
+  const p = await b.newPage({ viewport, acceptDownloads: true });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/', r => r.fulfill({ contentType: 'text/html', body: html }));
@@ -86,8 +86,13 @@ async function run(viewport, tag) {
   const grade = (await p.textContent('.review__head b')).trim();
   // The test page isn't a secure context, so capture what the game writes instead of reading the clipboard.
   await p.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { window.__copied = t; } } }));
-  await p.locator('.share-bar .ghost-btn').click();
+  await p.locator('.share-bar .ghost-btn', { hasText: 'Copy result' }).click();
   await p.waitForSelector('.share-bar .ghost-btn:has-text("Copied")');
+  // The result card: drawn in the browser and downloaded (no touch screen here, so no share sheet).
+  const [card] = await Promise.all([p.waitForEvent('download'), p.locator('.share-bar .ghost-btn', { hasText: 'Save image' }).click()]);
+  const cardPath = `shots/${tag}-8b-card.png`;
+  await card.saveAs(cardPath);
+  if (!/^major-mayhem-daily-\d+\.png$/.test(card.suggestedFilename()) || fs.statSync(cardPath).size < 50000) throw new Error('result card missing or empty: ' + card.suggestedFilename());
   const shared = await p.evaluate(() => window.__copied ?? '');
   if (!shared.includes('Major Mayhem Daily #')) throw new Error('share text not copied: ' + JSON.stringify(shared));
   console.log(tag, 'draft grade', grade, '| share:', shared.split('\n')[0]);

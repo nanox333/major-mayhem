@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
@@ -7,6 +7,8 @@ import { Stats, dailyStreak } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
+import { cardFileName, drawResultCard, siteHost } from '../ui/card';
+import { reportError, track } from '../analytics';
 import { RosterList } from './Lobby';
 import { StageTrack } from './Match';
 
@@ -33,7 +35,11 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </div>
         <div className="mvp-card__rating"><b>{fmt(ratings[star.player.id].rating)}</b><small>Event rating</small></div>
       </div>
-      <ShareBar text={() => shareText(s, pageUrl())} />
+      <ShareBar
+        text={() => shareText(s, pageUrl())}
+        image={{ draw: () => drawResultCard(s, siteHost()), name: cardFileName(s) }}
+        props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }}
+      />
       {date && (
         <p className="daily-meta">
           {streak > 1 && <span>🔥 {streak}-day daily streak</span>}
@@ -68,15 +74,70 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   );
 }
 
-export function ShareBar({ text }: { text: () => string }) {
-  const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const share = async () => {
-    setState((await copyText(text())) ? 'copied' : 'failed');
-    setTimeout(() => setState('idle'), 2200);
+type ShareState = 'idle' | 'copied' | 'copyFailed' | 'shared' | 'saved' | 'failed';
+const SHARE_LABEL: Record<ShareState, string> = { idle: '', copied: '✓ Copied to clipboard', copyFailed: 'Copy blocked by the browser', shared: '✓ Shared', saved: '✓ Image saved', failed: 'Blocked by the browser' };
+
+/** Phones get the system share sheet (Discord, WhatsApp, …); desktops get a download. */
+const canShareImage = () => {
+  try {
+    return matchMedia('(pointer: coarse)').matches && !!navigator.canShare?.({ files: [new File([''], 'x.png', { type: 'image/png' })] });
+  } catch { return false; }
+};
+
+/**
+ * Copy the spoiler-light text, and optionally share or save the result card. The card is drawn as soon as the bar
+ * mounts: Safari only lets a page open the share sheet straight from a tap, with no slow work in between.
+ */
+export function ShareBar({ text, image, props = {} }: {
+  text: () => string; props?: Record<string, string | number>;
+  image?: { draw: () => Promise<Blob>; name: string };
+}) {
+  const [state, setState] = useState<ShareState>('idle');
+  const card = useRef<Promise<Blob> | null>(null);
+  const [share] = useState(canShareImage);
+  useEffect(() => {
+    if (!image) return;
+    const p = image.draw();
+    p.catch((e) => reportError(e, 'result-card'));
+    card.current = p;
+  }, [image?.name]);
+  const done = (s: ShareState) => { setState(s); setTimeout(() => setState('idle'), 2200); };
+  const copy = async () => {
+    const ok = await copyText(text());
+    track('share', { ...props, method: 'copy', ok });
+    done(ok ? 'copied' : 'copyFailed');
+  };
+  const sendImage = async () => {
+    if (!image || !card.current) return;
+    try {
+      const blob = await card.current;
+      if (share) {
+        await navigator.share({ files: [new File([blob], image.name, { type: 'image/png' })], text: text() });
+        track('share', { ...props, method: 'share_image', ok: true });
+        done('shared');
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = Object.assign(document.createElement('a'), { href: url, download: image.name });
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+        track('share', { ...props, method: 'save_image', ok: true });
+        done('saved');
+      }
+    } catch (e) {
+      if (e instanceof DOMException && e.name === 'AbortError') return; // closed the share sheet
+      reportError(e, 'share-image');
+      track('share', { ...props, method: share ? 'share_image' : 'save_image', ok: false });
+      done('failed');
+    }
   };
   return (
     <div className="share-bar">
-      <button className="ghost-btn" onClick={share}>{state === 'copied' ? '✓ Copied to clipboard' : state === 'failed' ? 'Copy blocked by the browser' : '⧉ Copy result'}</button>
+      <button className="ghost-btn" onClick={copy}>{state === 'copied' || state === 'copyFailed' ? SHARE_LABEL[state] : '⧉ Copy result'}</button>
+      {image && (
+        <button className="ghost-btn" onClick={sendImage}>
+          {state === 'shared' || state === 'saved' || state === 'failed' ? SHARE_LABEL[state] : share ? '↗ Share image' : '⤓ Save image'}
+        </button>
+      )}
     </div>
   );
 }

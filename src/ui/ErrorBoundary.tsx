@@ -1,5 +1,6 @@
 import React from 'react';
 import { KEY } from '../game/state';
+import { reportError } from '../analytics';
 
 /**
  * Catches a crash anywhere in the game and offers a way out. A saved run that no longer fits the code or data
@@ -10,7 +11,7 @@ export class ErrorBoundary extends React.Component<{ children: React.ReactNode }
 
   static getDerivedStateFromError(error: Error) { return { error }; }
 
-  componentDidCatch(error: Error) { console.error('Major Mayhem crashed:', error); }
+  componentDidCatch(error: Error) { console.error('Major Mayhem crashed:', error); reportError(error, 'render'); }
 
   reset = () => {
     try { localStorage.removeItem(KEY); } catch { /* storage unavailable */ }
