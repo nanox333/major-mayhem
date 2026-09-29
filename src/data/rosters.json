@@ -773,6 +773,9 @@
   "YNk": {
    "rating": 74
   },
+  "cArn": {
+   "rating": 80
+  },
   "dastan": {
    "rating": 80
   },
@@ -4228,7 +4231,6 @@
    "dates": "Nov 28–30, 2013",
    "result": "Champions",
    "wiki": "DreamHack_Winter_2013",
-   "source": "unverified",
    "players": [
     {
      "nick": "pronax",
@@ -4270,7 +4272,8 @@
      "rating": 78
     }
    ],
-   "since": "2026-09-30"
+   "since": "2026-09-30",
+   "coach": "cArn"
   },
   {
    "org": "Team LDLC.com",
@@ -4279,7 +4282,6 @@
    "dates": "Nov 27–29, 2014",
    "result": "Champions",
    "wiki": "DreamHack_Winter_2014",
-   "source": "unverified",
    "players": [
     {
      "nick": "Happy",
@@ -4322,7 +4324,8 @@
      "rating": 82
     }
    ],
-   "since": "2026-09-30"
+   "since": "2026-09-30",
+   "coach": "MoMan"
   },
   {
    "org": "Team Vitality",
@@ -4331,8 +4334,7 @@
    "dates": "May 8–21, 2023",
    "result": "Champions",
    "wiki": "BLAST.tv_Paris_Major_2023",
-   "coach": "XTQZZZ",
-   "source": "unverified",
+   "coach": "zonic",
    "players": [
     {
      "nick": "apEX",
