@@ -7,6 +7,7 @@ import { Stats, dailyStreak } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
 import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
+import { play } from '../ui/sound';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
 import { cleanName, duelFrom, duelLink } from '../game/duel';
 import { reportError, track } from '../analytics';
@@ -21,6 +22,17 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps));
   const date = dailyDate(s);
   const streak = date ? dailyStreak(stats.daily, date).current : 0;
+  // The result, once the banner has landed; then the achievement bell, if this run earned one.
+  useEffect(() => {
+    const t = setTimeout(() => play(champ ? 'champion' : pl.key === 'DUEL-W' ? 'mapWin' : 'mapLose'), 350);
+    return () => clearTimeout(t);
+  }, []);
+  const newAch = s.recorded ? stats.lastNew?.length ?? 0 : 0;
+  useEffect(() => {
+    if (!newAch) return;
+    const t = setTimeout(() => play('achievement'), 1900);
+    return () => clearTimeout(t);
+  }, [newAch]);
   return (
     <div className="final">
       <div className={`final__banner ${champ || pl.key === 'DUEL-W' ? 'is-champ' : ''}`}>

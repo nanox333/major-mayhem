@@ -10,6 +10,8 @@ import { Avatar, RoleIcon, TeamBadge } from '../ui/art';
 import { rarity, reduceMotion } from '../ui/util';
 import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
+import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
+import { play, playTicks } from '../ui/sound';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
@@ -34,7 +36,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
             {played && ` You already finished this one (${played.placement}); replays don't change your record.`}
           </p>
         )}
-        <button className="cta cta--orange" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button>
+        <button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button>
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'daily' && (
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
         )}
@@ -78,11 +80,14 @@ function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
     const el = strip.current!;
     el.style.transform = 'translateX(0)';
     const raf = requestAnimationFrame(() => requestAnimationFrame(() => {
-      el.style.transition = 'transform 2.4s cubic-bezier(.08,.75,.16,1)';
+      el.style.transition = `transform ${REEL_MS}ms cubic-bezier(${REEL_CURVE.join(',')})`;
       el.style.transform = `translateX(${-target}px)`;
     }));
     const t = setTimeout(onDone, 2900);
-    return () => { cancelAnimationFrame(raf); clearTimeout(t); };
+    // A tick each time an item passes the marker (the strip starts moving a couple of frames in), then a chime for the team it stops on.
+    const ticks = playTicks(reelTickTimes(target, w / 2, STEP), 40);
+    const chime = play('reveal', { rarity: rarity(items[LAND]), delay: REEL_MS + 40 });
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); ticks(); chime(); };
   }, [items]);
   return (
     <div className="reel anim-in" ref={box} aria-label="Opening case">
@@ -122,7 +127,7 @@ function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action
         const r = G.rosterById.get(id)!;
         const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
         return (
-          <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}>
+          <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}>
             <div className="case-item__top">
               <TeamBadge roster={r} size={44} />
               <div className="case-item__id">
@@ -136,7 +141,7 @@ function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action
         );
       })}
       <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
-        <button className="ghost-btn" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
+        <button className="ghost-btn" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
       </div>
     </div>
   );
@@ -175,7 +180,7 @@ function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action>
         );
       })}
       <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
-        <button className="ghost-btn" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
+        <button className="ghost-btn" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
       </div>
     </div>
   );
@@ -223,9 +228,9 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
                 <a className="agent__name" href={playerLiquipedia(p.nick)} target="_blank" rel="noreferrer" title={`${p.nick} on Liquipedia`}>{p.nick}</a>
                 {!hard && draftHints(drafted, p).map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}>{h.text}</span>)}
                 <div className="agent__slots">
-                  {bench && <button className="slot-chip slot-chip--main" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Bench</button>}
+                  {bench && <button className="slot-chip slot-chip--main" data-sfx="draft" onClick={() => dispatch({ type: 'bench', player: p })}>⇄ Bench</button>}
                   {!bench && slots.map((slot) => (
-                    <button key={slot} className={`slot-chip ${!hard && p.roles[0] === slot ? 'slot-chip--main' : ''}`} onClick={() => dispatch({ type: 'draft', player: p, slot })}>
+                    <button key={slot} className={`slot-chip ${!hard && p.roles[0] === slot ? 'slot-chip--main' : ''}`} data-sfx="draft" onClick={() => dispatch({ type: 'draft', player: p, slot })}>
                       <RoleIcon role={slot} size={12} /> {ROLE_SHORT[slot]}
                     </button>
                   ))}

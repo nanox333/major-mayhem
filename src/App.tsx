@@ -6,6 +6,8 @@ import { abandonDaily, dailyStarted, loadStats, recordDuel, recordRun } from './
 import { Duel, decodeDuel, duelCode } from './game/duel';
 import { BoardHost } from './ui/Board';
 import { Modal } from './ui/Modal';
+import { play, useSoundOn } from './ui/sound';
+import { track } from './analytics';
 import { useRunTracking } from './ui/useTracking';
 import { RoleIcon } from './ui/art';
 import { DraftScreen } from './screens/Draft';
@@ -77,7 +79,10 @@ function Game() {
   return (
     <div className={`page phase-${s.phase}`}>
       <header className="masthead">
-        <button className="hud-btn masthead__help" onClick={() => setHelp(true)} aria-label="How to play and data sources">?</button>
+        <div className="masthead__left">
+          <button className="hud-btn" onClick={() => setHelp(true)} aria-label="How to play and data sources">?</button>
+          <SoundButton />
+        </div>
         <div className="brand">
           <h1 className="logo">Major Mayhem</h1>
           <p className="tagline">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p>
@@ -138,6 +143,20 @@ function Game() {
       {help && <HelpModal onClose={() => setHelp(false)} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>
+  );
+}
+
+/** The master sound switch; on by default, and remembered. */
+function SoundButton() {
+  const [on, toggle] = useSoundOn();
+  return (
+    <button className="hud-btn" data-sfx="none" aria-pressed={on} aria-label={on ? 'Turn sound off' : 'Turn sound on'} title={on ? 'Sound on' : 'Sound off'}
+      onClick={() => { toggle(); if (!on) play('click'); track('sound', { on: !on }); }}>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
+        {on ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /> : <path d="M16 9.5l5 5M21 9.5l-5 5" />}
+      </svg>
+    </button>
   );
 }
 

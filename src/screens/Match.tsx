@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
@@ -6,6 +6,7 @@ import { RoleIcon, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
+import { play } from '../ui/sound';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -64,6 +65,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
   const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
   const [found, setFound] = useState(false);
   useEffect(() => { setFound(false); const tm = setTimeout(() => setFound(true), reduceMotion() ? 0 : 1500); return () => clearTimeout(tm); }, [pending.oppId]);
+  useEffect(() => { if (found) play('found'); }, [found]);
   return (
     <div className="stack">
       {pending.stage !== 'DUEL' && <StageTrack t={t} current={pending.stage} />}
@@ -91,7 +93,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
           </div>
           <SubPanel s={s} pending={pending} dispatch={dispatch} />
           <div className="accept-bar"><span /></div>
-          <button className="cta cta--go" onClick={() => dispatch({ type: 'start' })}>Accept</button>
+          <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
         </div>
       )}
     </div>
@@ -179,6 +181,18 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     const e = game?.events.find((x) => x.round === n && x.playerId);
     if (e?.playerId) pulse(e.playerId, e.good);
   }, [n, mapIdx]);
+  // Sound: a blip as each round is played (only when playback moves on by one, so skipping ahead stays quiet), a sting for a
+  // clutch or the half, and a jingle when the map ends.
+  const prevN = useRef(n);
+  useEffect(() => {
+    const from = prevN.current;
+    prevN.current = n;
+    if (!game || n !== from + 1 || n > total) return;
+    const evs = game.events.filter((e) => e.round === n);
+    play(evs.some((e) => e.kind === 'clutch' && e.good) ? 'clutch' : game.rounds[n - 1] ? 'roundWin' : 'roundLoss');
+    if (evs.some((e) => e.kind === 'half' || e.kind === 'ot')) play('half', { delay: 250 });
+  }, [n]);
+  useEffect(() => { if (game && mapDone) play(game.won ? 'mapWin' : 'mapLose', { delay: 350 }); }, [mapDone, mapIdx]);
   // Your side for the round being played (sides swap at halftime and in overtime).
   const side: G.Side = game ? G.sideAt(Math.min(n, total - 1), game.start) : 'T';
   useEffect(() => { announceMap(mapName || null); }, [mapName]);
@@ -252,13 +266,13 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
               <strong>Pistol lost. Save or force?</strong>
               <p>Saving means an eco now and a full buy after. A force buy gives you a real chance next round, but if it fails you're broke for the one after.</p>
               <div className="buy__btns">
-                <button className="ghost-btn" onClick={() => setBought((b) => [...b, n])}>Save (eco)</button>
-                <button className="ghost-btn buy__force" onClick={() => call('force')}>Force buy</button>
+                <button className="ghost-btn" data-sfx="call" onClick={() => setBought((b) => [...b, n])}>Save (eco)</button>
+                <button className="ghost-btn buy__force" data-sfx="call" onClick={() => call('force')}>Force buy</button>
               </div>
             </div>
           ) : (
             <div className="calls">
-              <button className="ghost-btn calls__timeout" onClick={() => call('timeout')} disabled={!canTimeout}
+              <button className="ghost-btn calls__timeout" data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
                 title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
                 Timeout
               </button>
@@ -347,7 +361,7 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
           const state = st ? `${st.action === 'ban' ? 'is-banned' : 'is-picked'} by-${st.team}` : '';
           return (
             <li key={map} className={`veto__map ${state}`}>
-              <button disabled={!!st || !t} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
+              <button disabled={!!st || !t} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => dispatch({ type: 'veto', map })} aria-label={`${t?.action ?? ''} ${map}`}>
                 <span className="veto__name">{map}<small>{G.sideLean(map)}</small></span>
                 <span className="veto__comfort" title="Map comfort (game values)">
                   <span className="us">You {pips(mineC)}</span>

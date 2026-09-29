@@ -284,10 +284,45 @@ async function twitch() {
   await p.close();
 }
 
+/** Sound: silent until the first click, ticks and a chime when a case opens, one note per Guess clue, and mute that survives a reload. */
+async function sound() {
+  const { p, errs } = await page();
+  await p.addInitScript(() => {
+    window.__osc = 0; window.__ctxs = [];
+    const AC = window.AudioContext;
+    window.AudioContext = class extends AC { constructor(...a) { super(...a); window.__ctxs.push(navigator.userActivation.hasBeenActive); } };
+    const make = AC.prototype.createOscillator; AC.prototype.createOscillator = function () { window.__osc++; return make.call(this); };
+  });
+  const heard = async (act, wait = 300) => { const before = await p.evaluate(() => window.__osc); await act(); await p.waitForTimeout(wait); return (await p.evaluate(() => window.__osc)) - before; };
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.waitForSelector('button.cta'); await p.waitForTimeout(400);
+  if ((await p.evaluate(() => window.__ctxs.length)) !== 0) throw new Error('an audio context was created before any click');
+  if (!(await heard(() => p.locator('.ghost-btn', { hasText: 'Play Daily' }).click()))) throw new Error('a button click made no sound');
+  if (!(await p.evaluate(() => window.__ctxs[0]))) throw new Error('the audio context was created before user activation');
+  const reel = await heard(() => p.locator('button.cta', { hasText: 'Open case' }).click({ force: true }), 3300);
+  if (reel < 25) throw new Error(`the case reel should tick and chime, heard ${reel} notes`);
+  await p.locator('[aria-label="Turn sound off"]').click();
+  await p.waitForSelector('.reroll-row .ghost-btn');
+  if (await heard(() => p.locator('.reroll-row .ghost-btn').click(), 600)) throw new Error('muted, but a reroll still made sound');
+  await p.reload(); await p.waitForSelector('[aria-label="Turn sound on"]');
+  if (await heard(() => p.locator('[aria-label="Your stats"]').click())) throw new Error('mute did not survive a reload');
+  await p.keyboard.press('Escape');
+  await p.locator('[aria-label="Turn sound on"]').click();
+  await p.locator('.tabs button', { hasText: 'Guess the pro' }).click();
+  await p.fill('.guess__box input', 'zyw');
+  await p.waitForSelector('.guess__suggest button');
+  const notes = await heard(() => p.locator('.guess__suggest button').first().click(), 900);
+  if (notes !== 6) throw new Error(`a guess should play one note per clue (6), heard ${notes}`);
+  console.log('sound: reel', reel, 'notes | guess', notes, 'notes | mute persists | errors:', errs);
+  if (errs.length) problems.push(`sound: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 await run({ width: 1280, height: 900 }, 'desk');
 await run({ width: 390, height: 844 }, 'mob');
 await duel();
 await twitch();
+await sound();
 await guess();
 await b.close();
 if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
