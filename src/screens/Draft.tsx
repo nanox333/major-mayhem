@@ -133,6 +133,7 @@ function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
   }, [land]);
   const box = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLDivElement>(null);
+  const [landed, setLanded] = useState(false);
   useLayoutEffect(() => {
     const w = box.current?.clientWidth ?? 600;
     const target = LAND * STEP + STEP / 2 - w / 2 + (Math.random() - 0.5) * (STEP * 0.6);
@@ -143,16 +144,17 @@ function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
       el.style.transform = `translateX(${-target}px)`;
     }));
     const t = setTimeout(onDone, 2900);
+    const glow = setTimeout(() => setLanded(true), REEL_MS);
     // A tick each time an item passes the marker (the strip starts moving a couple of frames in), then a chime for the team it stops on.
     const ticks = playTicks(reelTickTimes(target, w / 2, STEP), 40);
     const chime = play('reveal', { rarity: rarity(items[LAND]), delay: REEL_MS + 40 });
-    return () => { cancelAnimationFrame(raf); clearTimeout(t); ticks(); chime(); };
+    return () => { cancelAnimationFrame(raf); clearTimeout(t); clearTimeout(glow); ticks(); chime(); };
   }, [items]);
   return (
-    <div className="reel anim-in" ref={box} aria-label="Opening case">
+    <div className={`reel anim-in rar-${rarity(items[LAND])} ${landed ? 'is-landed' : ''}`} ref={box} aria-label="Opening case">
       <div className="reel__strip" ref={strip}>
         {items.map((r, i) => (
-          <div key={i} className={`reel__item rar-${rarity(r)}`}>
+          <div key={i} className={`reel__item rar-${rarity(r)} ${landed && i === LAND ? 'is-landed' : ''}`}>
             <TeamBadge roster={r} size={44} />
             <strong>{r.tag}</strong>
             <small>{r.year}</small>

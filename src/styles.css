@@ -165,6 +165,10 @@ button { font: inherit; color: inherit; }
   background: linear-gradient(180deg, #252d37, #171c23); border-bottom: 4px solid var(--rar, var(--rar-milspec));
 }
 .reel__item strong { font-family: var(--f-head); font-size: .95rem; letter-spacing: .06em; }
+.reel__item.is-landed { box-shadow: 0 0 22px 2px var(--rar), inset 0 0 14px rgba(255,255,255,.08); animation: reel-land .5s ease-out; }
+.reel.is-landed .reel__marker { background: var(--rar); box-shadow: 0 0 18px var(--rar); }
+@keyframes reel-land { from { transform: scale(1); } 40% { transform: scale(1.08); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .reel__item.is-landed { animation: none; } }
 .reel__item small { color: var(--muted); font-size: .75rem; }
 .reel__marker { position: absolute; top: 0; bottom: 0; left: 50%; width: 3px; transform: translateX(-50%); background: var(--t); box-shadow: 0 0 12px var(--t); }
 .reel::before, .reel::after { content: ''; position: absolute; top: 0; bottom: 0; width: 18%; z-index: 1; pointer-events: none; }
