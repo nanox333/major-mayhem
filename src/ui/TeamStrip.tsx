@@ -57,14 +57,14 @@ export function TeamStrip({ s }: { s: Run }) {
             ) : (
               <div title={`${x.label}: open`} role="img" aria-label={`${x.label}: open`}>
                 <span className="strip__face strip__face--empty">{x.role ? <RoleIcon role={x.role} size={18} /> : x.label[0]}</span>
-                <span className="strip__nick">Open</span>
                 <span className="strip__role">{x.label}</span>
               </div>
             )}
           </li>
         ))}
       </ol>
-      <p className="strip__caption" aria-live="polite">
+      {/* The round and what's left are already in the heading and the slots above; the caption only speaks up for a tapped pick (screen readers still get the status). */}
+      <p className={`strip__caption ${picked?.who ? '' : 'sr'}`} aria-live="polite">
         {picked?.who ? <><b>{picked.label}</b> · {picked.who.nick} · {picked.who.from}</>
           : <>Round {roundNumber(s)} of {draftRounds(s)}{left.length ? <> · Still to fill: {left.join(', ')}</> : null}</>}
       </p>
