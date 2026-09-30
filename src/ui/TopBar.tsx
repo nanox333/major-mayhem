@@ -29,11 +29,13 @@ interface TopBarProps {
   onHelp: () => void;
   onStats: () => void;
   onTwitch: () => void;
+  /** Opens the settings dialog. */
+  onSettings: () => void;
   abandon: boolean;
   onNewRun: () => void;
 }
 
-export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, abandon, onNewRun }: TopBarProps) {
+export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun }: TopBarProps) {
   const twitch = useTwitchStatus();
   const inGuess = view === 'guess';
   const toggleGame = () => setView(inGuess ? backView : 'guess');
@@ -56,9 +58,10 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, aba
         <div className="topbar__end" role="group" aria-label="Help, sound and more">
           <button type="button" className="hud-btn" onClick={onHelp} aria-label="How to play and data sources" title="How to play"><I.HelpIcon /></button>
           <SoundButton />
+          <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label="Settings" title="Settings" data-sfx="none"><I.SettingsIcon /></button>
           {/* Once chat votes are connected (or trying to), the button stays in view so the connection state does. Before that it's in the menu. */}
           {twitch !== 'off' && <TwitchButton onClick={onTwitch} />}
-          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} showTwitch={twitch === 'off'} onStats={onStats} onTwitch={onTwitch} abandon={abandon} onNewRun={onNewRun} />
+          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} showTwitch={twitch === 'off'} onStats={onStats} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} />
         </div>
       </div>
     </header>
@@ -76,10 +79,10 @@ function SoundButton() {
   );
 }
 
-interface MoreProps { inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onStats: () => void; onTwitch: () => void; abandon: boolean; onNewRun: () => void }
+interface MoreProps { inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onStats: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
 
-/** Stats, Twitch chat votes and a new run: the things you use now and then (and Guess the pro, on a phone). A settings panel replaces this in #110. */
-function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onStats, onTwitch, abandon, onNewRun }: MoreProps) {
+/** Stats, Twitch chat votes and a new run: the things you use now and then (and Guess the pro and Settings, on a phone, where the gear has no room). */
+function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onStats, onTwitch, onSettings, abandon, onNewRun }: MoreProps) {
   const [open, setOpen] = useState(false);
   const [ask, setAsk] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -108,6 +111,7 @@ function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onStats, onTwitch, a
           <button type="button" className="menu__item menu__item--game" onClick={pick(onGame)} aria-label={game}>{inGuess ? <I.ChevronLeftIcon /> : <I.CrosshairIcon />}<span>{game}</span></button>
           <button type="button" className="menu__item" onClick={pick(onStats)} aria-label="Your stats"><I.StatsIcon /><span>Stats</span></button>
           {showTwitch && <TwitchButton variant="menu" onClick={pick(onTwitch)} />}
+          <button type="button" className="menu__item menu__item--settings" onClick={pick(onSettings)} aria-label="Settings"><I.SettingsIcon /><span>Settings</span></button>
           <button type="button" className={`menu__item ${ask ? 'is-ask' : ''}`} aria-label="Start a new run" title={ask && abandon ? "Today's daily will count as abandoned" : undefined}
             onClick={() => { if (ask) { setAsk(false); setOpen(false); onNewRun(); } else setAsk(true); }}>
             <I.RefreshIcon /><span>{ask ? (abandon ? 'Abandon daily?' : 'New run?') : 'New run'}</span>

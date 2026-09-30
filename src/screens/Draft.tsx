@@ -200,6 +200,9 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   const [slot, setSlot] = useState<Role | null>(null);
   // Pointing at a player (mouse or keyboard) previews them; pressing one keeps the preview until you draft or pick someone else (#143).
   const [hov, setHov] = useState<Chosen | null>(null);
+  // Choosing a player with the keyboard moves focus to the Draft button, so the next Enter drafts them (#77).
+  const [focusDraft, setFocusDraft] = useState(false);
+  useEffect(() => { if (focusDraft && sel) { document.querySelector<HTMLElement>('.draftbar .cta')?.focus(); setFocusDraft(false); } }, [focusDraft, sel]);
   // On a phone one card is open at a time, so all three fit on the screen; on wider screens every card is open.
   const phone = useMedia('(max-width: 860px)');
   const [openId, setOpenId] = useState<string | null>(s.offer[0] ?? null);
@@ -289,7 +292,8 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
                   return (
                     <li key={p.id}>
                       {ok
-                        ? <button type="button" className={`prow ${on ? 'is-sel' : ''} ${st.state === 'secondary' ? 'is-second' : ''}`} aria-pressed={on} data-sfx="select" onClick={() => choose({ r, p })}
+                        ? <button type="button" className={`prow ${on ? 'is-sel' : ''} ${st.state === 'secondary' ? 'is-second' : ''}`} aria-pressed={on} data-sfx="select" onClick={(e) => { choose({ r, p }); if (e.detail === 0) setFocusDraft(true); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter' && on) { e.preventDefault(); draft(); } }}
                           onMouseEnter={() => setHov({ r, p })} onMouseLeave={() => setHov(null)} onFocus={() => setHov({ r, p })} onBlur={() => setHov(null)}>{body}</button>
                         : <div className="prow is-off">{body}</div>}
                     </li>

@@ -22,6 +22,8 @@ export const CrosshairIcon = (p: P) => <Svg {...p}><path d="M12 20a8 8 0 1 0 0-1
 export const CoachIcon = (p: P) => <Svg {...p}><path d="M9 4h6v3H9zM7 5.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6.5a1 1 0 0 0-1-1h-1M9 12h6M9 16h4" /></Svg>;
 /** The bench slot: a bench. */
 export const BenchIcon = (p: P) => <Svg {...p}><path d="M3 10h18M5 10v9M19 10v9M3 14.5h18M6 10V6.5h12V10" /></Svg>;
+/** Settings: a gear. */
+export const SettingsIcon = (p: P) => <Svg {...p}><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4.9a7.6 7.6 0 0 0-2.6-1.5L14 2.4h-4l-.4 2.5A7.6 7.6 0 0 0 7 6.4l-2.4-.9-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-.9a7.6 7.6 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.6 7.6 0 0 0 2.6-1.5l2.4.9 2-3.4z" /></Svg>;
 /** The search box. */
 export const SearchIcon = (p: P) => <Svg {...p}><path d="M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM16.2 16.2L21 21" /></Svg>;
 export const HelpIcon = (p: P) => <Svg {...p}><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.4 9.4a2.7 2.7 0 1 1 3.8 2.5c-.8.4-1.2 1-1.2 1.8M12 17h.01" /></Svg>;

@@ -49,7 +49,7 @@ async function openGuess(p) {
   else { await openMenu(p); await p.locator('.menu__item--game').click(); }
 }
 async function page(viewport = { width: 1280, height: 900 }, reducedMotion) {
-  const p = await b.newPage({ viewport, ...(reducedMotion ? { reducedMotion } : {}) });
+  const p = await b.newPage({ viewport, colorScheme: 'dark', ...(reducedMotion ? { reducedMotion } : {}) });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/**', r => r.fulfill({ contentType: 'text/html', body: html }));
@@ -57,12 +57,12 @@ async function page(viewport = { width: 1280, height: 900 }, reducedMotion) {
 }
 
 async function run(viewport, tag) {
-  const p = await b.newPage({ viewport, acceptDownloads: true });
+  const p = await b.newPage({ viewport, acceptDownloads: true, colorScheme: 'dark' });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/', r => r.fulfill({ contentType: 'text/html', body: html }));
   await p.goto('http://game.local/');
-  await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.evaluate((prefs) => { localStorage.clear(); if (prefs) localStorage.setItem('mm-prefs', prefs); }, process.env.MM_PREFS ?? null); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
   await p.waitForSelector('button.cta');
   await p.locator('.home__daily').click();
@@ -410,6 +410,87 @@ async function guessMotion() {
   await p.close();
 }
 
+/**
+ * Settings and the keyboard (#110, #75, #77): the gear opens a dialog that takes focus and gives it back; theme and high contrast apply at once and
+ * survive a reload; M mutes, ? opens the shortcuts, 1 then Enter then Enter drafts a player; and with single-key shortcuts off none of them fire.
+ */
+async function settingsAndKeys() {
+  const { p, errs } = await page({ width: 1440, height: 900 });
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  const attr = (n) => p.evaluate((k) => document.documentElement.dataset[k], n);
+  if ((await attr('theme')) !== 'dark' || (await attr('contrast')) !== 'normal') throw new Error('the default should be the dark theme with normal contrast');
+
+  // With nothing saved the theme follows the device: a light system gets the light palette.
+  const lightCtx = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' });
+  const lp = await lightCtx.newPage();
+  await lp.route('https://fonts.**', (r) => r.fulfill({ body: '' }));
+  await lp.route('http://game.local/**', (r) => r.fulfill({ contentType: 'text/html', body: html }));
+  await lp.goto('http://game.local/');
+  if ((await lp.evaluate(() => document.documentElement.dataset.theme)) !== 'light') throw new Error('a light system should get the light theme by default');
+  await lightCtx.close();
+
+  const gear = p.locator('.hud-btn--gear');
+  await gear.click();
+  await p.waitForSelector('[role="dialog"][aria-label="Settings"]');
+  await p.locator('.seg button', { hasText: 'Light' }).click();
+  if ((await attr('theme')) !== 'light') throw new Error('choosing Light should switch the palette at once');
+  await p.locator('[role="switch"][aria-label="High contrast"]').click();
+  if ((await attr('contrast')) !== 'high') throw new Error('High contrast should apply at once');
+  await p.screenshot({ path: 'shots/settings-light-hc.png' });
+  await p.keyboard.press('Escape');
+  if (!(await gear.evaluate((el) => el === document.activeElement))) throw new Error('closing the settings should give focus back to the gear');
+  await p.reload();
+  if ((await attr('theme')) !== 'light' || (await attr('contrast')) !== 'high') throw new Error('the theme and contrast should survive a reload');
+  await gear.click();
+  await p.locator('.seg button', { hasText: 'Dark' }).click();
+  await p.locator('[role="switch"][aria-label="High contrast"]').click();
+  await p.keyboard.press('Escape');
+  if ((await attr('theme')) !== 'dark' || (await attr('contrast')) !== 'normal') throw new Error('switching back should restore the dark palette');
+
+  // M mutes and unmutes; ? opens the shortcuts.
+  await p.locator('body').click({ position: { x: 5, y: 300 } });
+  await p.keyboard.press('m');
+  await p.waitForSelector('[aria-label="Turn sound on"]');
+  await p.keyboard.press('m');
+  await p.waitForSelector('[aria-label="Turn sound off"]');
+  await p.keyboard.press('?');
+  await p.waitForSelector('[role="dialog"][aria-label="Settings"]');
+  if (!(await p.locator('.settings__keys kbd').count())) throw new Error('the shortcuts should be listed');
+  await p.keyboard.press('m');
+  if (await p.locator('[aria-label="Turn sound on"]').count()) throw new Error('shortcuts should be quiet while a dialog is open');
+
+  // Turn them off: M does nothing.
+  await p.locator('[role="switch"][aria-label="Single-key shortcuts"]').click();
+  await p.keyboard.press('Escape');
+  await p.locator('body').click({ position: { x: 5, y: 300 } });
+  await p.keyboard.press('m');
+  if (await p.locator('[aria-label="Turn sound on"]').count()) throw new Error('with shortcuts off, M should do nothing');
+  await p.reload();
+  await p.locator('body').click({ position: { x: 5, y: 300 } });
+  await p.keyboard.press('m');
+  if (await p.locator('[aria-label="Turn sound on"]').count()) throw new Error('the shortcuts switch should survive a reload');
+  await gear.click();
+  await p.locator('[role="switch"][aria-label="Single-key shortcuts"]').click();
+  await p.keyboard.press('Escape');
+
+  // Drafting from the keyboard: 1 goes to the first player of the first team, Enter chooses, Enter drafts.
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card', { timeout: 8000 });
+  await p.waitForTimeout(600);
+  await p.locator('body').click({ position: { x: 5, y: 300 } });
+  await p.keyboard.press('1');
+  if (!(await p.evaluate(() => document.activeElement?.closest('.case-card') === document.querySelector('.case-card') && document.activeElement?.classList.contains('prow')))) throw new Error('1 should focus the first player in the first team');
+  await p.keyboard.press('Enter');
+  await p.waitForSelector('.draftbar .cta');
+  if (!(await p.evaluate(() => document.activeElement?.classList.contains('cta')))) throw new Error('choosing a player by keyboard should move focus to the Draft button');
+  await p.keyboard.press('Enter');
+  await p.waitForSelector('.lrow.is-full', { state: 'attached', timeout: 5000 });
+  console.log('settings and keys: theme, contrast, M, ?, 1 + Enter + Enter ok errors:', errs);
+  if (errs.length) problems.push(`settings: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 /** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
@@ -454,6 +535,7 @@ await draftui();
 await sound();
 await guess();
 await guessMotion();
+await settingsAndKeys();
 await b.close();
 if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
 console.log('OK');

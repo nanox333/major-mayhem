@@ -35,6 +35,9 @@ export const dismissTip = (id: TipId) => { if (!seen.has(id)) commit(new Set(see
 /** Shows every tip again, from the help screen. */
 export const resetTips = () => commit(new Set());
 export const useTipSeen = (id: TipId) => useSyncExternalStore(subscribe, () => seen.has(id));
+/** Whether first-time tips are on: any tip still to show. Turning them off marks every tip seen; turning them on shows them all again (#110). */
+export const useTipsOn = () => useSyncExternalStore(subscribe, () => TIP_IDS.some((id) => !seen.has(id)));
+export const setTipsOn = (on: boolean) => commit(on ? new Set() : new Set<string>(TIP_IDS));
 
 /** A short explanation of one mechanic, shown the first time it appears and then never again unless tips are reset. */
 export function Tip({ id, title, children }: { id: TipId; title: string; children: React.ReactNode }) {

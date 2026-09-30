@@ -58,6 +58,58 @@
   color-scheme: dark;
 }
 
+/* The light palette (#75): the same names, so nothing else changes. Chosen by contrast, see contrast.test.ts, which checks every pair for each palette. */
+:root[data-theme="light"] {
+  --bg: #eef1f6;
+  --panel: #ffffff;
+  --panel-2: #e6ebf3;
+  --inset: #f2f5fa;
+  --line: #d3dae6;
+  --line-2: #b2bccd;
+  --control: #66738c;
+  --text: #182033;
+  --strong: #000000;
+  --text-2: #34405a;
+  --muted: #525f78;
+  --muted-2: #8894aa;
+  --accent: #a94a06;
+  --accent-hi: #8f3f04;
+  --on-accent: #ffffff;
+  --ct: #1f5fb4;
+  --go: #1d7a1d; --go-text: #176417; --on-go: #ffffff;
+  --loss: #c0392b; --loss-text: #a82a1e;
+  --twitch: #6a3cc4; --twitch-line: #6a3cc4;
+  --shadow: 0 10px 30px rgba(20, 30, 50, .14);
+  color-scheme: light;
+}
+/* High contrast (#75): borders you can see, text as bright as it goes, and a thicker focus ring; the marks that carry meaning (✓ ≈ ✗, arrows, words) are unchanged. */
+:root[data-contrast="high"] {
+  --line: #7a879e;
+  --line-2: #9aa6bb;
+  --control: #b4bed0;
+  --text: #ffffff;
+  --text-2: #f4f7fb;
+  --muted: #d3dae6;
+  --muted-2: #a7b2c6;
+}
+:root[data-theme="light"][data-contrast="high"] {
+  --line: #6b7890;
+  --line-2: #4a566d;
+  --control: #3b465c;
+  --text: #000000;
+  --text-2: #0d1526;
+  --muted: #2d384e;
+  --muted-2: #5a6780;
+  --accent: #8f3f04;
+  --accent-hi: #762f00;
+}
+:root[data-contrast="high"] :focus-visible { outline-width: 3px; }
+:root[data-contrast="high"] :is(.console, .case-card, .mcard, .prow, .side-card, .lrow, .tip, .modal__card, .stats-panel, .how, .daily-panel, .mbtn, .ghost-btn, .cta--quiet, .slot-chip, .guess__row > span, .guess__box, .seg, .switch) { border-width: 2px; }
+:root[data-contrast="high"] .prow { border-color: var(--line); }
+/* The home hero is a night scene in either palette: its art and the text over it keep the dark colours. */
+.hero { --bg: #0a0f1a; --inset: #0c1220; --panel-2: #172036; --text: #e9eef6; --strong: #ffffff; --accent: #ff8a1f; --accent-hi: #ffa24d; --ct: #5e98d9; color-scheme: dark; }
+
+
 * { box-sizing: border-box; }
 html, body { min-height: 100%; }
 /* 16px up to about 1500px wide, then a little bigger, so a 1080p or 1440p window isn't reading phone-sized type (#149). */
@@ -289,7 +341,9 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 
 /* ---------- board ---------- */
 .board { display: grid; gap: 6px; justify-self: end; width: var(--board); max-width: 100%; animation: board-in .5s cubic-bezier(.2,.8,.3,1) both; }
-.board__map { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #141414; border: 1px solid var(--line); }
+.board__map { position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; background: #141414; border: 1px solid var(--line);
+  /* The radar is dark in either palette, so what is drawn on it keeps the dark colours. */
+  --strong: #ffffff; --text: #e9eef6; --text-2: #c9d2e0; --muted: #8f9bb1; --panel-2: #172036; --accent: #ff8a1f; --ct: #5e98d9; --go: #4fb34f; --loss: #d9534f; }
 .map-art { display: block; width: 100%; height: 100%; user-select: none; }
 .board__caption { display: flex; gap: 12px; flex-wrap: wrap; font-family: var(--f-body); font-weight: 700; font-size: .8rem; color: var(--muted); }
 .board__caption .t { color: var(--t); } .board__caption .ct { color: var(--ct); }
@@ -400,7 +454,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .rounds i:nth-child(12) { margin-right: 4px; }
 .rounds i.lost { opacity: .45; }
 /* Pistol rounds (1 and 13) carry a white notch on top, played or not; a round with a clutch gets a white dot. */
-.rounds i.pistol { box-shadow: inset 0 3px 0 rgba(255, 255, 255, .85); }
+.rounds i.pistol { box-shadow: inset 0 3px 0 var(--strong); }
 .rounds i.clutch::after { content: ''; display: block; width: 4px; height: 4px; margin: 4px auto 0; border-radius: 50%; background: var(--strong); }
 .maps { display: flex; gap: 4px; justify-content: center; flex-wrap: wrap; }
 .maps__pill { padding: 2px 8px; font-family: var(--f-body); font-weight: 700; font-size: .8rem; color: var(--muted); border: 1px solid var(--line); }
@@ -409,10 +463,10 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .maps__pill.l { color: var(--strong); background: color-mix(in srgb, var(--ct) 22%, transparent); border-color: var(--ct); }
 /* The feed is the last thing in its column, so it can grow downward freely; the responsive rules at the end hold space for it where the board sits underneath. */
 .killfeed { display: grid; gap: 5px; align-content: start; }
-.kf { display: grid; gap: 1px; padding: 6px 10px; background: rgba(0,0,0,.45); border-right: 3px solid; font-weight: 600; animation: kf-in .28s ease-out both; }
+.kf { display: grid; gap: 1px; padding: 6px 10px; background: var(--panel-2); border-right: 3px solid; font-weight: 600; animation: kf-in .28s ease-out both; }
 .kf small { font-family: var(--f-body); font-size: .8rem; color: var(--muted); }
 .kf--us { border-color: var(--go); } .kf--them { border-color: var(--loss); } .kf--idle { border-color: var(--line); color: var(--muted); }
-.kf--half { border-color: var(--muted); background: rgba(255,255,255,.06); font-family: var(--f-head); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.kf--half { border-color: var(--muted); background: color-mix(in srgb, var(--strong) 8%, var(--panel-2)); font-family: var(--f-head); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .result-stamp { justify-self: center; padding: 4px 18px; font-family: var(--f-head); font-weight: 800; font-size: 1.8rem; letter-spacing: .14em; text-transform: uppercase; border: 2px solid; animation: stamp .5s cubic-bezier(.22,1,.36,1) both; }
 .result-stamp.w { color: var(--go); } .result-stamp.l { color: var(--loss); }
 
@@ -425,7 +479,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .sb tr.ct th { color: var(--ct); }
 .sb th:first-child, .sb td:first-child { text-align: left; }
 .sb td { text-align: right; padding: 3px 10px; font-weight: 600; }
-.sb tbody tr:nth-child(odd) { background: rgba(255,255,255,.025); }
+.sb tbody tr:nth-child(odd) { background: color-mix(in srgb, var(--strong) 4%, transparent); }
 .sb td:last-child { font-family: var(--f-head); font-weight: 800; }
 .sb__tag { display: inline-block; min-width: 38px; margin-right: 6px; color: var(--muted); font-family: var(--f-head); font-size: .7rem; }
 
@@ -628,7 +682,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .veto__map.is-banned .veto__name { text-decoration: line-through; }
 .veto__map.is-picked button { border-color: var(--go); }
 .veto__map.is-picked .veto__state { color: var(--go); }
-.kf--pistol { font-family: var(--f-head); letter-spacing: .03em; text-transform: uppercase; background: rgba(255,255,255,.04); }
+.kf--pistol { font-family: var(--f-head); letter-spacing: .03em; text-transform: uppercase; background: color-mix(in srgb, var(--strong) 5%, var(--panel-2)); }
 .kf--clutch { border-color: var(--t); background: color-mix(in srgb, var(--accent) 22%, var(--inset)); font-size: 1.08rem; }
 @media (max-width: 520px) {
   .veto { padding: 12px 10px; }
@@ -768,7 +822,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .tb { position: relative; display: inline-flex; }
 .tb i { position: absolute; right: -5px; bottom: -5px; width: 13px; height: 13px; display: grid; place-items: center; border-radius: 50%; background: var(--go); color: var(--on-go); font-size: .62rem; font-style: normal; font-weight: 800; }
 .tbs__none { color: var(--muted); font-size: .78rem; font-weight: 600; }
-.flag { flex: none; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); }
+.flag { flex: none; border-radius: 2px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--strong) 25%, transparent); }
 .guess__row.is-right { box-shadow: 0 0 0 1px var(--go), 0 0 16px color-mix(in srgb, var(--go) 35%, transparent); border-radius: var(--r-s); }
 .gp.is-lost .guess__row:not(.guess__row--empty) { opacity: .88; }
 
@@ -1332,3 +1386,31 @@ button.prow:hover { background: var(--panel-2); border-color: transparent; }
 .reroll-row .ghost-btn, .ghost-btn--big { border-color: var(--control); color: var(--strong); }
 .reroll-row .ghost-btn:hover:not(:disabled) { border-color: var(--accent); }
 @media (max-width: 860px) { .chem__if { min-height: 0; } }
+
+
+/* ---------- settings (#110) ---------- */
+.modal__card h4 { margin: 0 0 6px; font-family: var(--f-head); font-weight: 800; font-size: 1.05rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.settings__sec { display: grid; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.setrow { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.setrow__text { min-width: 0; display: grid; gap: 2px; }
+.setrow__text b { font-family: var(--f-body); font-size: var(--fs-label); color: var(--strong); }
+.setrow__text small { font-family: var(--f-read); font-size: var(--fs-caption); line-height: 1.4; color: var(--muted); }
+.switch { flex: none; position: relative; display: inline-flex; align-items: center; gap: 8px; min-width: 76px; min-height: 44px; padding: 0 12px 0 46px; border: 1px solid var(--control); border-radius: 999px; background: var(--inset); color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: var(--fs-caption); cursor: pointer; }
+.switch i { position: absolute; left: 6px; top: 50%; width: 24px; height: 24px; margin-top: -12px; border-radius: 50%; background: var(--muted); transition: left .15s, background .15s; }
+.switch.is-on { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--inset)); color: var(--strong); }
+.switch.is-on i { left: calc(100% - 30px); background: var(--accent); }
+.switch.is-on { padding: 0 46px 0 12px; }
+.settings__keys { width: 100%; border-collapse: collapse; font-size: var(--fs-caption); }
+.settings__keys th, .settings__keys td { padding: 6px 8px; border-top: 1px solid var(--line); text-align: left; font-weight: 500; vertical-align: top; }
+.settings__keys td:first-of-type { color: var(--text-2); }
+.settings__keys td.muted { text-align: right; white-space: nowrap; }
+kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px solid var(--control); border-bottom-width: 2px; border-radius: var(--r-s); background: var(--inset); color: var(--strong); font: 700 .85rem var(--f-body); text-align: center; }
+.settings__btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.ghost-btn.is-ask { border-color: var(--accent); color: var(--strong); }
+.hud-btn--gear { display: inline-flex; }
+.menu__item--settings { display: none; }
+@media (max-width: 520px) { .hud-btn--gear { display: none; } .menu__item--settings { display: flex; } }
+@media (max-width: 520px) { .setrow { flex-wrap: wrap; } }
+
+/* In the light palette the radar is only a hint of texture behind the grid. */
+:root[data-theme="light"] .gp__bg::before { opacity: .14; filter: blur(7px) grayscale(1); }

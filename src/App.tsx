@@ -10,6 +10,10 @@ import { TopBar, View } from './ui/TopBar';
 import { RunProgress } from './ui/RunProgress';
 import { LineupPanel } from './ui/Lineup';
 import { DraftSidebar } from './ui/DraftSidebar';
+import { SettingsDialog } from './ui/Settings';
+import { usePrefs } from './ui/prefs';
+import { useShortcuts } from './ui/shortcuts';
+import { useSoundOn } from './ui/sound';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
@@ -40,6 +44,7 @@ function Game() {
   const [helpTopic, setHelpTopic] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [twitch, setTwitch] = useState(false);
+  const [settings, setSettings] = useState<false | 'shortcuts' | true>(false);
   const [stats, setStats] = useState(loadStats);
   const [reelFor, setReelFor] = useState<number | null>(null);
   // The player or coach you are pointing at in the case, previewed in the lineup and the chemistry panel (#143).
@@ -83,6 +88,23 @@ function Game() {
   // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
   const backView: View = atStart && s.mode !== 'duel' ? 'home' : 'draft';
   const view: View = chosen === 'draft' ? backView : chosen;
+  // Single-key shortcuts (#77), off-able in the settings and quiet while a dialog is open or you are typing.
+  const prefs = usePrefs();
+  const [, toggleSound] = useSoundOn();
+  const inCase = view === 'draft' && s.phase === 'draft' && s.step === 'teams';
+  const goToCard = (n: number) => {
+    const card = document.querySelectorAll<HTMLElement>('.case-card')[n];
+    if (!card) return;
+    const toggle = card.querySelector<HTMLElement>('.case-card__toggle');
+    if (toggle && toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
+    setTimeout(() => card.querySelector<HTMLElement>('button.prow')?.focus(), 0);
+  };
+  useShortcuts(prefs.shortcuts, {
+    m: () => { toggleSound(); },
+    '?': () => setSettings('shortcuts'),
+    ...(inCase ? { '1': () => goToCard(0), '2': () => goToCard(1), '3': () => goToCard(2) } : {}),
+    Enter: () => { const b = document.querySelector<HTMLButtonElement>('.draftbar .cta'); if (b && !b.disabled) b.click(); },
+  }, !!(help || showStats || twitch || settings || invite));
   const goNext = () => {
     // Once today's pro is found, one button for what to do next: the daily draft if it isn't done, else free play (#129).
     const h = homeState(s, stats, today());
@@ -102,7 +124,7 @@ function Game() {
 
   return (
     <>
-    <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
+    <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
       abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
@@ -143,6 +165,7 @@ function Game() {
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); setView('draft'); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
+      {settings && <SettingsDialog onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>
