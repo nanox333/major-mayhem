@@ -6,7 +6,8 @@ import * as G from '../game/logic';
 import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 
 const W = 1080, H = 1350;
-const C = { bg: '#0b0e12', panel: '#151a21', line: '#2a323d', text: '#e8eaed', cream: '#f1e5c8', muted: '#8b95a3', gold: '#e0a33b', ct: '#5e98d9', win: '#4fb34f', loss: '#d9534f', silver: '#d4d7da' };
+// The same palette as the page (#100): navy surfaces and the orange accent.
+const C = { bg: '#0a0f1a', panel: '#101726', line: '#243049', text: '#e9eef6', cream: '#f1e5c8', muted: '#8f9bb1', accent: '#ff8a1f', ct: '#5e98d9', win: '#4fb34f', loss: '#d9534f', silver: '#d4d7da' };
 const F = { logo: '"Saira Stencil One", Impact, sans-serif', head: '"Saira Condensed", "Arial Narrow", sans-serif', body: 'Rajdhani, "Arial Narrow", system-ui, sans-serif' };
 const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF', F: 'F', DUEL: 'BO3' };
 
@@ -60,12 +61,12 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
   const ratings = G.seriesRatings(run.t.matches.flatMap((m) => m.maps));
   const { grade } = G.draftReview(run.picks);
   const date = dailyDate(run);
-  const tone = champ ? C.gold : pl.key === 'F' ? C.silver : C.cream;
+  const tone = champ ? C.accent : pl.key === 'F' ? C.silver : C.cream;
 
   // background
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
   const glow = ctx.createRadialGradient(W / 2, 0, 40, W / 2, 0, 820);
-  glow.addColorStop(0, champ ? 'rgba(224,163,59,.32)' : 'rgba(224,163,59,.14)'); glow.addColorStop(1, 'rgba(224,163,59,0)');
+  glow.addColorStop(0, champ ? 'rgba(255,138,31,.32)' : 'rgba(255,138,31,.14)'); glow.addColorStop(1, 'rgba(255,138,31,0)');
   ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
   // brand
@@ -73,9 +74,9 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
   ctx.fillStyle = C.cream; ctx.font = `400 76px ${F.logo}`; spaced(ctx, 2);
   ctx.fillText('MAJOR MAYHEM', W / 2, 116);
   const bar = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0);
-  bar.addColorStop(0, 'rgba(224,163,59,0)'); bar.addColorStop(0.5, C.gold); bar.addColorStop(1, 'rgba(224,163,59,0)');
+  bar.addColorStop(0, 'rgba(255,138,31,0)'); bar.addColorStop(0.5, C.accent); bar.addColorStop(1, 'rgba(255,138,31,0)');
   ctx.fillStyle = bar; ctx.fillRect(W / 2 - 200, 138, 400, 5);
-  ctx.fillStyle = C.gold; ctx.font = `700 30px ${F.head}`; spaced(ctx, 6);
+  ctx.fillStyle = C.accent; ctx.font = `700 30px ${F.head}`; spaced(ctx, 6);
   ctx.fillText(date ? `DAILY #${dailyNumber(date)}` : 'FREE PLAY', W / 2, 196);
 
   // placement
@@ -104,13 +105,13 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
     const y = top + i * (rowH + 10);
     const isMvp = l.player.id === star.player.id;
     rounded(ctx, 60, y, W - 120, rowH, 10);
-    ctx.fillStyle = isMvp ? 'rgba(224,163,59,.12)' : C.panel; ctx.fill();
-    ctx.lineWidth = 2; ctx.strokeStyle = isMvp ? C.gold : C.line; ctx.stroke();
-    ctx.fillStyle = isMvp ? C.gold : C.ct; ctx.fillRect(60, y, 6, rowH);
-    await avatar(ctx, l.player, l.roster, 150, y + rowH / 2, 50, isMvp ? C.gold : C.line);
+    ctx.fillStyle = isMvp ? 'rgba(255,138,31,.12)' : C.panel; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = isMvp ? C.accent : C.line; ctx.stroke();
+    ctx.fillStyle = isMvp ? C.accent : C.ct; ctx.fillRect(60, y, 6, rowH);
+    await avatar(ctx, l.player, l.roster, 150, y + rowH / 2, 50, isMvp ? C.accent : C.line);
 
     ctx.textAlign = 'left';
-    ctx.fillStyle = C.gold; ctx.font = `700 24px ${F.head}`; spaced(ctx, 3);
+    ctx.fillStyle = C.accent; ctx.font = `700 24px ${F.head}`; spaced(ctx, 3);
     ctx.fillText(ROLE_LABEL[l.slot].toUpperCase(), 228, y + 36);
     spaced(ctx, 0); fit(ctx, l.player.nick, 700, 50, F.head, 440);
     ctx.fillStyle = C.text; ctx.fillText(l.player.nick, 228, y + 82);
@@ -118,7 +119,7 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
     if (isMvp) {
       ctx.font = `700 24px ${F.head}`; spaced(ctx, 2);
       const tw = ctx.measureText('★ MVP').width + 20;
-      rounded(ctx, 228 + nickW + 16, y + 52, tw, 34, 6); ctx.fillStyle = C.gold; ctx.fill();
+      rounded(ctx, 228 + nickW + 16, y + 52, tw, 34, 6); ctx.fillStyle = C.accent; ctx.fill();
       ctx.fillStyle = C.bg; ctx.fillText('★ MVP', 228 + nickW + 26, y + 78);
       spaced(ctx, 0);
     }
@@ -148,11 +149,11 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
   // footer
   const mvpRating = ratings[star.player.id]?.rating;
   const foot = [`MVP ${star.player.nick}${mvpRating !== undefined ? ` ${mvpRating.toFixed(2)}` : ''}`, grade !== null ? `DRAFT ${Math.round(grade * 100)}%` : ''].filter(Boolean).join('   ·   ');
-  ctx.fillStyle = C.gold; spaced(ctx, 3); fit(ctx, foot, 700, 36, F.head, 960);
+  ctx.fillStyle = C.accent; spaced(ctx, 3); fit(ctx, foot, 700, 36, F.head, 960);
   ctx.fillText(foot, W / 2, 1210);
   ctx.fillStyle = C.muted; spaced(ctx, 1); ctx.font = `700 30px ${F.body}`;
   ctx.fillText(host, W / 2, 1268);
-  ctx.fillStyle = C.gold; ctx.fillRect(0, H - 10, W, 10);
+  ctx.fillStyle = C.accent; ctx.fillRect(0, H - 10, W, 10);
 
   return new Promise((resolve, reject) => cv.toBlob((b) => (b ? resolve(b) : reject(new Error('canvas export failed'))), 'image/png'));
 }

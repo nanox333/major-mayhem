@@ -23,14 +23,14 @@ fs.mkdirSync(OUT, { recursive: true });
 const site = JSON.parse(fs.readFileSync('site.config.json', 'utf8'));
 const media = JSON.parse(fs.readFileSync('src/data/media.json', 'utf8'));
 const radars = JSON.parse(fs.readFileSync('src/data/radars.json', 'utf8'));
-const BG = '#0b0e12', GOLD = site.accent, CT = '#5e98d9', CREAM = '#f1e5c8', MUTED = '#8b95a3';
+const BG = site.themeColor, GOLD = site.accent, CT = '#5e98d9', CREAM = '#f1e5c8', MUTED = '#8f9bb1';
 const dataUri = (s) => Buffer.from(s.split(',')[1], 'base64');
 
 /** Text rendered with one of the bundled fonts. `size` is in pixels. */
 const text = (s, font, size, color, extra = '') =>
   sharp({ text: { text: `<span foreground="${color}"${extra}>${s}</span>`, font: `${FONTS[font].family} ${size}px`, fontfile: FONTS[font].file, rgba: true, dpi: 72 } }).png().toBuffer({ resolveWithObject: true });
 
-// ---------- icons: a gold shield (the game's team-badge shape) with a stencil M ----------
+// ---------- icons: an orange shield (the game's team-badge shape) with a stencil M ----------
 const SHIELD = 'M20 2 L36 9 V22 C36 30 29 36 20 38 C11 36 4 30 4 22 V9 Z';
 const iconSvg = (size, pad) => {
   const s = (size - pad * 2) / 40;
@@ -60,7 +60,7 @@ fs.writeFileSync(`${OUT}/favicon.svg`, `<svg xmlns="http://www.w3.org/2000/svg" 
 const W = 1200, H = 630;
 const bg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}">
   <defs>
-    <radialGradient id="glow" cx="0.2" cy="0.1" r="0.9"><stop offset="0" stop-color="#2a2114"/><stop offset="0.55" stop-color="${BG}"/></radialGradient>
+    <radialGradient id="glow" cx="0.2" cy="0.1" r="0.9"><stop offset="0" stop-color="#1c2236"/><stop offset="0.55" stop-color="${BG}"/></radialGradient>
     <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0"><stop offset="0.45" stop-color="${BG}" stop-opacity="1"/><stop offset="0.75" stop-color="${BG}" stop-opacity="0.35"/><stop offset="1" stop-color="${BG}" stop-opacity="0.1"/></linearGradient>
     <linearGradient id="bar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${GOLD}"/><stop offset="1" stop-color="${GOLD}" stop-opacity="0"/></linearGradient>
   </defs>
