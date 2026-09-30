@@ -5,7 +5,7 @@ import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, howEx
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
 import { Avatar } from '../ui/art';
-import { ArrowRightIcon, CaseIcon, FlagIcon, FlameIcon, InfinityIcon, CrosshairIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
+import { ArrowRightIcon, CaseIcon, FlagIcon, FlameIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
 import { dismissTip, useTipSeen } from '../ui/tips';
 import { useCountdown } from '../ui/useCountdown';
 import { DailyDone, ModePicker } from './Modes';
@@ -117,8 +117,8 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
       </section>
 
       <div className="modes3 home-secondary-modes">
-        <article className="mcard" aria-labelledby="mcard-free-h">
-          <span className="home-mode-art" aria-hidden="true"><InfinityIcon size={52} /></span>
+        <article className={`mcard home-mode-card ${freeShown || home.freeInProgress || ask === 'free' ? 'home-mode-card--expanded' : ''}`} aria-labelledby="mcard-free-h">
+          <span className="home-mode-art home-mode-art--free" aria-hidden="true"><LineupArt compact /></span>
           <p className="home-mode-label">Free play</p><h2 className="mcard__title" id="mcard-free-h">Draft anytime.<br />Any era.</h2>
           <p className="mcard__text">Draft as often as you like, in any era.</p>
           <div className="mcard__foot">
@@ -135,12 +135,14 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
             {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}>Continue free play · {runWhere(s)}<ArrowRightIcon size={18} /></button>}
             {freeShown
               ? <button type="button" className="cta cta--orange" data-sfx="open" onClick={openCase}><span className="cta__main">Open case<ArrowRightIcon size={18} /></span></button>
-              : ask !== 'free' && <button type="button" className="mbtn" onClick={startFree}>{home.freeInProgress ? 'New free play' : 'Start free play'}<ArrowRightIcon size={18} /></button>}
+              : ask !== 'free' && <button type="button" className={`mbtn ${home.freeInProgress ? '' : 'home-mode-start'}`} onClick={startFree}><span className={home.freeInProgress ? undefined : 'sr'}>{home.freeInProgress ? 'New free play' : 'Start free play'}</span><ArrowRightIcon size={22} /></button>}
           </div>
         </article>
 
-        <article className="mcard" aria-labelledby="mcard-guess-h">
-          <span className="home-mode-art home-mode-art--guess" aria-hidden="true"><CrosshairIcon size={56} /><b>?</b></span>
+        <article className="mcard home-mode-card" aria-labelledby="mcard-guess-h">
+          <span className="home-mode-art home-mode-art--guess" aria-hidden="true">
+            <svg viewBox="0 0 150 155" focusable="false"><path d="M14 149v-15c0-12 17-22 39-32V87c-8-7-13-18-13-31V45C40 6 110 6 110 45v11c0 13-5 24-13 31v15c22 10 39 20 39 32v15" fill="none" stroke="var(--muted)" strokeWidth="3" /><text x="75" y="88" textAnchor="middle">?</text></svg>
+          </span>
           <p className="home-mode-label">Guess the Pro</p><h2 className="mcard__title" id="mcard-guess-h">Eight guesses.<br />One pro.</h2>
           <p className="mcard__text">Name the pro in eight guesses.</p>
           <div className="mcard__foot">
@@ -148,7 +150,7 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
               {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : 'A new pro every day.'}
               {gStreak > 0 && ` · ${gStreak}-day streak`}
             </p>
-            <button type="button" className="mbtn" onClick={showGuess}>{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}<ArrowRightIcon size={18} /></button>
+            <button type="button" className="mbtn home-mode-start" onClick={showGuess}><span className="sr">{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
           </div>
         </article>
       </div>
@@ -161,8 +163,8 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
 }
 
 /** An original, deliberately schematic five-starter path, not a simulated bracket. */
-function LineupArt() {
-  return <svg className="home-lineup-art" viewBox="0 0 500 310" aria-hidden="true" focusable="false">
+function LineupArt({ compact = false }: { compact?: boolean }) {
+  return <svg className={`home-lineup-art ${compact ? 'home-lineup-art--compact' : ''}`} viewBox={compact ? '0 0 500 260' : '0 0 500 310'} aria-hidden="true" focusable="false">
     {[0, 1, 2, 3, 4].map((i) => <g key={i} transform={`translate(${15 + i * 97},0)`}>
       <text x="41" y="25" textAnchor="middle" className="home-lineup-art__number">{i + 1}</text>
       <rect x="3" y="40" width="76" height="135" fill="var(--inset)" stroke="var(--line)" />
@@ -174,9 +176,11 @@ function LineupArt() {
       <path d="M56 175v30h97v20M153 175v50M250 175v65M347 175v50M444 175v30h-97v20" />
       <path d="M111 225h84v27h-84zM305 225h84v27h-84zM195 239h110" />
     </g>
-    <path d="M250 239v36" stroke="var(--accent)" strokeWidth="2" />
-    <rect x="180" y="275" width="140" height="32" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
-    <text x="250" y="297" textAnchor="middle" className="home-lineup-art__finish">THE MAJOR</text>
+    {!compact && <>
+      <path d="M250 239v36" stroke="var(--accent)" strokeWidth="2" />
+      <rect x="180" y="275" width="140" height="32" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
+      <text x="250" y="297" textAnchor="middle" className="home-lineup-art__finish">THE MAJOR</text>
+    </>}
   </svg>;
 }
 

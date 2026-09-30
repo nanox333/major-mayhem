@@ -33,9 +33,10 @@ interface TopBarProps {
   onSettings: () => void;
   abandon: boolean;
   onNewRun: () => void;
+  onBrowse?: () => void;
 }
 
-export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun }: TopBarProps) {
+export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse }: TopBarProps) {
   const twitch = useTwitchStatus();
   const inGuess = view === 'guess';
   const toggleGame = () => setView(inGuess ? backView : 'guess');
@@ -50,10 +51,13 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
             : <button type="button" className="brand__btn" onClick={() => setView('home')} aria-label="Major Mayhem: home" data-sfx="none"><LogoMark /><span className="wordmark"><b>Major</b> <i>Mayhem</i></span></button>}
         </h1>
 
-        {/* On a phone this moves into the menu, so the bar still fits at 320px. */}
-        <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label={inGuess ? backLabel : 'Guess the pro'} onClick={toggleGame}>
-          {inGuess ? <I.ChevronLeftIcon size={20} /> : <I.CrosshairIcon size={20} />}<span>{inGuess ? backLabel : 'Guess the pro'}</span>
-        </button>
+        <nav className="shell-nav" aria-label="Game modes">
+          <button type="button" className="shell-link" aria-current={!inGuess ? 'page' : undefined} onClick={() => setView(inGuess ? backView : 'home')}>Play</button>
+          {onBrowse && <button type="button" className="shell-link" onClick={onBrowse}>Roster archive</button>}
+          <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label={inGuess ? backLabel : 'Guess the pro'} onClick={toggleGame}>
+            <span>{inGuess ? backLabel : 'Guess the pro'}</span>
+          </button>
+        </nav>
 
         <div className="topbar__end" role="group" aria-label="Help, sound and more">
           <button type="button" className="hud-btn" onClick={onHelp} aria-label="How to play and data sources" title="How to play"><I.HelpIcon /></button>
@@ -61,7 +65,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
           <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label="Settings" title="Settings" data-sfx="none"><I.SettingsIcon /></button>
           {/* Once chat votes are connected (or trying to), the button stays in view so the connection state does. Before that it's in the menu. */}
           {twitch !== 'off' && <TwitchButton onClick={onTwitch} />}
-          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} showTwitch={twitch === 'off'} onStats={onStats} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} />
+          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} showTwitch={twitch === 'off'} onStats={onStats} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView(inGuess ? backView : 'home')} />
         </div>
       </div>
     </header>
@@ -79,10 +83,10 @@ function SoundButton() {
   );
 }
 
-interface MoreProps { inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onStats: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
+interface MoreProps { onBrowse?: () => void; onPlay: () => void; inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onStats: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
 
 /** Stats, Twitch chat votes and a new run: the things you use now and then (and Guess the pro and Settings, on a phone, where the gear has no room). */
-function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onStats, onTwitch, onSettings, abandon, onNewRun }: MoreProps) {
+function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse, onPlay }: MoreProps) {
   const [open, setOpen] = useState(false);
   const [ask, setAsk] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -108,6 +112,8 @@ function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onStats, onTwitch, o
       </button>
       {open && (
         <div id="topbar-menu" className="menu__panel" role="group" aria-label="More">
+          <button type="button" className="menu__item menu__item--mode" onClick={pick(onPlay)}><I.CaseIcon /><span>Play</span></button>
+          {onBrowse && <button type="button" className="menu__item menu__item--mode" onClick={pick(onBrowse)}><I.RosterIcon /><span>Roster archive</span></button>}
           <button type="button" className="menu__item menu__item--game" onClick={pick(onGame)} aria-label={game}>{inGuess ? <I.ChevronLeftIcon /> : <I.CrosshairIcon />}<span>{game}</span></button>
           <button type="button" className="menu__item" onClick={pick(onStats)} aria-label="Your stats"><I.StatsIcon /><span>Stats</span></button>
           {showTwitch && <TwitchButton variant="menu" onClick={pick(onTwitch)} />}

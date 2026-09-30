@@ -93,3 +93,62 @@
   .match-live .match-dock { position: static; max-height: none; overflow: visible; padding: 12px 0; }
   .match-live:not(.match-live--decision) { padding-bottom: 0; }
 }
+/* Desktop desk: score, field, event ledger and decisions form one composition. */
+@media (min-width: 861px) {
+  .match-live { gap: 14px; }
+  .match-live .hud { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 16px; padding: 12px 0 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; }
+  .match-live .hud__meta { grid-column: 1; }
+  .match-live .match-state { grid-column: 2; margin: 0; text-align: right; }
+  .match-live .hud__score { grid-column: 1 / -1; margin: 4px 0 8px; }
+  .match-live .hud__nums { font-size: 4rem; }
+  .match-live .rounds, .match-live .maps { grid-column: 1 / -1; margin: 0; }
+  .match-live .match-workspace { grid-template-columns: minmax(180px, 1fr) minmax(400px, 1.8fr) minmax(240px, 1fr); align-items: start; }
+  .match-live .match-centre { display: contents; }
+  .match-live .match-centre > .board { grid-column: 2; grid-row: 1; width: min(440px, max(400px, calc(100dvh - 500px))); max-width: 100%; margin-inline: auto; }
+  .match-live .match-five { grid-row: 1; padding: 12px; }
+  .match-live .match-five > div { padding: 8px 0; min-height: 54px; }
+  .match-live .match-feed { grid-column: 3; grid-row: 1; }
+  .match-live .match-dock { grid-column: 1 / -1; grid-row: 2; margin: 0; }
+  .match-live .match-centre .controls { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; gap: 12px; }
+  .match-live .match-centre .calls { max-width: 34%; }
+  .match-live .calls__timeout { min-width: 150px; }
+  .match-live .playback { border: 0; padding: 0; margin-left: auto; }
+  .match-live .playback__note { display: none; }
+  .match-live .match-workspace > .tip { grid-column: 1 / -1; grid-row: 3; }
+  .match-live .radar-detail { min-height: 36px; padding: 4px 0; }
+  .match-live .radar-lineups summary { min-height: 44px; padding-block: 10px; }
+  .match-live .killfeed { max-height: 280px; }
+  .match-live .buy { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 6px 20px; margin: 0; padding: 12px 0; background: transparent; }
+  .match-live .buy strong { grid-column: 1; }
+  .match-live .buy p { grid-column: 1; grid-row: 2; max-width: 65ch; margin: 0; }
+  .match-live .buy__btns { grid-column: 2; grid-row: 1 / span 2; }
+  .match-live .buy__skip { grid-column: 3; grid-row: 1 / span 2; }
+}
+.match-live .match-feed .hud__extra { margin-top: 20px; padding-top: 16px; gap: 16px; }
+.match-live .match-feed .momentum { display: grid; gap: 8px; }
+.match-live .match-feed .momentum__bar { width: 100%; }
+.match-live .match-feed .economy { display: grid; gap: 8px; }
+.match-live .match-feed .momentum__label { font-family: var(--f-head); font-weight: 700; font-size: 1rem; color: var(--text); }
+.match-live .match-feed .economy__side { display: block; padding: 8px 0; border-top: 1px solid var(--line); }
+@media (min-width: 861px) and (max-width: 1100px) {
+  .match-live .match-workspace { grid-template-columns: 170px minmax(0, 1fr); }
+  .match-live .match-feed { grid-column: 1 / -1; grid-row: 3; }
+  .match-live .match-workspace > .tip { grid-row: 4; }
+}
+.match-live .match-feed .momentum, .match-live .match-feed .economy { grid-template-columns: minmax(0, 1fr); }
+.match-live .match-feed .momentum > *, .match-live .match-feed .economy > * { grid-column: 1; }
+@media (min-width: 861px) {
+  .match-live .hud { padding-block: 6px 8px; gap: 4px 16px; }
+  .match-live .hud__score { margin: 0; }
+  .match-live .hud__nums { font-size: 3.5rem; }
+  .match-live .radar-detail:has(> span:only-child) { display: none; }
+  .match-live .radar-disclosure { margin-block: 4px; }
+}
+@media (min-width: 861px) {
+  .match-live .board--broadcast { grid-template-columns: minmax(0, 1fr) 140px; }
+  .match-live .board--broadcast .board__map, .match-live .radar-disclosure { grid-column: 1 / -1; }
+  .match-live .radar-detail, .match-live .radar-detail:has(> span:only-child) { display: grid; grid-column: 1; grid-row: 3; min-height: 44px; padding-block: 4px; font-size: .75rem; }
+  .match-live .radar-lineups { grid-column: 2; grid-row: 3; }
+  .match-live .radar-lineups summary { font-size: .75rem; padding: 8px 0; }
+  .match-live .radar-lineups[open] { grid-column: 1 / -1; grid-row: 4; }
+}

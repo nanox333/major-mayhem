@@ -30,6 +30,8 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
     const t = setTimeout(() => play(champ ? 'champion' : pl.key === 'DUEL-W' ? 'mapWin' : 'mapLose'), 350);
     return () => clearTimeout(t);
   }, []);
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
   const [report, setReport] = useState<number | null>(null);
   const newAch = s.recorded ? stats.lastNew?.length ?? 0 : 0;
   useEffect(() => {
@@ -49,7 +51,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           <ol className="result-path" aria-label="Your played matches">
             {s.t.matches.map((m, i) => <li key={i}><b className={m.won ? 'is-win' : 'is-loss'} aria-label={m.won ? 'Won' : 'Lost'}>{m.won ? 'W' : 'L'}</b><span>{m.stage === 'QUAL' ? s.t.qual.need ? 'Swiss' : 'Qualifier' : G.STAGE_NAME[m.stage]}</span></li>)}
           </ol>
-          <ShareBar text={() => shareText(s, pageUrl(), practice)} image={{ draw: () => drawResultCard(s, siteHost(), practice), name: cardFileName(s) }} props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }} />
+          <ShareBar onImageReady={blob => setPreview(URL.createObjectURL(blob))} text={() => shareText(s, pageUrl(), practice)} image={{ draw: () => drawResultCard(s, siteHost(), practice), name: cardFileName(s) }} props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }} />
           {practice && <p className="practice" role="note">Practice run: Daily #{dailyNumber(date!)} already has a result, so this one doesn't change your record, your streak or your achievements.</p>}
         </div>
         <div className="mvp-card">
@@ -69,13 +71,21 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           <NextDaily />
         </p>
       )}
-      <PathView s={s} onOpen={setReport} />
+      <div className="result-recap">
+        <PathView s={s} onOpen={setReport} />
+        <aside className="result-export" aria-label="Exported result image">
+          <h4>Share image</h4><p>The image saved or shared above.</p>
+          {preview ? <img src={preview} alt="Preview of your exported result card, including placement, played match path, lineup and MVP." /> : <p role="status">Preparing image…</p>}
+        </aside>
+      </div>
       {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
+      <div className="result-analysis">
       <AnalysisSection title="Roster and staff" note={`Five starters${s.bench ? ', bench' : ''} · ${s.coach ? `Coach: ${s.coach}` : 'No coach recorded'}`}>
         <RosterList mine={mine} stats={ratings} mvpId={star.player.id} /><Staff s={s} stats={ratings} />
       </AnalysisSection>
       <AnalysisSection title="Team review" note="Draft composition and actual match contributors"><TeamReviewCard mine={mine} s={s} /></AnalysisSection>
       <AnalysisSection title="Pick strength" note="Individual role-adjusted model values, not a win prediction"><DraftReview picks={s.picks} hard={!!s.opts?.hard} /></AnalysisSection>
+      </div>
       {stats.runs > 0 && (
         <p className="muted small">
           Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
@@ -104,7 +114,8 @@ const canShareImage = () => {
  * Copy the spoiler-light text, and optionally share or save the result card. The card is drawn as soon as the bar
  * mounts: Safari only lets a page open the share sheet straight from a tap, with no slow work in between.
  */
-export function ShareBar({ text, image, props = {} }: {
+export function ShareBar({ text, image, props = {}, onImageReady }: {
+  onImageReady?: (blob: Blob) => void;
   text: () => string; props?: Record<string, string | number>;
   image?: { draw: () => Promise<Blob>; name: string };
 }) {
@@ -114,8 +125,10 @@ export function ShareBar({ text, image, props = {} }: {
   useEffect(() => {
     if (!image) return;
     const p = image.draw();
-    p.catch((e) => reportError(e, 'result-card'));
+    let active = true;
+    p.then(blob => { if (active) onImageReady?.(blob); }).catch((e) => reportError(e, 'result-card'));
     card.current = p;
+    return () => { active = false; };
   }, [image?.name]);
   const done = (s: ShareState) => { setState(s); setTimeout(() => setState('idle'), 2200); };
   const copy = async () => {
@@ -327,9 +340,10 @@ function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
       </li>
     );
   };
-  if (duel.length) return <section className="path"><h4>Match ledger</h4><ul className="history">{duel.map(row)}</ul></section>;
+  const columns = <div className="ledger-columns" aria-hidden="true"><span>Stage</span><span>Opponent (year)</span><span>Maps · round scores</span><span>Result · match score</span></div>;
+  if (duel.length) return <section className="path"><h4>Match ledger</h4>{columns}<ul className="history">{duel.map(row)}</ul></section>;
   return (
-    <div className="path"><h4>Match ledger</h4>
+    <div className="path"><h4>Match ledger</h4>{columns}
       {swiss.length > 0 && (
         <section aria-labelledby="path-swiss">
           <h4 id="path-swiss">{t.qual.need ? 'Swiss stage' : 'Qualification'} <span>{t.qual.w}–{t.qual.l}{t.qual.w >= need ? ' · advanced' : t.qual.l >= need ? ' · out' : ''}</span></h4>

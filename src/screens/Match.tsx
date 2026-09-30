@@ -297,7 +297,6 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
             return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}`} />;
           })}
         </div>
-        {game && !vetoing && !mapDone && <Momentum rounds={game.rounds} n={n} total={total} forced={game.calls?.force ?? []} theirTag={opp.tag} />}
         {m.bestOf === 3 && !vetoing && (
           <div className="maps">
             {[0, 1, 2].map((i) => {
@@ -369,6 +368,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
             ))}
             {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
+          <Momentum rounds={game.rounds} n={n} total={total} forced={game.calls?.force ?? []} theirTag={opp.tag} />
           </section>
         </div>
       ) : (

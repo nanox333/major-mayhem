@@ -1673,3 +1673,29 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
   .wordmark { font-size: clamp(.7rem, 3.5vw, 1.1rem); }
   .pstep { padding-inline: 6px; }
 }
+
+/* Mode navigation is independent of the run's informational progress. */
+@media (min-width: 1001px) {
+  .topbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .topbar__end { justify-self: end; border: 0; padding-left: 0; }
+}
+.shell-nav { display: flex; align-items: center; gap: 12px; }
+.shell-link, .shell-nav .gamelink { min-height: 48px; padding: 0 12px; border: 0; border-radius: 0; background: none; font: 600 .875rem var(--f-body); color: var(--muted); cursor: pointer; }
+.shell-link:hover, .shell-nav .gamelink:hover { color: var(--strong); }
+.shell-link[aria-current="page"], .shell-nav .gamelink[aria-current="page"] { color: var(--strong); box-shadow: inset 0 -2px 0 var(--accent); }
+.menu__item--mode { display: none; }
+.console__eyebrow { margin: 0 0 4px; color: var(--muted); font: 600 .8125rem/1.5 var(--f-body); }
+.console__title { font-size: clamp(2rem, 3vw, 2.8rem); line-height: 1.05; letter-spacing: 0; text-transform: none; }
+.console__head--progress { padding-block: 4px 12px; justify-content: flex-end; }
+.console__head--progress .progress { margin-left: auto; }
+.cta, .mcard .cta, .mbtn { min-height: 48px; padding: 12px 24px; font-family: var(--f-body); font-size: 1rem; font-weight: 700; line-height: 1.35; letter-spacing: 0; text-transform: none; }
+.cta__sub { font-weight: 400; letter-spacing: 0; }
+@media (max-width: 1000px) {
+  .shell-nav { gap: 0; }
+  .shell-link, .shell-nav .gamelink { padding-inline: 8px; font-size: .8125rem; }
+}
+@media (max-width: 800px) {
+  .shell-nav { display: none; }
+  .menu__item--mode, .menu__item--game { display: flex; }
+  .console__head--progress .progress { margin-left: 0; }
+}

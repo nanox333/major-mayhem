@@ -70,7 +70,7 @@ async function run(viewport, tag) {
   await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
   const step = async () => (await p.textContent('.progress [aria-current="step"]')).trim();
-  if (await p.locator('.topbar ol, .topbar [aria-current]').count()) throw new Error('the run steps must not be in the top bar (#140)');
+  if (await p.locator('.topbar .progress, .topbar [aria-current="step"]').count()) throw new Error('the run steps must not be in the top bar (#140)');
   if (!(await step()).startsWith('Draft')) throw new Error(`the progress list should be on the Draft step, got "${await step()}"`);
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   // Five players, then the coach (round 6) and the bench player (round 7).

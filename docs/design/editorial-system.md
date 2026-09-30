@@ -14,9 +14,9 @@ Spacing is 4, 8, 12, 16, 24 and 32px (`--space-1` through `--space-6`). Radius i
 
 ## Patterns and hierarchy
 
-Use a row plus a rule for sequential information. A selected row has orange boundary and an explicit selection label/check; hover does not carry required meaning. Enclose independently interactive candidates and dialogs, not every subsection. Disclosure headers remain real controls with expanded state. Primary actions are filled orange; secondary actions use plain outlined or text treatment. A page should have one dominant next action, while tactical actions remain distinct controls.
+Use a row plus a rule for sequential information. A selected row has orange boundary and an explicit selection label/check; hover does not carry required meaning. Enclose independently interactive candidates and dialogs, not every subsection. Disclosure headers remain real controls with expanded state. Primary actions are filled orange with regular, bold sentence-case labels and a 48px minimum height; secondary actions use plain outlined or text treatment. A page should have one dominant next action, while tactical actions remain distinct controls.
 
-The shared shell aligns its mark, content and page gutters. Mode navigation stays in the top bar; informational run progress remains in the console heading and cannot undo gameplay. Phone mode navigation and settings move to the existing More menu; sound and help remain directly available. Header controls and shared buttons have at least 44px targets. Text remains real selectable text.
+The shared shell aligns its mark, content and page gutters. Desktop mode navigation (Play, Roster archive, Guess the pro) sits centrally in the top bar; informational run progress remains in the console heading and cannot undo gameplay. Below 800px, mode navigation moves to the existing More menu; phone settings also move there; sound and help remain directly available. Header controls and shared buttons have at least 44px targets. Text remains real selectable text.
 
 ## Assets and validation
 

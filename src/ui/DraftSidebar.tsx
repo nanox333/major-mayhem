@@ -39,7 +39,7 @@ function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () 
             <li key={x.label} className={`syn syn--${x.kind} ${x.value < 0 ? 'is-bad' : ''}`}><b>{strength(x.value)}</b><span>{x.label}</span></li>
           ))}
         </ul>
-      ) : <p className="muted small">No links yet. Players from the same country, org or era build chemistry.</p>}
+      ) : <p className="muted small">Same country, org or era builds links.</p>}
       <ChemIf preview={preview} />
     </section>
   );
@@ -47,7 +47,7 @@ function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () 
 
 /**
  * What the player you are pointing at would add (#143): the word before and after, and the links behind the change, as text with a mark.
- * The panel keeps its height whether or not you are pointing at anyone, so nothing below it moves.
+ * The current consequence stays visible; longer historical context is available on demand.
  */
 function ChemIf({ preview }: { preview: Preview | null }) {
   const pv = preview?.chem ?? null;
@@ -58,7 +58,7 @@ function ChemIf({ preview }: { preview: Preview | null }) {
       {!pv ? <p className="muted small">Point at a player to see what they would add.</p> : (
         <>
           <h4>If you draft {who}</h4>
-          {preview?.playerId && <Majors id={preview.playerId} />}
+          {preview?.playerId && <details className="chem__history"><summary>Major history</summary><Majors id={preview.playerId} /></details>}
           <p className="chem__total chem__total--if">
             {pv.before === pv.after
               ? <><b>{pv.after}</b><span className="muted small"> no change</span></>
