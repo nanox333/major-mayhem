@@ -1,0 +1,81 @@
+// What the draft screen says about your team while you build it: a hint from the open slots, live chemistry, a placement label.
+// Display only: nothing here changes the draft, the simulation or a daily, so there is no rules version. (#108, #109, #104)
+import { ROLE_LABEL, ROLE_ORDER, Role } from '../data/rosters';
+import * as G from './logic';
+import { Synergy, chemistryOf, synergies } from './synergy';
+
+/** "an AWPer", "a Lurker": the label with the article it reads with. */
+const withArticle = (label: string) => `${/^[AEIOU]/.test(label) ? 'an' : 'a'} ${label}`;
+const list = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+interface HintState { picks: G.Pick[]; extras?: boolean; coach?: string | null; bench?: G.Pick | null; opts?: { hard?: boolean } }
+
+/**
+ * One or two plain sentences about what the lineup still needs, built from the open slots only: never from ratings,
+ * the case in front of you, or what wins. Hard mode names the open slots exactly as the team strip does and gives no advice about roles.
+ */
+export function draftHint(s: HintState): string {
+  const hard = !!s.opts?.hard;
+  const open = G.openSlots(s.picks).map((r) => ROLE_LABEL[r]);
+  const coachOpen = !!s.extras && s.coach === undefined;
+  const benchOpen = !!s.extras && !s.bench;
+  if (hard) {
+    const left = [...open, ...(coachOpen ? ['Coach'] : []), ...(benchOpen ? ['Bench'] : [])];
+    return left.length ? `Still to fill: ${left.join(', ')}.` : 'Your team is set.';
+  }
+  if (open.length === ROLE_ORDER.length) return `Five slots to fill: ${list(open)}.`;
+  if (open.length) return `You still need ${list(open.map(withArticle))}.`;
+  if (coachOpen) return 'Your five are set. Now a coach: a better one lifts the team, and one who has coached your players adds chemistry.';
+  if (benchOpen) return 'Last pick: a bench player, any role. You can sub them in for one match.';
+  return 'Your team is set.';
+}
+
+/** The lineup you have so far, in slot order, so five picks read exactly as the lobby reads them. */
+function lineupSoFar(picks: G.Pick[]): G.Lineup[] {
+  return [...picks].sort((a, b) => ROLE_ORDER.indexOf(a.slot) - ROLE_ORDER.indexOf(b.slot)).map((pk) => {
+    const roster = G.rosterById.get(pk.rosterId)!;
+    return { slot: pk.slot, roster, player: roster.players.find((p) => p.id === pk.playerId)! };
+  });
+}
+
+export type ChemistryWord = 'None yet' | 'Some' | 'Good' | 'Strong' | 'Clashing';
+export interface Chemistry { rows: Synergy[]; word: ChemistryWord; /** 0 to 3, decoration only: the word carries the meaning. */ pips: 0 | 1 | 2 | 3 }
+
+/** The chemistry total in one word, from the same value the lobby uses (0 to 3, minus penalties). */
+export function chemistryWord(rows: Synergy[]): Pick<Chemistry, 'word' | 'pips'> {
+  if (!rows.length) return { word: 'None yet', pips: 0 };
+  const v = chemistryOf(rows);
+  if (v < 0) return { word: 'Clashing', pips: 0 };
+  if (v < 0.6) return { word: 'Some', pips: 1 };
+  if (v < 1.5) return { word: 'Good', pips: 2 };
+  return { word: 'Strong', pips: 3 };
+}
+
+/**
+ * Chemistry for the picks you have so far. With five picks the rows are exactly the lobby's; with fewer, a lineup of one
+ * can't have an "all one era" bonus. Hard mode leaves out the two-AWPers penalty, because it names a role.
+ */
+export function liveChemistry(picks: G.Pick[], coach: string | null | undefined, hard: boolean): Chemistry {
+  const l = lineupSoFar(picks);
+  let rows = synergies(l, coach);
+  if (l.length < 2) rows = rows.filter((x) => x.kind !== 'era');
+  if (hard) rows = rows.filter((x) => x.kind !== 'awp');
+  return { rows, ...chemistryWord(rows) };
+}
+
+/** A team's result as a placement, for the badge on a team card: text as well as an icon. */
+export function placementLabel(result: string): string {
+  switch (result) {
+    case 'Champions': return '1st place';
+    case 'Runner-up': return '2nd place';
+    case 'Semifinalist': return '3rd–4th place';
+    case 'Quarterfinalist': return '5th–8th place';
+    default: return result;
+  }
+}
+
+/** The slot a click on a player fills: their main role when it's open, else the first open one they cover. Hard mode gives no default. */
+export function defaultSlot(slots: Role[], main: Role, hard: boolean): Role | null {
+  if (hard || !slots.length) return null;
+  return slots.includes(main) ? main : slots[0];
+}

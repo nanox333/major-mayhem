@@ -83,6 +83,31 @@ describe('reducer', () => {
   });
 });
 
+describe('drafting straight from the case (#105)', () => {
+  /** One player round: spin, optionally look at every team and go back (the old two-screen flow allowed that), then open a team and draft. */
+  const round = (start: Run, browse: boolean): Run => {
+    let s = reducer(start, { type: 'spin' });
+    const r = G.rosterById.get(s.offer.find((id) => G.rosterEligible(G.rosterById.get(id)!, s.picks))!)!;
+    if (browse) for (const id of s.offer) { s = reducer(s, { type: 'team', id }); s = reducer(s, { type: 'back' }); }
+    s = reducer(s, { type: 'team', id: r.id });
+    const p = r.players.find((x) => G.eligibleSlots(x, s.picks).length)!;
+    return reducer(s, { type: 'draft', player: p, slot: G.eligibleSlots(p, s.picks)[0] });
+  };
+  it('reaches exactly the same run whether or not the teams were browsed first, so seeds play out as they did', () => {
+    for (const date of ['2026-10-01', '2026-10-02', '2026-10-03']) {
+      let direct = fresh('daily', date), browsed = fresh('daily', date);
+      for (let i = 0; i < 5; i++) { direct = round(direct, false); browsed = round(browsed, true); }
+      expect(direct).toEqual(browsed);
+      expect(direct.picks).toHaveLength(5);
+    }
+  });
+  it('a run saved on the old player screen still loads', () => {
+    const s = reducer(reducer(fresh('daily', '2026-10-01'), { type: 'spin' }), { type: 'team', id: reducer(fresh('daily', '2026-10-01'), { type: 'spin' }).offer[0] });
+    expect(s.step).toBe('players');
+    expect(validRun(JSON.parse(JSON.stringify(s)))).toBe(true);
+  });
+});
+
 describe('stats and sharing', () => {
   it('counts a finished run and keeps the first daily result', () => {
     const run = playThrough(fresh('daily', '2026-10-01'));
