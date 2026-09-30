@@ -8,6 +8,7 @@ import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 import { play } from '../ui/sound';
 import { Tip } from '../ui/tips';
+import { getPrefs } from '../ui/prefs';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -180,13 +181,16 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230 / speed);
     return () => clearTimeout(tm);
   }, [n, mapDone, mapIdx, !!game, speed, buyQuestion, paused]);
-  // Space pauses and resumes, the right arrow steps one round while paused (desktop and streamers).
+  // Space pauses and resumes, T calls a timeout, the right arrow steps one round while paused (desktop and streamers).
+  const callTimeout = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (!game || mapDone) return;
     const onKey = (e: KeyboardEvent) => {
+      if (!getPrefs().shortcuts || e.ctrlKey || e.metaKey || e.altKey || document.querySelector('[role="dialog"]')) return;
       if ((e.target as HTMLElement)?.closest('input, textarea, button, select')) return;
       if (e.key === ' ') { e.preventDefault(); setPaused((p) => !p); }
       if (e.key === 'ArrowRight' && paused && !buyQuestion) setN((x) => Math.min(x + 1, total));
+      if ((e.key === 't' || e.key === 'T') && callTimeout.current) { e.preventDefault(); callTimeout.current(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -199,6 +203,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
     track('call', { kind, round: n, stage: m.stage });
   };
   const canTimeout = !!game && lastMap && !mapDone && n >= 1 && G.canCall(m, { kind: 'timeout', round: n });
+  callTimeout.current = canTimeout ? () => call('timeout') : null;
   useChatVote(buyQuestion ? `buy-${m.form}-${mapIdx}-${n}` : null,
     [{ id: 'save', label: 'Save (eco)', aliases: ['save', 'eco'] }, { id: 'force', label: 'Force buy', aliases: ['force', 'force buy'] }],
     (id) => (id === 'force' ? call('force') : setBought((b) => [...b, n])));

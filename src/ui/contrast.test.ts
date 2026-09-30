@@ -5,9 +5,26 @@ import fs from 'fs';
 // 4.5:1 for text, 3:1 for outlines, focus rings and other things you have to see to use. A palette change that fails here fails the build.
 
 const css = fs.readFileSync(new URL('../styles.css', import.meta.url), 'utf8');
-const root = css.slice(css.indexOf(':root {'), css.indexOf('\n}', css.indexOf(':root {')));
-const tokens: Record<string, string> = {};
-for (const m of root.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})\b/g)) tokens[m[1]] = m[2];
+/** The hex colours a rule block defines, by token name. `selector` is matched up to its opening brace. */
+const block = (selector: string): Record<string, string> => {
+  const i = css.indexOf(`${selector} {`);
+  if (i < 0) throw new Error(`no ${selector} block in styles.css`);
+  const body = css.slice(i, css.indexOf('\n}', i));
+  const out: Record<string, string> = {};
+  for (const m of body.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-fA-F]{6})/g)) out[m[1]] = m[2];
+  return out;
+};
+const dark = block(':root');
+const highDark = block(':root[data-contrast="high"]');
+const light = block(':root[data-theme="light"]');
+const highLight = block(':root[data-theme="light"][data-contrast="high"]');
+// Each palette the game can draw, as the cascade builds it: the base, then the contrast mode over it.
+const PALETTES: Record<string, Record<string, string>> = {
+  'dark': dark,
+  'dark, high contrast': { ...dark, ...highDark },
+  'light': { ...dark, ...light },
+  'light, high contrast': { ...dark, ...light, ...highDark, ...highLight },
+};
 
 const channel = (v: number) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
 const luminance = (hex: string) => {
@@ -17,11 +34,6 @@ const luminance = (hex: string) => {
 const ratio = (a: string, b: string) => {
   const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
   return (hi + 0.05) / (lo + 0.05);
-};
-const tok = (name: string) => {
-  const v = tokens[name];
-  if (!v) throw new Error(`token --${name} is not a plain hex colour in :root`);
-  return v;
 };
 
 const SURFACES = ['bg', 'panel', 'panel-2', 'inset'];
@@ -36,8 +48,13 @@ const cases: [fg: string, bg: string, min: number, what: string][] = [
   ['on-go', 'go', 4.5, 'text on the green button'],
 ];
 
-describe('palette contrast (WCAG 2.1)', () => {
-  it('reads the tokens from :root', () => {
+describe.each(Object.entries(PALETTES))('palette contrast (WCAG 2.1), %s', (name, tokens) => {
+  const tok = (n: string) => {
+    const v = tokens[n];
+    if (!v) throw new Error(`token --${n} is not a plain hex colour in the ${name} palette`);
+    return v;
+  };
+  it('defines the tokens', () => {
     for (const n of ['bg', 'panel', 'panel-2', 'inset', 'text', 'accent', 'on-accent']) expect(tokens[n], n).toMatch(/^#[0-9a-f]{6}$/i);
   });
   it.each(cases)('%s on %s is at least %s:1 (%s)', (fg, bg, min) => {
@@ -46,9 +63,14 @@ describe('palette contrast (WCAG 2.1)', () => {
   it('a focus ring in the accent is visible on every surface (3:1)', () => {
     for (const s of SURFACES) expect(ratio(tok('accent'), tok(s)), s).toBeGreaterThanOrEqual(3);
   });
-  // The home hero (#119): text sits over art. Worst case for the text is the brightest part of the art (a light shaft in the hover accent at
-  // its strongest, over the glow) under the lightest part of the scrim (62% of the page colour on desktop, 58% on a phone).
-  it('the hero text stays readable over the brightest art (4.5:1)', () => {
+});
+
+// The home hero (#119) is a night scene in every palette (its own dark tokens), so this always uses the dark one. Text sits over art: the worst case
+// is the brightest part of the art (a light shaft in the hover accent at its strongest, over the glow) under the lightest part of the scrim
+// (62% of the page colour on desktop, 58% on a phone).
+describe('the hero', () => {
+  const tok = (n: string) => dark[n];
+  it('text stays readable over the brightest art (4.5:1)', () => {
     const mix = (a: string, b: string, t: number) => {
       const [x, y] = [parseInt(a.slice(1), 16), parseInt(b.slice(1), 16)];
       const ch = (s: number) => Math.round(((x >> s) & 255) * t + ((y >> s) & 255) * (1 - t));
