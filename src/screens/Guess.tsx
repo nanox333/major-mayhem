@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import radars from '../data/radars.json';
 import { dailyNumber, today } from '../game/state';
-import { BEST_LABEL, BEST_SHORT, CLUE_MARK, Clue, GuessDay, MAX_GUESSES, Pro, REVEAL, RevealPlan, addGuess, answerFor, clueMeaning, compare, guessShare, guessStreak, loadGuesses, prosOn, revealPlan, saveGuesses, searchState, spokenGuess, teamsFor } from '../game/guess';
+import { BEST_LABEL, BEST_SHORT, CLUE_LABEL, CLUE_MARK, Clue, GuessDay, MAX_GUESSES, Pro, REVEAL, RevealPlan, addGuess, answerFor, clueMeaning, compare, guessShare, guessStreak, loadGuesses, prosOn, revealPlan, saveGuesses, searchState, spokenGuess, teamsFor } from '../game/guess';
 import { COUNTRY } from '../game/synergy';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
@@ -218,7 +218,7 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
 
 /** One clue: the value, a mark that never depends on colour, and a description for screen readers and for hover. */
 function ClueCell({ c, p, a, style }: { c: Clue; p: Pro; a: Pro; style?: React.CSSProperties }) {
-  const said = `${HEAD[c.key].replace('*', '')}: ${namedFor(c)}. ${meaning(c, p, a)}.`;
+  const said = `${CLUE_LABEL[c.key]}: ${namedFor(c)}. ${meaning(c, p, a)}.`;
   const arrow = c.dir ? (c.dir === 'up' ? '↑' : '↓') : '';
   let body: React.ReactNode;
   if (c.key === 'country') body = <><Flag code={p.country} size={16} decorative /><b>{p.country}</b></>;
