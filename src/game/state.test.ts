@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as G from './logic';
 import { COACHES, ROSTERS, rostersOn } from '../data/rosters';
 import { Opts, Run, dailyNumber, fresh, lineupFor, poolCheck, reducer, roundOf, validRun } from './state';
-import { addAbandon, addRun, dailyStarted, dailyStreak, emptyStats, statsSections } from './stats';
+import { FINISH_SHORT, addAbandon, addRun, dailyStarted, dailyStreak, emptyStats, recentDailies, statsSections } from './stats';
 import { shareText } from './share';
 import { newAchievements } from './achievements';
 import { DUEL_ID, decodeDuel, duelCode, duelFrom, duelLink, encodeDuel } from './duel';
@@ -419,5 +419,29 @@ describe('draft duels', () => {
   it('survives a reload: the challenger is registered before the save is checked', () => {
     const s = reducer(reducer(draftThrough(reducer(fresh('free'), { type: 'duel', duel: d })), { type: 'play' }), { type: 'start' });
     expect(validRun(JSON.parse(JSON.stringify(s)))).toBe(true);
+  });
+});
+
+describe('recent dailies for the stats chart (#76)', () => {
+  it('lists the last days oldest first, with gaps for days not played and a mark for abandoned ones', () => {
+    const daily = {
+      '2026-10-01': { placement: 'Champions', reached: 4, mvp: 'a', grade: 0.9 },
+      '2026-10-03': { placement: 'Abandoned', reached: 0, mvp: '–', grade: null, abandoned: true },
+      '2026-10-04': { placement: 'Semifinals', reached: 2, mvp: 'b', grade: 0.7 },
+    };
+    const days = recentDailies(daily, '2026-10-04', 5);
+    expect(days.map((d) => d.date)).toEqual(['2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']);
+    expect(days.map((d) => d.state)).toEqual(['missed', 'played', 'missed', 'abandoned', 'played']);
+    expect(days[1]).toMatchObject({ reached: 4, placement: 'Champions', n: 4 });
+    expect(days[4].reached).toBe(2);
+  });
+  it('crosses a month end and keeps the requested length', () => {
+    const days = recentDailies({}, '2026-10-02', 14);
+    expect(days).toHaveLength(14);
+    expect(days[0].date).toBe('2026-09-19');
+    expect(days[13].date).toBe('2026-10-02');
+  });
+  it('names every finish in a few letters', () => {
+    expect(FINISH_SHORT).toHaveLength(5);
   });
 });
