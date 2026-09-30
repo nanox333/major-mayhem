@@ -25,6 +25,8 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **The help is two screens:** *How to play* (the three steps, then twelve short topics you can open) and *Sources and credits*, kept apart from the rules ([#21]).
 - **Navigation:** the game switch (Draft a Major / Guess the pro) is a row of buttons, clearly apart from the numbered progress trail (Draft, Lobby, Major, Results), and the header buttons carry words on wide screens ([#20]).
 - **Typography:** small labels and buttons use a plain, sentence-case face instead of tiny wide-spaced capitals; paragraphs use the system font at a comfortable size; decision text (teams, players, buttons) is larger; the striped texture behind text is gone ([#20]).
+- **A new look:** near-black navy panels with one orange accent, flat fills with thin borders and small rounded corners instead of chamfered gradients. Every colour is a named value in one place, inputs have an outline you can see, and a test checks the text and outline colours against WCAG contrast ([#100]).
+- **One slim top bar** replaces the big logo, the row of labelled buttons, the game switch and the numbered trail: the mark and wordmark, Draft / Lobby / Major / Results as icon tabs (the current one underlined, finished ones ticked), Guess the pro, help, sound and a menu that holds Stats, Twitch chat votes and New run. On a phone it is two rows and about half the height of the old header ([#101]).
 - Achievement dates use the same local day as the daily, not UTC ([#26]).
 - **Draft cards:** one "Draft as …" button per slot, with the role fit written underneath; the name no longer doubles as the Liquipedia link; unavailable players say exactly why; subs show the role they take and the fit ([#17]).
 - "Draft review" is now **Pick strength**, with a note on what it does and doesn't measure ([#18]).
@@ -34,6 +36,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Scoreboards add up:** a player dies at most once per round, kills always equal the other side's deaths, and a clutch leaves the clutcher as the only survivor ([#12]).
 - **Narration follows your buy:** a lost pistol no longer says "You're saving" before you choose, and force-buy or anti-eco lines only appear when that's happening ([#15]).
 - **Free-play filters stay true:** a filter that leaves too few teams (today, CS2 + Champions) can't be chosen, instead of quietly drafting from the whole era ([#63]).
+- **The first-time introduction is back on the first screen.** It had stopped showing once the start screen became the Play Daily page, and it now opens with the line that used to sit under the logo ([#21], [#101]).
 - **Guess the pro** labels Majors, best finish and first year as counts from this game, not careers ([#14]).
 - **Roster data:** Vitality's coach at Paris 2023 is zonic; Fnatic 2013 and LDLC 2014 get their coaches; the three "unverified" champions are checked against Wikipedia ([#25]). IGL labels corrected for Liquid 2024 (Twistzz), G2 2018 (shox) and AVANGAR 2019 ([#13]).
 - Duel links accept only known free-play options ([#27]).
@@ -97,4 +100,6 @@ The first tagged release, covering everything since the initial draft game.
 [#26]: https://github.com/nanox333/major-mayhem/issues/26
 [#27]: https://github.com/nanox333/major-mayhem/issues/27
 [#38]: https://github.com/nanox333/major-mayhem/issues/38
+[#100]: https://github.com/nanox333/major-mayhem/issues/100
+[#101]: https://github.com/nanox333/major-mayhem/issues/101
 [#63]: https://github.com/nanox333/major-mayhem/issues/63
