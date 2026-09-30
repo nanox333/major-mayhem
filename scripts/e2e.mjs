@@ -48,8 +48,8 @@ async function openGuess(p) {
   if (await link.isVisible()) await link.click();
   else { await openMenu(p); await p.locator('.menu__item--game').click(); }
 }
-async function page(viewport = { width: 1280, height: 900 }) {
-  const p = await b.newPage({ viewport });
+async function page(viewport = { width: 1280, height: 900 }, reducedMotion) {
+  const p = await b.newPage({ viewport, ...(reducedMotion ? { reducedMotion } : {}) });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/**', r => r.fulfill({ contentType: 'text/html', body: html }));
@@ -259,7 +259,7 @@ async function duel() {
 
 /** Guess the pro: type names, pick from the suggestions, and finish the day (win or after eight guesses). */
 async function guess() {
-  const { p, errs } = await page({ width: 390, height: 844 });
+  const { p, errs } = await page({ width: 390, height: 844 }, 'reduce');
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await openGuess(p);
   await p.waitForSelector('.guess__box input');
@@ -271,8 +271,10 @@ async function guess() {
     await p.waitForTimeout(150);
   }
   await p.waitForSelector('.guess__answer');
-  const rows = await p.$$eval('.guess__row:not(.guess__row--head)', (r) => r.length);
+  const rows = await p.$$eval('.guess__row:not(.guess__row--head):not(.guess__row--empty)', (r) => r.length);
   if (rows < 1 || rows > 8) throw new Error('unexpected number of guesses: ' + rows);
+  if ((await p.locator('.guess__row:not(.guess__row--head) .flag').count()) < rows) throw new Error('every guess should show a flag');
+  if (!(await p.locator('.guess__next').count())) throw new Error('the end of the day should offer one next step');
   await p.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { window.__copied = t; } } }));
   await p.locator('.share-bar .ghost-btn', { hasText: 'Copy result' }).click();
   const shared = await p.evaluate(() => window.__copied ?? '');
@@ -377,6 +379,37 @@ async function draftui() {
   await p.close();
 }
 
+/**
+ * Guess the pro with motion on (#127): the tiles turn over one at a time and the row is complete after about two seconds, Enter while a row is turning
+ * finishes it at once, a bad guess shakes the box, and after a reload the rows are static.
+ */
+async function guessMotion() {
+  const { p, errs } = await page({ width: 1280, height: 900 }, 'no-preference');
+  await p.goto('http://game.local/'); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('mm-tips', JSON.stringify(['guess'])); }); await p.reload();
+  await openGuess(p);
+  await p.waitForSelector('.guess__box input');
+  if ((await p.locator('.guess__row:not(.guess__row--head)').count()) !== 8) throw new Error('the grid should always have eight rows');
+  await p.fill('.guess__box input', 'zyw'); await p.waitForSelector('.guess__suggest button'); await p.keyboard.press('Enter');
+  await p.waitForTimeout(700);
+  if ((await p.locator('.guess__row.is-reveal').count()) !== 1) throw new Error('a new guess should be revealing');
+  await p.waitForTimeout(2300);
+  if (await p.locator('.guess__row.is-reveal').count()) throw new Error('the reveal should be over after about two seconds');
+  const cells = await p.locator('.guess__row:not(.guess__row--head):not(.guess__row--empty) .clue').count();
+  if (cells !== 6) throw new Error(`a finished row has six clues, found ${cells}`);
+  await p.fill('.guess__box input', 'niko'); await p.waitForSelector('.guess__suggest button'); await p.keyboard.press('Enter');
+  await p.waitForTimeout(400);
+  await p.keyboard.press('Enter'); await p.waitForTimeout(100);
+  if (await p.locator('.guess__row.is-reveal').count()) throw new Error('Enter during a reveal should finish it at once');
+  await p.fill('.guess__box input', 'zzzzqq'); await p.keyboard.press('Enter'); await p.waitForTimeout(100);
+  if (!(await p.locator('.guess__bar.is-shake').count())) throw new Error('a bad guess should shake the box');
+  if (!(await p.locator('.sr[role="status"]', { hasText: /^Guess 2, /i }).count())) throw new Error('each guess should be announced once as a sentence');
+  await p.reload(); await openGuess(p); await p.waitForSelector('.guess__row:not(.guess__row--head):not(.guess__row--empty)');
+  if (await p.locator('.guess__row.is-reveal').count()) throw new Error('after a reload the rows should be static');
+  console.log('guess motion: flip, skip, shake and static reload ok errors:', errs);
+  if (errs.length) problems.push(`guess motion: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 /** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
@@ -402,6 +435,8 @@ async function sound() {
   await p.keyboard.press('Escape');
   await p.locator('[aria-label="Turn sound on"]').click();
   await openGuess(p);
+  // A reveal takes about two seconds with motion on, so the six notes are counted with reduced motion, where they play together.
+  await p.emulateMedia({ reducedMotion: 'reduce' });
   await p.fill('.guess__box input', 'zyw');
   await p.waitForSelector('.guess__suggest button');
   const notes = await heard(() => p.locator('.guess__suggest button').first().click(), 900);
@@ -418,6 +453,7 @@ await twitch();
 await draftui();
 await sound();
 await guess();
+await guessMotion();
 await b.close();
 if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
 console.log('OK');
