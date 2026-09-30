@@ -40,6 +40,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: End-to-end playthrough
         run: npm run e2e
+      - name: Responsive UI flows
+        run: npm run e2e:ui
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

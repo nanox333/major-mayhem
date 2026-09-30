@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Run, draftRounds } from '../game/state';
 import { ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
@@ -12,14 +12,15 @@ import { slotsOf } from './TeamStrip';
  * It is the wide-screen version of the team strip. A row shows the slot you chose, never a player's own role, so hard mode reveals nothing.
  */
 export function LineupPanel({ s, preview }: { s: Run; /** The player or coach you are pointing at, shown as a ghost row in the slot they would take (#143). */ preview?: Preview | null }) {
+  const lineup_h = useId();
   const slots = slotsOf(s);
   const filled = slots.filter((x) => x.who).length;
   const roster = preview ? G.rosterById.get(preview.rosterId) : undefined;
   const pl = roster && preview?.playerId ? roster.players.find((p) => p.id === preview.playerId) : undefined;
   const ghost = roster && preview ? { key: preview.slot, nick: pl?.nick ?? preview.coach ?? '', from: `${roster.org} ${roster.year}`, face: pl ? <Avatar player={pl} roster={roster} /> : <TeamBadge roster={roster} size={34} /> } : null;
   return (
-    <section className="lineup" aria-labelledby="lineup-h">
-      <h3 id="lineup-h" className="lineup__head">Your lineup <span>{filled} / {draftRounds(s)}</span></h3>
+    <section className="lineup" aria-labelledby={lineup_h}>
+      <h3 id={lineup_h} className="lineup__head">Your lineup <span>{filled} / {draftRounds(s)}</span></h3>
       <ol className="lineup__rows">
         {slots.map((x) => ghost && !x.who && ghost.key === x.key ? (
           <li key={x.key} className="lrow is-preview">

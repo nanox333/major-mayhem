@@ -30,7 +30,7 @@ export function useShortcuts(on: boolean, handlers: ShortcutHandlers, blocked: b
   useEffect(() => {
     if (!on || blocked) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || typing(e)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || typing(e) || document.querySelector('[role="dialog"], .menu__panel')) return;
       const k = (e.key.length === 1 ? e.key.toLowerCase() : e.key) as keyof ShortcutHandlers;
       const fn = ref.current[k];
       if (!fn) return;

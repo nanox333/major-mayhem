@@ -51,6 +51,7 @@ export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcu
           </div>
         </div>
         <Switch label="High contrast" hint="Stronger borders, brighter text and a thicker focus ring." on={prefs.contrast} onChange={(contrast) => setPrefs({ contrast })} />
+        <Switch label="Fast case reveals" hint="Show the dealt case immediately. Reduced motion always skips the reel." on={prefs.fastReveals} onChange={(fastReveals) => setPrefs({ fastReveals })} />
       </section>
 
       <section className="settings__sec" aria-labelledby="set-tips">
