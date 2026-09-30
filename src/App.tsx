@@ -10,6 +10,7 @@ import { TopBar, View } from './ui/TopBar';
 import { RunProgress } from './ui/RunProgress';
 import { LineupPanel } from './ui/Lineup';
 import { DraftSidebar } from './ui/DraftSidebar';
+import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
@@ -72,8 +73,12 @@ function Game() {
   if (s.phase === 'ready') { title = 'Ready to rumble'; kicker = `Lobby · ${draftRounds(s)} of ${draftRounds(s)} drafted`; }
   if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `${s.duel ? 'Draft duel' : 'Major'} · Best of ${s.current?.bestOf ?? G.bestOfFor(stageNow!, s.t)}`; }
   if (s.phase === 'final') { title = s.duel ? 'Showmatch over' : 'Tournament over'; kicker = 'Results'; }
-  // The second daily, Guess the pro, has its own tab and doesn't touch the draft run.
-  const [view, setView] = useState<View>('draft');
+  // The home is the first page, and anywhere a run isn't under way; a saved run resumes where it was (#115). Guess the pro doesn't touch the run.
+  const atStart = s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
+  const [chosen, setView] = useState<View>('draft');
+  // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
+  const backView: View = atStart && s.mode !== 'duel' ? 'home' : 'draft';
+  const view: View = chosen === 'draft' ? backView : chosen;
   if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
 
   // The radar is scenery while you draft, so it leaves the draft screen; the lobby and the match keep it (#102).
@@ -85,10 +90,11 @@ function Game() {
 
   return (
     <>
-    <TopBar view={view} setView={setView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
-      abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
-    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''}`}>
-      <main className="console">
+    <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
+      abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
+    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
+      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
+      {view !== 'home' && <main className="console">
         <div className="console__head">
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
@@ -105,7 +111,7 @@ function Game() {
           {drafting && <LineupPanel s={s} />}
           {view === 'guess' ? <section className="console__main"><GuessScreen /></section> : <section className="console__main">
             <ChatVoteBar />
-            {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onGuess={() => setView('guess')} onTwitch={() => setTwitch(true)} />}
+            {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} />}
             {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
             {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
@@ -114,7 +120,7 @@ function Game() {
           {drafting && <DraftSidebar s={s} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
           {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
-      </main>
+      </main>}
 
       <footer className="foot">
         Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.
@@ -122,7 +128,7 @@ function Game() {
       </footer>
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
-        onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); }} />}
+        onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); setView('draft'); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}

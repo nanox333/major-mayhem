@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ROSTERS, CREDITS } from '../data/rosters';
 import { Modal } from '../ui/Modal';
-import { ThreeSteps, resetTips } from '../ui/tips';
+import { HowSteps, resetTips } from '../ui/tips';
 
 export type HelpTab = 'play' | 'sources';
 
@@ -37,7 +37,7 @@ function HowToPlay() {
   return (
     <>
       <h3>How to play</h3>
-      <ThreeSteps />
+      <HowSteps />
       <h3>The details</h3>
       <p className="muted small">The game explains each of these the first time it comes up. They're all here as well.</p>
       <div className="details">
@@ -110,6 +110,8 @@ function Sources() {
           <li key={r.event}><span>{r.event}{r.unverified ? ' (unverified)' : ''}</span> <a href={r.sourceUrl} target="_blank" rel="noreferrer">Wikipedia</a> <a href={r.liquipediaUrl} target="_blank" rel="noreferrer">Liquipedia</a></li>
         ))}
       </ul>
+      <h3>Icons and art</h3>
+      <p>The interface icons, the logo mark and the arena on the home screen are drawn for this game and share its licence. They don't copy any other game's or team's artwork, and the game is not affiliated with Valve.</p>
       <h3>Sounds</h3>
       <p>Sound effects are recordings from four CC0 packs by <a href="https://kenney.nl" target="_blank" rel="noreferrer">Kenney</a>: Interface Sounds, Impact Sounds, Casino Audio and Sci-fi Sounds. Layered and levelled for the game; the Sound button in the header mutes them.</p>
       <h3>Photos and logos</h3>

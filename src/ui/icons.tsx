@@ -29,6 +29,15 @@ export const MoreIcon = (p: P) => <Svg {...p} fill><circle cx="5" cy="12" r="1.7
 export const CheckIcon = (p: P) => <Svg {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></Svg>;
 export const ChevronLeftIcon = (p: P) => <Svg {...p}><path d="M15 5l-7 7 7 7" /></Svg>;
 export const ChevronDownIcon = (p: P) => <Svg {...p}><path d="M6 9l6 6 6-6" /></Svg>;
+export const CalendarIcon = (p: P) => <Svg {...p}><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z" /></Svg>;
+export const InfinityIcon = (p: P) => <Svg {...p}><path d="M12 12c-1.5-2.5-3-4-5-4a4 4 0 0 0 0 8c2 0 3.5-1.5 5-4zm0 0c1.5 2.5 3 4 5 4a4 4 0 0 0 0-8c-2 0-3.5 1.5-5 4z" /></Svg>;
+export const FlameIcon = (p: P) => <Svg {...p}><path d="M12 3c1 3.5 4.5 5 4.5 9a4.5 4.5 0 0 1-9 0c0-1.7.8-3 1.7-3.8.3 1.3 1 1.9 1.6 2.1C11 8 10.5 5.5 12 3z" /></Svg>;
+export const StarIcon = (p: P) => <Svg {...p}><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" /></Svg>;
+export const HomeIcon = (p: P) => <Svg {...p}><path d="M4 11l8-7 8 7M6 10v9h12v-9M10 19v-5h4v5" /></Svg>;
+export const MapPinIcon = (p: P) => <Svg {...p}><path d="M12 21s6-5.5 6-10a6 6 0 1 0-12 0c0 4.5 6 10 6 10zM12 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" /></Svg>;
+export const ArrowRightIcon = (p: P) => <Svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
+export const ShareIcon = (p: P) => <Svg {...p}><path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4" /></Svg>;
+export const ClockIcon = (p: P) => <Svg {...p}><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" /></Svg>;
 /** A medal: a placement below first. */
 export const MedalIcon = (p: P) => <Svg {...p}><path d="M12 21a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM9 10.5 7 3h4l1 4 1-4h4l-2 7.5" /></Svg>;
 export const PlusIcon = (p: P) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;

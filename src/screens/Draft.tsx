@@ -14,11 +14,12 @@ import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
-import { ThreeSteps, Tip, useTipSeen } from '../ui/tips';
-import { CaseIcon, ChevronDownIcon, MedalIcon, TrophyIcon } from '../ui/icons';
+import { HowSteps, Tip, useTipSeen } from '../ui/tips';
+import { CaseIcon, ChevronDownIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
+import { DailyDone, ModePicker } from './Modes';
 
-export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, onTwitch }: {
-  s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
+export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
+  s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
 }) {
   if (s.step === 'spin') {
     const open = G.openSlots(s.picks);
@@ -26,12 +27,9 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
     const played = date ? stats.daily[date] : undefined;
     const todayN = dailyNumber(today());
     const doneToday = stats.daily[today()];
-    if (s.picks.length === 0 && s.offerKey === 0 && s.mode !== 'duel') {
-      return <Home s={s} dispatch={dispatch} setReelFor={setReelFor} stats={stats} onGuess={onGuess} onTwitch={onTwitch} />;
-    }
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
-        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><ThreeSteps compact /></Tip>}
+        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><HowSteps compact /></Tip>}
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
           {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
@@ -61,70 +59,6 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
     return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <CaseCards s={s} dispatch={dispatch} />;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
-}
-
-/** Today's finished (or abandoned) daily: result, share buttons and the countdown. */
-function DailyDone({ d, n }: { d: NonNullable<Stats['daily'][string]>; n: number }) {
-  return (
-    <div className="daily-done">
-      <small>Daily #{n} {d.abandoned ? 'abandoned' : 'done'}</small>
-      <strong>{d.placement}</strong>
-      <span>{d.abandoned ? 'Reset after it started, so it has no result.' : `MVP ${d.mvp}${d.grade !== null ? ` · Draft ${Math.round(d.grade * 100)}%` : ''}`}</span>
-      {d.share && !d.abandoned && <ShareBar text={() => [d.share, pageUrl()].filter(Boolean).join('\n')} props={{ mode: 'daily', daily: n, from: 'daily-done' }} />}
-      <NextDaily />
-    </div>
-  );
-}
-
-/** The first screen: today's daily is the big action, the other modes sit beneath it (#68). */
-function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
-  s: Run; dispatch: React.Dispatch<Action>; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
-}) {
-  const todayN = dailyNumber(today());
-  const done = stats.daily[today()];
-  const played = done && !done.abandoned;
-  const { current: streak } = dailyStreak(stats.daily, today());
-  const best = stats.runs > 0 ? REACHED[stats.reached.reduce((b, n, i) => (n > 0 ? i : b), 0)] : null;
-  const free = s.mode === 'free';
-  const introSeen = useTipSeen('intro');
-  const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); };
-  const playDaily = () => {
-    if (s.mode !== 'daily') dispatch({ type: 'reset', mode: 'daily' });
-    setReelFor(1);
-    dispatch({ type: 'spin' });
-  };
-  return (
-    <div className="spin-stage home anim-in">
-      <button className="home__daily" data-sfx="open" onClick={playDaily}>
-        <small>{played ? 'Played ✓' : 'Same cases for everyone'}</small>
-        <strong>{played ? `Replay Daily #${todayN}` : `Play Daily #${todayN}`}</strong>
-        <span>{played ? `${done.placement}. Replays don't change your record.` : <NextDaily />}</span>
-      </button>
-      <p className="daily-meta">
-        {streak > 0 && <span>🔥 {streak}-day streak</span>}
-        {best && <span>Best finish: {best}</span>}
-        {!streak && !best && introSeen && <span>Draft five pros, then win the Major.</span>}
-      </p>
-      {/* A first-time visitor's introduction, with the tagline that used to sit in the header (#101). It sits under the daily button so the button stays first. */}
-      <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><ThreeSteps compact /></Tip>
-      {done && <DailyDone d={done} n={todayN} />}
-      <div className="home__cards">
-        <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => dispatch({ type: 'reset', mode: 'free' })}>
-          <strong>Free play</strong><small>Any era, champions or underdogs, hard mode</small>
-        </button>
-        <button className="home__card" onClick={onGuess}>
-          <strong>Guess the pro</strong><small>A second daily: eight guesses</small>
-        </button>
-      </div>
-      {free && (
-        <>
-          <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />
-          <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={openCase}>Open case</button></div>
-        </>
-      )}
-      <button type="button" className="link-btn" onClick={onTwitch}>Twitch chat votes ›</button>
-    </div>
-  );
 }
 
 /** CS-style case roulette: a strip of teams slides past a marker and stops on the first team in the offer. */
@@ -196,7 +130,7 @@ function SpinAgain({ s, reroll }: { s: Run; reroll: () => void }) {
   return (
     <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
       <button className="ghost-btn ghost-btn--big" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>
-        ⟳ Spin again · {s.rerolls <= 0 ? 'no spins left' : `${s.rerolls} spin${s.rerolls === 1 ? '' : 's'} left`}
+        <RefreshIcon size={16} /> Spin again · {s.rerolls <= 0 ? 'no spins left' : `${s.rerolls} spin${s.rerolls === 1 ? '' : 's'} left`}
       </button>
     </div>
   );
@@ -471,23 +405,3 @@ function unavailableReason(p: Roster['players'][number], s: Run, drafted: Set<st
 /** Opens the roster-data issue form with this roster filled in (#13). */
 const reportUrl = (r: { org: string; year: number; event: string }) =>
   `https://github.com/nanox333/major-mayhem/issues/new?template=roster_data.yml&roster=${encodeURIComponent(`${r.org} ${r.year} (${r.event})`)}`;
-
-/** Free-play options, chosen before the first case. */
-function ModePicker({ opts, dispatch }: { opts: Opts; dispatch: React.Dispatch<Action> }) {
-  const set = (o: Opts) => dispatch({ type: 'opts', opts: { ...opts, ...o } });
-  // A filter that leaves too few teams can't be chosen, rather than quietly widening once the draft starts (#63).
-  const choice = <K extends keyof Opts>(key: K, value: Opts[K], label: string) => {
-    const { n, ok } = poolCheck({ ...opts, [key]: value });
-    const why = ok ? undefined : `Only ${n} team${n === 1 ? '' : 's'} match with your other settings; a full draft needs ${MIN_POOL}.`;
-    return <button className={opts[key] === value ? 'is-on' : ''} aria-pressed={opts[key] === value} disabled={!ok} title={why} aria-description={why} onClick={() => set({ [key]: value } as Opts)}>{label}</button>;
-  };
-  const blocked = ([{ era: 'csgo' }, { era: 'cs2' }, { pool: 'champions' }, { pool: 'underdogs' }] as Opts[]).some((o) => !poolCheck({ ...opts, ...o }).ok);
-  return (
-    <div className="modes" aria-label="Free-play mode">
-      <div className="modes__row"><span>Era</span><div className="seg">{choice('era', undefined, 'All')}{choice('era', 'csgo', 'CS:GO')}{choice('era', 'cs2', 'CS2')}</div></div>
-      <div className="modes__row"><span>Teams</span><div className="seg">{choice('pool', undefined, 'All')}{choice('pool', 'champions', 'Champions')}{choice('pool', 'underdogs', 'Underdogs')}</div></div>
-      <div className="modes__row"><span>Hard</span><div className="seg">{choice('hard', undefined, 'Off')}{choice('hard', true, 'No role labels')}</div></div>
-      {blocked && <p className="muted small">Greyed-out options leave fewer than {MIN_POOL} teams with your other settings, too few for a full draft.</p>}
-    </div>
-  );
-}

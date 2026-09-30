@@ -46,4 +46,18 @@ describe('palette contrast (WCAG 2.1)', () => {
   it('a focus ring in the accent is visible on every surface (3:1)', () => {
     for (const s of SURFACES) expect(ratio(tok('accent'), tok(s)), s).toBeGreaterThanOrEqual(3);
   });
+  // The home hero (#119): text sits over art. Worst case for the text is the brightest part of the art (a light shaft in the hover accent at
+  // its strongest, over the glow) under the lightest part of the scrim (62% of the page colour on desktop, 58% on a phone).
+  it('the hero text stays readable over the brightest art (4.5:1)', () => {
+    const mix = (a: string, b: string, t: number) => {
+      const [x, y] = [parseInt(a.slice(1), 16), parseInt(b.slice(1), 16)];
+      const ch = (s: number) => Math.round(((x >> s) & 255) * t + ((y >> s) & 255) * (1 - t));
+      return '#' + [16, 8, 0].map((s) => ch(s).toString(16).padStart(2, '0')).join('');
+    };
+    const art = mix(tok('accent-hi'), tok('inset'), 0.5);
+    for (const scrim of [0.58, 0.62]) {
+      const under = mix(tok('bg'), art, scrim);
+      for (const fg of ['text', 'strong', 'accent']) expect(ratio(tok(fg), under), `${fg} under a ${scrim} scrim`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
 });

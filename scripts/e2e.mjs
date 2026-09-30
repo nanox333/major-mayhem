@@ -193,7 +193,9 @@ async function run(viewport, tag) {
   await p.locator('button.cta', { hasText: 'Play again' }).click();
   await p.waitForSelector('.daily-done');
   if (await p.locator('.home__daily', { hasText: 'Replay' }).count() === 0) throw new Error('a finished daily should show as played on the start screen');
-  console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', (await p.textContent('.daily-done .next-daily')).trim());
+  const clock = (await p.textContent('.mcard--daily .clock')).trim();
+  if (!/^\d\d:\d\d:\d\d$/.test(clock)) throw new Error('the daily card should carry the countdown clock, got "' + clock + '"');
+  console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', clock);
   await p.screenshot({ path: `shots/${tag}-10-daily-done.png`, fullPage: true });
   const sw = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   console.log(tag, 'horizontal overflow px:', sw, 'errors:', errs);
@@ -208,14 +210,14 @@ async function run(viewport, tag) {
   };
   // A save pointing at a player who no longer exists starts a new run instead of crashing.
   await setSave((s) => { s.picks[0].playerId = 'retired-player'; });
-  await p.waitForSelector('.spin-stage');
+  await p.waitForSelector('.home3');
   if (await p.$('.crash')) throw new Error('a save with a missing player crashed the page');
   // A save that passes the checks but still crashes shows the error screen; "Reset run" recovers and keeps stats.
   await setSave((s) => { s.t.matches[0].maps = null; });
   await p.waitForSelector('.crash');
   await p.screenshot({ path: `shots/${tag}-11-crash.png`, fullPage: true });
   await p.locator('.crash button', { hasText: 'Reset run' }).click();
-  await p.waitForSelector('.spin-stage');
+  await p.waitForSelector('.home3');
   if (!(await p.evaluate(() => localStorage.getItem('major-mayhem-stats-v1')))) throw new Error('reset run cleared lifetime stats');
   console.log(tag, 'broken saves recover OK');
   await p.close();
@@ -301,6 +303,7 @@ async function twitch() {
   await p.locator('.twitch-form button.cta').click();
   await p.waitForSelector('.twitch-status.is-live');
   await p.keyboard.press('Escape');
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.chatvote', { timeout: 8000 });
   // Chat votes once, on a player: option 2 is the second player who can be drafted, in the order the case lists them.
@@ -330,7 +333,7 @@ async function sound() {
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.waitForSelector('button.cta'); await p.waitForTimeout(400);
   if ((await p.evaluate(() => window.__ctxs.length)) !== 0) throw new Error('an audio context was created before any click');
-  if (!(await heard(() => p.locator('.home__card', { hasText: 'Free play' }).click()))) throw new Error('a button click made no sound');
+  if (!(await heard(() => p.locator('button.mbtn', { hasText: 'Start free play' }).click()))) throw new Error('a button click made no sound');
   if (!(await p.evaluate(() => window.__ctxs[0]))) throw new Error('the audio context was created before user activation');
   const reel = await heard(() => p.locator('button.cta', { hasText: 'Open case' }).click({ force: true }), 3300);
   if (reel < 25) throw new Error(`the case reel should tick and chime, heard ${reel} notes`);
