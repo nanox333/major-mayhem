@@ -53,3 +53,22 @@ describe('first-appearance tips (#21)', () => {
     expect(blocked.tipSeen('fit')).toBe(true);
   });
 });
+
+describe('one tip at a time, and turning them all off (#130, #110)', () => {
+  it('draws only the first unseen tip of the ones on screen', async () => {
+    const { tips } = await load();
+    expect(tips.firstVisible(['fit', 'chem', 'form'], new Set())).toBe('fit');
+    expect(tips.firstVisible(['fit', 'chem', 'form'], new Set(['fit']))).toBe('chem');
+    expect(tips.firstVisible(['fit', 'chem'], new Set(['fit', 'chem']))).toBeNull();
+    expect(tips.firstVisible([], new Set())).toBeNull();
+  });
+  it('knows the chemistry tip, and skipping tips marks every one seen until they are turned back on', async () => {
+    const { tips, store } = await load();
+    expect(tips.TIP_IDS).toContain('chem');
+    tips.setTipsOn(false);
+    for (const id of tips.TIP_IDS) expect(tips.tipSeen(id)).toBe(true);
+    expect(JSON.parse(store['mm-tips'])).toEqual(tips.TIP_IDS);
+    tips.setTipsOn(true);
+    for (const id of tips.TIP_IDS) expect(tips.tipSeen(id)).toBe(false);
+  });
+});

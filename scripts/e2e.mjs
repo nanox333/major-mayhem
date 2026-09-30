@@ -491,6 +491,47 @@ async function settingsAndKeys() {
   await p.close();
 }
 
+/**
+ * First-time tips (#130, #21): a first-time visitor sees the intro on the home and one tip at a time while drafting, "Skip tips" turns them all off, a
+ * hard-mode tip names no roles, and a player with a record sees none of it.
+ */
+async function tips() {
+  const { p, errs } = await page({ width: 1440, height: 900 });
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.waitForSelector('.how__steps');
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(600);
+  if ((await p.locator('.tip').count()) !== 1) throw new Error(`a first-time player should see exactly one tip at a time, saw ${await p.locator('.tip').count()}`);
+  if (!(await p.locator('.tip', { hasText: 'Roles and fit' }).count())) throw new Error('the first tip while drafting should be Roles and fit');
+  await p.screenshot({ path: 'shots/tip-fit.png' });
+  await p.locator('.tip .tip__ok').click();
+  if ((await p.locator('.tip').count()) !== 1 || !(await p.locator('.tip', { hasText: 'Team chemistry' }).count())) throw new Error('after dismissing one tip the next should take its place');
+  await p.locator('.tip .tip__skip').click();
+  if (await p.locator('.tip').count()) throw new Error('"Skip tips" should remove every tip');
+  await p.reload();
+  if (await p.locator('.tip').count()) throw new Error('skipped tips should stay skipped after a reload');
+  // Hard mode: the tip names no role.
+  await p.evaluate(() => { localStorage.clear(); }); await p.reload();
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.seg, .seg button', { hasText: 'No role labels' }).first().click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(600);
+  const hardTip = await p.locator('.tip').first().innerText();
+  if (/IGL|AWP|Entry|Lurker|Support/.test(hardTip)) throw new Error('the hard-mode tip should name no roles: ' + hardTip);
+  // A player with a record sees none of it.
+  await p.evaluate(() => { localStorage.clear(); localStorage.setItem('major-mayhem-stats-v1', JSON.stringify({ v: 1, runs: 3, titles: 0, reached: [3, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [], duels: { w: 0, l: 0 } })); }); await p.reload();
+  await p.waitForSelector('.home3');
+  if (await p.locator('.how__steps').count()) throw new Error('a returning player should get the slim How it works row');
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(400);
+  if (await p.locator('.tip').count()) throw new Error('a player who has finished a run should see no tips');
+  console.log('tips: intro, one at a time, skip, hard mode and returning player ok errors:', errs);
+  if (errs.length) problems.push(`tips: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 /** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
@@ -536,6 +577,7 @@ await sound();
 await guess();
 await guessMotion();
 await settingsAndKeys();
+await tips();
 await b.close();
 if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
 console.log('OK');

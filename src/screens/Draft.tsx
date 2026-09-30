@@ -246,6 +246,9 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   return (
     <div className="case">
       <OpenedCase>{bench ? 'Three iconic rosters. Pick anyone, any role, for your bench.' : 'Three iconic rosters. Pick one player to add to your lineup.'}</OpenedCase>
+      {!bench && (hard
+        ? <Tip id="fit" title="Hard mode" anchor="left">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
+        : <Tip id="fit" title="Roles and fit" anchor="left">Each player has a main role: draft them there for the best fit. A role they also cover costs a little, and the card says so ("2nd role"). The + and − marks are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
       <div className={`teams-col ${out ? 'is-out' : ''}`}>
         {s.offer.map((id, i) => {
           const r = G.rosterById.get(id)!;
