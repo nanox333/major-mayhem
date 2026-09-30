@@ -1,7 +1,7 @@
 // Playing a series: one map round by round, the veto and side choices around it, tactical calls, and whole matches.
 import { COACHES, isCoach } from '../data/rosters';
 import { random, rand } from './random';
-import { rules } from './rulesState';
+import { hasRule } from './rulesState';
 import { Lineup, naturalLineup, rosterById, rosterPower, teamPower } from './lineup';
 import { MAPS, Team, Veto, VETO_ORDER, comfort, vetoChoice, vetoTurn } from './veto';
 import { CT_BIAS, Side, bestSide, otherSide, sideAt, sideEdge, sideLean } from './sides';
@@ -87,7 +87,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
         events.push({ round: rn, text: fill(lines[rand(lines.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
       }
     }
-    const t = rules() < 2 ? tallyRoundV1(won, kwM, dwM, kwO, dwO, star) : tallyRound(won, kwM, dwM, kwO, dwO, star, clutch);
+    const t = hasRule('oneDeathPerRound') ? tallyRound(won, kwM, dwM, kwO, dwO, star, clutch) : tallyRoundV1(won, kwM, dwM, kwO, dwO, star);
     for (let j = 0; j < 5; j++) { K[j] += t.ourKills[j]; D[j] += t.ourDeaths[j]; OK[j] += t.theirKills[j]; OD[j] += t.theirDeaths[j]; }
     if (rn === 1 || rn === 13) {
       econ = won ? 1 : -1; ecoLeft = 2; forced = false;

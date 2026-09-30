@@ -1,7 +1,7 @@
 // The Major: the Swiss stage and playoffs, who you meet next, and how a run ends.
 import { ROSTERS, Roster } from '../data/rosters';
 import { rand } from './random';
-import { rules } from './rulesState';
+import { hasRule } from './rulesState';
 import { Lineup, rosterPower } from './lineup';
 import { BEST_OF, Match, StageKey } from './match';
 import { seriesRatings } from './series';
@@ -44,7 +44,7 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
   const notUsed = rosters.filter((r) => !t.used.includes(r.id));
   // From rules v3 a clean opponent is used for as long as one is left: a smaller clean pool is better than facing someone on your own team (#167).
   // Earlier versions fall back once fewer than eight remain, and keep doing so, so old dailies and challenges replay as they did.
-  const pool = (rules() >= 3 ? clean.length > 0 : clean.length >= 8) ? clean
+  const pool = (hasRule('cleanOpponentPool') ? clean.length > 0 : clean.length >= 8) ? clean
     : [notUsed.filter((r) => !mine.some((x) => x.roster.id === r.id)), notUsed, rosters].find((x) => x.length)!;
   const ranked = pool
     .map((r) => ({ r, p: rosterPower(r).total }))

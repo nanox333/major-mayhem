@@ -136,20 +136,37 @@ export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.
  *   IGL labels (#13).
  * - v3 (from 2026-10-01): opponents are chosen from the rosters that share nobody with your team for as long as any are left,
  *   instead of switching to ones that do once fewer than eight remain (#167).
- * To add a version: append it here with tomorrow's date, keep the old behaviour behind `rules() < n` in the code, and
- * put any changed roles in `rolesV1`-style fields.
+ * To add a version: append it here with tomorrow's date, name each behaviour it changes in `RULE_SINCE` below and read it
+ * with `hasRule('name')` (never compare the version number in the code), put any changed roles in `rolesV1`-style fields,
+ * and pin the previous version's fingerprints in `rules.test.ts`, which fails until you do.
  */
 export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }] as const;
 export const LATEST_RULES: number = RULES[RULES.length - 1].v;
 export const rulesOn = (date: string): number => [...RULES].reverse().find((r) => r.from <= date)?.v ?? 1;
+/** Each behaviour that differs between rules versions, and the first version it applies in. Code reads these with `hasRule`, not with version numbers. */
+export const RULE_SINCE = {
+  /** A player dies at most once a round and kills equal the other side's deaths (#12, #15); before, kills and deaths were handed out independently. */
+  oneDeathPerRound: 2,
+  /** Killfeed lines about a force buy or an eco only appear in rounds where that is happening (#12). */
+  buyAwareNarration: 2,
+  /** Corrected roles, such as who is the in-game leader (#13). */
+  correctedRoles: 2,
+  /** Corrected coaches (#13). */
+  correctedCoaches: 2,
+  /** Opponents come from rosters that share nobody with your team for as long as any are left, not only while eight or more remain (#167). */
+  cleanOpponentPool: 3,
+} as const;
+export type RuleSwitch = keyof typeof RULE_SINCE;
+/** Whether rules version `v` includes the behaviour `f`. */
+export const rulesInclude = (v: number, f: RuleSwitch): boolean => v >= RULE_SINCE[f];
 /** The rules version whose corrected roles and coaches are in the roster data right now. */
 let applied = LATEST_RULES;
 export const appliedRules = () => applied;
 /** Puts every corrected role and coach back as it was under rules `v`. */
 export function applyRoles(v: number) {
   applied = v;
-  for (const [p, latest, v1] of CORRECTED) p.roles = v >= 2 ? latest : v1;
-  for (const [r, latest, v1] of RECOACHED) r.coach = v >= 2 ? latest : v1;
+  for (const [p, latest, v1] of CORRECTED) p.roles = rulesInclude(v, 'correctedRoles') ? latest : v1;
+  for (const [r, latest, v1] of RECOACHED) r.coach = rulesInclude(v, 'correctedCoaches') ? latest : v1;
 }
 
 /** Free play draws from every roster that isn't retired. */
