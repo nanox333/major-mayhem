@@ -6,7 +6,7 @@ import fs from 'fs'; import sharp from 'sharp';
 const OUT = 'src/data/radars.json';
 const DIR = 'assets-src/radars';
 const SIZE = 760;
-// file → map name as used in MAPS (src/game/logic.ts). `clip` drops the source's frame first (fractions
+// file → map name as used in MAPS (src/game/veto.ts). `clip` drops the source's frame first (fractions
 // of the image: left, top, right, bottom), `dark` makes the black background and grey grid transparent
 // (the map's own dark areas are tinted, so they stay), `black` only drops pure-black background,
 // `faint` drops semi-transparent grid dots.

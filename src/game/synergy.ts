@@ -1,7 +1,7 @@
 // Synergies: what makes five players more (or less) than the sum of their ratings. All values are team-power
-// points, the same scale as ratings; see teamPower in logic.ts for how they combine and cap.
+// points, the same scale as ratings; see teamPower in lineup.ts for how they combine and cap.
 import { COACHES, ROSTERS, Player, Roster, appliedRules, isCoach } from '../data/rosters';
-import type { Lineup } from './logic';
+import type { Lineup } from './lineup';
 
 export type SynergyKind = 'lineup' | 'nation' | 'duo' | 'era' | 'awp' | 'coach';
 export interface Synergy { kind: SynergyKind; label: string; value: number }
