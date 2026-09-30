@@ -83,7 +83,8 @@ function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
   const played = done && !done.abandoned;
   const { current: streak } = dailyStreak(stats.daily, today());
   const best = stats.runs > 0 ? REACHED[stats.reached.reduce((b, n, i) => (n > 0 ? i : b), 0)] : null;
-  const free = s.mode === 'free';
+  // Free-play options stay tucked away until asked for, so the daily is the only thing that asks for attention.
+  const [free, setFree] = useState(false);
   const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); };
   const playDaily = () => {
     if (s.mode !== 'daily') dispatch({ type: 'reset', mode: 'daily' });
@@ -92,26 +93,26 @@ function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
   };
   return (
     <div className="spin-stage home anim-in">
-      <button className="home__daily" data-sfx="open" onClick={playDaily}>
+      {done && <DailyDone d={done} n={todayN} />}
+      <button className={`home__daily ${played ? 'is-played' : ''}`} data-sfx="open" onClick={playDaily}>
         <small>{played ? 'Played ✓' : 'Same cases for everyone'}</small>
         <strong>{played ? `Replay Daily #${todayN}` : `Play Daily #${todayN}`}</strong>
-        <span>{played ? `${done.placement}. Replays don't change your record.` : <NextDaily />}</span>
+        <span>{played ? "Replays don't change your record" : <NextDaily />}</span>
       </button>
       <p className="daily-meta">
         {streak > 0 && <span>🔥 {streak}-day streak</span>}
         {best && <span>Best finish: {best}</span>}
         {!streak && !best && <span>Draft five pros, then win the Major.</span>}
       </p>
-      {done && <DailyDone d={done} n={todayN} />}
       <div className="home__cards">
-        <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => dispatch({ type: 'reset', mode: 'free' })}>
-          <strong>Free play</strong><small>Any era, champions or underdogs, hard mode</small>
+        <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => { if (!free && s.mode !== 'free') dispatch({ type: 'reset', mode: 'free' }); setFree(!free); }}>
+          <strong>Free play</strong><small>{free ? 'Choose your options below' : 'Any era, champions or underdogs, hard mode'}</small>
         </button>
         <button className="home__card" onClick={onGuess}>
           <strong>Guess the pro</strong><small>A second daily: eight guesses</small>
         </button>
       </div>
-      {free && (
+      {free && s.mode === 'free' && (
         <>
           <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />
           <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={openCase}>Open case</button></div>

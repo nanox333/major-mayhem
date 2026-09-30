@@ -52,9 +52,10 @@ button { font: inherit; color: inherit; }
 
 /* ---------- masthead ---------- */
 .masthead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
-.brand { min-width: 0; }
+.brand { flex: 1 1 340px; min-width: min-content; }
+.utility { flex: none; }
 .logo {
-  margin: 0; font-family: var(--f-logo); font-weight: 400; font-size: clamp(2rem, 7.5vw, 3.6rem); line-height: 1; letter-spacing: .02em;
+  margin: 0; font-family: var(--f-logo); font-weight: 400; font-size: clamp(2rem, 7.5vw, 3rem); line-height: 1; letter-spacing: .02em;
   color: #f3f1ea; text-transform: uppercase; white-space: nowrap;
   text-shadow: 0 2px 0 #000, 0 0 24px rgba(224, 163, 59, .25);
 }
@@ -109,19 +110,19 @@ button { font: inherit; color: inherit; }
 .back-btn:hover { color: #fff; border-color: #4a5462; }
 
 /* ---------- team strip: your team filling up as you draft (#69) ---------- */
-.strip { display: grid; gap: 6px; padding: 10px 16px 8px; border-bottom: 1px solid var(--line); background: #10151b; }
+.strip { display: grid; gap: 4px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: #10151b; }
 .strip__slots { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
-.strip__slot > button, .strip__slot > div { width: 100%; height: 100%; min-height: 84px; display: grid; justify-items: center; align-content: center; gap: 2px; padding: 6px 4px; border: 1px solid var(--line); background: var(--panel); color: inherit; font: inherit; }
+.strip__slot > button, .strip__slot > div { width: 100%; height: 100%; min-height: 66px; display: grid; justify-items: center; align-content: center; gap: 1px; padding: 5px 4px; border: 1px solid var(--line); background: var(--panel); color: inherit; font: inherit; }
 .strip__slot > button { cursor: pointer; border-color: rgba(224, 163, 59, .55); background: linear-gradient(180deg, rgba(224, 163, 59, .12), var(--panel)); }
 .strip__slot > button:hover, .strip__slot > button[aria-pressed="true"] { border-color: var(--t); }
 .strip__slot.is-next > div { border-style: dashed; border-color: var(--t); }
-.strip__face { width: 40px; height: 40px; overflow: hidden; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--t); background: #0f1419; color: var(--t); font-family: var(--f-head); font-weight: 800; }
+.strip__face { width: 34px; height: 34px; overflow: hidden; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--t); background: #0f1419; color: var(--t); font-family: var(--f-head); font-weight: 800; }
 .strip__face > img, .strip__face > svg:not(.badge) { width: 100%; height: 100%; object-fit: cover; }
 .strip__face--empty { border: 2px dashed #5d6773; background: transparent; color: #8a95a3; }
 .strip__nick { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--f-head); font-weight: 800; font-size: 1rem; line-height: 1.1; color: #fff; }
 .strip__slot > div .strip__nick { font-family: var(--f-body); font-weight: 600; font-size: .85rem; color: var(--muted); }
 .strip__role { display: inline-flex; align-items: center; gap: 3px; font-size: .8rem; font-weight: 700; color: var(--muted); }
-.strip__caption { margin: 0; font-family: var(--f-read); font-size: .9rem; color: #cfd6de; }
+.strip__caption { margin: 0; min-height: 0; font-family: var(--f-read); font-size: .9rem; color: #cfd6de; }
 .strip__caption b { color: var(--t); }
 
 .console__body { padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
@@ -556,7 +557,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 @media (max-width: 520px) {
   .masthead { flex-direction: column-reverse; align-items: stretch; gap: 8px; }
   .utility { flex-wrap: nowrap; justify-content: space-between; }
-  .brand { text-align: center; }
+  .brand { text-align: center; flex: none; }
   .logo::after { margin-inline: auto; background: linear-gradient(90deg, transparent, var(--t), transparent); }
   .logo { font-size: clamp(1.9rem, 9vw, 2.4rem); }
   .hud__org { display: none; }
@@ -632,14 +633,21 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .buy__force { border-color: var(--t); color: var(--t); }
 
 /* ---------- home: daily first (#68) ---------- */
-.home { gap: 12px; }
-.home__daily { display: grid; justify-items: center; gap: 2px; width: min(420px, 100%); padding: 18px 20px; border: 1px solid var(--t); color: #1d1204; background: linear-gradient(180deg, #f2bb55, #d8912a); cursor: pointer; animation: cta-glow 1.6s ease-in-out infinite; }
+.home .daily-meta { color: var(--muted); }
+.home .daily-done { width: min(520px, 100%); }
+.home .daily-meta span:first-child:not(.next-daily) { color: #cfd6de; font-weight: 600; }
+.home { gap: 14px; min-height: 0; padding-block: 8px; }
+.home__daily { display: grid; justify-items: center; gap: 2px; width: min(520px, 100%); padding: 22px 24px; border: 1px solid var(--t); color: #1d1204; background: linear-gradient(180deg, #f2bb55, #d8912a); cursor: pointer; animation: cta-glow 1.6s ease-in-out infinite; }
 .home__daily:hover { filter: brightness(1.08); }
+.home__daily.is-played { color: var(--t); background: transparent; border-color: rgba(224,163,59,.55); animation: none; padding-block: 12px; }
+.home__daily.is-played strong { font-size: 1.2rem; }
+.home__daily.is-played .next-daily { color: var(--muted); }
 .home__daily small { font-family: var(--f-body); font-weight: 700; font-size: .8rem; }
 .home__daily strong { font-family: var(--f-head); font-weight: 800; font-size: 1.7rem; text-transform: uppercase; letter-spacing: .04em; line-height: 1.1; }
 .home__daily span { font-size: .88rem; }
 .home__daily .next-daily { color: #3a2608; }
-.home__cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: min(420px, 100%); }
+.home__cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: min(520px, 100%); }
+.home .modes { width: min(520px, 100%); margin: 0; }
 .home__card { display: grid; gap: 2px; padding: 10px 12px; text-align: left; border: 1px solid var(--line); background: var(--panel); color: #cfd6de; cursor: pointer; }
 .home__card:hover { border-color: var(--t); }
 .home__card.is-on { border-color: var(--t); background: rgba(224,163,59,.12); box-shadow: inset 0 -2px 0 var(--t); }
@@ -783,9 +791,10 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
   .steps span { font-size: .9rem; line-height: 1.4; }
   /* On the very first screen the empty strip would only push the intro and the case down. */
   .page.is-start .strip { display: none; }
-  /* Under the buttons, so a tip never pushes the choice down the screen. */
-  .players-col .tip { order: 5; }
 }
+
+/* Under the players, so a tip never pushes the choice down the screen. */
+.players-col .tip { order: 5; }
 
 /* ---------- desktop layout and typography (#20) ---------- */
 /* While you draft the radar is scenery, so it's small and the cards get the room; in a match it's the picture, so it grows. */
