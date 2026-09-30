@@ -120,7 +120,8 @@ describe('the team review credits the players who played (#177)', () => {
   const run = playWithBench(fresh('free'));
   const mine = G.lineupFromPicks(run.picks);
   const bench = benchLineup(run)!;
-  const subbed = mine[0];
+  // The starter the bench player replaces in every match is the first one drafted (not the first in slot order).
+  const subbed = mine.find((x) => x.player.id === run.picks[0].playerId)!;
   it('rates the bench player and not the starter who never played', () => {
     const ratings = G.seriesRatings(run.t.matches.flatMap((m) => m.maps));
     expect(ratings[bench.player.id]).toBeDefined();

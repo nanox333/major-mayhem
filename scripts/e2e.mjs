@@ -127,6 +127,19 @@ async function run(viewport, tag) {
       if (g === 0 && n === 1) {
         await p.waitForTimeout(3200); await answerBuy();
         await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true });
+        if (tag === 'desk') {
+          // A dialog over the controls holds playback where it is, and it carries on after (#181).
+          await p.locator('.speed button', { hasText: 'Tactical' }).click();
+          const score = () => p.locator('.hud__nums').innerText();
+          await p.locator('.hud-btn--gear').click();
+          await p.waitForSelector('[role="dialog"]');
+          await p.waitForTimeout(400);
+          const before = await score();
+          await p.waitForTimeout(2200);
+          if ((await score()) !== before) throw new Error('playback should wait while a dialog covers the controls');
+          await p.keyboard.press('Escape');
+          await p.locator('.speed button', { hasText: '1×' }).click();
+        }
         if (!(await p.locator('.hud__extra .momentum__bar').count()) || !(await p.locator('.hud__extra .economy__side').count())) throw new Error('the live match should show momentum and the economy of each side (#71)');
         // A tactical timeout shows up in the killfeed and can't be called twice in a half.
         await p.waitForSelector('.calls__timeout:not([disabled])', { timeout: 6000 });
@@ -335,6 +348,8 @@ async function twitch() {
   // Keep the chat connection (it lives in the page): go home and start a new free run there.
   await p.locator('.brand__btn').first().click();
   await p.locator('button.mbtn', { hasText: 'New free play' }).click();
+  // A new run over one that is under way asks first (#182).
+  await p.locator('button', { hasText: 'Replace it' }).click();
   await p.locator('.seg button', { hasText: 'No role labels' }).first().click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.chatvote', { timeout: 8000 });
@@ -602,6 +617,114 @@ async function dataSafety() {
   await p.close();
 }
 
+/**
+ * Keyboard and focus (#179, #180): the whole seven-round draft can be played from the keyboard with focus always on a relevant control, and the game's
+ * keys stay out of an open menu.
+ */
+async function keyboardDraft() {
+  const { p, errs } = await page({ width: 1440, height: 900 }, 'reduce');
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card', { timeout: 8000 });
+  // An open More menu keeps the keyboard: 1 must not jump to a roster behind it (#179).
+  await p.click('[aria-label="More"]');
+  await p.keyboard.press('1');
+  if (!(await p.locator('.menu__panel').count())) throw new Error('pressing 1 should not close the open menu');
+  if (await p.evaluate(() => !!document.activeElement?.closest('.case-card'))) throw new Error('pressing 1 in an open menu should not move focus to a roster');
+  await p.keyboard.press('Escape');
+  if (!(await p.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'More'))) throw new Error('Escape should give focus back to More');
+  const adrift = () => p.evaluate(() => !document.activeElement || document.activeElement === document.body);
+  // Seven rounds: 1, Enter, Enter for each player; Enter on the coach; Open case where focus is put.
+  for (let round = 0; round < 7; round++) {
+    if (round > 0) {
+      if (await adrift()) throw new Error(`focus was lost after round ${round}`);
+      await p.keyboard.press('Enter'); // the Open case button holds focus
+      await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
+      await p.waitForTimeout(250);
+    } else {
+      await p.locator('body').click({ position: { x: 5, y: 300 } });
+    }
+    if (round === 5) {
+      if (!(await p.evaluate(() => document.activeElement?.classList.contains('case-item--coach')))) throw new Error('the coach round should put focus on the first coach');
+      await p.keyboard.press('Enter');
+      continue;
+    }
+    if (round > 0 && round !== 5 && !(await p.evaluate(() => document.activeElement?.classList.contains('prow')))) throw new Error(`round ${round + 1} should put focus on the first player`);
+    if (round === 0) { await p.keyboard.press('1'); await p.waitForFunction(() => document.activeElement?.classList.contains('prow'), null, { timeout: 3000 }); }
+    await p.keyboard.press('Enter');
+    await p.waitForFunction(() => document.activeElement?.classList.contains('cta'), null, { timeout: 3000 }).catch(() => { throw new Error('choosing a player should move focus to the Draft button'); });
+    await p.keyboard.press('Enter');
+    await p.waitForTimeout(250);
+  }
+  if (!(await p.locator('.action-bar .cta--go').count())) throw new Error('a keyboard draft should reach the lobby');
+  if (!(await p.evaluate(() => document.activeElement?.classList.contains('cta--go')))) throw new Error('the lobby should put focus on Find match');
+  console.log('keyboard draft: seven rounds, focus kept, menu respected errors:', errs);
+  if (errs.length) problems.push(`keyboard draft: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
+/**
+ * Protecting a run under way, and yesterday's daily (#182, #183): a start that would replace a run asks first, the same way every time; a daily left
+ * from an earlier day is shown as that day's, apart from today's.
+ */
+async function runGuards() {
+  const ctx = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark', reducedMotion: 'reduce' });
+  await ctx.clock.install({ time: new Date('2026-10-01T10:00:00') });
+  const p = await ctx.newPage();
+  const errs = []; p.on('pageerror', (e) => errs.push(e.message));
+  await p.route('https://fonts.**', (r) => r.fulfill({ body: '' }));
+  await p.route('http://game.local/**', (r) => r.fulfill({ contentType: 'text/html', body: html }));
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  // A free run under way: starting today's daily asks, and keeping it leaves the run alone.
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card');
+  const seed = await p.evaluate(() => JSON.parse(localStorage.getItem('major-mayhem-run-v2')).seed);
+  await p.locator('.brand__btn').first().click();
+  await p.locator('.home__daily').click();
+  await p.waitForSelector('.mcard__ask');
+  if (!/free run/.test(await p.locator('.mcard__ask').innerText())) throw new Error('starting a daily over a free run should say the free run would be replaced');
+  await p.locator('button', { hasText: 'Keep it' }).click();
+  if ((await p.evaluate(() => JSON.parse(localStorage.getItem('major-mayhem-run-v2')).seed)) !== seed) throw new Error('keeping the run should leave it untouched');
+  // Start a daily for the 1st (replacing the free run, confirmed), then let the day roll over.
+  await p.locator('.home__daily').click();
+  await p.locator('button', { hasText: 'Replace it' }).click();
+  await p.waitForSelector('.case-card');
+  await ctx.clock.setSystemTime(new Date('2026-10-02T10:00:00'));
+  await p.reload();
+  await p.waitForSelector('.case-card, .spin-stage');
+  await p.locator('.brand__btn').first().click();
+  await p.waitForSelector('.home3');
+  const old = await p.locator('.mcard__old').innerText();
+  if (!/Daily #4 \(2026-10-01\) is unfinished/.test(old)) throw new Error('an earlier day\'s daily should be shown as that day\'s: ' + old);
+  if (!/#5/.test(await p.locator('.mcard--daily .mcard__title').innerText())) throw new Error('the daily card should be today\'s');
+  if (/Continue today/i.test(await p.locator('.home__daily').innerText())) throw new Error('an earlier day\'s daily must not be offered as today\'s');
+  await p.locator('.home__daily').click();
+  await p.waitForSelector('.mcard__ask');
+  if (!/Daily #4.*abandons it/.test(await p.locator('.mcard__ask').innerText())) throw new Error('starting today should say the old daily would be abandoned');
+  await p.locator('button', { hasText: 'Keep it' }).click();
+  await p.locator('.mcard__old .mbtn').click();
+  await p.waitForSelector('.case-card');
+  console.log('run guards: asks before replacing, old daily shown as its own errors:', errs);
+  if (errs.length) problems.push(`run guards: page errors: ${errs.join(' | ')}`);
+  await ctx.close();
+}
+
+/** The phone draft (#185): each collapsed card says how many of its players fit what you still need, before you open it. */
+async function phoneDraft() {
+  const { p, errs } = await page({ width: 390, height: 844 }, 'reduce');
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card');
+  const sums = await p.$$eval('.case-card__sum', (els) => els.map((e) => e.textContent));
+  if (sums.length !== 3 || !sums.every((x) => /main role|Nobody|you can draft/.test(x))) throw new Error('every collapsed card should summarise its players: ' + JSON.stringify(sums));
+  console.log('phone draft: card summaries ok errors:', errs);
+  if (errs.length) problems.push(`phone draft: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 /** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
@@ -649,6 +772,9 @@ await guessMotion();
 await settingsAndKeys();
 await tips();
 await dataSafety();
+await keyboardDraft();
+await runGuards();
+await phoneDraft();
 await b.close();
 if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
 console.log('OK');

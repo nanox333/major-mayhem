@@ -1625,3 +1625,12 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 .veto-series .is-now { border-color: var(--accent); }
 .buy__skip { margin-top: 8px; }
 @media (max-width: 520px) { .review__facts b { display: block; min-width: 0; } }
+
+
+/* ---------- an unfinished daily from an earlier day (#183) ---------- */
+.mcard__old { display: grid; gap: 8px; padding: 10px 12px; border: 1px dashed var(--accent); border-radius: var(--r-m); background: color-mix(in srgb, var(--accent) 7%, var(--panel)); }
+.mcard__old p { margin: 0; font-family: var(--f-read); font-size: var(--fs-caption); color: var(--text); }
+
+
+/* ---------- phone draft: a summary on each collapsed card (#185) ---------- */
+.case-card__sum { display: block; margin-top: 4px; color: var(--text-2); font-size: var(--fs-caption); line-height: 1.3; }

@@ -1,7 +1,7 @@
 // What the home screen says (#115, #117, #118): which state you are in, the daily countdown, and your best finish.
 // Display only: nothing here changes a run, a save, the simulation or a daily, so there is no rules version.
 import { ACHIEVEMENTS } from './achievements';
-import { Run, dailyDate, draftRounds, roundNumber } from './state';
+import { Run, dailyDate, dailyNumber, draftRounds, roundNumber } from './state';
 import { Stats, statsSections } from './stats';
 
 export type DailyState = 'new' | 'progress' | 'done' | 'abandoned';
@@ -10,6 +10,8 @@ export interface HomeState {
   daily: DailyState;
   /** A free-play run with a case open that isn't finished. */
   freeInProgress: boolean;
+  /** An unfinished daily from an earlier day, which keeps its own date and rules (#183). It is not today's run, and today's state above ignores it. */
+  oldRun: { date: string; n: number } | null;
   /** No record and no run started: the first visit. */
   first: boolean;
 }
@@ -18,18 +20,31 @@ export interface HomeState {
 const inProgress = (run: Run) => run.offerKey > 0 && run.phase !== 'final';
 
 /**
- * Which home you get. A daily run in progress wins (it keeps its own date, so "continue" is right even after midnight);
- * otherwise today's result decides between finished, abandoned and new.
+ * Which home you get. Today's daily is in progress only when the run in progress is today's; a run saved from an earlier day is still resumable, and
+ * is shown as that day's (`oldRun`), apart from today's result, which decides between finished, abandoned and new (#183).
  */
 export function homeState(run: Run, stats: Stats, day: string): HomeState {
   const started = inProgress(run);
-  const dailyRun = started && !!dailyDate(run);
+  const runDate = started ? dailyDate(run) : null;
+  const todays = runDate === day;
   const today = stats.daily[day];
   return {
-    daily: dailyRun ? 'progress' : today ? (today.abandoned ? 'abandoned' : 'done') : 'new',
+    daily: todays ? 'progress' : today ? (today.abandoned ? 'abandoned' : 'done') : 'new',
     freeInProgress: started && run.mode === 'free',
+    oldRun: runDate && !todays ? { date: runDate, n: dailyNumber(runDate) } : null,
     first: statsSections(stats).empty && !started,
   };
+}
+
+/**
+ * What starting another run would throw away, in words, or null when nothing is at risk (#182). Every action that replaces the run asks with this,
+ * so the same situation always gets the same question: a daily that has been opened counts as abandoned, a free run is lost.
+ */
+export function replaceRisk(home: HomeState, run: Run): string | null {
+  if (home.oldRun) return `Daily #${home.oldRun.n} (${home.oldRun.date}) is unfinished. Starting another run abandons it, and it can't be played for a result again.`;
+  if (home.daily === 'progress') return "Today's daily is under way. Starting another run abandons it, and it can't be played for a result again.";
+  if (home.freeInProgress) return `Your free run (${runWhere(run)}) would be replaced by a new one.`;
+  return null;
 }
 
 /** Where a run in progress is, in words: "round 4 of 7", "in the lobby". */

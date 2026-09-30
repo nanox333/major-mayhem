@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROSTERS, Roster } from '../data/rosters';
 import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
-import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, howExpanded, runWhere } from '../game/home';
+import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, howExpanded, replaceRisk, runWhere } from '../game/home';
 import { Action, Run, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
 import { Avatar } from '../ui/art';
@@ -32,7 +32,8 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
   const todayN = dailyNumber(cd.day);
   const home = homeState(s, stats, cd.day);
   const doneToday = stats.daily[cd.day];
-  const [ask, setAsk] = useState(false);
+  // Which start is waiting for an answer to "this would throw away your run" (#182).
+  const [ask, setAsk] = useState<'daily' | 'free' | null>(null);
   const [freeOpen, setFreeOpen] = useState(false);
 
   // At local midnight the page moves on to the new daily by itself, and says so.
@@ -40,11 +41,17 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
   const prevDay = useRef(cd.day);
   useEffect(() => { if (prevDay.current !== cd.day) { prevDay.current = cd.day; setReady(dailyNumber(cd.day)); } }, [cd.day]);
 
-  const playDaily = () => { dispatch({ type: 'reset', mode: 'daily' }); setReelFor(1); dispatch({ type: 'spin' }); showDraft(); };
-  // A free run replaces whatever run there is, so it asks first when that would abandon a daily that has started.
+  // Starting any run replaces the one there is, so it asks first whenever that would throw one away: the same question from every button (#182).
+  const risk = replaceRisk(home, s);
+  const confirmWord = home.oldRun || home.daily === 'progress' ? 'Abandon it and start' : 'Replace it';
+  const playDaily = () => {
+    if (risk && ask !== 'daily') { setAsk('daily'); return; }
+    setAsk(null);
+    dispatch({ type: 'reset', mode: 'daily' }); setReelFor(1); dispatch({ type: 'spin' }); showDraft();
+  };
   const startFree = () => {
-    if (home.daily === 'progress' && !ask) { setAsk(true); return; }
-    setAsk(false);
+    if (risk && ask !== 'free') { setAsk('free'); return; }
+    setAsk(null);
     dispatch({ type: 'reset', mode: 'free' });
     setFreeOpen(true);
   };
@@ -91,6 +98,21 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
             ? <DailyDone d={doneToday} n={todayN} countdown={false} />
             : <p className="mcard__text">{home.daily === 'abandoned' ? "You abandoned today's run, so it has no result. You can still play it; it won't change your record." : home.daily === 'progress' ? 'Your run is waiting. Pick up where you left off.' : 'One draft a day, with the same cases for everyone.'}</p>}
           <div className="mcard__foot">
+            {home.oldRun && (
+              <div className="mcard__old" role="note">
+                <p>Daily #{home.oldRun.n} ({home.oldRun.date}) is unfinished. Today is Daily #{todayN}.</p>
+                <button type="button" className="mbtn" onClick={showDraft}>Continue Daily #{home.oldRun.n}<ArrowRightIcon size={18} /></button>
+              </div>
+            )}
+            {ask === 'daily' && risk && (
+              <div className="mcard__ask" role="alert">
+                <p>{risk}</p>
+                <div className="mcard__ask-btns">
+                  <button type="button" className="ghost-btn ghost-btn--big" onClick={playDaily}>{confirmWord}</button>
+                  <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(null)}>Keep it</button>
+                </div>
+              </div>
+            )}
             <p className="mcard__clock" aria-hidden="true"><small>{panel.label}</small><span className="clock clock--inline">{cd.clock}</span></p>
             <button type="button" className={`cta ${btn.quiet ? 'cta--quiet' : 'cta--orange'} home__daily`} data-sfx="open" onClick={home.daily === 'progress' ? showDraft : playDaily}>
               <span className="cta__main">{btn.action}<ArrowRightIcon size={20} /></span>
@@ -105,12 +127,12 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
           <h2 className="mcard__title" id="mcard-free-h">Free Play</h2>
           <p className="mcard__text">Draft as often as you like, in any era.</p>
           <div className="mcard__foot">
-            {ask && (
+            {ask === 'free' && risk && (
               <div className="mcard__ask" role="alert">
-                <p>Starting free play abandons today's daily, and it can't be played for a result again.</p>
+                <p>{risk}</p>
                 <div className="mcard__ask-btns">
-                  <button type="button" className="ghost-btn ghost-btn--big" onClick={startFree}>Abandon the daily</button>
-                  <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(false)}>Keep it</button>
+                  <button type="button" className="ghost-btn ghost-btn--big" onClick={startFree}>{confirmWord}</button>
+                  <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(null)}>Keep it</button>
                 </div>
               </div>
             )}
@@ -118,7 +140,7 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
             {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}>Continue free play · {runWhere(s)}<ArrowRightIcon size={18} /></button>}
             {freeShown
               ? <button type="button" className="cta cta--orange" data-sfx="open" onClick={openCase}><span className="cta__main">Open case<ArrowRightIcon size={18} /></span></button>
-              : !ask && <button type="button" className="mbtn" onClick={startFree}>{home.freeInProgress ? 'New free play' : 'Start free play'}<ArrowRightIcon size={18} /></button>}
+              : ask !== 'free' && <button type="button" className="mbtn" onClick={startFree}>{home.freeInProgress ? 'New free play' : 'Start free play'}<ArrowRightIcon size={18} /></button>}
           </div>
         </article>
 
