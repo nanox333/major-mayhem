@@ -1039,11 +1039,13 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
 @media (min-width: 861px) {
   .case .teams-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-/* With room for three columns, the lineup and the sidebar frame the case, and the strip above it is not needed. */
+/* With room, the case gets the space (#144): your lineup and the chemistry stack in a narrow column on the left, and the three cards take the rest,
+   about 300px each at 1440 and more on bigger windows. The strip above the case is not needed then. */
 @media (min-width: 1280px) {
-  .console__body.phase-draft { grid-template-columns: 264px minmax(0, 1fr) 288px; }
-  .lineup { display: block; position: sticky; top: 12px; }
-  .draft-side { grid-template-columns: minmax(0, 1fr); position: sticky; top: 12px; }
+  .console__body.phase-draft { grid-template-columns: 272px minmax(0, 1fr); column-gap: 20px; }
+  .console__body.phase-draft > .lineup { display: block; grid-column: 1; grid-row: 1; }
+  .console__body.phase-draft > .console__main { grid-column: 2; grid-row: 1 / span 2; }
+  .console__body.phase-draft > .draft-side { grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 2; }
   .page.is-wide .strip { display: none; }
 }
 .info-btn { width: 22px; height: 22px; margin-left: 6px; padding: 0; border: 1px solid var(--line-2); border-radius: 50%; background: none; color: var(--text-2); font: 700 .8rem var(--f-body); cursor: pointer; vertical-align: middle; }
@@ -1160,3 +1162,76 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
   .foot { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 999px) { .hero__scrim { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 60%, transparent)); } }
+
+
+/* ---------- the case: three cards the same size, and bigger (#144); a player who can only fill a second role says so (#145); the preview (#143) ---------- */
+.case-card { display: flex; flex-direction: column; }
+.case-players { flex: 1; }
+/* The event is pinned to the bottom and always leaves room for two lines, so no card ends earlier than another. */
+.case-card__event { margin-top: auto; padding-top: 4px; min-height: 2.9em; }
+.case .teams-col { align-items: stretch; }
+@media (min-width: 861px) {
+  /* A row is one height whatever it holds: the name, then one line of role, second role, chemistry or the reason it's off. */
+  .prow { height: 66px; grid-template-columns: 46px minmax(0, 1fr); gap: 11px; padding-block: 0; }
+  .prow__face { width: 46px; height: 46px; }
+  .prow__main { gap: 3px; align-content: center; }
+  .prow__meta { flex-wrap: nowrap; overflow: hidden; }
+  .prow__meta > * { flex: none; }
+  .prow__why { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .prow__cc { font-size: .82rem; }
+  .prow__role { font-size: .82rem; }
+  .prow .hint { font-size: .8rem; white-space: nowrap; }
+  .prow__why { font-size: .84rem; }
+  .case-card__name { font-size: 1.6rem; }
+  .case-card { padding: 16px; gap: 12px; }
+}
+.prow__role.is-taken { color: var(--muted); }
+.prow__role.is-taken s { text-decoration-thickness: 2px; }
+.prow__role.is-second { border-style: dashed; border-color: var(--accent); color: var(--accent-hi); }
+.slot-chip.is-taken, .slot-chip.is-taken:hover { border-style: dashed; background: none; color: var(--muted); cursor: not-allowed; }
+.slot-chip.is-taken s { text-decoration-thickness: 2px; }
+
+/* The preview: a ghost row in the slot the player would take, with a dashed accent outline and the word "Preview". */
+.lrow { min-height: 58px; }
+.lrow.is-preview { border: 1px dashed var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--inset)); }
+.lrow.is-preview .lrow__text { grid-column: 2; }
+.lrow.is-preview .lrow__text b { color: var(--text-2); }
+.lrow__pv { flex: none; padding: 0 8px; border: 1px dashed var(--accent); border-radius: 999px; color: var(--accent-hi); font-size: .8rem; font-weight: 700; }
+@media (prefers-reduced-motion: no-preference) { .lrow.is-preview { animation: pv-in .14s ease-out; } }
+@keyframes pv-in { from { opacity: .4; } to { opacity: 1; } }
+/* What it would add to chemistry. It keeps its height whether or not you are pointing at anyone, so nothing below it moves. */
+.chem__if { min-height: 136px; margin-top: 4px; padding-top: 10px; border-top: 1px dashed var(--line-2); display: grid; gap: 6px; align-content: start; }
+.chem__if h4 { margin: 0; color: var(--muted); font-family: var(--f-body); font-size: var(--fs-caption); font-weight: 700; }
+.side-card .chem__total--if { font-size: 1.2rem; }
+
+
+/* ---------- draft screen polish (#146) ---------- */
+/* One spacing scale (4/8/12/16/24) for the gaps between the parts of the screen. */
+.case { gap: 16px; }
+.console__body.phase-draft { gap: 16px; }
+/* Orange is for the one thing to do and the thing you chose: the button, the selected player, the preview and the current step. Not the title, the count or the badges. */
+.console__action { color: var(--strong); }
+.lineup__head span { color: var(--text-2); }
+.lrow__slot { border-color: var(--line-2); color: var(--text-2); }
+.opened__icon { background: var(--inset); border: 1px solid var(--line); color: var(--text-2); }
+/* Two levels of box, not four: the card holds its players as a list with hairlines, and a role is an icon and a word, not a pill in a box. */
+.prow { border-color: transparent; background: transparent; border-radius: var(--r-s); }
+.case-players li + li { border-top: 1px solid var(--line); }
+.case-players { gap: 0; }
+button.prow:hover { background: var(--panel-2); border-color: transparent; }
+.prow.is-sel, button.prow.is-sel:hover { border-color: var(--accent); }
+.prow__role { padding: 0; border: 0; border-radius: 0; background: none; }
+.prow__role.is-second { padding: 1px 8px; border: 1px dashed var(--accent); border-radius: 999px; }
+.prow__role.is-taken { padding: 0; border: 0; }
+/* Nicks are names, not labels: a calmer weight, and the capitals stay on short labels and buttons. */
+.prow__name b, .lrow__text b, .agent__name { font-weight: 700; letter-spacing: 0; }
+/* The sidebar reads: real titles and body text at a comfortable size. */
+.side-card { padding: 16px; gap: 10px; }
+.side-card h3 { font-size: 1.1rem; }
+.side-card p, .side-card .muted.small { font-size: 1rem; }
+.chem__if h4 { font-size: .95rem; }
+/* The main button is clear and proportionate, a step in a flow, and the secondary ones are real buttons. */
+.draftbar .cta { letter-spacing: .06em; font-size: 1.2rem; animation: none; min-width: 240px; padding-block: .7rem; }
+.reroll-row .ghost-btn, .ghost-btn--big { border-color: var(--control); color: var(--strong); }
+.reroll-row .ghost-btn:hover:not(:disabled) { border-color: var(--accent); }
+@media (max-width: 860px) { .chem__if { min-height: 0; } }

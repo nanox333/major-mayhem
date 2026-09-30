@@ -1,16 +1,16 @@
 import React from 'react';
-import { Chemistry, draftHint, liveChemistry } from '../game/draftui';
-import { Run, dailyDate, dailyNumber, optsLabel } from '../game/state';
+import { Chemistry, Preview, draftHint, liveChemistry } from '../game/draftui';
+import * as G from '../game/logic';
+import { Run } from '../game/state';
 import { strength } from '../game/synergy';
-import { CheckIcon } from './icons';
+import { Sr } from './art';
 
 /** The sidebar beside the case while you draft (#107, #108, #109): the mode, live chemistry, and a hint. All of it is built from your picks and the open slots, never from ratings. */
-export function DraftSidebar({ s, onChemistryHelp }: { s: Run; /** Opens the help on its Chemistry topic. */ onChemistryHelp: () => void }) {
+export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Opens the help on its Chemistry topic. */ onChemistryHelp: () => void; preview?: Preview | null }) {
   const chem = liveChemistry(s.picks, s.coach, !!s.opts?.hard);
   return (
     <aside className="draft-side" aria-label="Draft details">
-      <ModeCard s={s} />
-      <ChemistryCard chem={chem} onHelp={onChemistryHelp} />
+      <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
       <section className="side-card hint-card" aria-labelledby="hint-h">
         <h3 id="hint-h">Draft hint</h3>
         <p>{draftHint(s)}</p>
@@ -19,25 +19,8 @@ export function DraftSidebar({ s, onChemistryHelp }: { s: Run; /** Opens the hel
   );
 }
 
-/** The current mode, read only: switching restarts the run, so it goes through New run in the menu. */
-function ModeCard({ s }: { s: Run }) {
-  const date = dailyDate(s);
-  const tags = optsLabel(s.opts);
-  const [name, note] = s.duel ? ['Draft duel', `Against ${s.duel.name}. You open the same cases they did.`]
-    : date ? ['Daily Challenge', `Daily #${dailyNumber(date)}: one draft a day, and everyone gets the same cases.`]
-      : ['Free play', tags.length ? tags.join(' · ') : 'Any era, any team, as many drafts as you like.'];
-  return (
-    <section className="side-card" aria-labelledby="mode-h">
-      <h3 id="mode-h">Game mode</h3>
-      <p className="mode-now"><CheckIcon size={16} /> <b>{name}</b></p>
-      <p className="muted small">{note}</p>
-      <p className="muted small">To change it, start a new run from the menu.</p>
-    </section>
-  );
-}
-
 /** Chemistry as the list of links behind it, with one word for the total. The pips are decoration; the word and the list carry it. */
-function ChemistryCard({ chem, onHelp }: { chem: Chemistry; onHelp: () => void }) {
+function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () => void; preview: Preview | null }) {
   return (
     <section className="side-card chem" aria-labelledby="chem-h">
       <h3 id="chem-h">Team chemistry <button type="button" className="info-btn" onClick={onHelp} aria-label="What is team chemistry? Opens the help" title="What is this?" data-sfx="none">?</button></h3>
@@ -53,6 +36,39 @@ function ChemistryCard({ chem, onHelp }: { chem: Chemistry; onHelp: () => void }
           ))}
         </ul>
       ) : <p className="muted small">No links yet. Players from the same country, org or era build chemistry.</p>}
+      <ChemIf preview={preview} />
     </section>
+  );
+}
+
+/**
+ * What the player you are pointing at would add (#143): the word before and after, and the links behind the change, as text with a mark.
+ * The panel keeps its height whether or not you are pointing at anyone, so nothing below it moves.
+ */
+function ChemIf({ preview }: { preview: Preview | null }) {
+  const pv = preview?.chem ?? null;
+  const roster = preview ? G.rosterById.get(preview.rosterId) : undefined;
+  const who = roster && preview ? (preview.coach ?? roster.players.find((p) => p.id === preview.playerId)?.nick ?? '') : '';
+  return (
+    <div className="chem__if">
+      {!pv ? <p className="muted small">Point at a player to see what they would add.</p> : (
+        <>
+          <h4>If you draft {who}</h4>
+          <p className="chem__total chem__total--if">
+            {pv.before === pv.after
+              ? <><b>{pv.after}</b><span className="muted small"> no change</span></>
+              : <><b>{pv.before}</b><span aria-hidden="true"> → </span><Sr> to </Sr><b>{pv.after}</b></>}
+          </p>
+          {pv.added.length + pv.removed.length > 0 && (
+            <ul className="synergies">
+              {pv.added.map((x) => <li key={x.label} className={`syn syn--${x.kind} ${x.value < 0 ? 'is-bad' : ''}`}><b>{strength(x.value)}</b><span>{x.label}</span></li>)}
+              {pv.removed.map((x) => <li key={`-${x.label}`} className="syn is-bad"><b>−</b><span>Loses {x.label}</span></li>)}
+            </ul>
+          )}
+          {pv.capped && <p className="muted small">Already at maximum: this link adds nothing more.</p>}
+          {!pv.added.length && !pv.removed.length && <p className="muted small">No new links.</p>}
+        </>
+      )}
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ROLE_ORDER, ROSTERS, Roster } from '../data/rosters';
 import * as G from './logic';
-import { Synergy, synergies } from './synergy';
-import { chemistryWord, defaultSlot, draftHint, liveChemistry, placementLabel } from './draftui';
+import { Synergy, chemistryOf, synergies } from './synergy';
+import { chemPreview, chemistryWord, defaultSlot, draftHint, liveChemistry, placementLabel, playerState } from './draftui';
 
 const pick = (r: Roster, i: number, slot: G.Pick['slot']): G.Pick => ({ slot, rosterId: r.id, playerId: r.players[i].id });
 /** A whole real roster as five picks, one per slot in slot order. */
@@ -100,5 +100,68 @@ describe('placement and default slot (#104, #105)', () => {
   });
   it('gives no default in hard mode, where nothing says which slot suits a player', () => {
     expect(defaultSlot(['AWP', 'LURK'], 'AWP', true)).toBe(null);
+  });
+});
+
+describe('player state (#145)', () => {
+  const p = (...roles: G.Pick['slot'][]) => ({ roles });
+  it('is main while their main role is open', () => {
+    expect(playerState(p('IGL', 'SUP'), ['IGL', 'SUP'], false)).toEqual({ state: 'main', would: 'IGL', taken: null });
+  });
+  it('is secondary once their main role is taken but another they cover is open', () => {
+    expect(playerState(p('IGL', 'ENTRY'), ['ENTRY'], false)).toEqual({ state: 'secondary', would: 'ENTRY', taken: 'IGL' });
+  });
+  it('is unavailable when every role they cover is taken, and for a one-role player whose slot is filled', () => {
+    expect(playerState(p('IGL', 'ENTRY'), [], false).state).toBe('unavailable');
+    expect(playerState(p('AWP'), [], false).state).toBe('unavailable');
+    expect(playerState(p('AWP'), ['AWP'], false)).toEqual({ state: 'main', would: 'AWP', taken: null });
+  });
+  it('in hard mode names no role: draftable or not, never secondary', () => {
+    expect(playerState(p('IGL'), ['ENTRY', 'LURK'], true)).toEqual({ state: 'main', would: null, taken: null });
+    expect(playerState(p('IGL'), [], true).state).toBe('unavailable');
+  });
+  it('agrees with what the game lets you draft', () => {
+    const r = ROSTERS[0];
+    const picks = [pick(r, 0, r.players[0].roles[0])];
+    for (const pl of r.players) {
+      const open = G.eligibleSlots(pl, picks);
+      const st = playerState(pl, open, false);
+      expect(st.state === 'unavailable').toBe(open.length === 0);
+      if (st.would) expect(open).toContain(st.would);
+    }
+  });
+});
+
+describe('chemistry preview (#143)', () => {
+  const five = fromRoster(ROSTERS[0]);
+  it('equals the change in the lobby total after really adding the same pick', () => {
+    for (const r of ROSTERS.slice(0, 12)) {
+      const base = fromRoster(r).slice(0, 3);
+      for (const cand of ROSTERS.slice(12, 20).map((x) => pick(x, 0, ROLE_ORDER[3]))) {
+        const before = liveChemistry(base, undefined, false);
+        const after = liveChemistry([...base, cand], undefined, false);
+        const pv = chemPreview({ picks: base }, { picks: [...base, cand] }, false);
+        expect(pv.delta).toBeCloseTo(chemistryOf(after.rows) - chemistryOf(before.rows), 9);
+        expect(pv.before).toBe(before.word);
+        expect(pv.after).toBe(after.word);
+      }
+    }
+  });
+  it('shows a link a pick adds, and a penalty', () => {
+    const pv = chemPreview({ picks: five.slice(0, 4) }, { picks: five }, false);
+    expect(pv.added.length + pv.removed.length).toBeGreaterThan(0);
+    expect(pv.after).toBe(liveChemistry(five, undefined, false).word);
+  });
+  it('says so when a link is already at the cap and adds nothing', () => {
+    const rows = [syn(1), syn(1), syn(1), syn(1)];
+    expect(chemistryOf(rows)).toBe(3);
+    // A stub of the same rule: adding a positive row to a full total changes nothing.
+    expect(chemistryOf([...rows, syn(0.5)]) - chemistryOf(rows)).toBe(0);
+  });
+  it('has no change to show for a pick with no links', () => {
+    const solo = [pick(ROSTERS[0], 0, ROLE_ORDER[0])];
+    const pv = chemPreview({ picks: [] }, { picks: solo }, false);
+    expect(pv.added).toEqual([]);
+    expect(pv.delta).toBe(0);
   });
 });

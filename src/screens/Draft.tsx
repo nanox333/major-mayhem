@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
-import { defaultSlot, placementLabel } from '../game/draftui';
+import { ChemPreview, Preview, chemPreview, defaultSlot, placementLabel, playerState } from '../game/draftui';
 import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, poolCheck, roundOf, slotsFor, today } from '../game/state';
 import { Stats, dailyStreak } from '../game/stats';
 import { REACHED } from './Stats';
@@ -18,8 +18,10 @@ import { HowSteps, Tip, useTipSeen } from '../ui/tips';
 import { CaseIcon, ChevronDownIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
 import { DailyDone, ModePicker } from './Modes';
 
-export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
+export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
+  /** Tells the lineup and the chemistry panel which player or coach you are pointing at (#143). */
+  onPreview: (p: Preview | null) => void;
 }) {
   if (s.step === 'spin') {
     const open = G.openSlots(s.picks);
@@ -56,7 +58,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
   }
   if (s.step === 'teams') {
     if (reelFor === s.offerKey && !reduceMotion()) return <CaseReel land={s.offer[0]} onDone={() => setReelFor(null)} />;
-    return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <CaseCards s={s} dispatch={dispatch} />;
+    return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} onPreview={onPreview} /> : <CaseCards s={s} dispatch={dispatch} onPreview={onPreview} />;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
 }
@@ -142,8 +144,14 @@ function Placement({ roster }: { roster: Roster }) {
 }
 
 /** The coach round: three coaches, each shown with the Major they coached at. */
-function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
+function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void }) {
   const { out, reroll } = useReroll(dispatch);
+  useEffect(() => () => onPreview(null), []);
+  const pointAt = (id: string | null) => {
+    if (!id) return onPreview(null);
+    const c = G.rosterById.get(id)!.coach!;
+    onPreview({ slot: 'coach', rosterId: id, coach: c, chem: chemPreview({ picks: s.picks, coach: s.coach }, { picks: s.picks, coach: c }, !!s.opts?.hard) });
+  };
   const drafted = s.picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
   useChatVote(`coach-${s.offerKey}-${s.rerollKey}`, s.offer.map((id) => { const c = G.rosterById.get(id)!.coach!; return { id, label: c, aliases: [c] }; }),
     (id) => dispatch({ type: 'coach', rosterId: id }));
@@ -155,7 +163,8 @@ function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action
           const r = G.rosterById.get(id)!;
           const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
           return (
-            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}>
+            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}
+              onMouseEnter={() => pointAt(id)} onMouseLeave={() => pointAt(null)} onFocus={() => pointAt(id)} onBlur={() => pointAt(null)}>
               <div className="case-item__top">
                 <TeamBadge roster={r} size={44} />
                 <div className="case-item__id">
@@ -180,7 +189,7 @@ type Chosen = { r: Roster; p: Player };
  * The case (#102 to #105): three team cards with all fifteen players in view. Pick a player, see the slot and what it means, then draft.
  * It drafts through the same two steps as before (open the team, then draft the player), so a seed plays out exactly as it did.
  */
-function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
+function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void }) {
   const { out, reroll } = useReroll(dispatch);
   const bench = roundOf(s) === 'bench';
   const hard = !!s.opts?.hard;
@@ -189,11 +198,24 @@ function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }
   const can = (p: Player) => (bench ? !taken.has(p.id) : slotsFor(s, p).length > 0);
   const [sel, setSel] = useState<Chosen | null>(null);
   const [slot, setSlot] = useState<Role | null>(null);
+  // Pointing at a player (mouse or keyboard) previews them; pressing one keeps the preview until you draft or pick someone else (#143).
+  const [hov, setHov] = useState<Chosen | null>(null);
   // On a phone one card is open at a time, so all three fit on the screen; on wider screens every card is open.
   const phone = useMedia('(max-width: 860px)');
   const [openId, setOpenId] = useState<string | null>(s.offer[0] ?? null);
   // A new case, or a spin again, clears the choice.
-  useEffect(() => { setSel(null); setSlot(null); setOpenId(s.offer[0] ?? null); }, [s.offerKey, s.rerollKey]);
+  useEffect(() => { setSel(null); setSlot(null); setHov(null); setOpenId(s.offer[0] ?? null); }, [s.offerKey, s.rerollKey]);
+
+  const cand = hov ?? sel;
+  const isSel = !!cand && !!sel && cand.p.id === sel.p.id;
+  const candSlot: Role | 'bench' | null = !cand ? null : bench ? 'bench' : isSel ? slot : defaultSlot(slotsFor(s, cand.p), cand.p.roles[0], hard);
+  const chem: ChemPreview | null = useMemo(() => {
+    if (!cand || bench) return null;
+    const use = candSlot && candSlot !== 'bench' ? candSlot : slotsFor(s, cand.p)[0];
+    return use ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot: use, rosterId: cand.r.id, playerId: cand.p.id }], coach: s.coach }, hard) : null;
+  }, [cand?.p.id, candSlot, s.picks.length]);
+  useEffect(() => { onPreview(cand ? { slot: candSlot, rosterId: cand.r.id, playerId: cand.p.id, chem } : null); }, [cand?.p.id, candSlot, chem]);
+  useEffect(() => () => onPreview(null), []);
 
   const choose = (c: Chosen) => { setSel(c); setOpenId(c.r.id); setSlot(bench ? null : defaultSlot(slotsFor(s, c.p), c.p.roles[0], hard)); };
   const draft = () => {
@@ -227,7 +249,7 @@ function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }
           const expanded = !phone || openId === id;
           const top = (
             <>
-              <TeamBadge roster={r} size={phone ? 44 : 56} />
+              <TeamBadge roster={r} size={phone ? 44 : 68} />
               <div className="case-card__id">
                 <h3 className="case-card__name">{r.org}</h3>
                 <div className="case-card__meta"><span>{r.year}</span><Placement roster={r} /></div>
@@ -244,25 +266,31 @@ function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }
                   const ok = can(p);
                   const on = sel?.r.id === id && sel.p.id === p.id;
                   const hints = !hard && ok && !bench ? draftHints(drafted, p) : [];
+                  const st = bench ? { state: ok ? 'main' : 'unavailable', would: null, taken: null } as const : playerState(p, slotsFor(s, p), hard);
                   const body = (
                     <>
                       <span className="prow__face"><Avatar player={p} roster={r} /></span>
                       <span className="prow__main">
                         <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}>{p.country}</em></span>
-                        {(!hard || hints.length > 0) && (
-                          <span className="prow__meta">
-                            {!hard && <span className="prow__role" title="Main role"><RoleIcon role={p.roles[0]} size={13} /> <Sr>Main role: </Sr>{ROLE_SHORT[p.roles[0]]}</span>}
-                            {hints.map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}><i aria-hidden="true">{h.good ? '+' : '−'}</i> <Sr>{h.good ? 'Bonus: ' : 'Penalty: '}</Sr>{h.text}</span>)}
-                          </span>
-                        )}
-                        {!ok && <small className="prow__why" title={unavailableReason(p, s, taken)}>{rowReason(p, s, taken)}</small>}
+                        <span className="prow__meta">
+                          {!ok && <small className="prow__why" title={unavailableReason(p, s, taken)}>{rowReason(p, s, taken)}</small>}
+                          {ok && !hard && st.state === 'main' && <span className="prow__role" title="Main role"><RoleIcon role={p.roles[0]} size={13} /> <Sr>Main role: </Sr>{ROLE_SHORT[p.roles[0]]}</span>}
+                          {ok && !hard && st.state === 'secondary' && (
+                            <>
+                              <span className="prow__role is-taken" title={`${ROLE_LABEL[st.taken]} is already filled`}><RoleIcon role={st.taken} size={13} /> <s>{ROLE_SHORT[st.taken]}</s> taken<Sr>: {ROLE_LABEL[st.taken]}, their main role, is already filled. </Sr></span>
+                              <span className="prow__role is-second" title={`Would play ${ROLE_LABEL[st.would]} as a second role`}><RoleIcon role={st.would} size={13} /> {ROLE_SHORT[st.would]} 2nd role<Sr>: would play {ROLE_LABEL[st.would]} as a second role. </Sr></span>
+                            </>
+                          )}
+                          {hints.map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}><i aria-hidden="true">{h.good ? '+' : '−'}</i> <Sr>{h.good ? 'Bonus: ' : 'Penalty: '}</Sr>{h.text}</span>)}
+                        </span>
                       </span>
                     </>
                   );
                   return (
                     <li key={p.id}>
                       {ok
-                        ? <button type="button" className={`prow ${on ? 'is-sel' : ''}`} aria-pressed={on} data-sfx="select" onClick={() => choose({ r, p })}>{body}</button>
+                        ? <button type="button" className={`prow ${on ? 'is-sel' : ''} ${st.state === 'secondary' ? 'is-second' : ''}`} aria-pressed={on} data-sfx="select" onClick={() => choose({ r, p })}
+                          onMouseEnter={() => setHov({ r, p })} onMouseLeave={() => setHov(null)} onFocus={() => setHov({ r, p })} onBlur={() => setHov(null)}>{body}</button>
                         : <div className="prow is-off">{body}</div>}
                     </li>
                   );
@@ -273,7 +301,7 @@ function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }
           );
         })}
       </div>
-      <span className="sr" role="status">{sel ? `${sel.p.nick} selected. Choose a slot, then draft.` : ''}</span>
+      <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
       {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
       <SpinAgain s={s} reroll={reroll} />
     </div>
@@ -284,11 +312,17 @@ function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }
 function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel: Chosen; slot: Role | null; setSlot: (r: Role) => void; bench: boolean; hard: boolean; onDraft: () => void }) {
   const slots = bench ? [] : slotsFor(s, sel.p);
   const nick = sel.p.nick;
+  const st = bench ? null : playerState(sel.p, slots, hard);
   return (
     <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
       <p className="draftbar__who"><b>{nick}</b> <span>{sel.r.org} {sel.r.year}</span></p>
       {slots.length > 0 && (
         <div className="draftbar__slots" role="group" aria-label={`Slot for ${nick}`}>
+          {!hard && st?.state === 'secondary' && (
+            <button type="button" disabled className="slot-chip slot-chip--draft is-taken" aria-label={`${ROLE_LABEL[st.taken]}: already filled`}>
+              <span><RoleIcon role={st.taken} size={12} /> <s>{ROLE_SHORT[st.taken]}</s></span><small className="fit">already filled</small>
+            </button>
+          )}
           {slots.map((sl) => {
             const note = G.fitNote(sel.p, sl);
             return (

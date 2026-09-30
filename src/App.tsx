@@ -13,6 +13,7 @@ import { DraftSidebar } from './ui/DraftSidebar';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
+import { Preview } from './game/draftui';
 import { ReadyScreen } from './screens/Lobby';
 import { LiveScreen, PreviewScreen } from './screens/Match';
 import { FinalScreen } from './screens/Final';
@@ -40,6 +41,8 @@ function Game() {
   const [twitch, setTwitch] = useState(false);
   const [stats, setStats] = useState(loadStats);
   const [reelFor, setReelFor] = useState<number | null>(null);
+  // The player or coach you are pointing at in the case, previewed in the lineup and the chemistry panel (#143).
+  const [preview, setPreview] = useState<Preview | null>(null);
   // A challenge link (#duel=…) opens an invite; the hash is cleared so a reload doesn't ask again.
   const [invite, setInvite] = useState<{ duel: Duel | null } | null>(() => {
     const code = typeof location !== 'undefined' ? duelCode(location.hash) : null;
@@ -108,16 +111,16 @@ function Game() {
         {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${view === 'guess' ? 'guess' : s.phase}`}>
-          {drafting && <LineupPanel s={s} />}
+          {drafting && <LineupPanel s={s} preview={preview} />}
           {view === 'guess' ? <section className="console__main"><GuessScreen /></section> : <section className="console__main">
             <ChatVoteBar />
-            {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} />}
+            {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onPreview={setPreview} />}
             {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
             {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>}
-          {drafting && <DraftSidebar s={s} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
+          {drafting && <DraftSidebar s={s} preview={preview} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
           {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
       </main>}

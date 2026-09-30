@@ -79,3 +79,51 @@ export function defaultSlot(slots: Role[], main: Role, hard: boolean): Role | nu
   if (hard || !slots.length) return null;
   return slots.includes(main) ? main : slots[0];
 }
+
+/**
+ * What a player is to you right now (#145): drafted into their main role, only into a second role because their main one is taken,
+ * or not at all. One function, so the row, the preview, the confirm panel and the Twitch vote can't disagree.
+ * `open` is the slots they could fill now (`slotsFor`). Hard mode has no roles to name: a player is either draftable or not.
+ */
+export type PlayerState =
+  | { state: 'main'; would: Role | null; taken: null }
+  | { state: 'secondary'; would: Role; taken: Role }
+  | { state: 'unavailable'; would: null; taken: null };
+export function playerState(p: { roles: Role[] }, open: Role[], hard: boolean): PlayerState {
+  if (!open.length) return { state: 'unavailable', would: null, taken: null };
+  if (hard) return { state: 'main', would: null, taken: null };
+  if (open.includes(p.roles[0])) return { state: 'main', would: p.roles[0], taken: null };
+  return { state: 'secondary', would: open[0], taken: p.roles[0] };
+}
+
+/** What one more pick (or a coach) does to chemistry (#143): the word before and after, the links it adds and removes, and the size of the change. */
+export interface ChemPreview {
+  before: ChemistryWord;
+  after: ChemistryWord;
+  added: Synergy[];
+  removed: Synergy[];
+  /** The change in the chemistry total the lobby uses (`chemistryOf`): what drafting this pick would really do. */
+  delta: number;
+  /** A link that would count, but the total is already at its cap, so it adds nothing. */
+  capped: boolean;
+}
+export function chemPreview(before: { picks: G.Pick[]; coach?: string | null }, after: { picks: G.Pick[]; coach?: string | null }, hard: boolean): ChemPreview {
+  const a = liveChemistry(before.picks, before.coach, hard);
+  const b = liveChemistry(after.picks, after.coach, hard);
+  const same = (x: Synergy, y: Synergy) => x.label === y.label && x.value === y.value;
+  const added = b.rows.filter((x) => !a.rows.some((y) => same(x, y)));
+  const removed = a.rows.filter((x) => !b.rows.some((y) => y.label === x.label));
+  const delta = chemistryOf(b.rows) - chemistryOf(a.rows);
+  const capped = added.some((x) => x.value > 0) && !added.some((x) => x.value < 0) && delta < 1e-9;
+  return { before: a.word, after: b.word, added, removed, delta, capped };
+}
+
+/** The lineup slot a preview sits in: a role, 'coach' or 'bench'. */
+export interface Preview {
+  slot: string | null;
+  rosterId: string;
+  /** Set for a player; a coach has only the roster they coached at. */
+  playerId?: string;
+  coach?: string;
+  chem: ChemPreview | null;
+}
