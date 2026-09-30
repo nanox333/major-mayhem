@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS } from './achievements';
-import { achievementCount, bestFinish, clockText, dailyButton, dailyPanel, homeState, howExpanded, msUntilMidnight, runWhere, spokenLeft } from './home';
+import { achievementCount, bestFinish, clockText, dailyButton, dailyPanel, homeState, howExpanded, msUntilMidnight, replaceRisk, runWhere, spokenLeft } from './home';
 import { fresh, reducer } from './state';
 import { emptyStats } from './stats';
 
@@ -9,15 +9,31 @@ const started = (mode: 'daily' | 'free', date = DAY) => reducer(fresh(mode, mode
 
 describe('the home you get (#115)', () => {
   it('is the first visit with no record and no run', () => {
-    expect(homeState(fresh('daily', DAY), emptyStats(), DAY)).toEqual({ daily: 'new', freeInProgress: false, first: true });
+    expect(homeState(fresh('daily', DAY), emptyStats(), DAY)).toEqual({ daily: 'new', freeInProgress: false, oldRun: null, first: true });
   });
   it('is a daily in progress once a case is open', () => {
     const h = homeState(started('daily'), emptyStats(), DAY);
     expect(h.daily).toBe('progress');
     expect(h.first).toBe(false);
   });
-  it('keeps a daily in progress after midnight, because it carries its own date', () => {
-    expect(homeState(started('daily', DAY), emptyStats(), '2026-10-02').daily).toBe('progress');
+  it('shows a saved daily from an earlier day as that day, and not as today (#183)', () => {
+    const h = homeState(started('daily', DAY), emptyStats(), '2026-10-02');
+    expect(h.daily).toBe('new');
+    expect(h.oldRun).toEqual({ date: DAY, n: 4 });
+    expect(homeState(started('daily', DAY), emptyStats(), DAY).oldRun).toBeNull();
+    // Today's result still decides today's state, whatever the old run is.
+    const done = { ...emptyStats(), runs: 1, daily: { '2026-10-02': { placement: 'Champions', reached: 4, mvp: 'x', grade: 0.9 } } };
+    expect(homeState(started('daily', DAY), done, '2026-10-02')).toMatchObject({ daily: 'done', oldRun: { date: DAY } });
+  });
+  it('says what starting another run would throw away, the same way for every entry point (#182)', () => {
+    const none = homeState(fresh('free'), emptyStats(), DAY);
+    expect(replaceRisk(none, fresh('free'))).toBeNull();
+    const old = homeState(started('daily', DAY), emptyStats(), '2026-10-02');
+    expect(replaceRisk(old, started('daily', DAY))).toMatch(/Daily #4 \(2026-10-01\) is unfinished.*abandons it/);
+    const today = homeState(started('daily', DAY), emptyStats(), DAY);
+    expect(replaceRisk(today, started('daily', DAY))).toMatch(/Today's daily is under way/);
+    const free = started('free');
+    expect(replaceRisk(homeState(free, emptyStats(), DAY), free)).toMatch(/free run \(round 1 of 7\) would be replaced/);
   });
   it('shows today finished or abandoned from the stats', () => {
     const done = { ...emptyStats(), runs: 1, daily: { [DAY]: { placement: 'Champions', reached: 4, mvp: 'donk', grade: 0.9 } } };
@@ -99,7 +115,7 @@ describe('the daily countdown (#117)', () => {
 
 describe('the daily card and panel say different things (#150)', () => {
   const done = { placement: 'Semifinals' };
-  const st = (daily: 'new' | 'progress' | 'done' | 'abandoned') => ({ daily, freeInProgress: false, first: false });
+  const st = (daily: 'new' | 'progress' | 'done' | 'abandoned') => ({ daily, freeInProgress: false, oldRun: null, first: false });
   it('starts as a plain countdown', () => {
     expect(dailyPanel(st('new'), 3, fresh('daily', DAY))).toMatchObject({ title: "Today's daily", label: 'Ends in', note: null, rule: null, progress: null });
     expect(dailyButton(st('new'), fresh('daily', DAY))).toEqual({ action: "Start today's run", sub: null, quiet: false });

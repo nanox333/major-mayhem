@@ -125,14 +125,18 @@ function Game() {
     Enter: () => { const b = document.querySelector<HTMLButtonElement>('.draftbar .cta'); if (b && !b.disabled) b.click(); },
   }, !!(help || showStats || twitch || settings || invite || browse));
   const goNext = () => {
-    // Once today's pro is found, one button for what to do next: the daily draft if it isn't done, else free play (#129).
+    // Once today's pro is found, one button for what to do next (#129). A run that is already under way is continued, never replaced from here (#182):
+    // an earlier day's daily, today's, or a free run. Only with nothing under way does it start today's draft, or free play when the daily is done.
     const h = homeState(s, stats, today());
-    if (h.daily === 'progress') return setView('draft');
+    if (h.oldRun || h.daily === 'progress' || h.freeInProgress) return setView('draft');
     if (h.daily === 'new') { dispatch({ type: 'reset', mode: 'daily' }); setReelFor(1); dispatch({ type: 'spin' }); return setView('draft'); }
     dispatch({ type: 'reset', mode: 'free' }); setReelFor(1); dispatch({ type: 'spin' }); setView('draft');
   };
   const hs = homeState(s, stats, today());
-  const guessNext = { label: hs.daily === 'progress' ? "Continue today's draft" : hs.daily === 'new' ? "Play today's draft" : 'Free play', go: goNext };
+  const guessNext = {
+    label: hs.oldRun ? `Continue Daily #${hs.oldRun.n}` : hs.daily === 'progress' ? "Continue today's draft" : hs.freeInProgress ? 'Continue your free run' : hs.daily === 'new' ? "Play today's draft" : 'Free play',
+    go: goNext,
+  };
 
   // The radar is scenery while you draft, so it leaves the draft screen; the lobby and the match keep it (#102).
   const showBoard = s.phase !== 'final' && s.phase !== 'draft' && s.phase !== 'live' && view === 'draft';

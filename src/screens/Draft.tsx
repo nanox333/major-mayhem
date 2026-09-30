@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
 import { ChemPreview, Preview, chemPreview, defaultSlot, placementLabel, playerState, sameCandidate } from '../game/draftui';
-import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, poolCheck, roundOf, slotsFor, today } from '../game/state';
+import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, draftRounds, poolCheck, roundNumber, roundOf, slotsFor, today } from '../game/state';
 import { Stats, dailyStreak } from '../game/stats';
 import { REACHED } from './Stats';
 import { pageUrl } from '../game/share';
@@ -19,8 +19,25 @@ import { CaseIcon, ChevronDownIcon, MedalIcon, RefreshIcon, TrophyIcon } from '.
 import { DailyDone, ModePicker } from './Modes';
 import { usePrefs } from '../ui/prefs';
 import { RosterBrowser } from '../ui/RosterBrowser';
+import { ArrivalFocus } from '../ui/ArrivalFocus';
 
-export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
+/**
+ * The draft (#180): the stage for the round, with a short announcement of where you are for a screen reader each time it changes, and keyboard focus
+ * handed on to the next decision when a screen replaces the one you were on.
+ */
+export function DraftScreen(props: { s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onPreview: (p: Preview | null) => void }) {
+  const s = props.s;
+  const round = roundOf(s);
+  const what = s.step === 'spin' ? 'open the case' : round === 'coach' ? 'pick a coach' : round === 'bench' ? 'pick a bench player' : 'pick a player';
+  return (
+    <>
+      <span className="sr" role="status">{`Round ${roundNumber(s)} of ${draftRounds(s)}: ${what}.`}</span>
+      <DraftStage {...props} />
+    </>
+  );
+}
+
+function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
   /** Tells the lineup and the chemistry panel which player or coach you are pointing at (#143). */
   onPreview: (p: Preview | null) => void;
@@ -54,6 +71,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onPreview
           </p>
         )}
         <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button></div>
+        <ArrivalFocus selector=".spin-stage .cta" />
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'daily' && (
           <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
         )}
@@ -183,6 +201,7 @@ function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Disp
     (id) => dispatch({ type: 'coach', rosterId: id }));
   return (
     <div className="case">
+      <ArrivalFocus selector=".case-item--coach" />
       <OpenedCase>Three coaches from Major history. Pick one to lead your team.</OpenedCase>
       <div className={`teams-col ${out ? 'is-out' : ''}`}>
         {s.offer.map((id, i) => {
@@ -276,6 +295,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
 
   return (
     <div className="case">
+      <ArrivalFocus selector=".case-card button.prow" />
       <OpenedCase>{bench ? 'Three iconic rosters. Pick anyone, any role, for your bench.' : 'Three iconic rosters. Pick one player to add to your lineup.'}</OpenedCase>
       {!bench && (hard
         ? <Tip id="fit" title="Hard mode" anchor="left">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
@@ -290,6 +310,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
               <div className="case-card__id">
                 <h3 className="case-card__name">{r.org}</h3>
                 <div className="case-card__meta"><span>{r.year}</span><Placement roster={r} /></div>
+                {phone && <small className="case-card__sum">{cardSummary(r, s, taken, bench, hard)}</small>}
               </div>
             </>
           );
@@ -481,3 +502,17 @@ function unavailableReason(p: Roster['players'][number], s: Run, drafted: Set<st
 /** Opens the roster-data issue form with this roster filled in (#13). */
 const reportUrl = (r: { org: string; year: number; event: string }) =>
   `https://github.com/nanox333/major-mayhem/issues/new?template=roster_data.yml&roster=${encodeURIComponent(`${r.org} ${r.year} (${r.event})`)}`;
+
+/**
+ * What a roster card can tell you before you open it, on a phone (#185): how many of its players can fill a slot you still need, how many of those in
+ * their main role and how many as a second role, and how many are already on your team. Counts only: no ratings, and in hard mode no roles.
+ */
+function cardSummary(r: Roster, s: Run, taken: Set<string>, bench: boolean, hard: boolean): string {
+  const open = r.players.filter((p) => (bench ? !taken.has(p.id) : slotsFor(s, p).length > 0));
+  const have = r.players.filter((p) => taken.has(p.id)).length;
+  if (hard || bench) return `${open.length} you can draft${have ? ` · ${have} already yours` : ''}`;
+  const main = open.filter((p) => slotsFor(s, p).includes(p.roles[0])).length;
+  const second = open.length - main;
+  const parts = [`${main} in their main role`, ...(second ? [`${second} as a 2nd role`] : []), ...(have ? [`${have} already yours`] : [])];
+  return open.length ? parts.join(' · ') : `Nobody fits an open slot${have ? ` · ${have} already yours` : ''}`;
+}

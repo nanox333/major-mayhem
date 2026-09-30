@@ -7,6 +7,7 @@ import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
 import { Synergy, strength } from '../game/synergy';
 import { mapComfort } from '../game/draftui';
+import { ArrivalFocus } from '../ui/ArrivalFocus';
 
 export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: Record<string, { k: number; d: number; rating: number }>; mvpId?: string }) {
   return (
@@ -100,6 +101,7 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
       <MapComfort mine={mine} />
       {s.duel && <Challenger s={s} />}
       {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
+      <ArrivalFocus selector=".action-bar .cta" />
       <div className="action-bar"><button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button></div>
     </div>
   );
