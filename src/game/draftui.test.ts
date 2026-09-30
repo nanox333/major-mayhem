@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ROLE_ORDER, ROSTERS, Roster } from '../data/rosters';
 import * as G from './logic';
 import { Synergy, chemistryOf, synergies } from './synergy';
-import { chemPreview, chemistryWord, defaultSlot, draftHint, liveChemistry, placementLabel, playerState } from './draftui';
+import { chemPreview, chemistryWord, defaultSlot, draftHint, liveChemistry, majorsOf, mapComfort, placementLabel, playerState } from './draftui';
 
 const pick = (r: Roster, i: number, slot: G.Pick['slot']): G.Pick => ({ slot, rosterId: r.id, playerId: r.players[i].id });
 /** A whole real roster as five picks, one per slot in slot order. */
@@ -163,5 +163,24 @@ describe('chemistry preview (#143)', () => {
     const pv = chemPreview({ picks: [] }, { picks: solo }, false);
     expect(pv.added).toEqual([]);
     expect(pv.delta).toBe(0);
+  });
+});
+
+describe('a player\'s Majors and your team\'s maps (#48, #49)', () => {
+  it('lists the Majors a player attended, oldest first, with how far they got', () => {
+    const r = ROSTERS.find((x) => x.result === 'Champions')!;
+    const pl = r.players[0];
+    const list = majorsOf(pl.id);
+    expect(list.length).toBeGreaterThan(0);
+    expect(list.some((m) => m.year === r.year && m.org === r.org && m.result === '1st')).toBe(true);
+    expect([...list].sort((a, b) => a.year - b.year)).toEqual(list);
+    expect(majorsOf('nobody-of-that-name')).toEqual([]);
+  });
+  it('ranks the seven maps for a lineup, best first, each with a word', () => {
+    const l = G.lineupFromPicks(fromRoster(ROSTERS[0]));
+    const c = mapComfort(l);
+    expect(c.map((x) => x.map).sort()).toEqual([...G.MAPS].sort());
+    for (let i = 1; i < c.length; i++) expect(c[i - 1].pips).toBeGreaterThanOrEqual(c[i].pips);
+    for (const x of c) expect(x.word).toBe(x.pips >= 4 ? 'strong' : x.pips <= 2 ? 'weak' : 'average');
   });
 });

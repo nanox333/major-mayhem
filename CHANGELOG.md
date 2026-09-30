@@ -37,6 +37,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **First-time tips in the new look** ([#130]): every tip is one callout, a rounded panel with an accent rule on its left edge, a "Tip" label, a title, "Got it" and a quiet **Skip tips** that turns them all off (they come back from Settings). Only one tip shows at a time. The Roles and fit tip now sits over the case where you choose a player (it described a screen that no longer existed), with new wording about the "2nd role" mark, and a new **Team chemistry** tip sits under the chemistry panel. The hard-mode tip still names no roles, and someone who has finished a run still sees none of it.
 - **Match: momentum and economy; results: the path** ([#71], [#72]): under the score, a **momentum bar** shows your share of the last six rounds with one sentence ("FaZe are on a 4-round run"), and **economy** says what each side is buying this round (full buy, force buy or eco, with $ marks), read from the rounds already played and your calls; the Timeout button pulses when the other side has won three in a row and a timeout would help. The results screen shows the **path through the Major**: the Swiss stage with its record and how it ended, the playoffs on a rail from quarterfinal to final, and where the run finished; every match still opens its report.
 - **Stats: finishes over time** ([#76]): a **Last 14 dailies** chart, a column per day as tall as how far you got (gold for a title), with the finish written under it and the day of the month below that, and gaps for days you didn't play or abandoned. "Most drafted" is a numbered list. Plain CSS, no chart library.
+- **Your maps before the veto, and a player's Majors** ([#49], [#48]): the lobby now has **Your maps**, the seven maps ranked by how at home your five are (pips and a word: strong, average, weak), the same comfort the veto compares with your opponent's. When you point at a player in the draft, the preview lists the Majors they attended and how far their team got ("2016 SF · 2018 1st").
 - **Icons:** one set of line icons drawn for the game replaces the scattered glyphs and inline drawings ([#114]).
 - **The draft screen has three columns on wide screens:** your lineup on the left (photo, nick, team and year, the team's logo, and "Add player" where a slot is still open), the case in the middle, and a sidebar with the game mode, live team chemistry and a draft hint. The radar no longer takes room while you draft; the lobby and the match still have it ([#102], [#107]).
 - **One line says where you are and what to do** ("Daily #2 · Draft · Round 3 of 7 · Choose your player"), an "Opened case" bar sits over the cards, and the reroll is "Spin again · 2 spins left" ([#103]).
@@ -127,6 +128,8 @@ The first tagged release, covering everything since the initial draft game.
 [#108]: https://github.com/nanox333/major-mayhem/issues/108
 [#109]: https://github.com/nanox333/major-mayhem/issues/109
 [#113]: https://github.com/nanox333/major-mayhem/issues/113
+[#48]: https://github.com/nanox333/major-mayhem/issues/48
+[#49]: https://github.com/nanox333/major-mayhem/issues/49
 [#76]: https://github.com/nanox333/major-mayhem/issues/76
 [#71]: https://github.com/nanox333/major-mayhem/issues/71
 [#72]: https://github.com/nanox333/major-mayhem/issues/72

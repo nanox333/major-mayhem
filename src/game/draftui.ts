@@ -127,3 +127,28 @@ export interface Preview {
   coach?: string;
   chem: ChemPreview | null;
 }
+
+// ---------- a player's Majors (#48) and your team's maps (#49) ----------
+const SHORT_RESULT: Record<string, string> = { Champions: '1st', 'Runner-up': '2nd', Semifinalist: 'SF', Quarterfinalist: 'QF' };
+let byPlayer: Map<string, { year: number; org: string; result: string }[]> | null = null;
+/** The Majors a player attended in this game's data, oldest first, each with how far their team got: "2016 SF", "2018 1st". */
+export function majorsOf(playerId: string): { year: number; org: string; result: string }[] {
+  if (!byPlayer) {
+    byPlayer = new Map();
+    for (const r of [...G.rosterById.values()].sort((a, b) => a.year - b.year)) for (const p of r.players) {
+      const list = byPlayer.get(p.id) ?? [];
+      list.push({ year: r.year, org: r.org, result: SHORT_RESULT[r.result] ?? r.result });
+      byPlayer.set(p.id, list);
+    }
+  }
+  return byPlayer.get(playerId) ?? [];
+}
+
+export type ComfortWord = 'strong' | 'average' | 'weak';
+/** How at home your five are on each map, best first, before the veto (#49): the same pips the veto shows, with a word for each so it doesn't rely on counting. */
+export function mapComfort(lineup: G.Lineup[]): { map: string; pips: number; word: ComfortWord }[] {
+  return G.MAPS.map((map) => {
+    const pips = G.comfortPips(G.comfort(lineup, map));
+    return { map, pips, word: (pips >= 4 ? 'strong' : pips <= 2 ? 'weak' : 'average') as ComfortWord };
+  }).sort((a, b) => b.pips - a.pips || a.map.localeCompare(b.map));
+}

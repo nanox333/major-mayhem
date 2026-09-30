@@ -1,5 +1,5 @@
 import React from 'react';
-import { Chemistry, Preview, draftHint, liveChemistry } from '../game/draftui';
+import { Chemistry, Preview, draftHint, liveChemistry, majorsOf } from '../game/draftui';
 import * as G from '../game/logic';
 import { Run } from '../game/state';
 import { strength } from '../game/synergy';
@@ -56,6 +56,7 @@ function ChemIf({ preview }: { preview: Preview | null }) {
       {!pv ? <p className="muted small">Point at a player to see what they would add.</p> : (
         <>
           <h4>If you draft {who}</h4>
+          {preview?.playerId && <Majors id={preview.playerId} />}
           <p className="chem__total chem__total--if">
             {pv.before === pv.after
               ? <><b>{pv.after}</b><span className="muted small"> no change</span></>
@@ -73,4 +74,11 @@ function ChemIf({ preview }: { preview: Preview | null }) {
       )}
     </div>
   );
+}
+
+/** The Majors the previewed player attended and how far their team got (#48): "2016 SF · 2018 1st". Text, so it reads the same without colour. */
+function Majors({ id }: { id: string }) {
+  const list = majorsOf(id);
+  if (!list.length) return null;
+  return <p className="chem__majors"><b>Majors</b> {list.map((m) => `${m.year} ${m.result}`).join(' · ')}</p>;
 }

@@ -1479,3 +1479,19 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 .most li::marker { color: var(--muted); font-weight: 700; }
 .most li b { font-family: var(--f-head); font-weight: 800; letter-spacing: .02em; }
 @media (max-width: 520px) { .dchart { gap: 2px; } .dchart__col small { font-size: .65rem; } .dchart__col em { display: none; } }
+
+
+/* ---------- map comfort in the lobby (#49) and a player's Majors on the preview (#48) ---------- */
+.comfort { display: grid; gap: 6px; }
+.comfort h4 { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.comfort h4 small { display: block; margin-top: 2px; font-family: var(--f-read); font-size: var(--fs-caption); letter-spacing: 0; text-transform: none; font-weight: 500; color: var(--muted); }
+.comfort ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 6px; }
+.comfort li { display: grid; grid-template-columns: 4.6rem auto 1fr; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--inset); font-size: var(--fs-caption); }
+.comfort li b { font-family: var(--f-head); font-weight: 800; font-size: 1rem; }
+.comfort__pips { display: inline-flex; gap: 3px; }
+.comfort__pips i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--control); }
+.comfort__pips i.on { background: var(--accent); border-color: var(--accent); }
+.comfort li > span:last-child { text-align: right; color: var(--text-2); font-weight: 700; }
+.comfort--weak > span:last-child { color: var(--muted); }
+.chem__majors { margin: 0; font-size: var(--fs-caption); color: var(--text-2); }
+.chem__majors b { color: var(--muted); font-weight: 700; margin-right: 4px; }

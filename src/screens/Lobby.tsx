@@ -3,9 +3,10 @@ import { ROLE_LABEL } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, benchLineup } from '../game/state';
 import { challengerLineup } from '../game/duel';
-import { Avatar, RatingMark, RoleIcon, TeamBadge } from '../ui/art';
+import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
 import { Synergy, strength } from '../game/synergy';
+import { mapComfort } from '../game/draftui';
 
 export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: Record<string, { k: number; d: number; rating: number }>; mvpId?: string }) {
   return (
@@ -96,9 +97,32 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
         <span>{offRoles === 0 ? 'Everyone on their main role' : `${offRoles} player${offRoles > 1 ? 's' : ''} off their main role`}</span>
       </div>
       <SynergyList list={power.synergies} />
+      <MapComfort mine={mine} />
       {s.duel && <Challenger s={s} />}
       {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
       <div className="action-bar"><button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button></div>
     </div>
+  );
+}
+
+/**
+ * Which maps your five are at home on, before the first veto (#49), so the veto isn't a surprise. The same comfort the veto panel compares with the
+ * opponent's, shown as pips and a word; the opponent's comfort still decides who has the edge, so this is half of the picture.
+ */
+function MapComfort({ mine }: { mine: G.Lineup[] }) {
+  const maps = mapComfort(mine);
+  return (
+    <section className="comfort" aria-labelledby="comfort-h">
+      <h4 id="comfort-h">Your maps <small>Where your five are most at home. Your opponent's comfort decides the veto too.</small></h4>
+      <ul>
+        {maps.map((x) => (
+          <li key={x.map} className={`comfort--${x.word}`}>
+            <b>{x.map}</b>
+            <span className="comfort__pips" aria-hidden="true">{[1, 2, 3, 4, 5].map((i) => <i key={i} className={i <= x.pips ? 'on' : ''} />)}</span>
+            <span>{x.word}<Sr>: {x.pips} of 5</Sr></span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
