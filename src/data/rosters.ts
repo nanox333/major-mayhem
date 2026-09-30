@@ -134,14 +134,20 @@ export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.
  * - v1: the launch simulation and data.
  * - v2 (from 2026-09-30): one death per player per round, consistent clutches and narration (#12, #15); corrected
  *   IGL labels (#13).
+ * - v3 (from 2026-10-01): opponents are chosen from the rosters that share nobody with your team for as long as any are left,
+ *   instead of switching to ones that do once fewer than eight remain (#167).
  * To add a version: append it here with tomorrow's date, keep the old behaviour behind `rules() < n` in the code, and
  * put any changed roles in `rolesV1`-style fields.
  */
-export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }] as const;
+export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }] as const;
 export const LATEST_RULES: number = RULES[RULES.length - 1].v;
 export const rulesOn = (date: string): number => [...RULES].reverse().find((r) => r.from <= date)?.v ?? 1;
+/** The rules version whose corrected roles and coaches are in the roster data right now. */
+let applied = LATEST_RULES;
+export const appliedRules = () => applied;
 /** Puts every corrected role and coach back as it was under rules `v`. */
 export function applyRoles(v: number) {
+  applied = v;
   for (const [p, latest, v1] of CORRECTED) p.roles = v >= 2 ? latest : v1;
   for (const [r, latest, v1] of RECOACHED) r.coach = v >= 2 ? latest : v1;
 }

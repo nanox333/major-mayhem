@@ -1,6 +1,6 @@
 // Synergies: what makes five players more (or less) than the sum of their ratings. All values are team-power
 // points, the same scale as ratings; see teamPower in logic.ts for how they combine and cap.
-import { COACHES, ROSTERS, Player, Roster, isCoach } from '../data/rosters';
+import { COACHES, ROSTERS, Player, Roster, appliedRules, isCoach } from '../data/rosters';
 import type { Lineup } from './logic';
 
 export type SynergyKind = 'lineup' | 'nation' | 'duo' | 'era' | 'awp' | 'coach';
@@ -40,14 +40,26 @@ export const era = (r: Roster) => (r.year >= 2024 ? 'CS2' : 'CS:GO');
 
 export const coachBonus = (coach?: string | null) => (isCoach(coach) ? (COACHES[coach].rating - 75) * 0.06 : 0);
 
-/** Players who played under this coach at a Major, by player id. */
-const coached = new Map<string, Set<string>>();
-for (const r of ROSTERS) if (r.coach) {
-  const s = coached.get(r.coach) ?? new Set<string>();
-  r.players.forEach((p) => s.add(p.id));
-  coached.set(r.coach, s);
+/**
+ * Players who played under each coach at a Major, by player id, as the roster data reads under one rules version (#169): a coach corrected after
+ * launch is the old one for runs that started under the old rules, so an old daily or challenge keeps its chemistry however the data changes later.
+ */
+const coachedByRules = new Map<number, Map<string, Set<string>>>();
+function coachedNow(): Map<string, Set<string>> {
+  const v = appliedRules();
+  let m = coachedByRules.get(v);
+  if (!m) {
+    m = new Map();
+    for (const r of ROSTERS) if (r.coach) {
+      const s = m.get(r.coach) ?? new Set<string>();
+      r.players.forEach((p) => s.add(p.id));
+      m.set(r.coach, s);
+    }
+    coachedByRules.set(v, m);
+  }
+  return m;
 }
-export const coachKnows = (coach: string, playerId: string) => !!coached.get(coach)?.has(playerId);
+export const coachKnows = (coach: string, playerId: string) => !!coachedNow().get(coach)?.has(playerId);
 
 export function nationCore(players: Player[]): { key: string; n: number } {
   const count = new Map<string, number>();

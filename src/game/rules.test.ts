@@ -18,10 +18,23 @@ describe('rules versions (#24)', () => {
       guesses: 'f539f431',
     });
   });
+  it('replays rules v2 as it was when v3 was added', () => {
+    // Recorded from the code at the end of v2 (before #167): the dailies of 28 to 30 September and four free seeds under v2. If this fails, a change
+    // reached v2: put it behind `rules() >= 3` (or a new version) instead of updating these values.
+    expect(fingerprints(2)).toEqual({
+      runs: {
+        'daily 2026-09-28': 'c33f075b', 'daily 2026-09-29': 'b8787ff3', 'daily 2026-09-30': '9d5d95e0',
+        'free a': '2e496025', 'free b': '71bfafaf', 'free c': 'f0c0cc7', 'free d': '2f593148',
+      },
+      lineups: '383254de',
+      guesses: 'f539f431',
+    });
+  });
   it('gives each daily the rules of its date, and new free runs the latest', () => {
     expect(rulesOn('2026-09-28')).toBe(1);
     expect(rulesOn('2026-09-29')).toBe(1);
     expect(rulesOn('2026-09-30')).toBe(2);
+    expect(rulesOn('2026-10-01')).toBe(3);
     expect(rulesOn('2027-01-01')).toBe(LATEST_RULES);
     expect(fresh('daily', '2026-09-29').rules).toBe(1);
     expect(fresh('daily', '2026-09-30').rules).toBe(2);

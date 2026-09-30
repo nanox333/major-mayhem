@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
+import { Action, Run, benchLineup, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
@@ -268,9 +268,9 @@ function TeamReviewCard({ mine, s }: { mine: G.Lineup[]; s: Run }) {
     <section className="review anim-in" aria-label="Team review">
       <div className="review__head"><span>Team review</span></div>
       <ul className="review__facts">
-        <li><b>Roles</b> {r.roles.main} in their main role{r.roles.secondary ? `, ${r.roles.secondary} in a secondary role` : ''}{r.roles.off ? `, ${r.roles.off} off-role` : ''}</li>
-        <li><b>Chemistry</b> {r.synergies.length ? r.synergies.join(' · ') : 'none'}</li>
-        {r.strongest && <li><b>Stood out</b> {r.strongest.nick} ({fmt(r.strongest.rating)}){r.weakest ? `; quietest: ${r.weakest.nick} (${fmt(r.weakest.rating)})` : ''}</li>}
+        <li><b>Roles as drafted</b> {r.roles.main} in their main role{r.roles.secondary ? `, ${r.roles.secondary} in a secondary role` : ''}{r.roles.off ? `, ${r.roles.off} off-role` : ''}</li>
+        <li><b>Chemistry as drafted</b> {r.synergies.length ? r.synergies.join(' · ') : 'none'}</li>
+        {r.strongest && <li><b>Stood out on the day</b> {r.strongest.nick} ({fmt(r.strongest.rating)}){r.weakest ? `; quietest: ${r.weakest.nick} (${fmt(r.weakest.rating)})` : ''}</li>}
         <li><b>Maps</b> {r.maps.won} won, {r.maps.lost} lost{r.maps.bestMap ? ` · best on ${r.maps.bestMap}` : ''}{r.maps.worstMap ? ` · struggled on ${r.maps.worstMap}` : ''}</li>
         <li><b>Calls</b> {r.calls.timeouts} timeout{r.calls.timeouts === 1 ? '' : 's'}{r.calls.forces ? `, ${r.calls.forces} force buy${r.calls.forces === 1 ? '' : 's'} (${r.calls.forcesWon} won)` : ', no force buys'}</li>
       </ul>

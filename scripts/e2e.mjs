@@ -331,6 +331,18 @@ async function twitch() {
   const picked = (await p.locator('.lrow.is-full .lrow__line b').first().textContent()).trim();
   if (picked !== second) throw new Error(`chat voted for ${second} but ${picked} was drafted`);
   console.log('twitch vote picked:', picked, 'errors:', errs);
+  // Hard mode (#176): the chat winner is staged, not drafted, and no role is chosen for the host.
+  // Keep the chat connection (it lives in the page): go home and start a new free run there.
+  await p.locator('.brand__btn').first().click();
+  await p.locator('button.mbtn', { hasText: 'New free play' }).click();
+  await p.locator('.seg button', { hasText: 'No role labels' }).first().click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.chatvote', { timeout: 8000 });
+  await p.waitForSelector('button.prow');
+  await p.evaluate(() => { window.__chat('ana', '1'); window.__chat('bo', '1'); });
+  await p.waitForSelector('.draftbar', { timeout: 14000 });
+  if (await p.locator('.lrow.is-full').count()) throw new Error('in hard mode a chat vote should not draft anyone until the host chooses the role');
+  if (!(await p.locator('.draftbar .cta[disabled]').count())) throw new Error('in hard mode the Draft button should wait for a role to be chosen');
   if (errs.length) problems.push(`twitch: page errors: ${errs.join(' | ')}`);
   await p.close();
 }
@@ -351,6 +363,11 @@ async function draftui() {
   const w = Number(rects[0].split(',')[2]);
   if (w < 290) throw new Error(`the team cards should be at least about 300px wide at 1440, got ${w}`);
 
+  // A quick double click on Spin again spends one reroll, not both (#174).
+  await p.evaluate(() => { const b = document.querySelector('.reroll-row button'); b.click(); b.click(); });
+  await p.waitForTimeout(700);
+  if (!/1 spin left/.test(await p.locator('.reroll-row').innerText())) throw new Error('a double click on Spin again should use one reroll: ' + (await p.locator('.reroll-row').innerText()));
+  await p.waitForSelector('.case-card');
   const row = p.locator('button.prow').first();
   await row.hover();
   if ((await p.locator('.lrow.is-preview').count()) !== 1) throw new Error('hovering a player should preview them in the lineup');

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import radars from '../data/radars.json';
 import { dailyNumber, today } from '../game/state';
-import { BEST_LABEL, BEST_SHORT, CLUE_LABEL, CLUE_MARK, Clue, GuessDay, MAX_GUESSES, Pro, REVEAL, RevealPlan, addGuess, answerFor, clueMeaning, compare, guessShare, guessStreak, loadGuesses, normalizeDay, prosOn, revealPlan, saveGuesses, searchState, spokenGuess, teamsFor } from '../game/guess';
+import { BEST_LABEL, BEST_SHORT, CLUE_LABEL, CLUE_MARK, CLUE_ORDER, Clue, GuessDay, MAX_GUESSES, Pro, REVEAL, RevealPlan, addGuess, answerFor, clueMeaning, compare, guessShare, guessStreak, loadGuesses, normalizeDay, prosOn, revealPlan, saveGuesses, searchState, spokenGuess, teamsFor } from '../game/guess';
 import { COUNTRY } from '../game/synergy';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
@@ -24,7 +24,7 @@ const HEAD_TIP: Partial<Record<Clue['key'], string>> = {
   first: 'Year of their earliest roster included in this game',
 };
 /** The columns, left to right. The clue for each comes from `compare`, which has its own order. */
-const COLUMNS: Clue['key'][] = ['country', 'orgs', 'first', 'role', 'majors', 'best'];
+const COLUMNS: readonly Clue['key'][] = CLUE_ORDER;
 
 /** What a clue shows in its cell, and its full name for the description (a nation is shown as its code, described by name). */
 const shownFor = (c: Clue) => (c.key === 'role' ? ROLE_LABEL[c.text as keyof typeof ROLE_LABEL] : c.text);

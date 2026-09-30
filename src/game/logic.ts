@@ -724,7 +724,9 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
   const clean = rosters.filter((r) => !r.players.some((p) => mineIds.has(p.id)) && !t.used.includes(r.id));
   // Smaller pools (era modes) can run short over a long run: fall back to rosters you drafted from, then to repeats.
   const notUsed = rosters.filter((r) => !t.used.includes(r.id));
-  const pool = clean.length >= 8 ? clean
+  // From rules v3 a clean opponent is used for as long as one is left: a smaller clean pool is better than facing someone on your own team (#167).
+  // Earlier versions fall back once fewer than eight remain, and keep doing so, so old dailies and challenges replay as they did.
+  const pool = (activeRules >= 3 ? clean.length > 0 : clean.length >= 8) ? clean
     : [notUsed.filter((r) => !mine.some((x) => x.roster.id === r.id)), notUsed, rosters].find((x) => x.length)!;
   const ranked = pool
     .map((r) => ({ r, p: rosterPower(r).total }))
