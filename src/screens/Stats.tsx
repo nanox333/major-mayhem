@@ -1,7 +1,7 @@
 import React from 'react';
 import { ROSTERS } from '../data/rosters';
 import { Modal } from '../ui/Modal';
-import { Stats, dailyStreak, statsSections } from '../game/stats';
+import { FINISH_SHORT, Stats, dailyStreak, recentDailies, statsSections, DayBar } from '../game/stats';
 import { dailyNumber, today } from '../game/state';
 import { ACHIEVEMENTS } from '../game/achievements';
 
@@ -43,19 +43,26 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
                 </ul>
               </>
             )}
-            <h3>Finishes</h3>
+            <h3>Finishes <span className="muted">all runs</span></h3>
             <ul className="bars">
               {[...REACHED].reverse().map((label, ri) => {
                 const i = REACHED.length - 1 - ri;
                 return <li key={label}><span>{label}</span><i style={{ width: `${(stats.reached[i] / max) * 100}%` }} /><b>{stats.reached[i]}</b></li>;
               })}
             </ul>
-            {most.length > 0 && (<><h3>Most drafted</h3><p>{most.map(([id, n]) => `${nickById.get(id) ?? id} ×${n}`).join(' · ')}</p></>)}
+            {most.length > 0 && (
+              <>
+                <h3>Most drafted</h3>
+                <ol className="most">{most.map(([id, n]) => <li key={id}><b>{nickById.get(id) ?? id}</b> ×{n}</li>)}</ol>
+              </>
+            )}
           </>
         ) : !show.empty && <p className="muted">No Major runs finished yet.</p>}
         {show.duels && (<><h3>Draft duels</h3><p>{stats.duels.w} won, {stats.duels.l} lost</p></>)}
         {show.dailies && (
           <>
+            <h3>Last 14 dailies</h3>
+            <DailyChart days={recentDailies(stats.daily, today())} />
             <h3>Recent dailies</h3>
             <p>Daily streak: {streak.current} day{streak.current === 1 ? '' : 's'} (best {streak.best})</p>
             <ul className="sources">
@@ -76,5 +83,24 @@ export function StatsModal({ stats, onClose }: { stats: Stats; onClose: () => vo
           })}
         </ul>
     </Modal>
+  );
+}
+
+/**
+ * Your finishes over the last two weeks (#76): a column per day, as tall as how far you got, with the finish written under it and the day of the
+ * month under that, so no value is carried by height or colour alone. Days you didn't play are gaps. Plain CSS, no chart library.
+ */
+function DailyChart({ days }: { days: DayBar[] }) {
+  const said = (d: DayBar) => (d.state === 'played' ? `Daily #${d.n}: ${d.placement}` : d.state === 'abandoned' ? `Daily #${d.n}: abandoned, no result` : `Daily #${d.n}: not played`);
+  return (
+    <ol className="dchart" aria-label="Your finish in each of the last 14 dailies, oldest first">
+      {days.map((d) => (
+        <li key={d.date} className={`dchart__col is-${d.state} ${d.state === 'played' && d.reached === 4 ? 'is-champ' : ''}`} aria-label={said(d)} title={said(d)}>
+          <span className="dchart__bar" aria-hidden="true"><i style={{ height: d.state === 'played' ? `${((d.reached + 1) / 5) * 100}%` : '0%' }} /></span>
+          <small aria-hidden="true">{d.state === 'played' ? FINISH_SHORT[d.reached] : d.state === 'abandoned' ? '⚑' : '–'}</small>
+          <em aria-hidden="true">{Number(d.date.slice(8))}</em>
+        </li>
+      ))}
+    </ol>
   );
 }

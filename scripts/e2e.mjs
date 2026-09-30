@@ -190,6 +190,7 @@ async function run(viewport, tag) {
   const runs = (await p.textContent('.stat-tiles div b')).trim();
   if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
   await p.waitForTimeout(500); await p.screenshot({ path: `shots/${tag}-9-stats.png` });
+  if ((await p.locator('.dchart li').count()) !== 14 || !(await p.locator('.dchart li.is-played').count())) throw new Error('the stats should chart the last 14 dailies, including the result of today (#76)');
   await p.keyboard.press('Escape');
   // After today's daily, the start screen shows the result instead of offering a replay.
   await p.locator('button.cta', { hasText: 'Play again' }).click();

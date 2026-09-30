@@ -135,3 +135,25 @@ export function dailyStreak(daily: Stats['daily'], today: string): { current: nu
   while (days.has(d - current)) current++;
   return { current, best };
 }
+
+/** One day in the "last dailies" chart (#76): played with a finish, abandoned, or not played. */
+export interface DayBar { date: string; n: number; state: 'played' | 'abandoned' | 'missed'; reached: number; placement?: string }
+/** A finish as a few letters, for under a bar: 0 Swiss out, 1 quarterfinal, 2 semifinal, 3 runner-up, 4 champion. */
+export const FINISH_SHORT = ['Sw', 'QF', 'SF', '2nd', '1st'];
+/**
+ * The last `count` days up to and including `upTo`, oldest first, each with its finish (the first finished run that day, as `daily` keeps it).
+ * Days you didn't play are there too, as gaps, so the chart is a record over time and not just a list of results.
+ */
+export function recentDailies(daily: Stats['daily'], upTo: string, count = 14): DayBar[] {
+  const out: DayBar[] = [];
+  const end = Date.parse(upTo + 'T00:00:00Z');
+  for (let k = count - 1; k >= 0; k--) {
+    const d = new Date(end - k * 86400000);
+    const date = d.toISOString().slice(0, 10);
+    const r = daily[date];
+    out.push(!r ? { date, n: dailyNumber(date), state: 'missed', reached: 0 }
+      : r.abandoned ? { date, n: dailyNumber(date), state: 'abandoned', reached: 0 }
+        : { date, n: dailyNumber(date), state: 'played', reached: Math.max(0, Math.min(4, r.reached)), placement: r.placement });
+  }
+  return out;
+}
