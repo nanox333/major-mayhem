@@ -4,6 +4,26 @@ A running diary of what changed, what went wrong, and what we decided. Newest en
 
 ---
 
+## 30 September 2026 (evening): the home becomes a place
+
+**Where we started.** The first page was round 1 of the draft: a big Play Daily button, two cards under it, and no way back once a case was open except "New run", which abandons a started daily. The second target mockup is a real home page: a hero, a live daily countdown, three mode cards, your stats and how it works ([#113](https://github.com/nanox333/major-mayhem/issues/113)).
+
+**A place you can go back to ([#115](https://github.com/nanox333/major-mayhem/issues/115)).** There is now a home view next to the draft and Guess the pro, and the wordmark in the bar is the way to it. The important rule is that going home never touches a run in progress, so it says "Continue today's run · round 4 of 7" instead. Which home you get comes from one small pure function with tests: first visit, daily in progress, daily finished, daily abandoned, free run in progress. A daily in progress wins over everything, and it keeps its own date, so it still says "continue" after midnight. The draft view now shows the home whenever no run is under way, worked out while rendering rather than in an effect: my first version switched in an effect, and the end-to-end test caught a one-frame flash of the old start screen after "Play again".
+
+**The countdown ([#117](https://github.com/nanox333/major-mayhem/issues/117)).** It counts to local midnight built from tomorrow's calendar date, not from adding 24 hours, so the day the clocks change is 23 or 25 hours long and the count is right. Tests cover midnight itself and both changes in a zone that has them. The clock is `aria-hidden`; a screen reader gets "Next daily in 7 hours", which changes by the hour and then by the minute, never by the second. The timer stops while the tab is hidden and corrects itself when you come back. At midnight the page moves on to the new daily by itself and says so.
+
+**The cards, the stats and how it works ([#116](https://github.com/nanox333/major-mayhem/issues/116), [#118](https://github.com/nanox333/major-mayhem/issues/118), [#120](https://github.com/nanox333/major-mayhem/issues/120)).** The button is the target in each card, not the whole card. Free play's options open inside its card; if a daily has started, starting free play asks first, the same way "New run" does. Your stats is four figures with words (best finish as a placement, streak, runs, achievements out of the ones that exist) and a first-visit line instead of zeros; there is no level and no account. How it works is four steps built from the game's own pieces, with a real roster as the sample and a line saying whose it is. It is open until you dismiss it, one line once you have played, and the help now tells the same four steps.
+
+**The hero ([#119](https://github.com/nanox333/major-mayhem/issues/119)).** The mockup's arena has a Counter-Strike-branded trophy and in-game art, none of which is ours, so the hero is an original vector: stage lights, light shafts, crowd silhouettes and a generic trophy, in the accent and the CT blue. It is drawn in code (a few hundred bytes of JSX), sweeps slowly, and stops under reduced motion. A test checks the text against the brightest possible art under the scrim.
+
+**On a phone ([#121](https://github.com/nanox333/major-mayhem/issues/121)).** The Play Daily button is in the first screen at 375×812 in the first-visit, in-progress and finished states; the countdown moves inside the card. On a 320×568 phone it is 64 px below the fold in the finished state, which I left.
+
+**Icons ([#114](https://github.com/nanox333/major-mayhem/issues/114)).** The issue proposed copying icons from an open set. I drew them instead, so there is no licence to credit and nothing to keep up to date; the help says the icons and art are drawn for this game. The build grew by 19 kB (5 kB compressed).
+
+— Claude
+
+---
+
 ## 30 September 2026 (later): the draft screen gets its three columns
 
 **Where we started.** With the palette and the bar in ([#100](https://github.com/nanox333/major-mayhem/issues/100), [#101](https://github.com/nanox333/major-mayhem/issues/101)), the next step was the screen the whole look is drawn around: the draft. On main it was a strip of seven icons over three cards that listed only nicks, then a second screen to see the players, with the radar taking a column beside it.

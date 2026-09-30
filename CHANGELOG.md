@@ -28,6 +28,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **A new look:** near-black navy panels with one orange accent, flat fills with thin borders and small rounded corners instead of chamfered gradients. Every colour is a named value in one place, inputs have an outline you can see, and a test checks the text and outline colours against WCAG contrast ([#100]).
 - **One slim top bar** replaces the big logo, the row of labelled buttons and the game switch: the mark and wordmark, Guess the pro, help, sound and a menu that holds Stats, Twitch chat votes and New run. It is one row at every width, and on a phone Guess the pro moves into the menu ([#101]).
 - **The four steps (Draft, Lobby, Major, Results) sit in the head of the game panel**, beside the title, and not in the top bar: the current step is filled and underlined, finished steps are ticked, and on a phone only the current step keeps its name on screen ([#140]).
+- **A new home screen:** a hero with an original arena illustration, a live countdown to the next daily (to the second; the page moves on to the new daily at local midnight), three cards for Daily Challenge, Free Play and Guess the Pro, your stats (best finish, streak, runs, achievements) and how it works in four steps. Nothing on it needs a login: it all comes from this browser ([#113], [#116], [#117], [#118], [#119], [#120]).
+- **The home is a place you can come back to.** Click the logo from anywhere; a run in progress is never touched. It says "Continue today's run · round 4 of 7", shows today's result once the daily is done, and asks before starting free play would abandon a daily that has started ([#115]). On a phone the Play Daily button is in the first screen in every state ([#121]).
+- **Icons:** one set of line icons drawn for the game replaces the scattered glyphs and inline drawings ([#114]).
 - **The draft screen has three columns on wide screens:** your lineup on the left (photo, nick, team and year, the team's logo, and "Add player" where a slot is still open), the case in the middle, and a sidebar with the game mode, live team chemistry and a draft hint. The radar no longer takes room while you draft; the lobby and the match still have it ([#102], [#107]).
 - **One line says where you are and what to do** ("Daily #2 · Draft · Round 3 of 7 · Choose your player"), an "Opened case" bar sits over the cards, and the reroll is "Spin again · 2 spins left" ([#103]).
 - **The case shows all fifteen players at once.** Each team card has its logo, a placement in words and an icon ("1st place", "5th–8th place"), and a row per player with photo, nick, country, main role and any chemistry bonus. Pick a player, see which slot they fill and what that means, then Draft: no more choosing a team blind and finding out on the next screen. Hard mode still shows no roles and gives no default slot. A seed plays out exactly as before, and on a phone one card is open at a time ([#104], [#105]).
@@ -42,7 +45,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Scoreboards add up:** a player dies at most once per round, kills always equal the other side's deaths, and a clutch leaves the clutcher as the only survivor ([#12]).
 - **Narration follows your buy:** a lost pistol no longer says "You're saving" before you choose, and force-buy or anti-eco lines only appear when that's happening ([#15]).
 - **Free-play filters stay true:** a filter that leaves too few teams (today, CS2 + Champions) can't be chosen, instead of quietly drafting from the whole era ([#63]).
-- **The first-time introduction is back on the first screen.** It had stopped showing once the start screen became the Play Daily page, and it now opens with the line that used to sit under the logo ([#21], [#101]).
+- **The first-time introduction shows on the first screen again.** It had stopped showing once the start screen became the Play Daily page. It is the home's "How it works" now ([#21], [#101], [#120]).
 - **Guess the pro** labels Majors, best finish and first year as counts from this game, not careers ([#14]).
 - **Roster data:** Vitality's coach at Paris 2023 is zonic; Fnatic 2013 and LDLC 2014 get their coaches; the three "unverified" champions are checked against Wikipedia ([#25]). IGL labels corrected for Liquid 2024 (Twistzz), G2 2018 (shox) and AVANGAR 2019 ([#13]).
 - Duel links accept only known free-play options ([#27]).
@@ -116,4 +119,13 @@ The first tagged release, covering everything since the initial draft game.
 [#107]: https://github.com/nanox333/major-mayhem/issues/107
 [#108]: https://github.com/nanox333/major-mayhem/issues/108
 [#109]: https://github.com/nanox333/major-mayhem/issues/109
+[#113]: https://github.com/nanox333/major-mayhem/issues/113
+[#114]: https://github.com/nanox333/major-mayhem/issues/114
+[#115]: https://github.com/nanox333/major-mayhem/issues/115
+[#116]: https://github.com/nanox333/major-mayhem/issues/116
+[#117]: https://github.com/nanox333/major-mayhem/issues/117
+[#118]: https://github.com/nanox333/major-mayhem/issues/118
+[#119]: https://github.com/nanox333/major-mayhem/issues/119
+[#120]: https://github.com/nanox333/major-mayhem/issues/120
+[#121]: https://github.com/nanox333/major-mayhem/issues/121
 [#63]: https://github.com/nanox333/major-mayhem/issues/63
