@@ -8,6 +8,8 @@ import { Modal } from './ui/Modal';
 import { useRunTracking } from './ui/useTracking';
 import { TopBar, View } from './ui/TopBar';
 import { RunProgress } from './ui/RunProgress';
+import { LineupPanel } from './ui/Lineup';
+import { DraftSidebar } from './ui/DraftSidebar';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
@@ -32,6 +34,7 @@ function Game() {
     rawDispatch(a);
   }, []);
   const [help, setHelp] = useState<HelpTab | null>(null);
+  const [helpTopic, setHelpTopic] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [twitch, setTwitch] = useState(false);
   const [stats, setStats] = useState(loadStats);
@@ -62,10 +65,10 @@ function Game() {
   const stepIdx = steps.findIndex((x) => x.k.includes(s.phase));
 
   let title = s.step === 'players' ? (round === 'bench' ? 'Choose your bench player' : 'Choose your player')
-    : s.step === 'teams' ? (round === 'coach' ? 'Pick a coach' : round === 'bench' ? 'Pick a team for the bench' : 'Pick a team') : 'Open a case';
+    : s.step === 'teams' ? (round === 'coach' ? 'Pick a coach' : round === 'bench' ? 'Choose your bench player' : 'Choose your player') : 'Open a case';
   const date = dailyDate(s);
   const tags = optsLabel(s.opts).map((x) => `${x} · `).join('');
-  let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : s.duel ? `Draft duel vs ${s.duel.name} · ` : tags}Draft · Round ${roundNumber(s)} of ${draftRounds(s)}${round === 'coach' ? ' · Coach' : round === 'bench' ? ' · Bench' : ''}`;
+  let kicker = `${date ? `Daily #${dailyNumber(date)} · ` : s.duel ? `Draft duel vs ${s.duel.name} · ` : tags}Draft · Round ${roundNumber(s)} of ${draftRounds(s)}`;
   if (s.phase === 'ready') { title = 'Ready to rumble'; kicker = `Lobby · ${draftRounds(s)} of ${draftRounds(s)} drafted`; }
   if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `${s.duel ? 'Draft duel' : 'Major'} · Best of ${s.current?.bestOf ?? G.bestOfFor(stageNow!, s.t)}`; }
   if (s.phase === 'final') { title = s.duel ? 'Showmatch over' : 'Tournament over'; kicker = 'Results'; }
@@ -73,29 +76,33 @@ function Game() {
   const [view, setView] = useState<View>('draft');
   if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
 
-  const showBoard = s.phase !== 'final' && view === 'draft';
+  // The radar is scenery while you draft, so it leaves the draft screen; the lobby and the match keep it (#102).
+  const showBoard = s.phase !== 'final' && s.phase !== 'draft' && view === 'draft';
   // The very first screen: on phones the empty team strip would only push the intro and the case down.
   const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
+  // Once the first case is open the draft has a lineup panel and a sidebar of its own (#102).
+  const drafting = view === 'draft' && s.phase === 'draft' && !start;
 
   return (
     <>
     <TopBar view={view} setView={setView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
       abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
-    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''}`}>
+    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''}`}>
       <main className="console">
         <div className="console__head">
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
           )}
           <div className="console__titles">
-            <span className="kicker">{kicker}</span>
-            <h2 className="console__title">{title}</h2>
+            {/* One heading, in one line where there is room: where you are, then what to do (#103). */}
+            <h2 className="console__title"><span className="kicker">{kicker}</span><span className="sep"> · </span><span className="console__action">{title}</span></h2>
           </div>
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
         {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${view === 'guess' ? 'guess' : s.phase}`}>
+          {drafting && <LineupPanel s={s} />}
           {view === 'guess' ? <section className="console__main"><GuessScreen /></section> : <section className="console__main">
             <ChatVoteBar />
             {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onGuess={() => setView('guess')} onTwitch={() => setTwitch(true)} />}
@@ -104,6 +111,7 @@ function Game() {
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>}
+          {drafting && <DraftSidebar s={s} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
           {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
       </main>
@@ -116,7 +124,7 @@ function Game() {
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
-      {help && <HelpModal tab={help} onClose={() => setHelp(null)} />}
+      {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>
     </>

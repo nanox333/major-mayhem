@@ -14,13 +14,31 @@ let challengeLink = null;
 async function draftAll(p) {
   for (let r = 0; r < 7; r++) {
     await p.locator('button.cta', { hasText: 'Open case' }).click({ force: true });
-    await p.waitForSelector('.case-item', { timeout: 6000 });
+    await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(300);
-    await p.locator('.case-item').first().click();
+    await pickFrom(p, 0);
     await p.waitForTimeout(300);
-    const chip = p.locator('.slot-chip').first();
-    if (await chip.count()) { await chip.click(); await p.waitForTimeout(200); }
   }
+}
+/**
+ * Picks from card `i` of the open case: the first player who can be drafted (opening the card first on a phone), then the draft button
+ * (the slot is their main role). In the coach round a card is one click. Returns the button's label, or 'coach'.
+ */
+async function pickFrom(p, i = 0, shot) {
+  const coach = p.locator('.case-item--coach');
+  if (await coach.count()) { await coach.nth(i).click(); return 'coach'; }
+  const card = p.locator('.case-card').nth(i);
+  const toggle = card.locator('.case-card__toggle');
+  if (await toggle.count() && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  const rows = card.locator('button.prow');
+  if (!(await rows.count())) throw new Error('no player can be drafted from card ' + i);
+  await rows.first().click();
+  const go = p.locator('.draftbar .cta:not([disabled])');
+  await go.waitFor();
+  if (shot) await p.screenshot({ path: shot, fullPage: true });
+  const label = (await go.textContent()).trim();
+  await go.click();
+  return label;
 }
 /** The top bar keeps stats, Twitch chat votes and a new run in a menu (#101). */
 const openMenu = (p) => p.click('[aria-label="More"]');
@@ -57,24 +75,20 @@ async function run(viewport, tag) {
   for (let r = 0; r < 7; r++) {
     if (r > 0) await cta('Open case'); // the Play Daily button already opened the first case
     if (r === 0) { await p.waitForTimeout(1200); await p.screenshot({ path: `shots/${tag}-1a-reel.png` }); }
-    await p.waitForSelector('.case-item', { timeout: 6000 });
+    await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(500);
     if (r === 0) await p.screenshot({ path: `shots/${tag}-1-teams.png`, fullPage: true });
     if (r === 1) { await p.click('.reroll-row .ghost-btn'); await p.waitForTimeout(600); }
-    const cards = await p.$$('.case-item');
+    const cards = await p.$$('.case-card, .case-item--coach');
     if (cards.length !== 3) throw new Error('expected 3 teams, got ' + cards.length);
     if (r === 5) {
       if (!(await p.$('.case-item--coach'))) throw new Error('round 6 is not the coach round');
       await p.screenshot({ path: `shots/${tag}-2b-coach.png`, fullPage: true });
     }
-    await cards[r % 3].click();
-    await p.waitForTimeout(500);
-    if (r === 0) await p.screenshot({ path: `shots/${tag}-2-players.png`, fullPage: true });
-    if (r === 5) continue; // picking a coach is one click
-    const chips = await p.$$('.slot-chip');
-    if (!chips.length) throw new Error('no eligible player in round ' + r);
-    if (r === 6 && !(await chips[0].textContent()).includes('Bench')) throw new Error('round 7 is not the bench round');
-    await chips[0].click();
+    // The draft screen has the lineup and the sidebar's hint from the first case on (#102, #109).
+    if (r === 0 && !(await p.locator('.side-card .chem__total').count())) throw new Error('the sidebar has no chemistry panel');
+    const picked = await pickFrom(p, r % 3, r === 0 ? `shots/${tag}-2-players.png` : undefined);
+    if (r === 6 && !/Bench/.test(picked)) throw new Error('round 7 is not the bench round, got "' + picked + '"');
     await p.waitForTimeout(300);
   }
   await p.waitForSelector('button.cta'); await p.waitForTimeout(700);
@@ -289,13 +303,15 @@ async function twitch() {
   await p.keyboard.press('Escape');
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.chatvote', { timeout: 8000 });
-  const second = (await p.locator('.case-item__name').nth(1).textContent()).trim();
+  // Chat votes once, on a player: option 2 is the second player who can be drafted, in the order the case lists them.
+  await p.waitForSelector('button.prow');
+  const second = (await p.locator('button.prow .prow__name b').nth(1).textContent()).trim();
   await p.evaluate(() => { window.__chat('ana', '2'); window.__chat('bo', '!2'); window.__chat('cy', '1'); window.__chat('di', 'nice case lol'); });
   await p.waitForSelector('.chatvote__opts li:nth-child(2) em:has-text("2")');
   await p.screenshot({ path: 'shots/twitch-1-vote.png', fullPage: true });
-  await p.waitForSelector('.team-heading', { timeout: 14000 });
-  const picked = (await p.textContent('.team-heading__name')).trim();
-  if (!picked.startsWith(second)) throw new Error(`chat voted for ${second} but ${picked} was opened`);
+  await p.waitForSelector('.lrow.is-full', { state: 'attached', timeout: 14000 });
+  const picked = (await p.locator('.lrow.is-full .lrow__line b').first().textContent()).trim();
+  if (picked !== second) throw new Error(`chat voted for ${second} but ${picked} was drafted`);
   console.log('twitch vote picked:', picked, 'errors:', errs);
   if (errs.length) problems.push(`twitch: page errors: ${errs.join(' | ')}`);
   await p.close();

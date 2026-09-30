@@ -4,30 +4,30 @@ import * as G from '../game/logic';
 import { Run, draftRounds, roundNumber, roundOf } from '../game/state';
 import { Avatar, RoleIcon, TeamBadge } from './art';
 
-interface Slot {
+export interface Slot {
   key: string;
   label: string;
   /** Set for the five player slots, which show a role icon while empty. */
   role?: Role;
-  /** Who is in it, or null while it's empty. */
-  who: { nick: string; from: string; face: React.ReactNode } | null;
+  /** Who is in it, or null while it's empty. `badge` is the team's logo, for the lineup panel. */
+  who: { nick: string; from: string; face: React.ReactNode; badge?: React.ReactNode } | null;
 }
 
 /** The seven places your team fills up, in draft order: five roles, the coach and the bench. */
-function slotsOf(s: Run): Slot[] {
+export function slotsOf(s: Run): Slot[] {
   const out: Slot[] = ROLE_ORDER.map((role) => {
     const pk = s.picks.find((p) => p.slot === role);
     if (!pk) return { key: role, label: ROLE_LABEL[role], role, who: null };
     const roster = G.rosterById.get(pk.rosterId)!;
     const player = roster.players.find((p) => p.id === pk.playerId)!;
-    return { key: role, label: ROLE_LABEL[role], role, who: { nick: player.nick, from: `${roster.org} ${roster.year}`, face: <Avatar player={player} roster={roster} /> } };
+    return { key: role, label: ROLE_LABEL[role], role, who: { nick: player.nick, from: `${roster.org} ${roster.year}`, face: <Avatar player={player} roster={roster} />, badge: <TeamBadge roster={roster} size={26} /> } };
   });
   if (!s.extras) return out;
   const from = s.coachFrom ? G.rosterById.get(s.coachFrom) : undefined;
-  out.push({ key: 'coach', label: 'Coach', who: s.coach ? { nick: s.coach, from: from ? `${from.org} ${from.year}` : 'Coach', face: from ? <TeamBadge roster={from} size={36} /> : <>C</> } : null });
+  out.push({ key: 'coach', label: 'Coach', who: s.coach ? { nick: s.coach, from: from ? `${from.org} ${from.year}` : 'Coach', face: from ? <TeamBadge roster={from} size={36} /> : <>C</>, badge: from ? <TeamBadge roster={from} size={26} /> : undefined } : null });
   const b = s.bench && G.rosterById.get(s.bench.rosterId);
   const bp = b && s.bench ? b.players.find((p) => p.id === s.bench!.playerId) : undefined;
-  out.push({ key: 'bench', label: 'Bench', who: b && bp ? { nick: bp.nick, from: `${b.org} ${b.year}`, face: <Avatar player={bp} roster={b} /> } : null });
+  out.push({ key: 'bench', label: 'Bench', who: b && bp ? { nick: bp.nick, from: `${b.org} ${b.year}`, face: <Avatar player={bp} roster={b} />, badge: <TeamBadge roster={b} size={26} /> } : null });
   return out;
 }
 

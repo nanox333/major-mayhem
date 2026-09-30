@@ -28,3 +28,7 @@ export const RefreshIcon = (p: P) => <Svg {...p}><path d="M4 12a8 8 0 0 1 14-5.3
 export const MoreIcon = (p: P) => <Svg {...p} fill><circle cx="5" cy="12" r="1.7" stroke="none" /><circle cx="12" cy="12" r="1.7" stroke="none" /><circle cx="19" cy="12" r="1.7" stroke="none" /></Svg>;
 export const CheckIcon = (p: P) => <Svg {...p}><path d="M5 12.5l4.5 4.5L19 7.5" /></Svg>;
 export const ChevronLeftIcon = (p: P) => <Svg {...p}><path d="M15 5l-7 7 7 7" /></Svg>;
+export const ChevronDownIcon = (p: P) => <Svg {...p}><path d="M6 9l6 6 6-6" /></Svg>;
+/** A medal: a placement below first. */
+export const MedalIcon = (p: P) => <Svg {...p}><path d="M12 21a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM9 10.5 7 3h4l1 4 1-4h4l-2 7.5" /></Svg>;
+export const PlusIcon = (p: P) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;

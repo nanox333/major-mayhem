@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ROSTERS, CREDITS } from '../data/rosters';
 import { Modal } from '../ui/Modal';
 import { ThreeSteps, resetTips } from '../ui/tips';
@@ -9,8 +9,16 @@ export type HelpTab = 'play' | 'sources';
  * Two screens in one dialog (#21): how to play (three steps, then the details a player can open), and, kept apart from the
  * rules, the sources and credits.
  */
-export function HelpModal({ onClose, tab: first = 'play' }: { onClose: () => void; tab?: HelpTab }) {
+export function HelpModal({ onClose, tab: first = 'play', topic }: { onClose: () => void; tab?: HelpTab; /** A topic to open and scroll to, by its title ("Chemistry"). */ topic?: string }) {
   const [tab, setTab] = useState<HelpTab>(first);
+  useEffect(() => {
+    if (!topic) return;
+    const d = [...document.querySelectorAll<HTMLDetailsElement>('.modal__card details')].find((x) => x.querySelector('summary')?.textContent === topic);
+    if (!d) return;
+    d.open = true;
+    d.scrollIntoView({ block: 'center' });
+    d.querySelector('summary')?.focus();
+  }, [topic]);
   return (
     <Modal label={tab === 'play' ? 'How to play' : 'Sources and credits'} onClose={onClose}>
       <div className="seg help__tabs" role="tablist" aria-label="Help">
