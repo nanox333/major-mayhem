@@ -3,6 +3,7 @@ import { ROLE_LABEL, ROLE_ORDER, Role } from '../data/rosters';
 import * as G from '../game/logic';
 import { Run, draftRounds, roundNumber, roundOf } from '../game/state';
 import { Avatar, RoleIcon, TeamBadge } from './art';
+import { BenchIcon, CoachIcon } from './icons';
 
 export interface Slot {
   key: string;
@@ -56,7 +57,7 @@ export function TeamStrip({ s }: { s: Run }) {
               </button>
             ) : (
               <div title={`${x.label}: open`} role="img" aria-label={`${x.label}: open`}>
-                <span className="strip__face strip__face--empty">{x.role ? <RoleIcon role={x.role} size={18} /> : x.label[0]}</span>
+                <span className="strip__face strip__face--empty">{x.role ? <RoleIcon role={x.role} size={18} /> : x.key === 'coach' ? <CoachIcon size={18} /> : <BenchIcon size={18} />}</span>
                 <span className="strip__role">{x.label}</span>
               </div>
             )}

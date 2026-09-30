@@ -18,6 +18,10 @@ export const TrophyIcon = (p: P) => <Svg {...p}><path d="M8 4h8v5a4 4 0 0 1-8 0z
 export const FlagIcon = (p: P) => <Svg {...p}><path d="M5 21V4M5 5h12.5L15 9l2.5 4H5" /></Svg>;
 /** Guess the pro. */
 export const CrosshairIcon = (p: P) => <Svg {...p}><path d="M12 20a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 2v4M12 18v4M2 12h4M18 12h4" /></Svg>;
+/** The coach's slot: a clipboard. */
+export const CoachIcon = (p: P) => <Svg {...p}><path d="M9 4h6v3H9zM7 5.5H6a1 1 0 0 0-1 1V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6.5a1 1 0 0 0-1-1h-1M9 12h6M9 16h4" /></Svg>;
+/** The bench slot: a bench. */
+export const BenchIcon = (p: P) => <Svg {...p}><path d="M3 10h18M5 10v9M19 10v9M3 14.5h18M6 10V6.5h12V10" /></Svg>;
 export const HelpIcon = (p: P) => <Svg {...p}><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM9.4 9.4a2.7 2.7 0 1 1 3.8 2.5c-.8.4-1.2 1-1.2 1.8M12 17h.01" /></Svg>;
 export const SoundIcon = ({ on, ...p }: P & { on: boolean }) => (
   <Svg {...p}><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />{on ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /> : <path d="M16 9.5l5 5M21 9.5l-5 5" />}</Svg>

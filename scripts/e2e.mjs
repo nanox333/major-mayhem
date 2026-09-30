@@ -320,6 +320,63 @@ async function twitch() {
   await p.close();
 }
 
+/**
+ * The case (#143 to #145): the three cards are one size, pointing at a player previews them in the lineup (hover and keyboard focus preview,
+ * leaving removes a hover preview, pressing keeps it), and a player whose main role is taken says so and can still be drafted into the role the card names.
+ */
+async function draftui() {
+  const { p, errs } = await page({ width: 1440, height: 900 });
+  await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
+  await p.locator('button.cta', { hasText: 'Open case' }).click();
+  await p.waitForSelector('.case-card', { timeout: 8000 });
+  await p.waitForTimeout(700);
+  const rects = await p.$$eval('.case-card', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height), Math.round(r.width)].join(','); }));
+  if (new Set(rects).size !== 1) throw new Error('the three team cards are not the same size: ' + rects.join(' | '));
+  const w = Number(rects[0].split(',')[2]);
+  if (w < 290) throw new Error(`the team cards should be at least about 300px wide at 1440, got ${w}`);
+
+  const row = p.locator('button.prow').first();
+  await row.hover();
+  if ((await p.locator('.lrow.is-preview').count()) !== 1) throw new Error('hovering a player should preview them in the lineup');
+  if (!(await p.locator('.chem__if h4').count())) throw new Error('hovering a player should show what they add to chemistry');
+  await p.mouse.move(2, 2); await p.waitForTimeout(150);
+  if (await p.locator('.lrow.is-preview').count()) throw new Error('leaving a player should remove a hover preview');
+  await row.click(); await p.mouse.move(2, 2); await p.waitForTimeout(150);
+  if ((await p.locator('.lrow.is-preview').count()) !== 1) throw new Error('a pressed player should stay previewed');
+  await p.locator('button.prow').nth(2).focus();
+  if ((await p.locator('.lrow.is-preview b').textContent()).trim() !== (await p.locator('button.prow').nth(2).locator('.prow__name b').textContent()).trim()) throw new Error('keyboard focus should preview like hover');
+
+  // Draft round by round until a player shows as a second role, then check the card and the confirm panel agree.
+  let checked = false;
+  await p.locator('button.prow').first().click();
+  await p.locator('.draftbar .cta').click();
+  for (let r = 1; r < 5 && !checked; r++) {
+    await p.locator('button.cta', { hasText: 'Open case' }).click({ force: true });
+    await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(500);
+    const second = p.locator('button.prow.is-second').first();
+    if (await second.count()) {
+      const named = (await second.locator('.prow__role.is-second').textContent()).replace(/2nd role/, '').replace(/^[^A-Za-z]*/, '').trim().split(/\s+/)[0];
+      if (!/taken/.test(await second.locator('.prow__role.is-taken').textContent())) throw new Error('a second-role player should show their main role as taken');
+      await second.click(); await p.waitForTimeout(200);
+      const taken = p.locator('.slot-chip.is-taken');
+      if (!(await taken.count()) || !(await taken.first().isDisabled())) throw new Error('the confirm panel should list the taken main role, disabled');
+      const enabled = await p.locator('.draftbar .slot-chip:not(.is-taken)').allTextContents();
+      if (!enabled.some((x) => x.toUpperCase().includes(named.toUpperCase()))) throw new Error(`the card says ${named} but the confirm panel offers: ${enabled.join(' | ')}`);
+      await p.screenshot({ path: 'shots/draftui-second-role.png' });
+      await p.locator('.draftbar .cta').click();
+      checked = true;
+    } else {
+      await p.locator('button.prow:not(.is-off)').first().click();
+      await p.locator('.draftbar .cta').click();
+    }
+    await p.waitForTimeout(300);
+  }
+  console.log('draft ui: equal cards', rects[0], '| preview ok | second role', checked ? 'checked' : 'not offered in these cases', 'errors:', errs);
+  if (errs.length) problems.push(`draft ui: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 /** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
@@ -358,6 +415,7 @@ await run({ width: 1280, height: 900 }, 'desk');
 await run({ width: 390, height: 844 }, 'mob');
 await duel();
 await twitch();
+await draftui();
 await sound();
 await guess();
 await b.close();
