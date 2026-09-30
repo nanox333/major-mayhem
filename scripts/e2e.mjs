@@ -93,6 +93,7 @@ async function run(viewport, tag) {
   }
   await p.waitForSelector('button.cta'); await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-3-ready.png`, fullPage: true });
+  if ((await p.locator('.comfort li').count()) !== 7) throw new Error('the lobby should list all seven maps with how at home your team is (#49)');
   if (await p.$('.lobby__stat')) throw new Error('ratings visible in lobby');
   await cta('Find match');
   let n = 0, shotSb = false, shotKnife = false, shotHalf = false;
@@ -345,6 +346,7 @@ async function draftui() {
   await row.hover();
   if ((await p.locator('.lrow.is-preview').count()) !== 1) throw new Error('hovering a player should preview them in the lineup');
   if (!(await p.locator('.chem__if h4').count())) throw new Error('hovering a player should show what they add to chemistry');
+  if (!(await p.locator('.chem__majors').count())) throw new Error('hovering a player should show the Majors they attended (#48)');
   await p.mouse.move(2, 2); await p.waitForTimeout(150);
   if (await p.locator('.lrow.is-preview').count()) throw new Error('leaving a player should remove a hover preview');
   await row.click(); await p.mouse.move(2, 2); await p.waitForTimeout(150);
