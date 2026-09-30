@@ -126,6 +126,7 @@ async function run(viewport, tag) {
       if (g === 0 && n === 1) {
         await p.waitForTimeout(3200); await answerBuy();
         await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true });
+        if (!(await p.locator('.hud__extra .momentum__bar').count()) || !(await p.locator('.hud__extra .economy__side').count())) throw new Error('the live match should show momentum and the economy of each side (#71)');
         // A tactical timeout shows up in the killfeed and can't be called twice in a half.
         await p.waitForSelector('.calls__timeout:not([disabled])', { timeout: 6000 });
         await p.click('.calls__timeout');
@@ -157,6 +158,7 @@ async function run(viewport, tag) {
   }
   await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-7-final.png`, fullPage: true });
+  if (!(await p.locator('.path .history__row').count()) || !(await p.locator('.path__end').count())) throw new Error('the results should show the path through the Major (#72)');
   console.log(tag, 'final:', (await p.textContent('.final__banner h3')).trim(), '| MVP', (await p.textContent('.mvp-card strong')).trim(), (await p.textContent('.mvp-card__rating b')).trim());
   if (!(await p.$('.review__list li'))) throw new Error('no draft review');
   const grade = (await p.textContent('.review__head b')).trim();

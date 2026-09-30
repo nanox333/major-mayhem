@@ -81,22 +81,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
       )}
       <RosterList mine={mine} stats={ratings} mvpId={star.player.id} />
       <Staff s={s} stats={ratings} />
-      <ul className="history">
-        {s.t.matches.map((m, i) => {
-          const o = G.rosterById.get(m.opponentId)!;
-          return (
-            <li key={i} className={m.won ? 'w' : 'l'}>
-              {/* Each row opens the saved report for that match (#66). */}
-              <button className="history__row" onClick={() => setReport(i)} aria-label={`Match report: ${m.won ? 'won' : 'lost'} ${m.score[0]}–${m.score[1]} against ${o.org} ${o.year}`}>
-                <span>{m.stage === 'QUAL' ? (s.t.qual.need ? 'Swiss' : 'Qual') : m.stage === 'DUEL' ? 'BO3' : m.stage}</span>
-                <span className="history__opp">{o.org} {o.year}</span>
-                <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
-                <b>{m.won ? '✓' : '✗'} {m.score[0]}–{m.score[1]} ›</b>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <PathView s={s} onOpen={setReport} />
       {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
       <TeamReviewCard mine={mine} s={s} />
       <DraftReview picks={s.picks} />
@@ -321,5 +306,52 @@ function DraftReview({ picks }: { picks: G.Pick[] }) {
         })}
       </ol>
     </section>
+  );
+}
+
+/**
+ * The path through the Major (#72): the Swiss stage with its record and how it ended, then the playoffs as a short rail from the quarterfinal to the
+ * final, then where the run ended. Every match opens its report (#66), so the score, the maps and the key rounds are a tap away.
+ */
+function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
+  const t = s.t;
+  const pl = G.placement(t);
+  const items = t.matches.map((m, i) => ({ m, i }));
+  const swiss = items.filter(({ m }) => m.stage === 'QUAL');
+  const playoffs = items.filter(({ m }) => m.stage !== 'QUAL' && m.stage !== 'DUEL');
+  const duel = items.filter(({ m }) => m.stage === 'DUEL');
+  const need = G.qualNeed(t);
+  const row = ({ m, i }: { m: G.Match; i: number }) => {
+    const o = G.rosterById.get(m.opponentId)!;
+    const stage = m.stage === 'QUAL' ? `Bo${m.bestOf}` : m.stage === 'DUEL' ? 'Bo3' : m.stage === 'F' ? 'Final' : m.stage;
+    return (
+      <li key={i} className={m.won ? 'w' : 'l'}>
+        {/* Each row opens the saved report for that match (#66). */}
+        <button className="history__row" onClick={() => onOpen(i)} aria-label={`Match report: ${m.won ? 'won' : 'lost'} ${m.score[0]}–${m.score[1]} against ${o.org} ${o.year}`}>
+          <span>{stage}</span>
+          <span className="history__opp">{o.org} {o.year}</span>
+          <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
+          <b>{m.won ? '✓' : '✗'} {m.score[0]}–{m.score[1]} ›</b>
+        </button>
+      </li>
+    );
+  };
+  if (duel.length) return <ul className="history">{duel.map(row)}</ul>;
+  return (
+    <div className="path">
+      {swiss.length > 0 && (
+        <section aria-labelledby="path-swiss">
+          <h4 id="path-swiss">{t.qual.need ? 'Swiss stage' : 'Qualification'} <span>{t.qual.w}–{t.qual.l}{t.qual.w >= need ? ' · advanced' : t.qual.l >= need ? ' · out' : ''}</span></h4>
+          <ul className="history">{swiss.map(row)}</ul>
+        </section>
+      )}
+      {playoffs.length > 0 && (
+        <section aria-labelledby="path-playoffs">
+          <h4 id="path-playoffs">Playoffs</h4>
+          <ul className="history path__rail">{playoffs.map(row)}</ul>
+        </section>
+      )}
+      <p className={`path__end ${pl.key === 'CHAMP' ? 'is-champ' : ''}`}><span>Finished</span><b>{pl.label}</b></p>
+    </div>
   );
 }

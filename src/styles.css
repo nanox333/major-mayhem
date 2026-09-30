@@ -1435,3 +1435,32 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
   .tip__btns { grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: stretch; }
   .tip__ok { width: auto; min-width: 120px; }
 }
+
+
+/* ---------- match: momentum, economy and the timeout nudge (#71) ---------- */
+.hud__extra { display: grid; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+.momentum, .economy { display: grid; grid-template-columns: 82px minmax(0, 1fr) auto; align-items: center; gap: 10px; font-size: var(--fs-caption); color: var(--text-2); }
+.economy { grid-template-columns: 82px auto auto; justify-content: start; gap: 6px 18px; }
+.momentum__label { color: var(--muted); font-weight: 700; }
+.momentum__bar { position: relative; height: 10px; border-radius: 5px; background: var(--panel-2); overflow: hidden; border: 1px solid var(--line-2); }
+.momentum__bar i { position: absolute; inset: 0 auto 0 0; background: var(--accent); transition: width .25s ease; }
+.momentum__bar::after { content: ''; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--strong); opacity: .7; }
+.momentum small.is-warn { color: var(--loss-text); font-weight: 700; }
+.economy__side b { font-family: var(--f-head); letter-spacing: .05em; color: var(--accent-hi); margin-right: 4px; }
+.calls__timeout.is-nudge { border-color: var(--accent); color: var(--strong); background: color-mix(in srgb, var(--accent) 16%, var(--panel)); }
+@media (prefers-reduced-motion: no-preference) { .calls__timeout.is-nudge { animation: nudge 1.1s ease-in-out infinite; } }
+@keyframes nudge { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); } 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 45%, transparent); } }
+@media (max-width: 520px) { .momentum { grid-template-columns: 1fr; gap: 4px; } .momentum__label, .economy .momentum__label { display: none; } .economy { grid-template-columns: auto auto; } }
+
+
+/* ---------- results: the path through the Major (#72) ---------- */
+.path { display: grid; gap: 14px; }
+.path h4 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 6px; font-family: var(--f-head); font-weight: 800; font-size: var(--fs-label); letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.path h4 span { font-family: var(--f-body); font-size: var(--fs-caption); letter-spacing: 0; text-transform: none; color: var(--muted); font-weight: 700; }
+/* The playoffs are one line of play: a rail runs down beside them from the quarterfinal to the final. */
+.path__rail { position: relative; margin-left: 8px; padding-left: 12px; }
+.path__rail::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 2px; background: var(--line-2); }
+.path__end { display: flex; justify-content: space-between; align-items: center; margin: 0; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: var(--inset); }
+.path__end span { color: var(--muted); font-weight: 700; font-size: var(--fs-caption); }
+.path__end b { font-family: var(--f-head); font-weight: 800; font-size: 1.3rem; text-transform: uppercase; letter-spacing: .04em; }
+.path__end.is-champ { border-color: var(--rar-gold); }

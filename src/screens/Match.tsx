@@ -9,6 +9,7 @@ import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from
 import { play } from '../ui/sound';
 import { Tip } from '../ui/tips';
 import { getPrefs } from '../ui/prefs';
+import { BUY_LABEL, BUY_MARK, economyFor, momentumAt, momentumText } from '../game/momentum';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
   const q = t.qual;
@@ -274,6 +275,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
             return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}`} />;
           })}
         </div>
+        {game && !vetoing && !mapDone && <Momentum rounds={game.rounds} n={n} total={total} forced={game.calls?.force ?? []} theirTag={opp.tag} />}
         {m.bestOf === 3 && !vetoing && (
           <div className="maps">
             {[0, 1, 2].map((i) => {
@@ -310,7 +312,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch }: { mine: G.Lineup[]; 
           <div className="controls">
             {!buyQuestion && (
               <div className="calls">
-                <button className="ghost-btn calls__timeout" data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
+                <button className={`ghost-btn calls__timeout ${nudge ? 'is-nudge' : ''}`} data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
                   title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
                   Timeout
                 </button>
@@ -449,6 +451,30 @@ function VetoPanel({ m, opp, mine, dispatch }: { m: G.Match; opp: Roster; mine: 
       {!t && (
         <p className="veto__order"><b>Maps:</b> {G.vetoMaps(m.veto).map((x, i) => `${i + 1}. ${x.map} (${x.by === 'decider' ? 'decider' : `${who(x.by)} picked`})`).join(' · ')}</p>
       )}
+    </div>
+  );
+}
+
+/**
+ * Why you would make a call (#71): how the last few rounds went, and what each side is buying. Both are read from the rounds already played and your
+ * calls; the bar is never a prediction.
+ */
+function Momentum({ rounds, n, total, forced, theirTag }: { rounds: boolean[]; n: number; total: number; forced: number[]; theirTag: string }) {
+  const mo = momentumAt(rounds, n);
+  const buy = economyFor(rounds, Math.min(n, total - 1), forced);
+  const said = momentumText(mo, theirTag);
+  return (
+    <div className="hud__extra">
+      <div className="momentum">
+        <span className="momentum__label">Momentum</span>
+        <span className="momentum__bar" role="img" aria-label={`Momentum: ${said}. You won ${mo.ours} of the last ${mo.ours + mo.theirs}.`}><i style={{ width: `${Math.round(mo.share * 100)}%` }} /></span>
+        <small className={mo.run?.who === 'them' ? 'is-warn' : ''}>{said}</small>
+      </div>
+      <div className="economy">
+        <span className="momentum__label">Economy</span>
+        <span className="economy__side"><b aria-hidden="true">{BUY_MARK[buy.mine]}</b> You: {BUY_LABEL[buy.mine].toLowerCase()}</span>
+        <span className="economy__side"><b aria-hidden="true">{BUY_MARK[buy.theirs]}</b> {theirTag}: {BUY_LABEL[buy.theirs].toLowerCase()}</span>
+      </div>
     </div>
   );
 }
