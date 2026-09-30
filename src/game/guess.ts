@@ -4,6 +4,8 @@
 import { ROSTERS, Roster, Role, rostersOn, rulesOn } from '../data/rosters';
 import * as G from './logic';
 import { dailyNumber } from './state';
+import { isRealDate } from './dates';
+import { readKey, safeSet } from './persist';
 
 export interface Pro {
   id: string;
@@ -103,11 +105,43 @@ export function clueMeaning(c: Clue): string {
 export const describeClue = (c: Clue, shown: string = c.text) => `${CLUE_LABEL[c.key]}: ${shown}. ${clueMeaning(c)}.`;
 
 export interface GuessDay { guesses: string[]; done: boolean; won: boolean }
-const KEY = 'major-mayhem-guess-v1';
-export function loadGuesses(): Record<string, GuessDay> {
-  try { const v = JSON.parse(localStorage.getItem(KEY) ?? '{}'); return v && typeof v === 'object' ? v : {}; } catch { return {}; }
+export const GUESS_KEY = 'major-mayhem-guess-v1';
+
+/**
+ * What was saved for each day, keeping the days and guesses that are the right shape and dropping the rest (#164). Whether a guess is a real player is
+ * checked against the day's player list by `normalizeDay`, which also works out from the answer whether the day is won or over.
+ */
+export function sanitizeGuesses(raw: unknown): Record<string, GuessDay> {
+  const out: Record<string, GuessDay> = {};
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return out;
+  for (const [date, d] of Object.entries(raw as Record<string, any>)) {
+    if (!isRealDate(date) || typeof d !== 'object' || d === null || !Array.isArray(d.guesses)) continue;
+    const guesses = [...new Set<string>(d.guesses.filter((x: unknown): x is string => typeof x === 'string'))].slice(0, MAX_GUESSES);
+    out[date] = { guesses, done: d.done === true, won: d.won === true };
+  }
+  return out;
 }
-export const saveGuesses = (g: Record<string, GuessDay>) => { try { localStorage.setItem(KEY, JSON.stringify(g)); } catch { /* storage unavailable */ } };
+
+/**
+ * A saved day as the game should treat it: guesses that are not players of that day are dropped, nothing counts after the answer, and "won" and "done" follow
+ * from the guesses and the answer and not from what the save claims.
+ */
+export function normalizeDay(day: GuessDay | undefined, known: { has(id: string): boolean }, answerId: string): GuessDay {
+  const valid = (day?.guesses ?? []).filter((id) => known.has(id));
+  const at = valid.indexOf(answerId);
+  const guesses = at >= 0 ? valid.slice(0, at + 1) : valid.slice(0, MAX_GUESSES);
+  const won = at >= 0;
+  return { guesses, won, done: won || guesses.length >= MAX_GUESSES };
+}
+
+// What this tab last knew, so a failed write does not make the next read come back empty (#166).
+let session: Record<string, GuessDay> | null = null;
+export const forgetGuesses = () => { session = null; };
+export function loadGuesses(): Record<string, GuessDay> {
+  if (session) return session;
+  try { const raw = readKey(GUESS_KEY); return sanitizeGuesses(raw ? JSON.parse(raw) : {}); } catch { return {}; }
+}
+export const saveGuesses = (g: Record<string, GuessDay>) => { session = g; safeSet(GUESS_KEY, JSON.stringify(g), 'your Guess history'); };
 
 /** Adds a guess (by player id) to a day, finishing it on a hit or on the last guess. Pure. */
 export function addGuess(day: GuessDay, id: string, answer: Pro): GuessDay {

@@ -216,13 +216,22 @@ async function run(viewport, tag) {
   await setSave((s) => { s.picks[0].playerId = 'retired-player'; });
   await p.waitForSelector('.home3');
   if (await p.$('.crash')) throw new Error('a save with a missing player crashed the page');
-  // A save that passes the checks but still crashes shows the error screen; "Reset run" recovers and keeps stats.
+  // A save whose matches or state machine are malformed is refused up front, not half-way through a match (#165).
   await setSave((s) => { s.t.matches[0].maps = null; });
-  await p.waitForSelector('.crash');
-  await p.screenshot({ path: `shots/${tag}-11-crash.png`, fullPage: true });
-  await p.locator('.crash button', { hasText: 'Reset run' }).click();
   await p.waitForSelector('.home3');
-  if (!(await p.evaluate(() => localStorage.getItem('major-mayhem-stats-v1')))) throw new Error('reset run cleared lifetime stats');
+  if (await p.$('.crash')) throw new Error('a save with malformed matches should start a new run, not crash');
+  await setSave((s) => { s.phase = 'invalid'; s.seed = null; });
+  await p.waitForSelector('.home3');
+  if (await p.$('.crash')) throw new Error('a save with invalid enums should start a new run, not crash');
+  // A damaged record and a damaged Guess history are recovered, keeping what is valid (#164).
+  await p.evaluate(() => { localStorage.setItem('major-mayhem-stats-v1', '{"v":1,"runs":4,"daily":null}'); const d = new Date(); const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; localStorage.setItem('major-mayhem-guess-v1', JSON.stringify({ [k]: { guesses: ['not-a-player'], done: false, won: false } })); });
+  await p.reload();
+  await p.waitForSelector('.home3');
+  if (await p.$('.crash')) throw new Error('a damaged record should not crash the home');
+  await openGuess(p);
+  await p.waitForSelector('.guess__box input');
+  if (await p.$('.crash')) throw new Error('an unknown player in the Guess history should not crash Guess');
+  if (!(await p.evaluate(() => localStorage.getItem('major-mayhem-stats-v1')?.includes('"runs":4') ?? true))) throw new Error('the valid part of a damaged record should be kept');
   console.log(tag, 'broken saves recover OK');
   await p.close();
 }
@@ -537,6 +546,45 @@ async function tips() {
   await p.close();
 }
 
+/**
+ * Saving (#166, #189): when the browser will not keep anything the page says so, and a backup downloaded from the settings restores a record into a
+ * browser that has nothing, while a file that is not a backup changes nothing.
+ */
+async function dataSafety() {
+  // A browser that refuses every write.
+  const { p: q, errs: qerrs } = await page({ width: 1280, height: 900 });
+  await q.addInitScript(() => { const set = Storage.prototype.setItem; Storage.prototype.setItem = function (k, v) { if (String(k).startsWith('major-mayhem-')) throw new Error('quota'); return set.call(this, k, v); }; });
+  await q.goto('http://game.local/');
+  await q.waitForSelector('.unsaved', { timeout: 5000 }).catch(() => { throw new Error('a failed write should show the not-saved notice'); });
+  if (!/Not saved on this device/.test(await q.locator('.unsaved').innerText())) throw new Error('the notice should say it is not saved on this device');
+  if (qerrs.length) problems.push(`unsaved: page errors: ${qerrs.join(' | ')}`);
+  await q.close();
+
+  const { p, errs } = await page({ width: 1280, height: 900 });
+  await p.goto('http://game.local/'); await p.evaluate(() => { localStorage.clear(); localStorage.setItem('major-mayhem-stats-v1', JSON.stringify({ v: 1, runs: 7, titles: 2, reached: [3, 1, 1, 0, 2], streak: 0, bestStreak: 1, drafted: {}, daily: {}, ach: {}, lastNew: [], duels: { w: 0, l: 0 } })); }); await p.reload();
+  if (await p.locator('.unsaved').count()) throw new Error('the not-saved notice should not show when saving works');
+  await p.locator('.hud-btn--gear').click();
+  const [download] = await Promise.all([p.waitForEvent('download'), p.locator('button', { hasText: 'Download a backup' }).click()]);
+  const file = await (async () => { const chunks = []; for await (const c of await download.createReadStream()) chunks.push(c); return Buffer.concat(chunks); })();
+  await p.keyboard.press('Escape');
+  // A browser with nothing in it, then the backup back in.
+  await p.evaluate(() => localStorage.clear()); await p.reload();
+  await p.locator('.hud-btn--gear').click();
+  await p.setInputFiles('input[type="file"]', { name: 'not-a-backup.json', mimeType: 'application/json', buffer: Buffer.from('{"hello":1}') });
+  await p.waitForSelector('.settings__warn');
+  if (await p.evaluate(() => localStorage.getItem('major-mayhem-stats-v1'))) throw new Error('a file that is not a backup should change nothing');
+  await p.setInputFiles('input[type="file"]', { name: 'backup.json', mimeType: 'application/json', buffer: file });
+  await p.waitForSelector('.settings__restore');
+  if (!/7 Major runs/.test(await p.locator('.settings__restore').innerText())) throw new Error('the preview should say what the backup holds');
+  await Promise.all([p.waitForLoadState('load'), p.locator('button', { hasText: 'Replace my data' }).click()]);
+  await p.waitForSelector('.home3');
+  const runs = await p.evaluate(() => JSON.parse(localStorage.getItem('major-mayhem-stats-v1') ?? '{}').runs);
+  if (runs !== 7) throw new Error(`the restored record should have 7 runs, has ${runs}`);
+  console.log('data safety: unsaved notice, backup and restore ok errors:', errs);
+  if (errs.length) problems.push(`data safety: page errors: ${errs.join(' | ')}`);
+  await p.close();
+}
+
 /** Sound: silent until the first click, ticks and a chime when a case opens, one sample per Guess clue, and mute that survives a reload. (Counts the recorded samples being started.) */
 async function sound() {
   const { p, errs } = await page();
@@ -583,6 +631,7 @@ await guess();
 await guessMotion();
 await settingsAndKeys();
 await tips();
+await dataSafety();
 await b.close();
 if (problems.length) { console.error('FAIL\n- ' + problems.join('\n- ')); process.exit(1); }
 console.log('OK');

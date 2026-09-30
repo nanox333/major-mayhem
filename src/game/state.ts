@@ -1,9 +1,11 @@
 // Run state: the draft, the tournament, and the reducer that moves between them.
 // Every random step runs under a seed derived from the run seed, so the daily challenge deals
 // everyone the same cases and a reloaded run can't be rerolled by refreshing the page.
-import { COACHES, LATEST_RULES, Player, ROLE_ORDER, Role, Roster, activeRosters, rostersOn, rulesOn } from '../data/rosters';
+import { LATEST_RULES, Player, ROLE_ORDER, Role, Roster, activeRosters, isCoach, rostersOn, rulesOn } from '../data/rosters';
 import * as G from './logic';
-import { DUEL_ID, Duel, duelRosters, registerDuel } from './duel';
+import { DUEL_ID, Duel, duelRosters, registerDuel, validDuel } from './duel';
+import { isRealDate } from './dates';
+import { readKey, safeSet } from './persist';
 
 export type Phase = 'draft' | 'ready' | 'preview' | 'live' | 'final';
 export type Mode = 'free' | 'daily' | 'duel';
@@ -57,7 +59,13 @@ export interface Run {
   duel?: Duel;
   /** The rules version this run plays under (#24); runs saved before versions existed are v1. */
   rules?: number;
+  /**
+   * Who this attempt is, apart from its seed (free-play replays and a daily played again share a seed). Recording a result is keyed by it, so it counts once (#163).
+   * Saves from before it existed get one when they are loaded.
+   */
+  attempt?: string;
 }
+export const newAttempt = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 export const rulesOf = (s: Pick<Run, 'rules'>) => s.rules ?? 1;
 
 /** Slots a player can go into: the roles they cover, or in hard mode any open slot (off-role costs as usual). */
@@ -98,7 +106,7 @@ export const fresh = (mode: Mode = 'free', date = today(), opts?: Opts): Run => 
   ...(mode === 'free' && opts && optsLabel(opts).length ? { opts } : {}),
   v: 3, mode, seed: mode === 'daily' ? `daily-${date}` : `free-${Math.random().toString(36).slice(2, 10)}`,
   phase: 'draft', step: 'spin', offer: [], offerKey: 0, rerollKey: 0, seen: [], team: null, picks: [], rerolls: 2,
-  t: G.newTournament(), pending: null, current: null, recorded: false, extras: true, bench: null,
+  t: G.newTournament(), pending: null, current: null, recorded: false, extras: true, bench: null, attempt: newAttempt(),
   // A daily plays under the rules of its date; everything else starts on the latest.
   rules: mode === 'daily' ? rulesOn(date) : LATEST_RULES,
 });
@@ -111,57 +119,125 @@ export function freshDuel(d: Duel): Run {
   // The friend drafts under the challenger's rules, so the cases match. Links from before versions existed are v1,
   // or the daily's version when they carry a date.
   const rules = d.rules ?? (d.date ? rulesOn(d.date) : 1);
-  return { ...fresh('free', today(), d.opts), mode: 'duel', seed: d.seed, duel: d, t: { ...G.newTournament(), duel: true }, rules };
+  return { ...fresh('free', today(), d.opts), mode: 'duel', seed: d.seed, duel: d, t: { ...G.newTournament(), duel: true }, rules, attempt: newAttempt() };
 }
 
-export function load(): Run {
+/** Parses a saved run and checks it; null when there is none or it is not usable. A v2 save is carried over as a free run. */
+export function parseRun(raw: string | null): Run | null {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return fresh();
+    if (!raw) return null;
     const r = JSON.parse(raw);
-    if (r.duel) registerDuel(r.duel);
     // v2 saves predate daily mode: carry them over as free runs.
-    if (r.v === 2) Object.assign(r, { v: 3, mode: 'free', seed: `free-${Math.random().toString(36).slice(2, 10)}`, recorded: r.phase === 'final' });
+    if (r?.v === 2) Object.assign(r, { v: 3, mode: 'free', seed: `free-${Math.random().toString(36).slice(2, 10)}`, recorded: r.phase === 'final' });
     // A match saved before map vetoes existed can't be continued: replay it from the match-found screen.
-    if (r.current && !('veto' in r.current)) Object.assign(r, { current: null, phase: r.pending ? 'preview' : r.phase });
-    if (!validRun(r)) return fresh();
-    G.setRules(rulesOf(r));
+    if (r?.current && typeof r.current === 'object' && !('veto' in r.current)) Object.assign(r, { current: null, phase: r.pending ? 'preview' : r.phase });
+    if (!validRun(r)) return null;
+    if (!r.attempt) r.attempt = newAttempt();
     return r as Run;
-  } catch { return fresh(); }
+  } catch { return null; }
 }
+
+/** The saved run, or a fresh one. `bad` says a save was there but could not be used, so the page can say so instead of quietly starting over. */
+export function load(): Run {
+  const r = parseRun(readKey(KEY));
+  if (!r) return fresh();
+  if (r.duel) registerDuel(r.duel);
+  G.setRules(rulesOf(r));
+  return r;
+}
+/** Whether there is a saved run that cannot be used. */
+export const savedRunIsBroken = () => { const raw = readKey(KEY); return !!raw && !parseRun(raw); };
+
+// ---------- checking a save (#165) ----------
+// A save is only used when everything the game will read from it has the right shape, so an edited or damaged one is refused up front and not half-way
+// through a match. Saves from older versions stay valid: what they lack is optional, what they have must still be the right kind of thing.
+const isObj = (x: unknown): x is Record<string, any> => typeof x === 'object' && x !== null && !Array.isArray(x);
+const isInt = (x: unknown, lo: number, hi: number) => typeof x === 'number' && Number.isInteger(x) && x >= lo && x <= hi;
+const isNum = (x: unknown) => typeof x === 'number' && Number.isFinite(x);
+const isPair = (x: unknown) => Array.isArray(x) && x.length === 2 && isInt(x[0], 0, 99) && isInt(x[1], 0, 99);
+const STAGES = ['QUAL', 'QF', 'SF', 'F', 'DUEL'];
+const SIDES = ['T', 'CT'];
+const PHASES = ['draft', 'ready', 'preview', 'live', 'final'];
+
+const teamId = (id: unknown) => typeof id === 'string' && (G.rosterById.has(id) || id === DUEL_ID);
+const statOk = (x: any) => isObj(x) && typeof x.id === 'string' && typeof x.nick === 'string' && isNum(x.k) && isNum(x.d) && isNum(x.rating);
+const mapOk = (g: any) => isObj(g) && typeof g.map === 'string' && SIDES.includes(g.start)
+  && Array.isArray(g.rounds) && g.rounds.length <= 60 && g.rounds.every((x: unknown) => typeof x === 'boolean')
+  && Array.isArray(g.events) && g.events.every((e: any) => isObj(e) && isInt(e.round, 0, 99) && typeof e.text === 'string')
+  && isPair(g.score) && typeof g.won === 'boolean'
+  && isObj(g.stats) && Array.isArray(g.stats.mine) && g.stats.mine.every(statOk) && Array.isArray(g.stats.opp) && g.stats.opp.every(statOk)
+  && (g.calls === undefined || (isObj(g.calls) && Array.isArray(g.calls.timeouts) && g.calls.timeouts.every((n: unknown) => isInt(n, 0, 99)) && Array.isArray(g.calls.force) && g.calls.force.every((n: unknown) => isInt(n, 0, 99))));
+/** A match, finished or in progress. The veto, map order and knife only exist from later versions, so for a finished match they are optional. */
+const matchOk = (m: any, live: boolean) => isObj(m) && STAGES.includes(m.stage) && teamId(m.opponentId) && (m.bestOf === 1 || m.bestOf === 3)
+  && Array.isArray(m.maps) && m.maps.length <= 3 && m.maps.every(mapOk)
+  && typeof m.done === 'boolean' && typeof m.won === 'boolean' && isPair(m.score)
+  && (m.impact === undefined || isObj(m.impact)) && (m.form === undefined || isNum(m.form))
+  && (!live || (isObj(m.veto) && Array.isArray(m.veto.order) && Array.isArray(m.veto.steps) && Array.isArray(m.veto.left) && Array.isArray(m.pool) && m.pool.every((x: unknown) => typeof x === 'string')))
+  && (m.veto === undefined || (isObj(m.veto) && Array.isArray(m.veto.order) && Array.isArray(m.veto.steps) && Array.isArray(m.veto.left)))
+  && (m.next === undefined || m.next === null || (isObj(m.next) && typeof m.next.map === 'string' && typeof m.next.won === 'boolean' && SIDES.includes(m.next.best) && SIDES.includes(m.next.oppPick)))
+  && (m.playerForm === undefined || (isObj(m.playerForm) && Object.values(m.playerForm).every(isNum)));
 
 /**
- * Checks that everything a save points at still exists in the roster data, so a renamed or removed player or team
- * starts a new run instead of crashing the page on every load.
+ * Checks that a save is something the game can run: the state machine's fields, counters, people (no one twice), the tournament and any match in
+ * progress, and that everything it points at still exists in the roster data, so a renamed or removed player or team starts a new run instead of crashing.
  */
 export function validRun(r: any): boolean {
+  if (!isObj(r) || r.v !== 3) return false;
   const roster = (id: unknown) => typeof id === 'string' && G.rosterById.has(id);
-  const pickOk = (p: G.Pick) => roster(p.rosterId) && ROLE_ORDER.includes(p.slot)
+  const pickOk = (p: any) => isObj(p) && roster(p.rosterId) && ROLE_ORDER.includes(p.slot)
     && G.rosterById.get(p.rosterId)!.players.some((x) => x.id === p.playerId)
-    && (!p.offer || p.offer.every(roster));
-  return r?.v === 3
-    && Array.isArray(r.picks) && r.picks.length <= 5 && r.picks.every(pickOk)
-    && new Set(r.picks.map((p: G.Pick) => p.slot)).size === r.picks.length
-    && Array.isArray(r.offer) && r.offer.every(roster)
-    && (r.team === null || roster(r.team))
-    && (r.picks.length === 5 || !['ready', 'preview', 'live', 'final'].includes(r.phase))
-    && (!r.pending || roster(r.pending.oppId))
-    && (r.coach === undefined || r.coach === null || (typeof r.coach === 'string' && r.coach in COACHES))
-    && (!r.bench || (pickOk(r.bench) && !r.picks.some((p: G.Pick) => p.playerId === r.bench.playerId)))
-    && (!r.pending?.subOut || r.picks.some((p: G.Pick) => p.playerId === r.pending.subOut))
-    && (!r.current?.subOut || r.picks.some((p: G.Pick) => p.playerId === r.current.subOut))
-    && (!r.opts || (typeof r.opts === 'object' && [undefined, 'csgo', 'cs2'].includes(r.opts.era) && [undefined, 'champions', 'underdogs'].includes(r.opts.pool)))
-    && (r.rules === undefined || (Number.isInteger(r.rules) && r.rules >= 1 && r.rules <= LATEST_RULES))
-    && (!r.current || roster(r.current.opponentId))
-    && Array.isArray(r.t?.matches) && r.t.matches.every((m: G.Match) => roster(m.opponentId));
+    && (!p.offer || (Array.isArray(p.offer) && p.offer.every(roster)));
+  if (!['free', 'daily', 'duel'].includes(r.mode) || !PHASES.includes(r.phase) || !['spin', 'teams', 'players'].includes(r.step)) return false;
+  if (typeof r.seed !== 'string' || r.seed.length > 60) return false;
+  if (r.mode === 'daily' && !(r.seed.startsWith('daily-') && isRealDate(r.seed.slice(6)))) return false;
+  if (r.mode === 'free' && r.seed.startsWith('daily-')) return false;
+  if ((r.mode === 'duel') !== (r.duel !== undefined)) return false;
+  if (r.duel !== undefined && (!validDuel(r.duel) || r.duel.seed !== r.seed)) return false;
+  if (!isInt(r.offerKey, 0, 10000) || !isInt(r.rerollKey, 0, 10000) || !isInt(r.rerolls, 0, 10)) return false;
+  if (typeof r.recorded !== 'boolean' || (r.extras !== undefined && typeof r.extras !== 'boolean')) return false;
+  if (r.attempt !== undefined && (typeof r.attempt !== 'string' || r.attempt.length > 60)) return false;
+  if (!Array.isArray(r.picks) || r.picks.length > 5 || !r.picks.every(pickOk)) return false;
+  if (new Set(r.picks.map((p: G.Pick) => p.slot)).size !== r.picks.length) return false;
+  if (new Set(r.picks.map((p: G.Pick) => p.playerId)).size !== r.picks.length) return false;
+  if (!Array.isArray(r.offer) || r.offer.length > 3 || !r.offer.every(roster)) return false;
+  if (!Array.isArray(r.seen) || r.seen.length > 400 || !r.seen.every(roster)) return false;
+  if (!(r.team === null || roster(r.team)) || (r.step === 'players' && r.team === null)) return false;
+  if (!(r.coach === undefined || r.coach === null || isCoach(r.coach)) || !(r.coachFrom === undefined || roster(r.coachFrom))) return false;
+  if (r.bench && (!pickOk(r.bench) || r.picks.some((p: G.Pick) => p.playerId === r.bench.playerId))) return false;
+  if (r.opts !== undefined && !(isObj(r.opts) && [undefined, 'csgo', 'cs2'].includes(r.opts.era) && [undefined, 'champions', 'underdogs'].includes(r.opts.pool) && [undefined, true, false].includes(r.opts.hard))) return false;
+  if (!(r.rules === undefined || isInt(r.rules, 1, LATEST_RULES))) return false;
+  // Where the run is must agree with what it holds.
+  if (r.picks.length !== 5 && ['ready', 'preview', 'live', 'final'].includes(r.phase)) return false;
+  if (r.extras && ['ready', 'preview', 'live', 'final'].includes(r.phase) && (r.coach === undefined || !r.bench)) return false;
+  // The pending match and the one in progress.
+  const p = r.pending;
+  if (p !== null && p !== undefined) {
+    if (!isObj(p) || !STAGES.includes(p.stage) || !teamId(p.oppId)) return false;
+    if (p.form !== undefined && !(isObj(p.form) && Object.values(p.form).every(isNum))) return false;
+    if (p.subOut && !r.picks.some((x: G.Pick) => x.playerId === p.subOut)) return false;
+  }
+  if (r.current !== null && r.current !== undefined) {
+    if (!matchOk(r.current, true)) return false;
+    if (r.current.subOut && !r.picks.some((x: G.Pick) => x.playerId === r.current.subOut)) return false;
+  }
+  if (r.phase === 'preview' && !p) return false;
+  if (r.phase === 'live' && !r.current) return false;
+  // The tournament.
+  const t = r.t;
+  if (!isObj(t) || !Array.isArray(t.matches) || t.matches.length > 40 || !t.matches.every((m: unknown) => matchOk(m, false))) return false;
+  if (!isObj(t.qual) || !isInt(t.qual.w, 0, 20) || !isInt(t.qual.l, 0, 20) || !(t.qual.need === undefined || isInt(t.qual.need, 1, 10))) return false;
+  if (!['running', 'eliminated', 'champion'].includes(t.status) || !Array.isArray(t.used) || !t.used.every((x: unknown) => typeof x === 'string')) return false;
+  if (t.duel !== undefined && typeof t.duel !== 'boolean') return false;
+  if (r.phase === 'final' && t.status === 'running') return false;
+  return true;
 }
-export const save = (r: Run) => { try { localStorage.setItem(KEY, JSON.stringify(r)); } catch { /* storage unavailable: play on */ } };
+export const save = (r: Run) => { safeSet(KEY, JSON.stringify(r), 'your run'); };
 
 export type Action =
   | { type: 'spin' } | { type: 'reroll' } | { type: 'team'; id: string } | { type: 'back' }
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
   | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode; opts?: Opts } | { type: 'recorded' }
-  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel }
+  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel } | { type: 'adopt'; run: Run }
   | { type: 'coach'; rosterId: string } | { type: 'bench'; player: Player } | { type: 'sub'; out: string | null } | { type: 'call'; call: G.Call };
 
 /** A daily draws only from rosters available on its date, so later data additions don't change it. */
@@ -309,5 +385,7 @@ function reduce(s: Run, a: Action): Run {
     case 'opts': return s.offerKey === 0 && s.mode === 'free' && poolCheck(a.opts).ok ? fresh('free', today(), a.opts) : s;
     case 'duel': return freshDuel(a.duel);
     case 'recorded': return { ...s, recorded: true };
+    // Another tab moved this run on: take its version rather than overwrite it with a stale one (#163).
+    case 'adopt': return a.run;
   }
 }

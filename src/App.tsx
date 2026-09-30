@@ -1,7 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import * as G from './game/logic';
-import { Action, Phase, currentLineup, dailyDate, dailyNumber, draftRounds, load, optsLabel, reducer, roundNumber, roundOf, save, today } from './game/state';
-import { abandonDaily, dailyStarted, loadStats, recordDuel, recordRun } from './game/stats';
+import { Action, Phase, currentLineup, dailyDate, dailyNumber, draftRounds, KEY, load, optsLabel, parseRun, reducer, roundNumber, roundOf, save, today } from './game/state';
+import { STATS_KEY, abandonDaily, dailyStarted, forgetStats, loadStats, recordDuel, recordRun } from './game/stats';
+import { GUESS_KEY, forgetGuesses } from './game/guess';
+import { registerDuel } from './game/duel';
+import { UnsavedBar } from './ui/UnsavedBar';
 import { Duel, decodeDuel, duelCode } from './game/duel';
 import { BoardHost } from './ui/Board';
 import { Modal } from './ui/Modal';
@@ -57,6 +60,19 @@ function Game() {
     return { duel: decodeDuel(code) };
   });
   useEffect(() => save(s), [s]);
+  // Another tab changed what is saved (#163): take its run and its record rather than overwrite them with what this tab last saw.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === STATS_KEY) { forgetStats(); setStats(loadStats()); }
+      else if (e.key === GUESS_KEY) forgetGuesses();
+      else if (e.key === KEY) {
+        const run = parseRun(e.newValue);
+        if (run && JSON.stringify(run) !== JSON.stringify(latest.current)) { if (run.duel) registerDuel(run.duel); rawDispatch({ type: 'adopt', run }); }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
   useRunTracking(s);
   // Count each finished run once, even across reloads.
   useEffect(() => {
@@ -126,6 +142,7 @@ function Game() {
     <>
     <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
       abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
+    <UnsavedBar run={s} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
@@ -165,7 +182,7 @@ function Game() {
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); setView('draft'); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
-      {settings && <SettingsDialog onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />}
+      {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>

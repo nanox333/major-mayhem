@@ -3,7 +3,7 @@ import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
-import { Stats, dailyStreak } from '../game/stats';
+import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
 import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt } from '../ui/util';
@@ -24,6 +24,8 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps));
   const date = dailyDate(s);
   const streak = date ? dailyStreak(stats.daily, date).current : 0;
+  // A replay of a daily that already has a result is practice: it shows and shares as practice and changes nothing in your record (#162).
+  const practice = isPractice(stats, s);
   // The result, once the banner has landed; then the achievement bell, if this run earned one.
   useEffect(() => {
     const t = setTimeout(() => play(champ ? 'champion' : pl.key === 'DUEL-W' ? 'mapWin' : 'mapLose'), 350);
@@ -51,6 +53,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           </>
         )}
       </div>
+      {practice && <p className="practice" role="note">Practice run: Daily #{dailyNumber(date!)} already has a result, so this one doesn't change your record, your streak or your achievements.</p>}
       {!s.duel && <StageTrack t={s.t} />}
       <div className="mvp-card anim-in">
         <span className="mvp-card__photo"><Avatar player={star.player} roster={star.roster} /></span>
@@ -68,7 +71,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         </div>
       )}
       <ShareBar
-        text={() => shareText(s, pageUrl())}
+        text={() => shareText(s, pageUrl(), practice)}
         image={{ draw: () => drawResultCard(s, siteHost()), name: cardFileName(s) }}
         props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }}
       />

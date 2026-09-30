@@ -97,7 +97,8 @@ describe('drafting straight from the case (#105)', () => {
     for (const date of ['2026-10-01', '2026-10-02', '2026-10-03']) {
       let direct = fresh('daily', date), browsed = fresh('daily', date);
       for (let i = 0; i < 5; i++) { direct = round(direct, false); browsed = round(browsed, true); }
-      expect(direct).toEqual(browsed);
+      // Each run is its own attempt, so the ids differ; everything else is the same.
+      expect({ ...direct, attempt: '' }).toEqual({ ...browsed, attempt: '' });
       expect(direct.picks).toHaveLength(5);
     }
   });
@@ -116,7 +117,8 @@ describe('stats and sharing', () => {
     expect(once.runs).toBe(1);
     expect(once.reached.reduce((a, b) => a + b, 0)).toBe(1);
     expect(Object.values(once.drafted).reduce((a, b) => a + b, 0)).toBe(5);
-    expect(twice.runs).toBe(2);
+    // The second attempt at the same daily is practice (#162): it adds no run, and the first result stays.
+    expect(twice.runs).toBe(1);
     expect(twice.daily['2026-10-01']).toEqual(once.daily['2026-10-01']);
   });
   it('writes a short spoiler-light grid: the daily number, the path and which picks were the best in their case (#73)', () => {
@@ -368,7 +370,7 @@ describe('achievements', () => {
     const a = addRun(emptyStats(), asChamp);
     expect(a.ach.champion).toBe('2026-10-05');
     expect(a.lastNew).toContain('champion');
-    const b = addRun(a, { ...asChamp, seed: 'free-x', mode: 'free' });
+    const b = addRun(a, { ...asChamp, seed: 'free-x', mode: 'free', attempt: 'another-attempt' });
     expect(b.lastNew).not.toContain('champion');
     expect(b.ach.champion).toBe('2026-10-05');
   });

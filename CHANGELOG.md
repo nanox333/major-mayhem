@@ -38,6 +38,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Match: momentum and economy; results: the path** ([#71], [#72]): under the score, a **momentum bar** shows your share of the last six rounds with one sentence ("FaZe are on a 4-round run"), and **economy** says what each side is buying this round (full buy, force buy or eco, with $ marks), read from the rounds already played and your calls; the Timeout button pulses when the other side has won three in a row and a timeout would help. The results screen shows the **path through the Major**: the Swiss stage with its record and how it ended, the playoffs on a rail from quarterfinal to final, and where the run finished; every match still opens its report.
 - **Stats: finishes over time** ([#76]): a **Last 14 dailies** chart, a column per day as tall as how far you got (gold for a title), with the finish written under it and the day of the month below that, and gaps for days you didn't play or abandoned. "Most drafted" is a numbered list. Plain CSS, no chart library.
 - **Your maps before the veto, and a player's Majors** ([#49], [#48]): the lobby now has **Your maps**, the seven maps ranked by how at home your five are (pips and a word: strong, average, weak), the same comfort the veto compares with your opponent's. When you point at a player in the draft, the preview lists the Majors they attended and how far their team got ("2016 SF · 2018 1st").
+- **Saves, records and links are checked, and you can back them up** ([#162], [#163], [#164], [#165], [#166], [#170], [#189]): only the first attempt at a daily is scored, and a replay (of a finished or an abandoned one) is labelled **practice** and changes no tally, streak or achievement, and is shared as practice. Every run has its own attempt identity and a result counts once, even across a reload or two tabs; a second tab that moves your run on is followed and not overwritten. A saved run is only resumed when everything in it is valid (the state machine, counters, people, matches), old saves still resume, and a damaged record or Guess history keeps the parts that are valid and drops the rest, so the game no longer gets stuck on an error screen. The error screen now offers a backup of exactly what is saved, clearing only the open run, and (confirmed) clearing everything. After a failed write to the browser the page says so ("Not saved on this device") with a backup button, and the totals stay consistent for the session. Settings has **Your data**: download a backup (a versioned file with your record, Guess history and open run) and restore one after a preview; restoring replaces, never merges, and changes nothing if the file is bad. Challenge links with a coach name like "constructor" or an impossible date are rejected.
 - **Icons:** one set of line icons drawn for the game replaces the scattered glyphs and inline drawings ([#114]).
 - **The draft screen has three columns on wide screens:** your lineup on the left (photo, nick, team and year, the team's logo, and "Add player" where a slot is still open), the case in the middle, and a sidebar with the game mode, live team chemistry and a draft hint. The radar no longer takes room while you draft; the lobby and the match still have it ([#102], [#107]).
 - **One line says where you are and what to do** ("Daily #2 · Draft · Round 3 of 7 · Choose your player"), an "Opened case" bar sits over the cards, and the reroll is "Spin again · 2 spins left" ([#103]).
@@ -128,6 +129,13 @@ The first tagged release, covering everything since the initial draft game.
 [#108]: https://github.com/nanox333/major-mayhem/issues/108
 [#109]: https://github.com/nanox333/major-mayhem/issues/109
 [#113]: https://github.com/nanox333/major-mayhem/issues/113
+[#162]: https://github.com/nanox333/major-mayhem/issues/162
+[#163]: https://github.com/nanox333/major-mayhem/issues/163
+[#164]: https://github.com/nanox333/major-mayhem/issues/164
+[#165]: https://github.com/nanox333/major-mayhem/issues/165
+[#166]: https://github.com/nanox333/major-mayhem/issues/166
+[#170]: https://github.com/nanox333/major-mayhem/issues/170
+[#189]: https://github.com/nanox333/major-mayhem/issues/189
 [#48]: https://github.com/nanox333/major-mayhem/issues/48
 [#49]: https://github.com/nanox333/major-mayhem/issues/49
 [#76]: https://github.com/nanox333/major-mayhem/issues/76

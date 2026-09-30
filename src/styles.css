@@ -1495,3 +1495,13 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 .comfort--weak > span:last-child { color: var(--muted); }
 .chem__majors { margin: 0; font-size: var(--fs-caption); color: var(--text-2); }
 .chem__majors b { color: var(--muted); font-weight: 700; margin-right: 4px; }
+
+
+/* ---------- data, backups and the unsaved notice (#189, #166) ---------- */
+.settings__warn { margin: 0; padding: 8px 10px; border: 1px solid var(--loss); border-radius: var(--r-s); background: color-mix(in srgb, var(--loss) 10%, var(--panel)); color: var(--text); font-size: var(--fs-caption); }
+.settings__restore { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--accent); border-radius: var(--r-m); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); }
+.settings__restore p { margin: 0; }
+.unsaved { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px 14px; padding: 8px var(--gutter); background: color-mix(in srgb, var(--loss) 18%, var(--panel)); border-bottom: 1px solid var(--loss); color: var(--text); font-size: var(--fs-caption); }
+.unsaved b { color: var(--strong); }
+.crash h3 { margin: 18px 0 4px; font-family: var(--f-head); font-weight: 800; font-size: 1.1rem; letter-spacing: .05em; text-transform: uppercase; }
+.practice { margin: 0; padding: 8px 12px; border: 1px dashed var(--accent); border-radius: var(--r-s); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); color: var(--text); font-size: var(--fs-caption); text-align: center; }

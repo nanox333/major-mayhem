@@ -1,7 +1,8 @@
 // Draft duels: send your drafted team as a link; your friend drafts from the same cases, then the two teams play a
 // best-of-three showmatch. Everything travels in the link: no server.
-import { COACHES, LATEST_RULES, ROLE_ORDER, Role, Roster, rostersOn } from '../data/rosters';
+import { LATEST_RULES, ROLE_ORDER, Role, Roster, isCoach, rostersOn } from '../data/rosters';
 import * as G from './logic';
+import { isRealDate } from './dates';
 
 export interface Duel {
   v: 1;
@@ -54,21 +55,31 @@ const validOpts = (o: unknown) => o === undefined || (typeof o === 'object' && o
 const cleanOpts = (o: NonNullable<Duel['opts']>): NonNullable<Duel['opts']> =>
   ({ ...(o.era ? { era: o.era } : {}), ...(o.pool ? { pool: o.pool } : {}), ...(o.hard ? { hard: true } : {}) });
 
+/**
+ * Whether a value is a duel this version can play: real teams and players, a real coach (by own name, so "constructor" is not one), real calendar dates that
+ * agree with the seed, known options and a rules version that exists (#27, #170). Used for links and for a saved duel run alike.
+ */
+export function validDuel(d: any): d is Duel {
+  const player = (rid: unknown, pid: unknown) => typeof rid === 'string' && typeof pid === 'string' && !!G.rosterById.get(rid)?.players.some((p) => p.id === pid);
+  if (!(typeof d === 'object' && d !== null && !Array.isArray(d))) return false;
+  const datedSeed = typeof d.seed === 'string' && d.seed.startsWith('daily-');
+  return d.v === 1 && typeof d.seed === 'string' && d.seed.length <= 40 && typeof d.name === 'string'
+    && Array.isArray(d.picks) && d.picks.length === 5
+    && d.picks.every((x: unknown, i: number) => Array.isArray(x) && x.length === 3 && x[0] === ROLE_ORDER[i] && player(x[1], x[2]))
+    && new Set(d.picks.map((p: [Role, string, string]) => p[2])).size === 5
+    && (d.coach == null || isCoach(d.coach))
+    && (d.bench == null || (Array.isArray(d.bench) && player(d.bench[0], d.bench[1]) && !d.picks.some((p: [Role, string, string]) => p[2] === d.bench[1])))
+    // A dated duel is a daily: its date is a real day and is the one in the seed. An undated one is not a daily.
+    && (d.date === undefined ? !datedSeed : isRealDate(d.date) && d.seed === `daily-${d.date}`)
+    && validOpts(d.opts)
+    && (d.rules === undefined || (Number.isInteger(d.rules) && d.rules >= 1 && d.rules <= LATEST_RULES));
+}
+
 /** Reads a duel from a link, or null if it's malformed or names teams, players or a coach this version doesn't have. */
 export function decodeDuel(code: string): Duel | null {
   try {
     const d = JSON.parse(fromB64(code)) as Duel;
-    const player = (rid: string, pid: string) => G.rosterById.get(rid)?.players.some((p) => p.id === pid);
-    const ok = d?.v === 1 && typeof d.seed === 'string' && d.seed.length <= 40 && typeof d.name === 'string'
-      && Array.isArray(d.picks) && d.picks.length === 5
-      && d.picks.every(([slot, rid, pid], i) => slot === ROLE_ORDER[i] && player(rid, pid))
-      && new Set(d.picks.map((p) => p[2])).size === 5
-      && (d.coach == null || d.coach in COACHES)
-      && (d.bench == null || (player(d.bench[0], d.bench[1]) && !d.picks.some((p) => p[2] === d.bench![1])))
-      && (d.date === undefined || /^\d{4}-\d{2}-\d{2}$/.test(d.date))
-      && validOpts(d.opts)
-      && (d.rules === undefined || (Number.isInteger(d.rules) && d.rules >= 1 && d.rules <= LATEST_RULES));
-    return ok ? { ...d, name: cleanName(d.name), ...(d.opts ? { opts: cleanOpts(d.opts) } : {}) } : null;
+    return validDuel(d) ? { ...d, name: cleanName(d.name), ...(d.opts ? { opts: cleanOpts(d.opts) } : {}) } : null;
   } catch { return null; }
 }
 

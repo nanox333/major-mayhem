@@ -93,6 +93,8 @@ export const CREDITS = {
 
 /** Coach ratings: invented game values, like player ratings. */
 export const COACHES: Record<string, { rating: number }> = DATA.coaches;
+/** Whether a value names a coach in the data. Own keys only: "constructor" and "toString" are not coaches (#170). */
+export const isCoach = (name: unknown): name is string => typeof name === 'string' && Object.prototype.hasOwnProperty.call(COACHES, name);
 
 /** Players whose roles were corrected after launch: [player, latest roles, roles under rules v1]. */
 const CORRECTED: [Player, Role[], Role[]][] = [];
