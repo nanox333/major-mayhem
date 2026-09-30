@@ -30,6 +30,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **The four steps (Draft, Lobby, Major, Results) sit in the head of the game panel**, beside the title, and not in the top bar: the current step is filled and underlined, finished steps are ticked, and on a phone only the current step keeps its name on screen ([#140]).
 - **A new home screen:** a hero with an original arena illustration, a live countdown to the next daily (to the second; the page moves on to the new daily at local midnight), three cards for Daily Challenge, Free Play and Guess the Pro, your stats (best finish, streak, runs, achievements) and how it works in four steps. Nothing on it needs a login: it all comes from this browser ([#113], [#116], [#117], [#118], [#119], [#120]).
 - **The home is a place you can come back to.** Click the logo from anywhere; a run in progress is never touched. It says "Continue today's run · round 4 of 7", shows today's result once the daily is done, and asks before starting free play would abandon a daily that has started ([#115]). On a phone the Play Daily button is in the first screen in every state ([#121]).
+- **The home screen fits the window and says things once** ([#148], [#149], [#150], [#151], [#152], [#153]): the top bar, hero, cards and every other screen share one container that grows from 1200 to 1720 px on big monitors, and the type scales up a little with the window. The daily is on the page twice on purpose, with two jobs: the card is the action ("Start", "Continue · Round 3 of 7" or a quiet "Replay") and the panel is the status (a countdown, progress dots, or "Next daily" with your result once it's done). The three mode cards line up their buttons, the secondary buttons have a visible outline, and copy is one voice. **How it works** is the four steps for a first visit and one slim row for anyone who has played, so there is no empty box. Your stats show the number first and are one sentence until you have a record. Links use the accent instead of the browser's blue, the smallest text is 14 px, and the footer is two readable columns. The hero puts the trophy under the light beams with three rows of crowd, and its tagline is one short sentence.
 - **Icons:** one set of line icons drawn for the game replaces the scattered glyphs and inline drawings ([#114]).
 - **The draft screen has three columns on wide screens:** your lineup on the left (photo, nick, team and year, the team's logo, and "Add player" where a slot is still open), the case in the middle, and a sidebar with the game mode, live team chemistry and a draft hint. The radar no longer takes room while you draft; the lobby and the match still have it ([#102], [#107]).
 - **One line says where you are and what to do** ("Daily #2 · Draft · Round 3 of 7 · Choose your player"), an "Opened case" bar sits over the cards, and the reroll is "Spin again · 2 spins left" ([#103]).
@@ -120,6 +121,12 @@ The first tagged release, covering everything since the initial draft game.
 [#108]: https://github.com/nanox333/major-mayhem/issues/108
 [#109]: https://github.com/nanox333/major-mayhem/issues/109
 [#113]: https://github.com/nanox333/major-mayhem/issues/113
+[#148]: https://github.com/nanox333/major-mayhem/issues/148
+[#149]: https://github.com/nanox333/major-mayhem/issues/149
+[#150]: https://github.com/nanox333/major-mayhem/issues/150
+[#151]: https://github.com/nanox333/major-mayhem/issues/151
+[#152]: https://github.com/nanox333/major-mayhem/issues/152
+[#153]: https://github.com/nanox333/major-mayhem/issues/153
 [#114]: https://github.com/nanox333/major-mayhem/issues/114
 [#115]: https://github.com/nanox333/major-mayhem/issues/115
 [#116]: https://github.com/nanox333/major-mayhem/issues/116

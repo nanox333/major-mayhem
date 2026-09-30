@@ -123,8 +123,8 @@ function Game() {
       </main>}
 
       <footer className="foot">
-        Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.
-        Player strength is hidden; match ratings are simulated. Fan project, not affiliated with Valve or any team.
+        <p><strong>Data and credits</strong>Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.</p>
+        <p><strong>Fan project</strong>Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated.</p>
       </footer>
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}

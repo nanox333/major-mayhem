@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROSTERS, Roster } from '../data/rosters';
 import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
-import { achievementCount, bestFinish, homeState, runWhere } from '../game/home';
+import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, howExpanded, runWhere } from '../game/home';
 import { Action, Run, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
 import { Avatar } from '../ui/art';
@@ -50,7 +50,8 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
   };
   const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); showDraft(); };
 
-  const dailyLabel = home.daily === 'progress' ? `Continue today's run · ${runWhere(s)}` : home.daily === 'done' ? "Replay today's run" : home.daily === 'abandoned' ? 'Play it anyway' : "Start today's run";
+  const btn = dailyButton(home, s);
+  const panel = dailyPanel(home, todayN, s, doneToday?.placement);
   const freeShown = freeOpen && s.mode === 'free' && !home.freeInProgress;
 
   const g = useMemo(() => loadGuesses()[cd.day], [cd.day]);
@@ -64,16 +65,21 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
         <div className="hero__scrim" />
         <div className="hero__text">
           <p className="hero__title" aria-hidden="true"><b>Major</b><i>Mayhem</i></p>
-          <p className="hero__tag">Draft a dream team from Counter-Strike Major history and try to win the Major.</p>
+          <p className="hero__tag">Draft a dream team from Major history. Win the Major.</p>
         </div>
       </section>
 
       <aside className="daily-panel" aria-labelledby="daily-panel-h">
-        <div className="daily-panel__head"><CalendarIcon size={22} /><h2 id="daily-panel-h">Daily challenge</h2></div>
-        <p className="clock" aria-hidden="true">{cd.clock}</p>
+        <div className="daily-panel__head"><CalendarIcon size={22} /><h2 id="daily-panel-h">{panel.title}</h2></div>
+        <div className="daily-panel__clock" aria-hidden="true"><small>{panel.label}</small><p className="clock">{cd.clock}</p></div>
         <p className="sr">{cd.spoken}</p>
-        <p className="daily-panel__text">Complete today's run and see how far you can go.</p>
-        <p className="muted small">1 run per day that counts: replays don't change your record.</p>
+        {panel.progress && (
+          <ol className="dots" aria-label={`Round ${panel.progress.at} of ${panel.progress.of}`}>
+            {Array.from({ length: panel.progress.of }, (_, i) => <li key={i} className={i < panel.progress!.at - 1 ? 'is-done' : i === panel.progress!.at - 1 ? 'is-now' : ''} />)}
+          </ol>
+        )}
+        {panel.note && <p className="daily-panel__text">{panel.note}</p>}
+        {panel.rule && <p className="daily-panel__rule">{panel.rule}</p>}
         {ready !== null && <p className="daily-ready" role="status">Daily #{ready} is ready.</p>}
       </aside>
 
@@ -83,43 +89,50 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
           <h2 className="mcard__title" id="mcard-daily-h">Daily Challenge <span>#{todayN}</span></h2>
           {home.daily === 'done' && doneToday
             ? <DailyDone d={doneToday} n={todayN} countdown={false} />
-            : <p className="mcard__text">{home.daily === 'abandoned' ? 'You abandoned today\'s run, so it has no result. You can still play it; it won\'t change your record.' : 'One draft per day. Can you win the Major?'}</p>}
-          <p className="clock clock--inline" aria-hidden="true">{cd.clock}</p>
-          <button type="button" className={`cta ${home.daily === 'done' ? 'cta--quiet' : 'cta--orange'} home__daily`} data-sfx="open" onClick={home.daily === 'progress' ? showDraft : playDaily}>
-            {dailyLabel}<ArrowRightIcon size={20} />
-          </button>
-          {ready !== null && <p className="daily-ready daily-ready--inline" aria-hidden="true">Daily #{ready} is ready.</p>}
+            : <p className="mcard__text">{home.daily === 'abandoned' ? "You abandoned today's run, so it has no result. You can still play it; it won't change your record." : home.daily === 'progress' ? 'Your run is waiting. Pick up where you left off.' : 'One draft a day, with the same cases for everyone.'}</p>}
+          <div className="mcard__foot">
+            <p className="mcard__clock" aria-hidden="true"><small>{panel.label}</small><span className="clock clock--inline">{cd.clock}</span></p>
+            <button type="button" className={`cta ${btn.quiet ? 'cta--quiet' : 'cta--orange'} home__daily`} data-sfx="open" onClick={home.daily === 'progress' ? showDraft : playDaily}>
+              <span className="cta__main">{btn.action}<ArrowRightIcon size={20} /></span>
+              {btn.sub && <small className="cta__sub">{btn.sub}</small>}
+            </button>
+            {ready !== null && <p className="daily-ready daily-ready--inline" aria-hidden="true">Daily #{ready} is ready.</p>}
+          </div>
         </article>
 
         <article className="mcard" aria-labelledby="mcard-free-h">
           <span className="mcard__icon"><InfinityIcon size={26} /></span>
           <h2 className="mcard__title" id="mcard-free-h">Free Play</h2>
-          <p className="mcard__text">Unlimited drafts. Try different rosters and eras.</p>
-          {ask && (
-            <div className="mcard__ask" role="alert">
-              <p>Starting free play abandons today's daily, and it can't be played for a result again.</p>
-              <div className="mcard__ask-btns">
-                <button type="button" className="ghost-btn ghost-btn--big" onClick={startFree}>Abandon the daily</button>
-                <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(false)}>Keep it</button>
+          <p className="mcard__text">Draft as often as you like, in any era.</p>
+          <div className="mcard__foot">
+            {ask && (
+              <div className="mcard__ask" role="alert">
+                <p>Starting free play abandons today's daily, and it can't be played for a result again.</p>
+                <div className="mcard__ask-btns">
+                  <button type="button" className="ghost-btn ghost-btn--big" onClick={startFree}>Abandon the daily</button>
+                  <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(false)}>Keep it</button>
+                </div>
               </div>
-            </div>
-          )}
-          {freeShown && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
-          {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}>Continue free play · {runWhere(s)}<ArrowRightIcon size={18} /></button>}
-          {freeShown
-            ? <button type="button" className="cta cta--orange" data-sfx="open" onClick={openCase}>Open case<ArrowRightIcon size={18} /></button>
-            : !ask && <button type="button" className="mbtn" onClick={startFree}>{home.freeInProgress ? 'New free play' : 'Start free play'}<ArrowRightIcon size={18} /></button>}
+            )}
+            {freeShown && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
+            {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}>Continue free play · {runWhere(s)}<ArrowRightIcon size={18} /></button>}
+            {freeShown
+              ? <button type="button" className="cta cta--orange" data-sfx="open" onClick={openCase}><span className="cta__main">Open case<ArrowRightIcon size={18} /></span></button>
+              : !ask && <button type="button" className="mbtn" onClick={startFree}>{home.freeInProgress ? 'New free play' : 'Start free play'}<ArrowRightIcon size={18} /></button>}
+          </div>
         </article>
 
         <article className="mcard" aria-labelledby="mcard-guess-h">
           <span className="mcard__icon"><CrosshairIcon size={26} /></span>
           <h2 className="mcard__title" id="mcard-guess-h">Guess the Pro</h2>
-          <p className="mcard__text">Test your knowledge of CS Major history.</p>
-          <p className="mcard__state">
-            {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : 'Eight guesses, a new pro every day.'}
-            {gStreak > 0 && ` · ${gStreak}-day streak`}
-          </p>
-          <button type="button" className="mbtn" onClick={showGuess}>{g?.done ? 'See today\'s answer' : g?.guesses.length ? 'Keep guessing' : 'Play now'}<ArrowRightIcon size={18} /></button>
+          <p className="mcard__text">Name the pro in eight guesses.</p>
+          <div className="mcard__foot">
+            <p className="mcard__state">
+              {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : 'A new pro every day.'}
+              {gStreak > 0 && ` · ${gStreak}-day streak`}
+            </p>
+            <button type="button" className="mbtn" onClick={showGuess}>{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}<ArrowRightIcon size={18} /></button>
+          </div>
         </article>
       </div>
 
@@ -129,16 +142,18 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
   );
 }
 
-/** Your record from this browser: four figures, each with a word. No level, no account. */
+/**
+ * Your record from this browser (#118, #153): the number first, then what it is. With nothing to show it is one sentence, not four blanks.
+ */
 function StatsPanel({ stats, streak, onStats }: { stats: Stats; streak: number; onStats: () => void }) {
   const best = bestFinish(stats);
   const ach = achievementCount(stats);
   const empty = statsSections(stats).empty;
   const tiles: { icon: React.ReactNode; label: string; value: string }[] = [
-    { icon: <TrophyIcon size={18} />, label: 'Best finish', value: best ?? '–' },
-    { icon: <FlameIcon size={18} />, label: 'Daily streak', value: streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '–' },
-    { icon: <StatsIcon size={18} />, label: 'Runs', value: String(stats.runs) },
-    { icon: <StarIcon size={18} />, label: 'Achievements', value: `${ach.earned} / ${ach.total}` },
+    { icon: <TrophyIcon size={16} />, label: 'Best finish', value: best ?? '–' },
+    { icon: <FlameIcon size={16} />, label: 'Daily streak', value: streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '–' },
+    { icon: <StatsIcon size={16} />, label: 'Runs', value: String(stats.runs) },
+    { icon: <StarIcon size={16} />, label: 'Achievements', value: `${ach.earned} / ${ach.total}` },
   ];
   return (
     <section className="stats-panel" aria-labelledby="stats-panel-h">
@@ -146,10 +161,11 @@ function StatsPanel({ stats, streak, onStats }: { stats: Stats; streak: number; 
         <h2 id="stats-panel-h">Your stats</h2>
         <button type="button" className="link-btn" onClick={onStats}>View all</button>
       </div>
-      <ul className="stats-panel__tiles">
-        {tiles.map((t) => <li key={t.label}><span className="stats-panel__icon" aria-hidden="true">{t.icon}</span><small>{t.label}</small><b>{t.value}</b></li>)}
-      </ul>
-      {empty && <p className="muted small">Finish a run to start your record. It is kept in this browser only.</p>}
+      {empty
+        ? <p className="stats-panel__empty">No runs yet. Finish a run to set your best finish, and play the daily to start a streak. Your record stays in this browser.</p>
+        : <ul className="stats-panel__tiles">
+          {tiles.map((x) => <li key={x.label}><b>{x.value}</b><small><span className="stats-panel__icon" aria-hidden="true">{x.icon}</span>{x.label}</small></li>)}
+        </ul>}
     </section>
   );
 }
@@ -164,7 +180,7 @@ const SAMPLE: Roster = [...ROSTERS].filter((r) => r.result === 'Champions').sort
 function HowItWorks() {
   const seen = useTipSeen('intro');
   const [open, setOpen] = useState(false);
-  const shown = !seen || open;
+  const shown = howExpanded(seen, open);
   const steps = [
     { title: 'Open a case', text: 'Three iconic rosters from Major history.', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
     { title: 'Draft your team', text: 'Pick a player at a time: five, a coach and a bench player.', art: (
@@ -188,9 +204,10 @@ function HowItWorks() {
     <section className={`how ${shown ? 'is-open' : ''}`} aria-labelledby="how-h">
       <div className="how__head">
         <h2 id="how-h">How it works</h2>
+        {!shown && <p className="how__line">Open a case, draft your team, play the Major, share the result.</p>}
         {shown
-          ? <button type="button" className="link-btn" onClick={() => { setOpen(false); dismissTip('intro'); }}>{seen ? 'Hide' : 'Got it'}</button>
-          : <button type="button" className="link-btn" aria-expanded="false" onClick={() => setOpen(true)}>Open a case, draft, play, share ›</button>}
+          ? <button type="button" className="link-btn" aria-expanded="true" onClick={() => { setOpen(false); dismissTip('intro'); }}>{seen ? 'Hide the steps' : 'Got it'}</button>
+          : <button type="button" className="link-btn" aria-expanded="false" onClick={() => setOpen(true)}>Show the steps</button>}
       </div>
       {shown && (
         <>
