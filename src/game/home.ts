@@ -72,3 +72,41 @@ export function spokenLeft(ms: number): string {
   const mins = Math.ceil(ms / 60000);
   return mins <= 1 ? 'Next daily in less than a minute' : `Next daily in ${mins} minutes`;
 }
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/**
+ * The daily challenge is said once (#150): the card holds the action and the panel holds the status, so in every state the two say
+ * different things. `progress` is the run's own round while it's still in the draft, drawn as dots.
+ */
+export interface DailyPanel {
+  title: string;
+  /** What the clock counts to: "Ends in" while today's is still open to you, "Starts in" once it's done. */
+  label: string;
+  note: string | null;
+  /** Only where it matters: the finished state, when a replay is offered. */
+  rule: string | null;
+  progress: { at: number; of: number } | null;
+}
+export function dailyPanel(home: HomeState, todayN: number, run: Run, placement?: string): DailyPanel {
+  if (home.daily === 'done') return { title: 'Next daily', label: 'Starts in', note: `Daily #${todayN}: you finished ${placement ?? 'the run'}.`, rule: "A replay is for practice: it doesn't change your record.", progress: null };
+  if (home.daily === 'abandoned') return { title: 'Next daily', label: 'Starts in', note: `Daily #${todayN} was abandoned, so it has no result.`, rule: null, progress: null };
+  if (home.daily === 'progress') {
+    return { title: "Today's daily", label: 'Ends in', note: cap(runWhere(run)), rule: null, progress: run.phase === 'draft' ? { at: roundNumber(run), of: draftRounds(run) } : null };
+  }
+  return { title: "Today's daily", label: 'Ends in', note: null, rule: null, progress: null };
+}
+
+/** The daily card's button: the action, and a smaller line for the status. */
+export function dailyButton(home: HomeState, run: Run): { action: string; sub: string | null; quiet: boolean } {
+  if (home.daily === 'progress') return { action: "Continue today's run", sub: cap(runWhere(run)), quiet: false };
+  if (home.daily === 'done') return { action: "Replay today's run", sub: null, quiet: true };
+  if (home.daily === 'abandoned') return { action: 'Play it anyway', sub: null, quiet: false };
+  return { action: "Start today's run", sub: null, quiet: false };
+}
+
+/**
+ * How it works (#148): the four steps for anyone who hasn't played yet, one slim line for anyone who has, and always one press away.
+ * `seen` is the first-time-tips state (a finished run or a dismissed intro).
+ */
+export const howExpanded = (seen: boolean, opened: boolean) => !seen || opened;

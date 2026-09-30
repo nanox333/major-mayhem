@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS } from './achievements';
-import { achievementCount, bestFinish, clockText, homeState, msUntilMidnight, runWhere, spokenLeft } from './home';
+import { achievementCount, bestFinish, clockText, dailyButton, dailyPanel, homeState, howExpanded, msUntilMidnight, runWhere, spokenLeft } from './home';
 import { fresh, reducer } from './state';
 import { emptyStats } from './stats';
 
@@ -94,5 +94,39 @@ describe('the daily countdown (#117)', () => {
       expect(msUntilMidnight(new Date(2026, 2, 28, 0, 0, 0, 0))).toBe(24 * 3600000);
       expect(msUntilMidnight(new Date(2026, 2, 30, 0, 0, 0, 0))).toBe(24 * 3600000);
     });
+  });
+});
+
+describe('the daily card and panel say different things (#150)', () => {
+  const done = { placement: 'Semifinals' };
+  const st = (daily: 'new' | 'progress' | 'done' | 'abandoned') => ({ daily, freeInProgress: false, first: false });
+  it('starts as a plain countdown', () => {
+    expect(dailyPanel(st('new'), 3, fresh('daily', DAY))).toMatchObject({ title: "Today's daily", label: 'Ends in', note: null, rule: null, progress: null });
+    expect(dailyButton(st('new'), fresh('daily', DAY))).toEqual({ action: "Start today's run", sub: null, quiet: false });
+  });
+  it('shows progress in a run, and continues rather than restarts', () => {
+    const run = started('daily');
+    expect(dailyPanel(st('progress'), 3, run)).toMatchObject({ note: 'Round 1 of 7', progress: { at: 1, of: 7 } });
+    expect(dailyPanel(st('progress'), 3, { ...run, phase: 'live' }).progress).toBeNull();
+    expect(dailyButton(st('progress'), run)).toEqual({ action: "Continue today's run", sub: 'Round 1 of 7', quiet: false });
+  });
+  it('offers a quiet replay once finished, and only there explains the replay rule', () => {
+    const run = fresh('daily', DAY);
+    expect(dailyPanel(st('done'), 3, run, done.placement)).toMatchObject({ title: 'Next daily', label: 'Starts in', note: 'Daily #3: you finished Semifinals.' });
+    expect(dailyPanel(st('done'), 3, run, done.placement).rule).toMatch(/replay/i);
+    expect(dailyButton(st('done'), run).quiet).toBe(true);
+    for (const s of ['new', 'progress', 'abandoned'] as const) expect(dailyPanel(st(s), 3, started('daily')).rule).toBeNull();
+  });
+  it('never offers Continue for a finished daily', () => {
+    expect(dailyButton(st('done'), fresh('daily', DAY)).action).not.toMatch(/continue/i);
+    expect(dailyButton(st('abandoned'), fresh('daily', DAY)).action).toBe('Play it anyway');
+  });
+});
+
+describe('how it works (#148)', () => {
+  it('is open for a first visit and for an unfinished first run, slim for a player who has played, and opens on request', () => {
+    expect(howExpanded(false, false)).toBe(true);
+    expect(howExpanded(true, false)).toBe(false);
+    expect(howExpanded(true, true)).toBe(true);
   });
 });

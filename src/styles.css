@@ -47,23 +47,38 @@
   /* Paragraphs and notes: the system face, which reads better at length than the game's own. The condensed face is for headings. */
   --f-read: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --board: min(470px, 100%);
+  /* One container for the top bar and every screen (#149): they share the same left and right edges at every width. */
+  --wrap: 1200px;
+  --gutter: clamp(16px, 2.2vw, 32px);
+  /* One type scale (#153): nothing on the home screen is smaller than the caption. The root size itself grows with the window. */
+  --fs-caption: .875rem;
+  --fs-body: 1rem;
+  --fs-label: 1.05rem;
+  --fs-title: 1.25rem;
   color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
 html, body { min-height: 100%; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--f-body); font-weight: 500; font-size: 16px; -webkit-font-smoothing: antialiased; }
-a { color: var(--ct); }
+/* 16px up to about 1500px wide, then a little bigger, so a 1080p or 1440p window isn't reading phone-sized type (#149). */
+html { font-size: clamp(16px, 0.42vw + 9.5px, 21px); }
+@media (min-width: 1280px) { :root { --wrap: 1360px; } }
+@media (min-width: 1800px) { :root { --wrap: 1520px; } }
+@media (min-width: 2300px) { :root { --wrap: 1720px; } }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--f-body); font-weight: 500; font-size: 1rem; -webkit-font-smoothing: antialiased; }
+/* Links are the accent, not the browser's blue (#153): underlined, with a stronger underline on hover and a focus ring. */
+a { color: var(--accent-hi); text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+a:hover { text-decoration-color: currentColor; }
 button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--t); outline-offset: 2px; }
 .muted { color: var(--muted); }
 .small { font-size: .85rem; margin: 0; }
 
-.page { max-width: 1200px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 32px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.page { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--gutter); padding-block: 16px 32px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 
 /* ---------- top bar (#101): mark and wordmark, Guess the pro, help, sound and a menu. The run's progress is not here (#140). ---------- */
 .topbar { position: relative; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line); }
-.topbar__in { max-width: 1200px; margin: 0 auto; padding-inline: 16px; min-height: 60px; display: flex; align-items: center; gap: 12px; }
+.topbar__in { max-width: var(--wrap); margin: 0 auto; padding-inline: var(--gutter); min-height: 60px; display: flex; align-items: center; gap: 12px; }
 .brand { margin: 0 auto 0 0; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .logomark { flex: none; }
 .wordmark { font-family: var(--f-logo); font-weight: 400; font-size: 1.3rem; line-height: 1; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
@@ -457,7 +472,10 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- footer + modal ---------- */
-.foot { text-align: center; color: var(--muted); font-size: .8rem; line-height: 1.45; max-width: 76ch; justify-self: center; }
+/* The footer (#153): sources on one side, the disclaimer on the other, readable size, left-aligned. */
+.foot { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: var(--fs-caption); line-height: 1.5; }
+.foot p { margin: 0; max-width: 62ch; }
+.foot strong { display: block; margin-bottom: 2px; color: var(--text-2); font-family: var(--f-body); font-size: var(--fs-caption); }
 .modal { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; background: rgba(0,0,0,.7); animation: fade .2s ease-out both; }
 .modal__card { position: relative; width: min(640px, 100%); max-height: 86vh; overflow: auto; padding: 18px 20px; border: 1px solid var(--line); background: var(--panel); line-height: 1.5; animation: card-in .3s ease-out both; }
 .modal__card h3 { margin: .3rem 0 .4rem; font-family: var(--f-head); font-weight: 800; font-size: 1.4rem; letter-spacing: .06em; text-transform: uppercase; color: var(--t); }
@@ -784,7 +802,8 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .details details[open] summary { border-bottom: 1px solid var(--line); color: var(--t); }
 .details p { margin: 0; padding: 10px 12px 12px; }
 .help__foot { display: flex; justify-content: center; margin-top: 14px; }
-.link-btn { padding: 0; border: 0; background: none; color: var(--ct); font: inherit; text-decoration: underline; cursor: pointer; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--accent-hi); font: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); cursor: pointer; }
+.link-btn:hover { color: var(--strong); text-decoration-color: currentColor; }
 @media (max-width: 520px) {
   .tip { grid-template-columns: minmax(0, 1fr); padding: 8px 12px; }
   .tip__ok { width: 100%; }
@@ -825,7 +844,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .modal__card p, .modal__card li, .knife__advice, .spin-stage__hint, .veto__note, .review p, .review__facts li, .review__tip, .buy p, .foot, .muted.small,
 .subs__head small, .subs__tradeoff, .guess__empty, .unavailable, .strip__caption { font-family: var(--f-read); }
 .modal__card p, .modal__card li { font-size: .98rem; line-height: 1.55; }
-.foot { font-size: .85rem; }
+.foot { font-size: var(--fs-caption); }
 
 /* ---------- phones and touch (#19) ---------- */
 /* The screen's main button lives in an action bar. Where the board and lists push it below the fold (tablet and phone), the bar
@@ -1022,7 +1041,6 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
 }
 /* With room for three columns, the lineup and the sidebar frame the case, and the strip above it is not needed. */
 @media (min-width: 1280px) {
-  .page.is-wide { max-width: 1360px; }
   .console__body.phase-draft { grid-template-columns: 264px minmax(0, 1fr) 288px; }
   .lineup { display: block; position: sticky; top: 12px; }
   .draft-side { grid-template-columns: minmax(0, 1fr); position: sticky; top: 12px; }
@@ -1034,82 +1052,111 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
 
 /* ---------- the home screen (#113 to #121) ---------- */
 .brand__btn { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
-.home3 { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; }
-.hero { position: relative; grid-column: 1; min-height: 250px; display: flex; align-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--inset); }
-.hero__art { position: absolute; inset: 0; width: 100%; height: 100%; --crowd-far: #0e1526; --crowd-near: #070b14; }
+.home3 { display: grid; grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 420px); gap: 16px; align-items: start; }
+/* The hero takes the extra height of a tall window, up to a limit, so the page doesn't end with an empty bottom (#149). */
+.hero { position: relative; grid-column: 1; align-self: stretch; min-height: clamp(260px, 30vh, 440px); display: flex; align-items: center; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--inset); }
+.hero__art { position: absolute; inset: 0; width: 100%; height: 100%; --crowd-far: #0e1526; --crowd-mid: #0a101d; --crowd-near: #060a13; }
 .hero__sweep { transform-origin: 50% 0; transform-box: fill-box; animation: hero-sweep 9s ease-in-out infinite alternate; }
-@keyframes hero-sweep { from { transform: rotate(-1.6deg); } to { transform: rotate(1.6deg); } }
-.hero__scrim { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 90%, transparent) 0%, color-mix(in srgb, var(--bg) 62%, transparent) 42%, transparent 78%); }
-.hero__text { position: relative; padding: 24px 32px; }
-.hero__title { margin: 0; display: grid; font-family: var(--f-logo); font-size: clamp(2.6rem, 6vw, 4.6rem); line-height: .95; letter-spacing: .02em; text-transform: uppercase; }
+@keyframes hero-sweep { from { transform: rotate(-1.2deg); } to { transform: rotate(1.2deg); } }
+/* A clear zone for the text: the scrim is nearly solid where the words sit and fades before the trophy (#151). */
+.hero__scrim { position: absolute; inset: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--bg) 94%, transparent) 0%, color-mix(in srgb, var(--bg) 82%, transparent) 34%, color-mix(in srgb, var(--bg) 20%, transparent) 58%, transparent 74%); }
+.hero__text { position: relative; padding: clamp(20px, 3vw, 44px); }
+.hero__title { margin: 0; display: grid; font-family: var(--f-logo); font-size: clamp(2.6rem, 5.4vw, 5rem); line-height: .95; letter-spacing: .02em; text-transform: uppercase; }
 .hero__title b { color: var(--strong); font-weight: 400; }
 .hero__title i { color: var(--accent); font-style: normal; }
-.hero__tag { max-width: 34ch; margin: 12px 0 0; font-family: var(--f-read); font-size: 1.1rem; line-height: 1.45; color: var(--text); }
+.hero__tag { max-width: 24ch; margin: 14px 0 0; font-family: var(--f-read); font-size: clamp(1.05rem, 1.3vw, 1.35rem); line-height: 1.4; color: var(--text); text-wrap: balance; }
 
-.daily-panel { grid-column: 2; display: grid; align-content: center; gap: 8px; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
+/* The daily panel is the status, the card is the action (#150). */
+.daily-panel { grid-column: 2; align-self: stretch; display: grid; align-content: center; gap: 10px; padding: 20px 22px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
 .daily-panel__head { display: flex; align-items: center; gap: 10px; color: var(--accent); }
-.daily-panel h2, .stats-panel h2, .how h2 { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
-.clock { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: 3rem; line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--strong); }
-.clock--inline { display: none; }
-.daily-panel__text { margin: 0; font-family: var(--f-read); color: var(--text-2); }
+.daily-panel h2, .stats-panel h2, .how h2 { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: var(--fs-title); letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+.daily-panel__clock { display: grid; gap: 2px; }
+.daily-panel__clock small { color: var(--muted); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .04em; }
+.clock { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: clamp(3rem, 3.6vw, 4rem); line-height: 1; letter-spacing: .02em; font-variant-numeric: tabular-nums; color: var(--strong); }
+.mcard__clock { display: none; }
+.daily-panel__text { margin: 0; font-family: var(--f-read); font-size: var(--fs-body); color: var(--text-2); }
+.daily-panel__rule { margin: 0; font-family: var(--f-read); font-size: var(--fs-caption); line-height: 1.45; color: var(--text-2); }
 .daily-ready { margin: 0; color: var(--go-text); font-weight: 700; }
+.dots { list-style: none; margin: 0; padding: 0; display: flex; gap: 6px; }
+.dots li { width: 100%; max-width: 34px; height: 8px; border-radius: 4px; background: var(--line-2); }
+.dots li.is-done { background: var(--accent); }
+.dots li.is-now { background: color-mix(in srgb, var(--accent) 45%, var(--line-2)); box-shadow: 0 0 0 1px var(--accent); }
 
+/* Three cards built the same way: icon, title, a line, then a foot that sits at the bottom, so the buttons line up (#152). */
 .modes3 { grid-column: 1 / -1; display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 16px; align-items: stretch; }
-.mcard { display: grid; align-content: start; gap: 10px; padding: 18px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
+.mcard { display: flex; flex-direction: column; gap: 10px; padding: 20px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
 .mcard--daily { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--panel)); box-shadow: var(--glow); }
-.mcard__icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
+.mcard__icon { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: var(--inset); border: 1px solid var(--line); color: var(--text-2); }
+.mcard--daily .mcard__icon { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent) 12%, var(--inset)); }
 .mcard__title { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: 1.6rem; line-height: 1.05; letter-spacing: .03em; text-transform: uppercase; }
 .mcard__title span { color: var(--accent); }
-.mcard__text, .mcard__state { margin: 0; font-family: var(--f-read); line-height: 1.45; color: var(--text-2); }
-.mcard__state { font-size: .92rem; color: var(--muted); }
-.mcard .cta { width: 100%; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: .8rem 1rem; font-size: 1.15rem; letter-spacing: .08em; }
-.mcard .cta--quiet { border: 1px solid var(--line-2); background: none; color: var(--text); animation: none; }
-.mbtn { width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 0 16px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: var(--panel-2); color: var(--strong); font-family: var(--f-head); font-weight: 800; font-size: 1.1rem; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
-.mbtn:hover { border-color: var(--accent); }
+.mcard__text, .mcard__state { margin: 0; font-family: var(--f-read); font-size: var(--fs-body); line-height: 1.45; color: var(--text-2); }
+.mcard__state { font-size: var(--fs-caption); color: var(--muted); }
+.mcard__foot { margin-top: auto; padding-top: 6px; display: grid; gap: 10px; }
+.mcard .cta { width: 100%; min-width: 0; display: grid; justify-items: center; gap: 2px; padding: .85rem 1rem; font-size: 1.3rem; letter-spacing: .05em; }
+.cta__main { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.cta__sub { font-family: var(--f-body); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .02em; text-transform: none; opacity: .85; }
+.mcard .cta--quiet { border: 1px solid var(--control); background: none; color: var(--strong); animation: none; }
+.mcard .cta--quiet:hover { border-color: var(--accent); }
+/* The secondary buttons read as buttons: a raised fill, an outline that passes 3:1 on the card, and hover, pressed and focus states. */
+.mbtn { width: 100%; min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 0 16px; border: 1px solid var(--control); border-radius: var(--r-m); background: var(--panel-2); color: var(--strong); font-family: var(--f-head); font-weight: 800; font-size: 1.15rem; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: border-color .12s, background .12s, transform .1s; }
+.mbtn:hover { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel-2)); }
+.mbtn:active { transform: translateY(1px); }
 .mbtn--main { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
 .mbtn--main:hover { background: var(--accent-hi); }
 .mcard__ask { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--loss) 55%, var(--line)); border-radius: var(--r-m); background: color-mix(in srgb, var(--loss) 8%, var(--panel)); }
-.mcard__ask p { margin: 0; font-family: var(--f-read); font-size: .92rem; }
+.mcard__ask p { margin: 0; font-family: var(--f-read); font-size: var(--fs-caption); }
 .mcard__ask-btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .mcard .modes { width: 100%; margin: 0; }
 .mcard .daily-done { min-width: 0; }
 
-.stats-panel { grid-column: 2; grid-row: 3; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
+/* Your stats: the number is the biggest thing in the tile (#153). */
+.stats-panel { grid-column: 2; grid-row: 3; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
 .stats-panel__head, .how__head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
-.stats-panel__tiles { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.stats-panel__tiles li { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--inset); }
-.stats-panel__icon { color: var(--accent); }
-.stats-panel__tiles small { color: var(--muted); font-size: .8rem; }
-.stats-panel__tiles b { font-family: var(--f-head); font-weight: 800; font-size: 1.2rem; line-height: 1.1; }
-.stats-panel .muted { margin: 10px 0 0; }
+.stats-panel__tiles { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stats-panel__tiles li { display: grid; gap: 4px; align-content: start; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--inset); }
+.stats-panel__tiles b { order: 1; font-family: var(--f-head); font-weight: 800; font-size: clamp(1.5rem, 1.7vw, 2rem); line-height: 1.05; color: var(--strong); overflow-wrap: anywhere; }
+.stats-panel__tiles small { order: 2; display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: var(--fs-caption); font-weight: 700; }
+.stats-panel__icon { display: inline-flex; color: var(--accent); }
+.stats-panel__empty { margin: 12px 0 0; font-family: var(--f-read); font-size: var(--fs-body); line-height: 1.5; color: var(--text-2); }
 
-.how { grid-column: 1; grid-row: 3; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
-.how__steps { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; counter-reset: how; }
+/* How it works: the four steps, or one slim row that spans the page and leaves no hole in the grid (#148). */
+.how { grid-column: 1; grid-row: 3; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
+.how:not(.is-open) { grid-column: 1 / -1; grid-row: 4; padding-block: 12px; }
+.how:not(.is-open) .how__head { align-items: center; flex-wrap: wrap; column-gap: 16px; }
+.how__line { margin: 0 auto 0 0; font-family: var(--f-read); font-size: var(--fs-caption); color: var(--muted); }
+.home3:has(.how:not(.is-open)) .stats-panel { grid-column: 1 / -1; }
+.home3:has(.how:not(.is-open)) .stats-panel__tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.how__steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; counter-reset: how; }
 .how__step { display: grid; align-content: start; gap: 6px; counter-increment: how; }
-.how__step b { font-family: var(--f-head); font-weight: 800; font-size: 1.1rem; letter-spacing: .04em; text-transform: uppercase; }
+.how__step b { font-family: var(--f-head); font-weight: 800; font-size: var(--fs-label); letter-spacing: .04em; text-transform: uppercase; }
 .how__step b::before { content: counter(how) '. '; color: var(--accent); }
-.how__text { font-family: var(--f-read); font-size: .88rem; line-height: 1.4; color: var(--text-2); }
+.how__text { font-family: var(--f-read); font-size: var(--fs-caption); line-height: 1.45; color: var(--text-2); }
 .how__art { min-height: 64px; display: flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--inset); color: var(--accent); }
 .how__art--bracket { width: 100%; height: 64px; padding: 6px 10px; }
-.how__face { width: 30px; height: 30px; overflow: hidden; border: 1px solid var(--line-2); border-radius: 50%; }
+.how__art--roster { min-width: 0; overflow: hidden; }
+.how__face { flex: none; width: clamp(22px, 2vw, 30px); height: clamp(22px, 2vw, 30px); overflow: hidden; border: 1px solid var(--line-2); border-radius: 50%; }
 .how__face img, .how__face svg { display: block; width: 100%; height: 100%; object-fit: cover; }
 .how__art--card { gap: 8px; color: var(--text-2); }
-.how__art--card b { font-family: var(--f-head); font-size: 1.05rem; color: var(--strong); }
+.how__art--card b { font-family: var(--f-head); font-size: var(--fs-label); color: var(--strong); }
 .how__art--card b::before { content: none; }
-.how__sample { margin: 10px 0 0; }
-.how:not(.is-open) { padding-block: 10px; }
+.how__sample { margin: 12px 0 0; font-size: var(--fs-caption); }
 
 @media (max-width: 999px) {
   .home3 { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .hero, .daily-panel, .modes3, .stats-panel, .how { grid-column: 1; grid-row: auto; }
-  .hero { min-height: 170px; }
-  .hero__text { padding: 18px 18px; }
+  .hero, .daily-panel, .modes3, .stats-panel, .how, .how:not(.is-open) { grid-column: 1; grid-row: auto; }
+  .hero { min-height: 190px; }
+  .hero__text { padding: 18px; }
   .hero__title { font-size: clamp(2.2rem, 11vw, 3.4rem); }
-  .hero__tag { margin-top: 8px; font-size: 1rem; }
+  .hero__tag { margin-top: 8px; font-size: 1rem; max-width: 30ch; }
   .daily-panel { display: none; }
   .modes3 { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .mcard__clock { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .mcard__clock small { color: var(--muted); font-size: var(--fs-caption); font-weight: 700; }
   .clock--inline { display: block; font-size: 1.7rem; }
   .how__steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .how__face { width: 22px; height: 22px; }
+  .home3:has(.how:not(.is-open)) .stats-panel__tiles { grid-template-columns: 1fr 1fr; }
+  .foot { grid-template-columns: minmax(0, 1fr); }
 }
-@media (min-width: 1280px) { .page.is-home { max-width: 1360px; } }
-@media (max-width: 999px) { .hero__scrim { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 78%, transparent), color-mix(in srgb, var(--bg) 58%, transparent)); } }
+@media (max-width: 999px) { .hero__scrim { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 60%, transparent)); } }
