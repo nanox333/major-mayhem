@@ -726,54 +726,151 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .twitch-status.is-live { color: var(--twitch); }
 .twitch-status.is-error { color: var(--loss); }
 
-/* ---------- game tabs and Guess the pro ---------- */
-.guess__box { position: relative; }
-.guess__box input { width: 100%; box-sizing: border-box; padding: 11px 12px; background: var(--inset); border: 1px solid var(--line); color: var(--strong); font: inherit; font-weight: 600; font-size: 1.05rem; }
-.guess__box input:focus { border-color: var(--t); outline: none; }
-.guess__suggest { list-style: none; margin: 2px 0 0; padding: 0; border: 1px solid var(--line); background: var(--panel); }
-.guess__suggest button { width: 100%; min-height: 44px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 12px; background: none; border: 0; color: var(--text); font: inherit; cursor: pointer; text-align: left; }
-.guess__suggest button.is-on, .guess__suggest button:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.guess__suggest small { color: var(--muted); }
-.guess__empty { margin: 6px 0 0; padding: 10px 12px; border: 1px dashed var(--line-2); background: var(--panel); color: var(--text-2); font-size: .95rem; }
-/* Legend: each result is a symbol and a shape as well as a colour (solid = match, dashed = close, plain = no match). */
-.guess .spin-stage__hint { max-width: none; text-align: left; }
-.guess__legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: .92rem; color: var(--text-2); }
-.guess__legend li { display: inline-flex; align-items: center; gap: 8px; }
-.clue-key { flex: none; display: inline-grid; place-items: center; min-width: 30px; height: 26px; padding: 0 6px; border: 1px solid var(--line); background: var(--inset); font-weight: 800; font-size: .85rem; }
-.guess__grid { display: grid; gap: 4px; }
-.guess__row { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(5, minmax(0, 1fr)) minmax(0, 1.6fr); gap: 4px; }
-.guess__row > span { min-width: 0; padding: 8px 8px; background: var(--inset); border: 1px solid var(--line); font-weight: 700; font-size: .92rem; text-align: center; overflow-wrap: anywhere; }
-.guess__row--head > span { background: none; border: 0; color: var(--muted); font-family: var(--f-head); font-size: .74rem; letter-spacing: .06em; padding: 0 4px; }
-.guess__who { text-align: left !important; }
-.guess__who.is-hit { color: var(--go); }
-.guess__row > .clue { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.clue__label { display: none; }
-.clue__mark { font-style: normal; font-weight: 800; flex: none; color: var(--muted); }
+/* ---------- Guess the pro (#125 to #129) ---------- */
+.gp { position: relative; isolation: isolate; display: grid; gap: 16px; padding: clamp(16px, 2.4vw, 32px); border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); overflow: clip; }
+/* The backdrop is the game's own radar, blurred and darkened under a scrim, so text on it stays above 4.5:1. A different map each day. */
+.gp__bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; }
+.gp__bg::before { content: ''; position: absolute; inset: -24px; background: var(--radar) center / cover no-repeat; filter: blur(7px) brightness(.5) saturate(.6); opacity: .55; }
+.gp__bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, color-mix(in srgb, var(--panel) 62%, transparent) 0%, color-mix(in srgb, var(--panel) 88%, transparent) 55%, var(--panel) 100%); }
+.gp__head { display: flex; align-items: center; gap: 16px; }
+.gp__sil { flex: none; width: 68px; height: 68px; padding: 8px; border: 1px solid var(--line-2); border-radius: 50%; background: var(--inset); color: var(--panel-2); }
+.gp__titles { flex: 1; min-width: 0; }
+.gp__kicker { margin: 0 0 2px; color: var(--accent); font-family: var(--f-body); font-size: var(--fs-caption); font-weight: 700; }
+.gp__title { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: clamp(2rem, 3.4vw, 3rem); letter-spacing: .04em; line-height: 1; text-transform: uppercase; color: var(--strong); }
+.gp__title span { color: var(--accent); }
+.gp__sub { margin: 6px 0 0; font-family: var(--f-read); font-size: var(--fs-body); color: var(--text-2); }
+.gp__help { flex: none; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid var(--control); border-radius: 50%; background: var(--panel-2); color: var(--strong); cursor: pointer; }
+.gp__help:hover { border-color: var(--accent); color: var(--accent-hi); }
+
+/* The grid: a header row and eight rows; the ones you haven't used are faint, with their number in them. */
+.guess__grid { display: grid; gap: 6px; }
+.guess__row { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1.65fr) minmax(0, .9fr) minmax(0, 1.15fr) minmax(0, .8fr) minmax(0, 1.25fr); gap: 6px; align-items: stretch; }
+.guess__row > span { position: relative; min-width: 0; min-height: 54px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 8px; background: var(--inset); border: 1px solid var(--line); border-radius: var(--r-s); font-size: var(--fs-body); font-weight: 700; text-align: center; overflow-wrap: anywhere; }
+.guess__row--head > span { min-height: 0; background: none; border: 0; color: var(--muted); font-family: var(--f-head); font-size: var(--fs-caption); letter-spacing: .06em; padding: 0 4px; }
+.guess__row--empty > span { min-height: 54px; background: color-mix(in srgb, var(--inset) 70%, transparent); border-style: dashed; border-color: var(--line); }
+.guess__n { color: var(--muted); font-family: var(--f-head); font-size: 1.3rem; }
+.guess__who { justify-content: flex-start !important; text-align: left !important; font-family: var(--f-head); font-size: 1.2rem !important; }
+.guess__who.is-hit { color: var(--go-text); border-color: var(--accent) !important; }
+.clue__val { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 6px; }
+.clue__mark { position: absolute; top: 3px; right: 6px; font-size: .78rem; font-style: normal; font-weight: 800; color: var(--muted); }
+.guess__who .clue__mark { position: static; }
 .clue--hit .clue__mark, .guess__who .clue__mark { color: var(--go-text); }
-.clue--near .clue__mark { color: var(--t); }
-.guess__row > .clue--hit, .clue-key.clue--hit { background: color-mix(in srgb, var(--go) 24%, transparent); border-color: var(--go); box-shadow: inset 0 0 0 1px var(--go); color: var(--strong); }
-.guess__row > .clue--near, .clue-key.clue--near { background: color-mix(in srgb, var(--accent) 16%, transparent); border: 1px dashed var(--t); color: var(--strong); }
+.clue--near .clue__mark { color: var(--accent-hi); }
+.arrow { font-weight: 800; }
+.short { display: none; }
+/* Three states only, each a shape and a mark as well as a colour: solid green ✓, dashed amber ≈, plain ✗. */
+.guess__row > .clue--hit, .clue-key.clue--hit { background: color-mix(in srgb, var(--go) 24%, var(--inset)); border-color: var(--go); box-shadow: inset 0 0 0 1px var(--go); color: var(--strong); }
+.guess__row > .clue--near, .clue-key.clue--near { background: color-mix(in srgb, var(--accent) 16%, var(--inset)); border: 1px dashed var(--accent); color: var(--strong); }
 .guess__row > .clue--miss, .clue-key.clue--miss { color: var(--text-2); }
-/* Phones: each guess is a card of labelled clues, so nothing scrolls sideways (#19). */
-@media (max-width: 640px) {
-  .guess__row--head { display: none; }
-  .guess__row { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; padding: 8px; border: 1px solid var(--line); background: var(--inset); }
-  .guess__row > span { padding: 6px 8px; }
-  .guess__row > .guess__who { grid-column: 1 / -1; padding: 0 0 2px; border: 0; background: none; font-family: var(--f-head); font-size: 1.2rem; }
-  .guess__row > .clue { position: relative; grid-column: span 2; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 1px; padding-right: 24px; text-align: left; }
-  .clue-best, .clue-first { grid-column: span 3 !important; }
-  .clue-orgs { grid-column: 1 / -1 !important; }
-  .clue__label { display: block; color: var(--muted); font-family: var(--f-head); font-size: .72rem; letter-spacing: .06em; }
-  .clue--hit .clue__label, .clue--near .clue__label { color: var(--text-2); }
-  .clue .clue__mark { position: absolute; top: 5px; right: 8px; }
-}
-.guess__answer { display: flex; gap: 12px; align-items: center; padding: 12px; border: 1px solid var(--line); background: var(--panel); }
+.clue-orgs { flex-direction: column; gap: 2px !important; }
+.tbs { display: inline-flex; align-items: center; gap: 6px; }
+.tbs em { font-style: normal; font-size: var(--fs-caption); color: var(--text-2); }
+.tb { position: relative; display: inline-flex; }
+.tb i { position: absolute; right: -5px; bottom: -5px; width: 13px; height: 13px; display: grid; place-items: center; border-radius: 50%; background: var(--go); color: var(--on-go); font-size: .62rem; font-style: normal; font-weight: 800; }
+.tbs__none { color: var(--muted); font-size: .78rem; font-weight: 600; }
+.flag { flex: none; border-radius: 2px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .2); }
+.guess__row.is-right { box-shadow: 0 0 0 1px var(--go), 0 0 16px color-mix(in srgb, var(--go) 35%, transparent); border-radius: var(--r-s); }
+.gp.is-lost .guess__row:not(.guess__row--empty) { opacity: .88; }
+
+/* The reveal (#127): the name pops, then the tiles turn over left to right, each showing its result halfway. Transform and opacity only.
+   The timings are custom properties set from the same constants the sound uses. Reduced motion never sets these classes. */
+.guess__row.is-reveal { perspective: 700px; }
+.guess__row.is-reveal .guess__who { animation: gp-pop var(--pop) ease-out both; }
+.guess__row.is-reveal > .clue { animation: gp-flip var(--flip) ease-in-out both; animation-delay: var(--d); backface-visibility: hidden; }
+.guess__row.is-reveal > .clue::after { content: ''; position: absolute; inset: -1px; z-index: 2; border: 1px solid var(--line); border-radius: inherit; background: var(--inset); pointer-events: none; animation: gp-veil var(--flip) linear both; animation-delay: var(--d); }
+@keyframes gp-flip { 0% { transform: rotateX(0); } 50% { transform: rotateX(90deg); } 100% { transform: rotateX(0); } }
+@keyframes gp-veil { 0%, 49.9% { opacity: 1; } 50%, 100% { opacity: 0; } }
+@keyframes gp-pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.08); opacity: 1; } 100% { transform: scale(1); } }
+.guess__row.is-win > .clue, .guess__row.is-win > .guess__who { animation: gp-bounce var(--bounce-len) ease-out both; animation-delay: var(--b, 0ms); }
+.guess__row.is-win { box-shadow: 0 0 0 1px var(--go), 0 0 18px color-mix(in srgb, var(--go) 40%, transparent); border-radius: var(--r-s); }
+@keyframes gp-bounce { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-14px); } 70% { transform: translateY(0); } }
+.guess__bar.is-shake .guess__box { animation: gp-shake .4s ease-in-out; }
+@keyframes gp-shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-7px); } 40% { transform: translateX(7px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+.guess__answer.is-in { animation: gp-rise .4s ease-out both; }
+@keyframes gp-rise { from { transform: translateY(16px); opacity: 0; } to { transform: none; opacity: 1; } }
+.guess__answer.is-in ~ .guess__after .guess__streak svg { animation: gp-pulse .6s ease-out .3s both; }
+@keyframes gp-pulse { 40% { transform: scale(1.5); } }
+@media (prefers-reduced-motion: reduce) { .gp *, .gp *::before, .gp *::after { animation: none !important; } }
+
+/* Search and Guess. */
+.guess__bar { display: grid; gap: 8px; }
+.guess__box { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; padding: 4px 4px 4px 14px; border: 1px solid var(--control); border-radius: var(--r-m); background: var(--inset); }
+.guess__box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.guess__box > svg { margin-right: 10px; color: var(--muted); }
+.guess__box input { min-height: 44px; min-width: 0; padding: 0; border: 0; background: none; color: var(--strong); font: inherit; font-size: 1.1rem; font-weight: 600; outline: none; }
+.guess__go { min-width: 120px; min-height: 44px; padding: 0 1.4rem; border-radius: var(--r-s); font-size: 1.15rem; letter-spacing: .06em; animation: none; }
+.guess__go:disabled { opacity: .45; cursor: not-allowed; }
+.guess__suggest { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 8; list-style: none; margin: 0; padding: 4px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: var(--panel-2); box-shadow: var(--shadow); }
+.guess__suggest button { width: 100%; min-height: 44px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 12px; background: none; border: 0; border-radius: var(--r-s); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.guess__suggest button.is-on, .guess__suggest button:hover { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.guess__suggest small { color: var(--muted); }
+.guess__empty { margin: 0; padding: 10px 12px; border: 1px dashed var(--line-2); border-radius: var(--r-s); background: var(--panel); color: var(--text-2); font-size: var(--fs-body); }
+.guess__left { margin: 0; text-align: center; color: var(--text-2); font-size: var(--fs-caption); font-weight: 700; }
+
+/* The legend, now in a dialog behind the ? button. */
+.guess__legend { list-style: none; margin: 10px 0; padding: 0; display: grid; gap: 8px; color: var(--text-2); }
+.guess__legend li { display: inline-flex; align-items: center; gap: 10px; }
+.clue-key { flex: none; display: inline-grid; place-items: center; min-width: 34px; height: 28px; padding: 0 6px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--inset); font-weight: 800; }
+
+/* The end: the answer, then share, streak, the next daily and one next step (#129). */
+.guess__answer { display: flex; gap: 16px; align-items: center; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--inset); }
 .guess__answer.is-won { border-color: var(--go); }
-.guess__answer small { display: block; font-family: var(--f-body); font-weight: 700; color: var(--t); font-size: .8rem; }
-.guess__answer strong { display: block; font-family: var(--f-head); font-size: 1.6rem; }
-.guess__answer > div > span { display: block; color: var(--text-2); font-size: .9rem; }
-.guess__photo { width: 72px; height: 72px; flex: none; overflow: hidden; border: 1px solid var(--line); }
-.guess__teams { display: flex !important; flex-wrap: wrap; gap: 4px 10px; margin-top: 4px; color: var(--muted) !important; font-size: .8rem !important; }
+.guess__photo { width: 96px; height: 96px; flex: none; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--panel-2); }
+.guess__about { min-width: 0; display: grid; gap: 4px; }
+.guess__verdict { color: var(--accent); font-family: var(--f-body); font-size: var(--fs-label); font-weight: 700; }
+.guess__about strong { display: flex; align-items: center; gap: 10px; font-family: var(--f-head); font-weight: 800; font-size: 1.9rem; line-height: 1.1; }
+.guess__about strong em { font-family: var(--f-read); font-size: var(--fs-caption); font-style: normal; font-weight: 500; color: var(--muted); }
+.guess__about > span { color: var(--text-2); font-size: var(--fs-caption); }
+.guess__teams { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; }
+.guess__teams span { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: var(--fs-caption); }
+.guess__after { display: grid; gap: 12px; justify-items: center; }
+.guess__meta { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 20px; margin: 0; color: var(--text-2); font-size: var(--fs-body); }
+.guess__streak { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-hi); font-weight: 700; }
+.guess__next { min-width: 260px; }
+
+@media (max-width: 860px) {
+  .guess__row { grid-template-columns: minmax(0, 1.2fr) minmax(0, .9fr) minmax(0, 1.6fr) minmax(0, .9fr) minmax(0, 1.05fr) minmax(0, .8fr) minmax(0, 1.15fr); gap: 4px; }
+  .guess__row > span { padding: 4px 4px; font-size: .95rem; }
+  .gp__sil { display: none; }
+}
+/* On a phone every guess is two lines, so all eight fit on one screen, and the search sits in a sticky bar at the bottom (#128). The mark always shows; the value shortens. */
+@media (max-width: 520px) {
+  .gp { padding: 12px; gap: 10px; border-radius: var(--r-m); }
+  .gp__bg { display: none; }
+  .gp__title { font-size: 1.7rem; }
+  .gp__sub { margin-top: 2px; font-size: .92rem; }
+  .gp__kicker { display: none; }
+  .gp__head { gap: 10px; }
+  .guess__grid { gap: 4px; }
+  .guess__row--head { display: none; }
+  .guess__row { grid-template-columns: .95fr 1.6fr 1.3fr 1.3fr .8fr .95fr; gap: 4px; padding: 4px 6px 6px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--inset); scroll-margin-block: 70px 120px; }
+  .guess__row > span { min-height: 32px; padding: 2px 8px 2px 3px; gap: 3px; font-size: .8rem; overflow-wrap: normal; white-space: nowrap; }
+  .clue__val { flex-wrap: nowrap; gap: 2px; }
+  .clue-country b { display: none; }
+  .clue-country { padding-right: 3px !important; }
+  .clue-orgs { flex-direction: row; }
+  .arrow { font-size: .8rem; }
+  .guess__row > .guess__who { grid-column: 1 / -1; min-height: 0; padding: 0 2px; border: 0; background: none; font-size: 1.05rem !important; line-height: 1.1; }
+  .guess__row--empty { grid-template-columns: 1fr; padding: 0; border-style: dashed; }
+  .guess__row--empty > span { min-height: 28px; }
+  .guess__row--empty > .guess__ph { display: none; }
+  .guess__n { font-size: 1rem; }
+  .long { display: none; }
+  .short { display: inline; }
+  .tb .badge, .tb .badge-logo { width: 18px !important; height: 18px !important; }
+  .tbs { gap: 3px; }
+  .tbs__none { display: none; }
+  .clue__mark { top: 1px; right: 3px; font-size: .68rem; }
+  .guess__who .clue__mark { font-size: 1rem; }
+  .guess__bar { position: sticky; bottom: 0; z-index: 9; gap: 4px; margin: 0 -12px -12px; padding: 10px 12px calc(6px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, transparent, var(--panel) 22%); }
+  .guess__box { padding-block: 2px; }
+  .guess__suggest { top: auto; bottom: calc(100% + 4px); }
+  .guess__go { min-width: 96px; padding: 0 1rem; }
+  .guess__answer { padding: 12px; gap: 12px; }
+  .guess__photo { width: 72px; height: 72px; }
+  .guess__about strong { font-size: 1.5rem; }
+  .guess__next { width: 100%; min-width: 0; }
+}
 
 /* ---------- live match layout ---------- */
 /* Timeout, speed and skip share one row under the score; the killfeed comes after, so a new line never moves a button. */

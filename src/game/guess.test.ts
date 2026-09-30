@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { rostersOn } from '../data/rosters';
-import { CLUE_LABEL, CLUE_MARK, Clue, MAX_GUESSES, addGuess, answerFor, clueMeaning, compare, describeClue, guessShare, guessStreak, pros, searchState, suggest } from './guess';
+import { BEST_LABEL, BEST_SHORT, CLUE_LABEL, CLUE_MARK, Clue, MAX_GUESSES, REVEAL, addGuess, answerFor, clueMeaning, compare, describeClue, guessShare, guessStreak, pros, revealPlan, searchState, spokenGuess, suggest, teamsFor } from './guess';
 
 describe('guess the pro', () => {
   const all = pros();
@@ -80,5 +80,49 @@ describe('guess the pro', () => {
     expect(found.kind === 'results' && found.options.some((p) => p.id === 'niko')).toBe(true);
     expect(searchState(all, 'qqqqzz', [])).toEqual({ kind: 'none' });
     expect(searchState(all, 'niko', ['niko'])).toMatchObject({ kind: 'guessed', nick: expect.stringMatching(/niko/i) });
+  });
+});
+
+describe('the reveal plan (#127)', () => {
+  it('flips the cells left to right, one every stagger, each showing its result halfway through', () => {
+    const p = revealPlan(6, false);
+    expect(p.cells).toEqual([0, 1, 2, 3, 4, 5].map((i) => REVEAL.pop + i * REVEAL.stagger));
+    expect(p.show).toEqual(p.cells.map((c) => c + REVEAL.flip / 2));
+    expect(p.total).toBe(p.cells[5] + REVEAL.flip);
+    expect(p.total).toBeGreaterThan(1800); // about two seconds for a row
+    expect(p.total).toBeLessThan(2300);
+  });
+  it('bounces a winning row in a wave after the last flip', () => {
+    const p = revealPlan(6, false);
+    expect(p.bounce[0]).toBe(p.total);
+    expect(p.bounce[5] - p.bounce[0]).toBe(5 * REVEAL.bounce);
+  });
+  it('with reduced motion has no waits at all', () => {
+    const p = revealPlan(6, true);
+    expect([p.name, p.total, ...p.cells, ...p.show, ...p.bounce].every((x) => x === 0)).toBe(true);
+  });
+});
+
+describe('what a guess says in words and in teams (#125, #127)', () => {
+  const all = pros();
+  const zywoo = [...all.values()].find((p) => p.id === 'zywoo')!;
+  const niko = [...all.values()].find((p) => p.id === 'niko')!;
+  it('reads a whole row as one sentence, and a hit as just "Correct"', () => {
+    const clues = compare(niko, zywoo);
+    const said = spokenGuess(3, niko.nick, clues, (c) => c.text, false);
+    expect(said.startsWith(`Guess 3, ${niko.nick}. Nation:`)).toBe(true);
+    expect(clues.every((c) => said.includes(describeClue(c, c.text)))).toBe(true);
+    expect(spokenGuess(2, zywoo.nick, compare(zywoo, zywoo), (c) => c.text, true)).toBe(`Guess 2, ${zywoo.nick}. Correct.`);
+  });
+  it('shows up to three teams, the shared ones first, and counts the rest', () => {
+    const t = teamsFor(niko, zywoo);
+    expect(t.shown.length).toBeLessThanOrEqual(3);
+    expect(t.shown.length + t.more).toBe(niko.orgs.length);
+    const sharedFirst = t.shown.map((x) => x.shared);
+    expect(sharedFirst).toEqual([...sharedFirst].sort((a, b) => Number(b) - Number(a)));
+    for (const x of t.shown) expect(x.roster.org).toBe(x.org);
+  });
+  it('labels every finish in few letters', () => {
+    expect(BEST_SHORT).toHaveLength(BEST_LABEL.length);
   });
 });

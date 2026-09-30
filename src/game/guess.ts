@@ -151,3 +151,50 @@ export function searchState(all: Map<string, Pro>, text: string, exclude: string
   const seen = suggest(all, text, [], 1)[0];
   return seen ? { kind: 'guessed', nick: seen.nick } : { kind: 'none' };
 }
+
+// ---------- the reveal (#127) ----------
+/** Timings in ms, shared by the CSS (as custom properties) and the sound scheduler, so picture and sound can't drift apart. */
+export const REVEAL = { pop: 220, stagger: 250, flip: 500, bounce: 100, bounceLen: 500 } as const;
+
+export interface RevealPlan {
+  /** When the player-name cell pops in. */
+  name: number;
+  /** When each clue cell starts to flip, in order. */
+  cells: number[];
+  /** When each clue cell shows its result: halfway through its flip. The sound for that cell plays then. */
+  show: number[];
+  /** When the whole row is done. */
+  total: number;
+  /** When each cell of a winning row starts its bounce, after `total`. */
+  bounce: number[];
+}
+/**
+ * The schedule for one guess's reveal: the name pops, then the cells flip left to right, one every `stagger`, each showing its result at the
+ * halfway point. With reduced motion nothing waits: every delay is 0, the row is complete at once, and the sounds (which follow the sound
+ * setting, not motion) play together.
+ */
+export function revealPlan(n: number, reduced: boolean): RevealPlan {
+  if (reduced) return { name: 0, cells: Array(n).fill(0), show: Array(n).fill(0), total: 0, bounce: Array(n).fill(0) };
+  const cells = Array.from({ length: n }, (_, i) => REVEAL.pop + i * REVEAL.stagger);
+  const total = n ? cells[n - 1] + REVEAL.flip : REVEAL.pop;
+  return { name: 0, cells, show: cells.map((c) => c + REVEAL.flip / 2), total, bounce: Array.from({ length: n }, (_, i) => total + i * REVEAL.bounce) };
+}
+
+/** A whole guess as one sentence for a polite live region: "Guess 3, ZywOo. Nation: Sweden. Same region. ..." Announced once, not cell by cell. */
+export function spokenGuess(n: number, nick: string, clues: Clue[], named: (c: Clue) => string, right: boolean): string {
+  if (right) return `Guess ${n}, ${nick}. Correct.`;
+  return `Guess ${n}, ${nick}. ${clues.map((c) => describeClue(c, named(c))).join(' ')}`;
+}
+
+/** Best finish as a short label, for tight cells. */
+export const BEST_SHORT = ['QF', 'SF', '2nd', '1st'];
+
+/**
+ * The teams to show for a guess (#125): up to three, the ones shared with the answer first so they are never the ones left out,
+ * each with the roster its badge is drawn from (their latest at that organisation), and how many more there are.
+ */
+export function teamsFor(g: Pro, a: Pro, max = 3): { shown: { org: string; roster: Roster; shared: boolean }[]; more: number; sharedCount: number } {
+  const all = g.orgs.map((org) => ({ org, roster: [...g.rosters].reverse().find((r) => r.org === org)!, shared: a.orgs.includes(org) }));
+  const ordered = [...all.filter((x) => x.shared), ...all.filter((x) => !x.shared)];
+  return { shown: ordered.slice(0, max), more: Math.max(0, ordered.length - max), sharedCount: all.filter((x) => x.shared).length };
+}

@@ -14,6 +14,7 @@ import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
 import { Preview } from './game/draftui';
+import { homeState } from './game/home';
 import { ReadyScreen } from './screens/Lobby';
 import { LiveScreen, PreviewScreen } from './screens/Match';
 import { FinalScreen } from './screens/Final';
@@ -82,7 +83,15 @@ function Game() {
   // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
   const backView: View = atStart && s.mode !== 'duel' ? 'home' : 'draft';
   const view: View = chosen === 'draft' ? backView : chosen;
-  if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
+  const goNext = () => {
+    // Once today's pro is found, one button for what to do next: the daily draft if it isn't done, else free play (#129).
+    const h = homeState(s, stats, today());
+    if (h.daily === 'progress') return setView('draft');
+    if (h.daily === 'new') { dispatch({ type: 'reset', mode: 'daily' }); setReelFor(1); dispatch({ type: 'spin' }); return setView('draft'); }
+    dispatch({ type: 'reset', mode: 'free' }); setReelFor(1); dispatch({ type: 'spin' }); setView('draft');
+  };
+  const hs = homeState(s, stats, today());
+  const guessNext = { label: hs.daily === 'progress' ? "Continue today's draft" : hs.daily === 'new' ? "Play today's draft" : 'Free play', go: goNext };
 
   // The radar is scenery while you draft, so it leaves the draft screen; the lobby and the match keep it (#102).
   const showBoard = s.phase !== 'final' && s.phase !== 'draft' && view === 'draft';
@@ -97,7 +106,8 @@ function Game() {
       abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
-      {view !== 'home' && <main className="console">
+      {view === 'guess' && <GuessScreen next={guessNext} />}
+      {view !== 'home' && view !== 'guess' && <main className="console">
         <div className="console__head">
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
@@ -110,16 +120,16 @@ function Game() {
         </div>
         {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
 
-        <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${view === 'guess' ? 'guess' : s.phase}`}>
+        <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${s.phase}`}>
           {drafting && <LineupPanel s={s} preview={preview} />}
-          {view === 'guess' ? <section className="console__main"><GuessScreen /></section> : <section className="console__main">
+          <section className="console__main">
             <ChatVoteBar />
             {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onPreview={setPreview} />}
             {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
             {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
-          </section>}
+          </section>
           {drafting && <DraftSidebar s={s} preview={preview} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
           {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
