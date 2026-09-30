@@ -480,10 +480,10 @@ async function settingsAndKeys() {
   await p.waitForTimeout(600);
   await p.locator('body').click({ position: { x: 5, y: 300 } });
   await p.keyboard.press('1');
-  if (!(await p.evaluate(() => document.activeElement?.closest('.case-card') === document.querySelector('.case-card') && document.activeElement?.classList.contains('prow')))) throw new Error('1 should focus the first player in the first team');
+  await p.waitForFunction(() => document.activeElement?.closest('.case-card') === document.querySelector('.case-card') && document.activeElement?.classList.contains('prow'), null, { timeout: 3000 }).catch(() => { throw new Error('1 should focus the first player in the first team'); });
   await p.keyboard.press('Enter');
   await p.waitForSelector('.draftbar .cta');
-  if (!(await p.evaluate(() => document.activeElement?.classList.contains('cta')))) throw new Error('choosing a player by keyboard should move focus to the Draft button');
+  await p.waitForFunction(() => document.activeElement?.classList.contains('cta'), null, { timeout: 3000 }).catch(() => { throw new Error('choosing a player by keyboard should move focus to the Draft button'); });
   await p.keyboard.press('Enter');
   await p.waitForSelector('.lrow.is-full', { state: 'attached', timeout: 5000 });
   console.log('settings and keys: theme, contrast, M, ?, 1 + Enter + Enter ok errors:', errs);
