@@ -607,7 +607,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .review__list li.is-top .review__best { color: var(--go); }
 .review__facts { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; font-size: .88rem; }
 .review__facts li { padding: 4px 0; border-top: 1px solid var(--line); }
-.review__facts b { display: inline-block; min-width: 6.5em; color: var(--muted); font-family: var(--f-body); font-size: .8rem; }
+.review__facts b { display: inline-block; min-width: 10.5em; color: var(--muted); font-family: var(--f-body); font-size: .8rem; }
 .review__tip { margin: 10px 0 0; padding: 8px 10px; border-left: 3px solid var(--t); background: color-mix(in srgb, var(--accent) 8%, transparent); }
 .stat-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
 .stat-tiles div { display: grid; justify-items: center; padding: 10px 4px; border: 1px solid var(--line); background: var(--panel); }
@@ -1505,3 +1505,5 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 .unsaved b { color: var(--strong); }
 .crash h3 { margin: 18px 0 4px; font-family: var(--f-head); font-weight: 800; font-size: 1.1rem; letter-spacing: .05em; text-transform: uppercase; }
 .practice { margin: 0; padding: 8px 12px; border: 1px dashed var(--accent); border-radius: var(--r-s); background: color-mix(in srgb, var(--accent) 8%, var(--panel)); color: var(--text); font-size: var(--fs-caption); text-align: center; }
+
+@media (max-width: 520px) { .review__facts b { display: block; min-width: 0; } }

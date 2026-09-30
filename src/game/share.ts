@@ -9,7 +9,7 @@ export function shareText(run: Run, url?: string, practice = false): string {
   const pl = G.placement(run.t);
   const star = G.mvp(run.t, squadOf(run));
   const rating = G.seriesRatings(run.t.matches.flatMap((m) => m.maps))[star.player.id]?.rating;
-  const { grade } = G.draftReview(run.picks);
+  const { grade } = G.draftReview(run.picks, !!run.opts?.hard);
   const date = dailyDate(run);
   const duel = run.duel;
   const head = date ? `Major Mayhem Daily #${dailyNumber(date)}${practice ? ' (practice)' : ''}` : duel ? `Major Mayhem draft duel vs ${duel.name}` : 'Major Mayhem';
@@ -20,7 +20,7 @@ export function shareText(run: Run, url?: string, practice = false): string {
   const swiss = run.t.matches.filter((m) => m.stage === 'QUAL').map((m) => box(m.won)).join('');
   const knockout = run.t.matches.filter((m) => m.stage !== 'QUAL').map((m) => `${STAGE_SHORT[m.stage]} ${box(m.won)}`).join(' ');
   // One target per pick that had alternatives: hit when it was the strongest choice in its case (#73).
-  const scored = G.draftReview(run.picks).rounds.filter((r) => r.best);
+  const scored = G.draftReview(run.picks, !!run.opts?.hard).rounds.filter((r) => r.best);
   const hits = scored.filter((r) => r.value >= r.best!.value - 1e-9).length;
   const lines = [
     `${head} ${trophy} ${title}${run.opts?.hard ? ' 💀' : ''}`,

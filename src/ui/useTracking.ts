@@ -30,7 +30,7 @@ export function useRunTracking(s: Run) {
     }
     if (p.phase !== 'final' && s.phase === 'final') {
       const pl = G.placement(s.t);
-      const { grade } = G.draftReview(s.picks);
+      const { grade } = G.draftReview(s.picks, !!s.opts?.hard);
       const mvp = G.mvp(s.t, squadOf(s));
       track('run_finish', { ...base, placement: pl.key, reached: pl.reached, mvp: mvp.player.nick, ...(grade !== null ? { grade: Math.round(grade * 100) } : {}) });
     }

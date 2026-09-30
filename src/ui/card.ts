@@ -59,7 +59,7 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
   const mine = G.lineupFromPicks(run.picks);
   const star = G.mvp(run.t, squadOf(run));
   const ratings = G.seriesRatings(run.t.matches.flatMap((m) => m.maps));
-  const { grade } = G.draftReview(run.picks);
+  const { grade } = G.draftReview(run.picks, !!run.opts?.hard);
   const date = dailyDate(run);
   const tone = champ ? C.accent : pl.key === 'F' ? C.silver : C.cream;
 

@@ -63,6 +63,8 @@ export function answerFor(date: string): Pro {
 }
 
 export type ClueState = 'hit' | 'near' | 'miss';
+/** The order the clues are shown in, left to right. `compare` returns them in this order. */
+export const CLUE_ORDER = ['country', 'orgs', 'first', 'role', 'majors', 'best'] as const;
 export interface Clue { key: 'country' | 'role' | 'majors' | 'best' | 'first' | 'orgs'; text: string; state: ClueState; dir?: 'up' | 'down' }
 
 const REGION: Record<string, string> = { RU: 'CIS', UA: 'CIS', KZ: 'CIS', BY: 'CIS', SE: 'Nordic', DK: 'Nordic', NO: 'Nordic', FI: 'Nordic', EE: 'Baltic', LV: 'Baltic', LT: 'Baltic' };
@@ -72,13 +74,14 @@ const dir = (guess: number, answer: number) => (answer > guess ? 'up' : 'down') 
 export function compare(g: Pro, a: Pro): Clue[] {
   const region = (c: string) => REGION[c];
   const sharedOrgs = g.orgs.filter((o) => a.orgs.includes(o));
+  // The order the clues are shown, in the grid, the reveal sounds, the spoken row and the shared emoji row (#175): defined once, here.
   return [
     { key: 'country', text: g.country, state: g.country === a.country ? 'hit' : region(g.country) && region(g.country) === region(a.country) ? 'near' : 'miss' },
+    { key: 'orgs', text: sharedOrgs.length ? sharedOrgs.join(', ') : g.orgs.slice(0, 2).join(', '), state: sharedOrgs.length === a.orgs.length && g.orgs.length === a.orgs.length ? 'hit' : sharedOrgs.length ? 'near' : 'miss' },
+    { key: 'first', text: String(g.first), state: g.first === a.first ? 'hit' : Math.abs(g.first - a.first) <= 1 ? 'near' : 'miss', ...(g.first !== a.first ? { dir: dir(g.first, a.first) } : {}) },
     { key: 'role', text: g.role, state: g.role === a.role ? 'hit' : a.roles.includes(g.role) ? 'near' : 'miss' },
     { key: 'majors', text: String(g.majors), state: g.majors === a.majors ? 'hit' : 'miss', ...(g.majors !== a.majors ? { dir: dir(g.majors, a.majors) } : {}) },
     { key: 'best', text: BEST_LABEL[g.best], state: g.best === a.best ? 'hit' : 'miss', ...(g.best !== a.best ? { dir: dir(g.best, a.best) } : {}) },
-    { key: 'first', text: String(g.first), state: g.first === a.first ? 'hit' : Math.abs(g.first - a.first) <= 1 ? 'near' : 'miss', ...(g.first !== a.first ? { dir: dir(g.first, a.first) } : {}) },
-    { key: 'orgs', text: sharedOrgs.length ? sharedOrgs.join(', ') : g.orgs.slice(0, 2).join(', '), state: sharedOrgs.length === a.orgs.length && g.orgs.length === a.orgs.length ? 'hit' : sharedOrgs.length ? 'near' : 'miss' },
   ];
 }
 

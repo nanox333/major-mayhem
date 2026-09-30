@@ -568,10 +568,13 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
   return { map, start, rounds, events, score: [a, b], won: a > b, stats: { mine: stat(mine, K, D), opp: stat(oppL, OK, OD) }, calls, impact };
 }
 
-/** Average match rating per player across a set of maps (weighted by rounds). */
-export function seriesRatings(maps: MapGame[]): Record<string, { k: number; d: number; rating: number }> {
+/**
+ * Average match rating per player across a set of maps (weighted by rounds), for one side: yours by default, or the opponent's. The sides are kept apart
+ * because in a draft duel the same person can be on both, and each copy has its own kills, deaths and rating (#168).
+ */
+export function seriesRatings(maps: MapGame[], side: 'mine' | 'opp' = 'mine'): Record<string, { k: number; d: number; rating: number }> {
   const acc: Record<string, { k: number; d: number; rr: number; r: number }> = {};
-  for (const g of maps) for (const st of [...g.stats.mine, ...g.stats.opp]) {
+  for (const g of maps) for (const st of g.stats[side]) {
     const e = (acc[st.id] ??= { k: 0, d: 0, rr: 0, r: 0 });
     e.k += st.k; e.d += st.d; e.rr += st.rating * g.rounds.length; e.r += g.rounds.length;
   }
@@ -724,7 +727,9 @@ export function pickOpponent(t: Tournament, stage: StageKey, mine: Lineup[], ros
   const clean = rosters.filter((r) => !r.players.some((p) => mineIds.has(p.id)) && !t.used.includes(r.id));
   // Smaller pools (era modes) can run short over a long run: fall back to rosters you drafted from, then to repeats.
   const notUsed = rosters.filter((r) => !t.used.includes(r.id));
-  const pool = clean.length >= 8 ? clean
+  // From rules v3 a clean opponent is used for as long as one is left: a smaller clean pool is better than facing someone on your own team (#167).
+  // Earlier versions fall back once fewer than eight remain, and keep doing so, so old dailies and challenges replay as they did.
+  const pool = (activeRules >= 3 ? clean.length > 0 : clean.length >= 8) ? clean
     : [notUsed.filter((r) => !mine.some((x) => x.roster.id === r.id)), notUsed, rosters].find((x) => x.length)!;
   const ranked = pool
     .map((r) => ({ r, p: rosterPower(r).total }))
@@ -788,7 +793,7 @@ export interface PickReview {
 export const pickValue = (p: Player, slot: Role) => p.rating * fit(p, slot);
 
 /** Compare each pick with the best one available in its case that round. Picks are in draft order. */
-export function draftReview(picks: Pick[]): { rounds: PickReview[]; grade: number | null } {
+export function draftReview(picks: Pick[], hard = false): { rounds: PickReview[]; grade: number | null } {
   const rounds = picks.map((pk, i) => {
     const before = picks.slice(0, i);
     const roster = rosterById.get(pk.rosterId)!;
@@ -797,7 +802,8 @@ export function draftReview(picks: Pick[]): { rounds: PickReview[]; grade: numbe
     for (const id of pk.offer ?? []) {
       const r = rosterById.get(id);
       if (!r) continue;
-      for (const p of r.players) for (const slot of eligibleSlots(p, before)) {
+      // Hard mode allows any open slot, so its alternatives are those, not just the roles a player covers.
+      for (const p of r.players) for (const slot of (hard ? (draftedIds(before).has(p.id) ? [] : openSlots(before)) : eligibleSlots(p, before))) {
         const v = pickValue(p, slot);
         if (!best || v > best.value) best = { player: p, roster: r, slot, value: v };
       }

@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
-import { ChemPreview, Preview, chemPreview, defaultSlot, placementLabel, playerState } from '../game/draftui';
+import { ChemPreview, Preview, chemPreview, defaultSlot, placementLabel, playerState, sameCandidate } from '../game/draftui';
 import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, poolCheck, roundOf, slotsFor, today } from '../game/state';
 import { Stats, dailyStreak } from '../game/stats';
 import { REACHED } from './Stats';
@@ -107,15 +107,31 @@ function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
   );
 }
 
-function useReroll(dispatch: React.Dispatch<Action>) {
+/**
+ * Spin again (#174). A reroll is one pending operation: while it is under way any further press, by mouse, touch or keyboard, does nothing, so a quick
+ * double click spends one of the two rerolls and not both. It is dropped if the page leaves the screen or the run or case has changed in the meantime
+ * (`stamp` says which run and case it was made for), so a delayed reroll can never land on a different run.
+ */
+function useReroll(dispatch: React.Dispatch<Action>, stamp: string) {
   const [out, setOut] = useState(false);
+  const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const live = useRef(stamp);
+  live.current = stamp;
+  useEffect(() => () => { if (pending.current) clearTimeout(pending.current); }, []);
   const reroll = () => {
+    if (pending.current) return;
     if (reduceMotion()) return dispatch({ type: 'reroll' });
+    const madeFor = stamp;
     setOut(true);
-    setTimeout(() => { dispatch({ type: 'reroll' }); setOut(false); }, 160);
+    pending.current = setTimeout(() => {
+      pending.current = null;
+      if (live.current === madeFor) dispatch({ type: 'reroll' });
+      setOut(false);
+    }, 160);
   };
   return { out, reroll };
 }
+const stampOf = (s: Run) => `${s.attempt}:${s.offerKey}:${s.rerollKey}`;
 
 /** The opened-case bar over the cards (#103): what this case holds and what to do with it. */
 function OpenedCase({ children }: { children: React.ReactNode }) {
@@ -128,10 +144,10 @@ function OpenedCase({ children }: { children: React.ReactNode }) {
 }
 
 /** "Spin again" with the real number of spins left (#103). */
-function SpinAgain({ s, reroll }: { s: Run; reroll: () => void }) {
+function SpinAgain({ s, reroll, busy }: { s: Run; reroll: () => void; busy?: boolean }) {
   return (
     <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
-      <button className="ghost-btn ghost-btn--big" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>
+      <button className="ghost-btn ghost-btn--big" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0 || busy}>
         <RefreshIcon size={16} /> Spin again · {s.rerolls <= 0 ? 'no spins left' : `${s.rerolls} spin${s.rerolls === 1 ? '' : 's'} left`}
       </button>
     </div>
@@ -145,7 +161,7 @@ function Placement({ roster }: { roster: Roster }) {
 
 /** The coach round: three coaches, each shown with the Major they coached at. */
 function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void }) {
-  const { out, reroll } = useReroll(dispatch);
+  const { out, reroll } = useReroll(dispatch, stampOf(s));
   useEffect(() => () => onPreview(null), []);
   const pointAt = (id: string | null) => {
     if (!id) return onPreview(null);
@@ -178,7 +194,7 @@ function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Disp
           );
         })}
       </div>
-      <SpinAgain s={s} reroll={reroll} />
+      <SpinAgain s={s} reroll={reroll} busy={out} />
     </div>
   );
 }
@@ -190,7 +206,7 @@ type Chosen = { r: Roster; p: Player };
  * It drafts through the same two steps as before (open the team, then draft the player), so a seed plays out exactly as it did.
  */
 function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void }) {
-  const { out, reroll } = useReroll(dispatch);
+  const { out, reroll } = useReroll(dispatch, stampOf(s));
   const bench = roundOf(s) === 'bench';
   const hard = !!s.opts?.hard;
   const taken = G.draftedIds(s.picks);
@@ -210,14 +226,15 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   useEffect(() => { setSel(null); setSlot(null); setHov(null); setOpenId(s.offer[0] ?? null); }, [s.offerKey, s.rerollKey]);
 
   const cand = hov ?? sel;
-  const isSel = !!cand && !!sel && cand.p.id === sel.p.id;
+  // A pick is a person *and* the roster they are offered from: the same player in two rosters has different teammates, era and chemistry (#173).
+  const isSel = sameCandidate(cand, sel);
   const candSlot: Role | 'bench' | null = !cand ? null : bench ? 'bench' : isSel ? slot : defaultSlot(slotsFor(s, cand.p), cand.p.roles[0], hard);
   const chem: ChemPreview | null = useMemo(() => {
     if (!cand || bench) return null;
     const use = candSlot && candSlot !== 'bench' ? candSlot : slotsFor(s, cand.p)[0];
     return use ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot: use, rosterId: cand.r.id, playerId: cand.p.id }], coach: s.coach }, hard) : null;
-  }, [cand?.p.id, candSlot, s.picks.length]);
-  useEffect(() => { onPreview(cand ? { slot: candSlot, rosterId: cand.r.id, playerId: cand.p.id, chem } : null); }, [cand?.p.id, candSlot, chem]);
+  }, [cand?.p.id, cand?.r.id, candSlot, s.picks.length]);
+  useEffect(() => { onPreview(cand ? { slot: candSlot, rosterId: cand.r.id, playerId: cand.p.id, chem } : null); }, [cand?.p.id, cand?.r.id, candSlot, chem]);
   useEffect(() => () => onPreview(null), []);
 
   const choose = (c: Chosen) => { setSel(c); setOpenId(c.r.id); setSlot(bench ? null : defaultSlot(slotsFor(s, c.p), c.p.roles[0], hard)); };
@@ -237,6 +254,9 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
     const [rid, pid] = key.split('::');
     const r = G.rosterById.get(rid)!;
     const p = r.players.find((x) => x.id === pid)!;
+    // Hard mode is a test of which role each player fits, and chat votes for a person only: the winner is chosen on screen and waits for the host to
+    // pick the slot and confirm, and nothing infers the role from the hidden main one (#176).
+    if (hard && !bench) return choose({ r, p });
     dispatch({ type: 'team', id: rid });
     if (bench) return dispatch({ type: 'bench', player: p });
     const slots = slotsFor(s, p);
@@ -310,7 +330,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
       </div>
       <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
       {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
-      <SpinAgain s={s} reroll={reroll} />
+      <SpinAgain s={s} reroll={reroll} busy={out} />
     </div>
   );
 }

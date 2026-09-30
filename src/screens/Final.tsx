@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
+import { Action, Run, benchLineup, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
@@ -87,7 +87,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
       <PathView s={s} onOpen={setReport} />
       {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
       <TeamReviewCard mine={mine} s={s} />
-      <DraftReview picks={s.picks} />
+      <DraftReview picks={s.picks} hard={!!s.opts?.hard} />
       {stats.runs > 0 && (
         <p className="muted small">
           Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
@@ -262,14 +262,14 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
 
 /** The team as a whole (#18): role balance, chemistry, who stood out, maps and calls, and one thing to try next. */
 function TeamReviewCard({ mine, s }: { mine: G.Lineup[]; s: Run }) {
-  const r = teamReview(mine, s.coach, s.t);
+  const r = teamReview(mine, s.coach, s.t, benchLineup(s));
   return (
     <section className="review anim-in" aria-label="Team review">
       <div className="review__head"><span>Team review</span></div>
       <ul className="review__facts">
-        <li><b>Roles</b> {r.roles.main} in their main role{r.roles.secondary ? `, ${r.roles.secondary} in a secondary role` : ''}{r.roles.off ? `, ${r.roles.off} off-role` : ''}</li>
-        <li><b>Chemistry</b> {r.synergies.length ? r.synergies.join(' · ') : 'none'}</li>
-        {r.strongest && <li><b>Stood out</b> {r.strongest.nick} ({fmt(r.strongest.rating)}){r.weakest ? `; quietest: ${r.weakest.nick} (${fmt(r.weakest.rating)})` : ''}</li>}
+        <li><b>Roles as drafted</b> {r.roles.main} in their main role{r.roles.secondary ? `, ${r.roles.secondary} in a secondary role` : ''}{r.roles.off ? `, ${r.roles.off} off-role` : ''}</li>
+        <li><b>Chemistry as drafted</b> {r.synergies.length ? r.synergies.join(' · ') : 'none'}</li>
+        {r.strongest && <li><b>Stood out on the day</b> {r.strongest.nick} ({fmt(r.strongest.rating)}){r.weakest ? `; quietest: ${r.weakest.nick} (${fmt(r.weakest.rating)})` : ''}</li>}
         <li><b>Maps</b> {r.maps.won} won, {r.maps.lost} lost{r.maps.bestMap ? ` · best on ${r.maps.bestMap}` : ''}{r.maps.worstMap ? ` · struggled on ${r.maps.worstMap}` : ''}</li>
         <li><b>Calls</b> {r.calls.timeouts} timeout{r.calls.timeouts === 1 ? '' : 's'}{r.calls.forces ? `, ${r.calls.forces} force buy${r.calls.forces === 1 ? '' : 's'} (${r.calls.forcesWon} won)` : ', no force buys'}</li>
       </ul>
@@ -278,8 +278,8 @@ function TeamReviewCard({ mine, s }: { mine: G.Lineup[]; s: Run }) {
   );
 }
 
-function DraftReview({ picks }: { picks: G.Pick[] }) {
-  const { rounds, grade } = G.draftReview(picks);
+function DraftReview({ picks, hard }: { picks: G.Pick[]; hard: boolean }) {
+  const { rounds, grade } = G.draftReview(picks, hard);
   if (grade === null) return null;
   return (
     <section className="review anim-in" aria-label="Pick strength">
@@ -294,7 +294,8 @@ function DraftReview({ picks }: { picks: G.Pick[] }) {
       </p>
       <ol className="review__list">
         {rounds.map((r, i) => {
-          const top = !r.best || r.best.player.id === r.player.id || r.value >= r.best.value - 0.01;
+          // Strongest only when nothing legal was worth more, by value: the same person in a better role or another roster is a better option (#178).
+          const top = !r.best || r.value >= r.best.value - 0.01;
           return (
             <li key={i} className={top ? 'is-top' : ''}>
               <span className="review__round">R{i + 1}</span>

@@ -48,6 +48,8 @@ export function fingerprints(rules: number) {
   const fp = (x: unknown) => G.hash(JSON.stringify(x, (k, v) => (k === 'text' ? undefined : v))).toString(16);
   const runs: Record<string, string> = {};
   for (const date of ['2026-09-28', '2026-09-29']) runs[`daily ${date}`] = fp(playThrough(fresh('daily', date)).t);
+  // A daily played under v2 (from 2026-09-30), so later versions can be checked against it too.
+  if (rules >= 2) runs['daily 2026-09-30'] = fp(playThrough(fresh('daily', '2026-09-30')).t);
   for (const seed of ['a', 'b', 'c', 'd']) runs[`free ${seed}`] = fp(playThrough({ ...fresh('free', '2026-09-29'), seed: `free-${seed}`, rules } as Run).t);
   const [lineups, guesses] = G.withRules(rules, () => [
     fp(ROSTERS.map((r) => G.naturalLineup(r).map((x) => [x.slot, x.player.id]))),

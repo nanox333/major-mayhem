@@ -152,3 +152,7 @@ export function mapComfort(lineup: G.Lineup[]): { map: string; pips: number; wor
     return { map, pips, word: (pips >= 4 ? 'strong' : pips <= 2 ? 'weak' : 'average') as ComfortWord };
   }).sort((a, b) => b.pips - a.pips || a.map.localeCompare(b.map));
 }
+
+/** Two candidates are the same pick only when they are the same person offered from the same roster: one player in two rosters has different teammates and chemistry (#173). */
+export const sameCandidate = (a: { r: { id: string }; p: { id: string } } | null | undefined, b: { r: { id: string }; p: { id: string } } | null | undefined) =>
+  !!a && !!b && a.p.id === b.p.id && a.r.id === b.r.id;
