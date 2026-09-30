@@ -93,14 +93,14 @@ describe('series ratings keep each side apart (#168)', () => {
   const map = (mine: ReturnType<typeof stat>[], opp: ReturnType<typeof stat>[]) => ({ rounds: Array(24).fill(true), stats: { mine, opp } }) as unknown as G.MapGame;
   it('gives a shared player their own numbers on each side', () => {
     const maps = [map([stat('tarik', 12, 17, 0.9), stat('a', 1, 1, 1)], [stat('tarik', 18, 15, 1.24), stat('b', 1, 1, 1)])];
-    expect(G.seriesRatings(maps).tarik).toEqual({ k: 12, d: 17, rating: 0.9 });
+    expect(G.seriesRatings(maps, 'mine').tarik).toEqual({ k: 12, d: 17, rating: 0.9 });
     expect(G.seriesRatings(maps, 'opp').tarik).toEqual({ k: 18, d: 15, rating: 1.24 });
-    expect(Object.keys(G.seriesRatings(maps))).toEqual(['tarik', 'a']);
+    expect(Object.keys(G.seriesRatings(maps, 'mine'))).toEqual(['tarik', 'a']);
   });
   it('leaves an ordinary report unchanged', () => {
     const maps = [map([stat('a', 10, 12, 0.95)], [stat('b', 14, 9, 1.1)]), map([stat('a', 14, 10, 1.05)], [stat('b', 9, 14, 0.9)])];
-    expect(G.seriesRatings(maps).a.rating).toBe(1);
-    expect(G.seriesRatings(maps).b).toBeUndefined();
+    expect(G.seriesRatings(maps, 'mine').a.rating).toBe(1);
+    expect(G.seriesRatings(maps, 'mine').b).toBeUndefined();
     expect(G.seriesRatings(maps, 'opp').b.rating).toBe(1);
   });
 });
@@ -127,7 +127,7 @@ describe('the team review credits the players who played (#177)', () => {
     expect(ratings[subbed.player.id]).toBeUndefined();
   });
   it('can name the bench player as who stood out or was quietest, and never the unused starter', () => {
-    const r = teamReview(mine, run.coach, run.t, bench);
+    const r = teamReview(mine, run.coach, run.t, [...mine, bench]);
     const names = [r.strongest?.nick, r.weakest?.nick];
     expect(names).not.toContain(subbed.player.nick);
     const played = [...mine.filter((x) => x.player.id !== subbed.player.id), bench].map((x) => x.player.nick);
@@ -137,7 +137,7 @@ describe('the team review credits the players who played (#177)', () => {
     expect([old.strongest?.nick, old.weakest?.nick]).not.toContain(bench.player.nick);
   });
   it('still describes the drafted lineup for roles and chemistry', () => {
-    const r = teamReview(mine, run.coach, run.t, bench);
+    const r = teamReview(mine, run.coach, run.t, [...mine, bench]);
     expect(r.roles.main + r.roles.secondary + r.roles.off).toBe(5);
   });
 });

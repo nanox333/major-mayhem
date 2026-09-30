@@ -194,7 +194,7 @@ async function run(viewport, tag) {
   if ((await p.locator('.dchart li').count()) !== 14 || !(await p.locator('.dchart li.is-played').count())) throw new Error('the stats should chart the last 14 dailies, including the result of today (#76)');
   await p.keyboard.press('Escape');
   // After today's daily, the start screen shows the result instead of offering a replay.
-  await p.locator('button.cta', { hasText: 'Play again' }).click();
+  await p.getByRole('button', { name: 'Play again', exact: true }).click();
   await p.waitForSelector('.daily-done');
   if (await p.locator('.home__daily', { hasText: 'Replay' }).count() === 0) throw new Error('a finished daily should show as played on the start screen');
   const clock = (await p.textContent('.mcard--daily .clock')).trim();

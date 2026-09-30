@@ -6,7 +6,7 @@ import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
 import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
-import { fmt } from '../ui/util';
+import { fmt, useMedia } from '../ui/util';
 import { play } from '../ui/sound';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
 import { cleanName, duelFrom, duelLink } from '../game/duel';
@@ -21,7 +21,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   const pl = G.placement(s.t);
   const star = G.mvp(s.t, squadOf(s));
   const champ = pl.key === 'CHAMP';
-  const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps));
+  const ratings = G.seriesRatings(s.t.matches.flatMap((m) => m.maps), 'mine');
   const date = dailyDate(s);
   const streak = date ? dailyStreak(stats.daily, date).current : 0;
   // A replay of a daily that already has a result is practice: it shows and shares as practice and changes nothing in your record (#162).
@@ -54,7 +54,6 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         )}
       </div>
       {practice && <p className="practice" role="note">Practice run: Daily #{dailyNumber(date!)} already has a result, so this one doesn't change your record, your streak or your achievements.</p>}
-      {!s.duel && <StageTrack t={s.t} />}
       <div className="mvp-card anim-in">
         <span className="mvp-card__photo"><Avatar player={star.player} roster={star.roster} /></span>
         <div>
@@ -75,27 +74,29 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
         image={{ draw: () => drawResultCard(s, siteHost()), name: cardFileName(s) }}
         props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }}
       />
-      <ChallengeBar s={s} />
       {date && (
         <p className="daily-meta">
           {streak > 1 && <span>🔥 {streak}-day daily streak</span>}
           <NextDaily />
         </p>
       )}
-      <RosterList mine={mine} stats={ratings} mvpId={star.player.id} />
-      <Staff s={s} stats={ratings} />
+      {!s.duel && <StageTrack t={s.t} />}
       <PathView s={s} onOpen={setReport} />
       {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
-      <TeamReviewCard mine={mine} s={s} />
-      <DraftReview picks={s.picks} hard={!!s.opts?.hard} />
+      <AnalysisSection title="Roster and staff" note={`${squadOf(s).length} players · ${s.coach ?? 'no coach recorded'}`}>
+        <RosterList mine={mine} stats={ratings} mvpId={star.player.id} /><Staff s={s} stats={ratings} />
+      </AnalysisSection>
+      <AnalysisSection title="Team review" note="Draft composition and actual match contributors" desktopOpen><TeamReviewCard mine={mine} s={s} /></AnalysisSection>
+      <AnalysisSection title="Pick strength" note="Individual role-adjusted model values, not a win prediction"><DraftReview picks={s.picks} hard={!!s.opts?.hard} /></AnalysisSection>
       {stats.runs > 0 && (
         <p className="muted small">
           Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
           {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
         </p>
       )}
+      <ChallengeBar s={s} />
       <div className="final__actions action-bar">
-        <button className="cta cta--orange" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
+        <button className="ghost-btn ghost-btn--big" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
       </div>
     </div>
   );
@@ -262,7 +263,7 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
 
 /** The team as a whole (#18): role balance, chemistry, who stood out, maps and calls, and one thing to try next. */
 function TeamReviewCard({ mine, s }: { mine: G.Lineup[]; s: Run }) {
-  const r = teamReview(mine, s.coach, s.t, benchLineup(s));
+  const r = teamReview(mine, s.coach, s.t, squadOf(s));
   return (
     <section className="review anim-in" aria-label="Team review">
       <div className="review__head"><span>Team review</span></div>
@@ -294,14 +295,13 @@ function DraftReview({ picks, hard }: { picks: G.Pick[]; hard: boolean }) {
       </p>
       <ol className="review__list">
         {rounds.map((r, i) => {
-          // Strongest only when nothing legal was worth more, by value: the same person in a better role or another roster is a better option (#178).
-          const top = !r.best || r.value >= r.best.value - 0.01;
+          const top = !!r.best && r.value >= r.best.value - 0.01;
           return (
             <li key={i} className={top ? 'is-top' : ''}>
               <span className="review__round">R{i + 1}</span>
               <span className="review__pick"><RoleIcon role={r.slot} size={12} /> <b>{r.player.nick}</b> <em>{Math.round(r.value)}</em></span>
               <span className="review__best">
-                {top ? 'Strongest individual option' : (
+                {!r.best ? 'No case comparison saved' : top ? 'Strongest individual option' : (
                   <>Strongest option: <TeamBadge roster={r.best!.roster} size={14} /> <b>{r.best!.player.nick}</b> {ROLE_SHORT[r.best!.slot]} <em>{Math.round(r.best!.value)}</em></>
                 )}
               </span>
@@ -358,4 +358,12 @@ function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
       <p className={`path__end ${pl.key === 'CHAMP' ? 'is-champ' : ''}`}><span>Finished</span><b>{pl.label}</b></p>
     </div>
   );
+}
+
+/** Keep the summary visible; let readers choose how much analysis to open. */
+function AnalysisSection({ title, note, desktopOpen, children }: { title: string; note: string; desktopOpen?: boolean; children: React.ReactNode }) {
+  const phone = useMedia('(max-width: 860px)');
+  const [open, setOpen] = useState(!phone && !!desktopOpen);
+  useEffect(() => setOpen(!phone && !!desktopOpen), [phone, desktopOpen]);
+  return <details className="analysis-section" open={open} onToggle={e => setOpen(e.currentTarget.open)}><summary><b>{title}</b><span>{note}</span></summary><div>{children}</div></details>;
 }

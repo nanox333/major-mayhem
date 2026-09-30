@@ -8,7 +8,7 @@ const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF',
 export function shareText(run: Run, url?: string, practice = false): string {
   const pl = G.placement(run.t);
   const star = G.mvp(run.t, squadOf(run));
-  const rating = G.seriesRatings(run.t.matches.flatMap((m) => m.maps))[star.player.id]?.rating;
+  const rating = G.seriesRatings(run.t.matches.flatMap((m) => m.maps), 'mine')[star.player.id]?.rating;
   const { grade } = G.draftReview(run.picks, !!run.opts?.hard);
   const date = dailyDate(run);
   const duel = run.duel;

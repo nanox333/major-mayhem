@@ -27,7 +27,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'comeback', name: 'Comeback', desc: 'Win a map after trailing by five or more at halftime.', test: (r) => maps(r).some((g) => g.won && g.rounds.length >= 12 && leadAt(g, 12) <= -5) },
   { id: 'timeout', name: 'Timeout!', desc: 'Win a map where you called a timeout four or more rounds down.', test: (r) => maps(r).some((g) => g.won && (g.calls?.timeouts ?? []).some((i) => leadAt(g, i) <= -4)) },
   { id: 'force', name: 'Force buy', desc: 'Win the round after forcing on a lost pistol.', test: (r) => maps(r).some((g) => (g.calls?.force ?? []).some((i) => g.rounds[i])) },
-  { id: 'perfect-draft', name: 'Perfect draft', desc: 'Take the best pick on the board in every player round.', test: (r) => (G.draftReview(r.picks).grade ?? 0) >= 0.9995 },
+  { id: 'perfect-draft', name: 'Perfect draft', desc: 'Take the best pick on the board in every player round.', test: (r) => (G.draftReview(r.picks, !!r.opts?.hard).grade ?? 0) >= 0.9995 },
   { id: 'national-team', name: 'National team', desc: 'Win a Major with four or more players from one country.', test: (r) => { const c = nationCore(starters(r).map((x) => x.player)); return champ(r) && c.n >= 4 && c.key !== 'CIS'; } },
   { id: 'united-nations', name: 'United Nations', desc: 'Win a Major with five players from five countries.', test: (r) => champ(r) && new Set(starters(r).map((x) => x.player.country)).size === 5 },
   { id: 'duo', name: 'Dynamic duo', desc: 'Win a Major with a famous duo in your five.', test: (r) => { const ids = new Set(r.picks.map((p) => p.playerId)); return champ(r) && DUOS.some(([a, b]) => ids.has(a) && ids.has(b)); } },

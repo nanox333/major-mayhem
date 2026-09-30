@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { Chemistry, Preview, draftHint, liveChemistry, majorsOf } from '../game/draftui';
 import * as G from '../game/logic';
 import { Run } from '../game/state';
@@ -8,13 +8,14 @@ import { Tip } from './tips';
 
 /** The sidebar beside the case while you draft (#107, #108, #109): the mode, live chemistry, and a hint. All of it is built from your picks and the open slots, never from ratings. */
 export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Opens the help on its Chemistry topic. */ onChemistryHelp: () => void; preview?: Preview | null }) {
+  const hint_h = useId();
   const chem = liveChemistry(s.picks, s.coach, !!s.opts?.hard);
   return (
     <aside className="draft-side" aria-label="Draft details">
       <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
       {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
-      <section className="side-card hint-card" aria-labelledby="hint-h">
-        <h3 id="hint-h">Draft hint</h3>
+      <section className="side-card hint-card" aria-labelledby={hint_h}>
+        <h3 id={hint_h}>Draft hint</h3>
         <p>{draftHint(s)}</p>
       </section>
     </aside>
@@ -23,9 +24,10 @@ export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Open
 
 /** Chemistry as the list of links behind it, with one word for the total. The pips are decoration; the word and the list carry it. */
 function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () => void; preview: Preview | null }) {
+  const chem_h = useId();
   return (
-    <section className="side-card chem" aria-labelledby="chem-h">
-      <h3 id="chem-h">Team chemistry <button type="button" className="info-btn" onClick={onHelp} aria-label="What is team chemistry? Opens the help" title="What is this?" data-sfx="none">?</button></h3>
+    <section className="side-card chem" aria-labelledby={chem_h}>
+      <h3 id={chem_h}>Team chemistry <button type="button" className="info-btn" onClick={onHelp} aria-label="What is team chemistry? Opens the help" title="What is this?" data-sfx="none">?</button></h3>
       <p className="chem__total">
         <b>{chem.word}</b>
         <span className="pips" aria-hidden="true">{[1, 2, 3].map((i) => <i key={i} className={i <= chem.pips ? 'on' : ''} />)}</span>
