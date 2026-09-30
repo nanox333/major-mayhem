@@ -51,7 +51,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
         </h1>
 
         {/* On a phone this moves into the menu, so the bar still fits at 320px. */}
-        <button type="button" className="gamelink" aria-label={inGuess ? backLabel : 'Guess the pro'} onClick={toggleGame}>
+        <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label={inGuess ? backLabel : 'Guess the pro'} onClick={toggleGame}>
           {inGuess ? <I.ChevronLeftIcon size={20} /> : <I.CrosshairIcon size={20} />}<span>{inGuess ? backLabel : 'Guess the pro'}</span>
         </button>
 

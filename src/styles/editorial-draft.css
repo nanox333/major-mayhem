@@ -1,0 +1,65 @@
+/* Historical identity leads; selection and commitment remain separate states. */
+.phase-draft .case { gap: 16px; }
+.phase-draft .opened { padding: 0 0 12px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+.phase-draft .opened__icon { display: none; }
+.phase-draft .case-card { gap: 0; padding: 0; border: 1px solid var(--line); background: var(--panel); box-shadow: none; border-radius: var(--r-s); }
+.phase-draft .case-card.is-sel { border-color: var(--line-2); box-shadow: none; }
+.phase-draft .case-card[hidden] { display: none; }
+.phase-draft .case-card__top { padding: 16px 12px; gap: 10px; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.phase-draft .case-card__top > .team-badge { flex: none; }
+.phase-draft .case-card__name { font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+.phase-draft .case-card__meta { margin-top: 6px; }
+.phase-draft .case-card .place { border: 0; padding: 0; background: none; font-weight: 500; color: var(--text-2); }
+.case-card__major { margin: 4px 0 0; color: var(--muted); font: .8rem/1.4 var(--f-read); }
+.phase-draft .case-players { padding: 0 8px; }
+.phase-draft .prow { min-height: 68px; height: auto; grid-template-columns: 48px minmax(0, 1fr); padding: 6px 4px; gap: 10px; border: 0; border-left: 3px solid transparent; border-radius: 0; }
+.phase-draft .prow__face { width: 48px; height: 48px; border-radius: 2px; }
+.phase-draft .prow__main { display: grid; gap: 4px; min-width: 0; }
+.phase-draft .prow__name { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.phase-draft .prow__name b { font-family: var(--f-read); font-size: 1rem; font-weight: 700; }
+.phase-draft .prow__cc { font: .78rem var(--f-read); color: var(--muted); }
+.phase-draft .prow__meta { display: flex; flex-wrap: wrap; overflow: visible; gap: 4px; }
+.phase-draft .prow__role { margin-left: 0; font-size: .78rem; }
+.phase-draft .prow .hint { font-size: .74rem; white-space: normal; }
+.phase-draft .prow.is-sel, .phase-draft button.prow.is-sel:hover { border-color: var(--accent); background: var(--panel-2); box-shadow: none; }
+.phase-draft .roster-details-link { margin: 8px 12px 12px; font-size: .78rem; }
+.roster-selector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.roster-selector button { display: grid; gap: 4px; min-height: 52px; padding: 8px 4px; border: 0; border-bottom: 3px solid transparent; border-radius: 0; background: none; color: var(--text-2); font: 700 .9rem var(--f-read); cursor: pointer; overflow-wrap: anywhere; }
+.roster-selector small { font-size: .75rem; font-weight: 400; }
+.roster-selector button[aria-pressed=true] { border-bottom-color: var(--accent); color: var(--strong); background: var(--panel-2); }
+.phase-draft .draftbar, .draft-decision-empty { position: static; min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--panel); box-shadow: none; }
+.phase-draft .draftbar { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: center; }
+.draftbar__identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.draftbar__portrait { display: block; width: 64px; height: 64px; flex: none; overflow: hidden; border-radius: 2px; background: var(--panel-2); }
+.draftbar__portrait img, .draftbar__portrait svg { display: block; width: 100%; height: 100%; object-fit: cover; }
+.phase-draft .draftbar__who { display: grid; min-width: 0; gap: 4px; margin: 0; font: .85rem/1.4 var(--f-read); overflow-wrap: anywhere; }
+.phase-draft .draftbar__who b { font: 700 1.2rem/1.2 var(--f-read); }
+.draftbar__who small { color: var(--muted); font-size: .75rem; }
+.phase-draft .draftbar__chem { margin: 0; font: .85rem/1.5 var(--f-read); }
+.phase-draft .draftbar__slots { min-width: 0; }
+.phase-draft .draftbar .slot-chip { flex: 1 1 100px; }
+.phase-draft .draftbar .cta { width: 100%; min-width: 0; font-size: 1rem; letter-spacing: 0; }
+.draft-decision-empty { display: grid; gap: 6px; min-height: 112px; align-content: center; font: .9rem/1.5 var(--f-read); }
+.draft-decision-empty span { color: var(--muted); }
+.phase-draft .reroll-row { margin-top: 0; animation: none; justify-content: flex-end; }
+.phase-draft .draft-side { align-content: start; }
+.phase-draft .chem__if { min-height: 0; }
+.phase-draft .case-item--coach { box-shadow: none; background: var(--panel); }
+.phase-draft .case-item--coach:hover { transform: none; box-shadow: none; }
+.phase-draft .lrow.is-preview { border-style: dashed; background: var(--panel-2); }
+.phase-draft .lrow__face.is-empty { background: none; border: 1px dashed var(--line-2); }
+@media (min-width: 1100px) {
+  .phase-draft .draftbar { grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr); }
+  .phase-draft .draftbar__slots { grid-column: 1; }
+  .phase-draft .draftbar .cta { grid-column: 2; }
+}
+@media (max-width: 860px) {
+  .phase-draft .case-card__top { align-items: center; }
+  .phase-draft .case-card__name { font-size: 1.6rem; }
+  .phase-draft .draftbar { padding: 12px; }
+  .phase-draft .reroll-row .ghost-btn { width: 100%; }
+}
+@media (min-width: 861px) {
+  /* 48px portraits stay readable while all five rows leave room for the decision. */
+  .phase-draft .prow { min-height: 60px; }
+}

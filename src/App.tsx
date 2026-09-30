@@ -114,6 +114,8 @@ function Game() {
   const goToCard = (n: number) => {
     const card = document.querySelectorAll<HTMLElement>('.case-card')[n];
     if (!card) return;
+    const roster = document.querySelectorAll<HTMLButtonElement>('.roster-selector button')[n];
+    if (roster) roster.click();
     const toggle = card.querySelector<HTMLElement>('.case-card__toggle');
     if (toggle && toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
     setTimeout(() => card.querySelector<HTMLElement>('button.prow')?.focus(), 0);
@@ -151,8 +153,7 @@ function Game() {
       abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
     <UnsavedBar run={s} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
-      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
-      {view === 'home' && <button className="ghost-btn browse-entry" onClick={() => setBrowse(true)}>Explore Major rosters</button>}
+      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} onBrowse={() => setBrowse(true)} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view !== 'home' && view !== 'guess' && <main className="console">
         <div className="console__head">

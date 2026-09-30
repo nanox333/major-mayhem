@@ -65,21 +65,18 @@ describe.each(Object.entries(PALETTES))('palette contrast (WCAG 2.1), %s', (name
   });
 });
 
-// The home hero (#119) is a night scene in every palette (its own dark tokens), so this always uses the dark one. Text sits over art: the worst case
-// is the brightest part of the art (a light shaft in the hover accent at its strongest, over the glow) under the lightest part of the scrim
-// (62% of the page colour on desktop, 58% on a phone).
-describe('the hero', () => {
-  const tok = (n: string) => dark[n];
-  it('text stays readable over the brightest art (4.5:1)', () => {
-    const mix = (a: string, b: string, t: number) => {
-      const [x, y] = [parseInt(a.slice(1), 16), parseInt(b.slice(1), 16)];
-      const ch = (s: number) => Math.round(((x >> s) & 255) * t + ((y >> s) & 255) * (1 - t));
-      return '#' + [16, 8, 0].map((s) => ch(s).toString(16).padStart(2, '0')).join('');
-    };
-    const art = mix(tok('accent-hi'), tok('inset'), 0.5);
-    for (const scrim of [0.58, 0.62]) {
-      const under = mix(tok('bg'), art, scrim);
-      for (const fg of ['text', 'strong', 'accent']) expect(ratio(tok(fg), under), `${fg} under a ${scrim} scrim`).toBeGreaterThanOrEqual(4.5);
+// The editorial invitation is a flat page surface; artwork sits in a separate column.
+describe('editorial shared primitives', () => {
+  it('uses three surface levels in each palette', () => {
+    for (const tokens of Object.values(PALETTES)) {
+      expect(new Set(SURFACES.map((name) => tokens[name])).size).toBe(3);
+    }
+  });
+  it('keeps high-contrast grouping rules visible on every surface (3:1)', () => {
+    for (const name of ['dark, high contrast', 'light, high contrast']) {
+      for (const surface of SURFACES) {
+        expect(ratio(PALETTES[name].line, PALETTES[name][surface]), `${name}: ${surface}`).toBeGreaterThanOrEqual(3);
+      }
     }
   });
 });

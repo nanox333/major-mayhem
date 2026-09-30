@@ -6,9 +6,9 @@ import * as G from '../game/logic';
 import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 
 const W = 1080, H = 1350;
-// The same palette as the page (#100): navy surfaces and the orange accent.
-const C = { bg: '#0a0f1a', panel: '#101726', line: '#243049', text: '#e9eef6', cream: '#f1e5c8', muted: '#8f9bb1', accent: '#ff8a1f', ct: '#5e98d9', win: '#4fb34f', loss: '#d9534f', silver: '#d4d7da' };
-const F = { logo: '"Saira Stencil One", Impact, sans-serif', head: '"Saira Condensed", "Arial Narrow", sans-serif', body: 'Rajdhani, "Arial Narrow", system-ui, sans-serif' };
+// Flat charcoal, chalk and orange match the editorial page; no generated assets.
+const C = { bg: '#141615', panel: '#1c1f1d', line: '#383e39', text: '#f2f0e9', cream: '#f2f0e9', muted: '#b0b6ad', accent: '#f37a30', ct: '#79b0eb', win: '#4fb34f', loss: '#d9534f', silver: '#d4d7da' };
+const F = { logo: '"Saira Stencil One", Impact, sans-serif', head: '"Saira Condensed", "Arial Narrow", sans-serif', body: 'system-ui, sans-serif' };
 const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF', F: 'F', DUEL: 'BO3' };
 
 const loadImage = (src?: string) => new Promise<HTMLImageElement | null>((resolve) => {
@@ -47,7 +47,7 @@ async function avatar(ctx: CanvasRenderingContext2D, player: Player, roster: Ros
   ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.lineWidth = 4; ctx.strokeStyle = ring; ctx.stroke();
 }
 
-export async function drawResultCard(run: Run, host: string): Promise<Blob> {
+export async function drawResultCard(run: Run, host: string, practice = false): Promise<Blob> {
   if (typeof document !== 'undefined' && document.fonts) {
     await Promise.all([`400 76px ${F.logo}`, `700 40px ${F.head}`, `700 30px ${F.body}`].map((f) => document.fonts.load(f).catch(() => null)));
   }
@@ -65,19 +65,14 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
 
   // background
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
-  const glow = ctx.createRadialGradient(W / 2, 0, 40, W / 2, 0, 820);
-  glow.addColorStop(0, champ ? 'rgba(255,138,31,.32)' : 'rgba(255,138,31,.14)'); glow.addColorStop(1, 'rgba(255,138,31,0)');
-  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
 
   // brand
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = C.cream; ctx.font = `400 76px ${F.logo}`; spaced(ctx, 2);
   ctx.fillText('MAJOR MAYHEM', W / 2, 116);
-  const bar = ctx.createLinearGradient(W / 2 - 200, 0, W / 2 + 200, 0);
-  bar.addColorStop(0, 'rgba(255,138,31,0)'); bar.addColorStop(0.5, C.accent); bar.addColorStop(1, 'rgba(255,138,31,0)');
-  ctx.fillStyle = bar; ctx.fillRect(W / 2 - 200, 138, 400, 5);
+  ctx.fillStyle = C.accent; ctx.fillRect(340, 138, 400, 3);
   ctx.fillStyle = C.accent; ctx.font = `700 30px ${F.head}`; spaced(ctx, 6);
-  ctx.fillText(date ? `DAILY #${dailyNumber(date)}` : 'FREE PLAY', W / 2, 196);
+  ctx.fillText(run.duel ? 'DRAFT DUEL' : date ? `DAILY #${dailyNumber(date)}${practice ? ' · PRACTICE' : ''}` : 'FREE PLAY', W / 2, 196);
 
   // placement
   const label = (champ ? 'Major Champions' : pl.label).toUpperCase();
@@ -86,21 +81,25 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
 
   // path through the bracket
   spaced(ctx, 1); ctx.font = `700 30px ${F.head}`;
-  const pills = run.t.matches.map((m) => ({ text: `${STAGE_SHORT[m.stage]} ${m.score[0]}–${m.score[1]}`, won: m.won }));
+  const pills = run.t.matches.map((m) => ({ text: `${STAGE_SHORT[m.stage]} ${m.won ? 'W' : 'L'} ${m.score[0]}–${m.score[1]}`, won: m.won }));
   const widths = pills.map((p) => ctx.measureText(p.text).width + 40);
-  const gap = 14, total = widths.reduce((a, b) => a + b, 0) + gap * (pills.length - 1);
-  let x = (W - total) / 2;
+  const gap = 14;
+  let x = 60, pillY = 330;
   pills.forEach((p, i) => {
-    rounded(ctx, x, 334, widths[i], 54, 8);
+    if (x + widths[i] > W - 60) { x = 60; pillY += 62; }
+    rounded(ctx, x, pillY, widths[i], 54, 0);
     ctx.fillStyle = p.won ? 'rgba(79,179,79,.18)' : 'rgba(217,83,79,.18)'; ctx.fill();
     ctx.lineWidth = 2; ctx.strokeStyle = p.won ? C.win : C.loss; ctx.stroke();
     ctx.fillStyle = p.won ? '#9be09b' : '#f0a19e'; ctx.textAlign = 'center';
-    ctx.fillText(p.text, x + widths[i] / 2, 372);
+    ctx.fillText(p.text, x + widths[i] / 2, pillY + 38);
     x += widths[i] + gap;
   });
 
+  ctx.textAlign = 'center'; spaced(ctx, 0); ctx.fillStyle = C.muted; ctx.font = `400 20px ${F.body}`;
+  ctx.fillText('W = won · L = lost · Q: rounds for Bo1, maps for Bo3 · Playoffs: maps', W / 2, 478);
+
   // lineup
-  const top = 430, rowH = 128;
+  const top = 490, rowH = 116;
   for (const [i, l] of mine.entries()) {
     const y = top + i * (rowH + 10);
     const isMvp = l.player.id === star.player.id;
@@ -125,9 +124,9 @@ export async function drawResultCard(run: Run, host: string): Promise<Blob> {
     }
     const logo = await loadImage(l.roster.logo);
     let tx = 228;
-    if (logo) { ctx.drawImage(logo, tx, y + 94, 24, 24); tx += 32; }
+    if (logo) { ctx.drawImage(logo, tx, y + 88, 24, 24); tx += 32; }
     ctx.fillStyle = C.muted; ctx.font = `700 26px ${F.body}`;
-    ctx.fillText(`${l.roster.org} ${l.roster.year}`, tx, y + 115);
+    ctx.fillText(`${l.roster.org} ${l.roster.year}`, tx, y + 109);
 
     const st = ratings[l.player.id];
     if (st) {
