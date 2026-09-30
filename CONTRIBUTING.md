@@ -19,7 +19,12 @@ npm run check        # balance check: seeded simulations with pass/fail targets
 npm run build        # typecheck + single-file build in dist/
 npx playwright install chromium
 npm run e2e          # headless playthrough at desktop and phone width
+npm run e2e:ui       # responsive UI flows against dist/ (starts its own local preview)
 ```
+
+For the UI checks against an existing dev server, set `UI_BASE_URL` (for example
+`http://127.0.0.1:5173`). Both browser scripts honor `CHROMIUM_PATH` when using a
+locally installed Chromium. Run `npm run build` before checking production output.
 
 ## Making a change
 

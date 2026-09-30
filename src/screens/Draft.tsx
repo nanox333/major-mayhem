@@ -17,12 +17,21 @@ import { play, playTicks } from '../ui/sound';
 import { HowSteps, Tip, useTipSeen } from '../ui/tips';
 import { CaseIcon, ChevronDownIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
 import { DailyDone, ModePicker } from './Modes';
+import { usePrefs } from '../ui/prefs';
+import { RosterBrowser } from '../ui/RosterBrowser';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
   /** Tells the lineup and the chemistry panel which player or coach you are pointing at (#143). */
   onPreview: (p: Preview | null) => void;
 }) {
+  const prefs = usePrefs();
+  const caseRoot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (s.step === 'spin') caseRoot.current?.querySelector<HTMLElement>('button.cta')?.focus({ preventScroll: true });
+    if (s.step === 'teams' && (prefs.fastReveals || reduceMotion()) && reelFor === s.offerKey) setReelFor(null);
+    if (s.step === 'teams' && (reelFor === null || prefs.fastReveals || reduceMotion())) caseRoot.current?.querySelector<HTMLElement>('button.prow, .case-item--coach')?.focus({ preventScroll: true });
+  }, [s.offerKey, s.rerollKey, reelFor, s.step, prefs.fastReveals]);
   if (s.step === 'spin') {
     const open = G.openSlots(s.picks);
     const date = dailyDate(s);
@@ -30,7 +39,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onPreview
     const todayN = dailyNumber(today());
     const doneToday = stats.daily[today()];
     return (
-      <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
+      <div ref={caseRoot} className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
         {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><HowSteps compact /></Tip>}
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
@@ -57,14 +66,14 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onPreview
     );
   }
   if (s.step === 'teams') {
-    if (reelFor === s.offerKey && !reduceMotion()) return <CaseReel land={s.offer[0]} onDone={() => setReelFor(null)} />;
-    return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} onPreview={onPreview} /> : <CaseCards s={s} dispatch={dispatch} onPreview={onPreview} />;
+    if (reelFor === s.offerKey && !reduceMotion() && !prefs.fastReveals) return <CaseReel land={s.offer[0]} hard={!!s.opts?.hard} onDone={() => setReelFor(null)} />;
+    return <div ref={caseRoot}>{roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} onPreview={onPreview} /> : <CaseCards s={s} dispatch={dispatch} onPreview={onPreview} />}</div>;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
 }
 
 /** CS-style case roulette: a strip of teams slides past a marker and stops on the first team in the offer. */
-function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
+function CaseReel({ land, hard, onDone }: { land: string; hard: boolean; onDone: () => void }) {
   const STEP = 112, LAND = 32;
   const items = useMemo(() => {
     const pool = G.shuffle(ROSTERS);
@@ -88,14 +97,15 @@ function CaseReel({ land, onDone }: { land: string; onDone: () => void }) {
     const glow = setTimeout(() => setLanded(true), REEL_MS);
     // A tick each time an item passes the marker (the strip starts moving a couple of frames in), then a chime for the team it stops on.
     const ticks = playTicks(reelTickTimes(target, w / 2, STEP), 40);
-    const chime = play('reveal', { rarity: rarity(items[LAND]), delay: REEL_MS + 40 });
+    const chime = play('reveal', { rarity: hard ? 'milspec' : rarity(items[LAND]), delay: REEL_MS + 40 });
     return () => { cancelAnimationFrame(raf); clearTimeout(t); clearTimeout(glow); ticks(); chime(); };
   }, [items]);
   return (
-    <div className={`reel anim-in rar-${rarity(items[LAND])} ${landed ? 'is-landed' : ''}`} ref={box} aria-label="Opening case">
+    <div className={`reel anim-in rar-${hard ? 'milspec' : rarity(items[LAND])} ${landed ? 'is-landed' : ''}`} ref={box} aria-label="Opening case">
+      <button type="button" className="ghost-btn reel__skip" onClick={onDone}>Show case</button>
       <div className="reel__strip" ref={strip}>
         {items.map((r, i) => (
-          <div key={i} className={`reel__item rar-${rarity(r)} ${landed && i === LAND ? 'is-landed' : ''}`}>
+          <div key={i} className={`reel__item rar-${hard ? 'milspec' : rarity(r)} ${landed && i === LAND ? 'is-landed' : ''}`}>
             <TeamBadge roster={r} size={44} />
             <strong>{r.tag}</strong>
             <small>{r.year}</small>
@@ -163,7 +173,7 @@ function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Disp
           const r = G.rosterById.get(id)!;
           const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
           return (
-            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}
+            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${s.opts?.hard ? 'milspec' : rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}
               onMouseEnter={() => pointAt(id)} onMouseLeave={() => pointAt(null)} onFocus={() => pointAt(id)} onBlur={() => pointAt(null)}>
               <div className="case-item__top">
                 <TeamBadge roster={r} size={44} />
@@ -190,6 +200,7 @@ type Chosen = { r: Roster; p: Player };
  * It drafts through the same two steps as before (open the team, then draft the player), so a seed plays out exactly as it did.
  */
 function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void }) {
+  const [details, setDetails] = useState<string | null>(null);
   const { out, reroll } = useReroll(dispatch);
   const bench = roundOf(s) === 'bench';
   const hard = !!s.opts?.hard;
@@ -210,14 +221,14 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   useEffect(() => { setSel(null); setSlot(null); setHov(null); setOpenId(s.offer[0] ?? null); }, [s.offerKey, s.rerollKey]);
 
   const cand = hov ?? sel;
-  const isSel = !!cand && !!sel && cand.p.id === sel.p.id;
+  const isSel = !!cand && !!sel && cand.p.id === sel.p.id && cand.r.id === sel.r.id;
   const candSlot: Role | 'bench' | null = !cand ? null : bench ? 'bench' : isSel ? slot : defaultSlot(slotsFor(s, cand.p), cand.p.roles[0], hard);
   const chem: ChemPreview | null = useMemo(() => {
     if (!cand || bench) return null;
     const use = candSlot && candSlot !== 'bench' ? candSlot : slotsFor(s, cand.p)[0];
     return use ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot: use, rosterId: cand.r.id, playerId: cand.p.id }], coach: s.coach }, hard) : null;
-  }, [cand?.p.id, candSlot, s.picks.length]);
-  useEffect(() => { onPreview(cand ? { slot: candSlot, rosterId: cand.r.id, playerId: cand.p.id, chem } : null); }, [cand?.p.id, candSlot, chem]);
+  }, [cand?.p.id, cand?.r.id, candSlot, s.picks, s.coach, hard]);
+  useEffect(() => { onPreview(cand ? { slot: candSlot, rosterId: cand.r.id, playerId: cand.p.id, chem } : null); }, [cand?.p.id, cand?.r.id, candSlot, chem]);
   useEffect(() => () => onPreview(null), []);
 
   const choose = (c: Chosen) => { setSel(c); setOpenId(c.r.id); setSlot(bench ? null : defaultSlot(slotsFor(s, c.p), c.p.roles[0], hard)); };
@@ -304,6 +315,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
                 })}
               </ul>
               {expanded && <div className="case-card__event">{r.event}</div>}
+              <button type="button" className="roster-details-link" onClick={() => setDetails(id)} aria-label={`View roster: ${r.org} ${r.year}`}>View roster & sources</button>
             </article>
           );
         })}
@@ -311,6 +323,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
       <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
       {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
       <SpinAgain s={s} reroll={reroll} />
+      {details && <RosterBrowser initialId={details} hard={hard} onClose={() => setDetails(null)} />}
     </div>
   );
 }
@@ -320,9 +333,11 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
   const slots = bench ? [] : slotsFor(s, sel.p);
   const nick = sel.p.nick;
   const st = bench ? null : playerState(sel.p, slots, hard);
+  const preview = !hard && !bench && slot ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot, rosterId: sel.r.id, playerId: sel.p.id }], coach: s.coach }, false) : null;
   return (
     <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
       <p className="draftbar__who"><b>{nick}</b> <span>{sel.r.org} {sel.r.year}</span></p>
+      {preview && <div className="draftbar__chem small"><b>Chemistry: {preview.before} → {preview.after}</b><span>{[...preview.added.map(x => `${x.value < 0 ? '−' : '+'} ${x.label}`), ...preview.removed.map(x => `Loses ${x.label}`)].join(' · ') || 'No new links.'}{preview.capped ? ' At maximum.' : ''}</span></div>}
       {slots.length > 0 && (
         <div className="draftbar__slots" role="group" aria-label={`Slot for ${nick}`}>
           {!hard && st?.state === 'secondary' && (

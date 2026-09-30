@@ -13,13 +13,13 @@ export interface TeamReview {
   suggestion: string;
 }
 
-export function teamReview(lineup: G.Lineup[], coach: string | null | undefined, t: G.Tournament): TeamReview {
+export function teamReview(lineup: G.Lineup[], coach: string | null | undefined, t: G.Tournament, contributors: G.Lineup[] = lineup): TeamReview {
   const roles = { main: 0, secondary: 0, off: 0 };
   for (const x of lineup) roles[G.fitNote(x.player, x.slot).kind]++;
   const power = G.teamPower(lineup, coach);
   const games = t.matches.flatMap((m) => m.maps);
-  const ratings = G.seriesRatings(games);
-  const played = lineup.filter((x) => ratings[x.player.id]).map((x) => ({ nick: x.player.nick, rating: ratings[x.player.id].rating }))
+  const ratings = G.seriesRatings(games, 'mine');
+  const played = contributors.filter((x) => ratings[x.player.id]).map((x) => ({ nick: x.player.nick, rating: ratings[x.player.id].rating }))
     .sort((a, b) => b.rating - a.rating);
   const byMap = new Map<string, { w: number; l: number }>();
   for (const g of games) { const e = byMap.get(g.map) ?? { w: 0, l: 0 }; g.won ? e.w++ : e.l++; byMap.set(g.map, e); }

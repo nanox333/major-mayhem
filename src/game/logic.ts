@@ -569,9 +569,9 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
 }
 
 /** Average match rating per player across a set of maps (weighted by rounds). */
-export function seriesRatings(maps: MapGame[]): Record<string, { k: number; d: number; rating: number }> {
+export function seriesRatings(maps: MapGame[], side: 'mine' | 'opp' | 'both' = 'both'): Record<string, { k: number; d: number; rating: number }> {
   const acc: Record<string, { k: number; d: number; rr: number; r: number }> = {};
-  for (const g of maps) for (const st of [...g.stats.mine, ...g.stats.opp]) {
+  for (const g of maps) for (const st of side === 'both' ? [...g.stats.mine, ...g.stats.opp] : g.stats[side]) {
     const e = (acc[st.id] ??= { k: 0, d: 0, rr: 0, r: 0 });
     e.k += st.k; e.d += st.d; e.rr += st.rating * g.rounds.length; e.r += g.rounds.length;
   }
@@ -766,7 +766,7 @@ export function placement(t: Tournament): { key: string; label: string; reached:
 
 export function mvp(t: Tournament, mine: Lineup[]): Lineup {
   // MVP = best average match rating over the whole event, with highlight impact as a tiebreaker
-  const r = seriesRatings(t.matches.flatMap((m) => m.maps));
+  const r = seriesRatings(t.matches.flatMap((m) => m.maps), 'mine');
   const tot: Record<string, number> = {};
   for (const m of t.matches) for (const [k, v] of Object.entries(m.impact)) tot[k] = (tot[k] ?? 0) + v;
   const score = (id: string) => (r[id]?.rating ?? 0) * 100 + (tot[id] ?? 0) * 0.05;
@@ -788,7 +788,7 @@ export interface PickReview {
 export const pickValue = (p: Player, slot: Role) => p.rating * fit(p, slot);
 
 /** Compare each pick with the best one available in its case that round. Picks are in draft order. */
-export function draftReview(picks: Pick[]): { rounds: PickReview[]; grade: number | null } {
+export function draftReview(picks: Pick[], hard = false): { rounds: PickReview[]; grade: number | null } {
   const rounds = picks.map((pk, i) => {
     const before = picks.slice(0, i);
     const roster = rosterById.get(pk.rosterId)!;
@@ -797,7 +797,7 @@ export function draftReview(picks: Pick[]): { rounds: PickReview[]; grade: numbe
     for (const id of pk.offer ?? []) {
       const r = rosterById.get(id);
       if (!r) continue;
-      for (const p of r.players) for (const slot of eligibleSlots(p, before)) {
+      for (const p of r.players) for (const slot of hard ? (draftedIds(before).has(p.id) ? [] : openSlots(before)) : eligibleSlots(p, before)) {
         const v = pickValue(p, slot);
         if (!best || v > best.value) best = { player: p, roster: r, slot, value: v };
       }

@@ -19,6 +19,8 @@ import { useShortcuts } from './ui/shortcuts';
 import { useSoundOn } from './ui/sound';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
+import { MobileLineup } from './ui/MobileLineup';
+import { RosterBrowser } from './ui/RosterBrowser';
 import { DraftScreen } from './screens/Draft';
 import { Preview } from './game/draftui';
 import { homeState } from './game/home';
@@ -106,6 +108,7 @@ function Game() {
   const view: View = chosen === 'draft' ? backView : chosen;
   // Single-key shortcuts (#77), off-able in the settings and quiet while a dialog is open or you are typing.
   const prefs = usePrefs();
+  const [browse, setBrowse] = useState(false);
   const [, toggleSound] = useSoundOn();
   const inCase = view === 'draft' && s.phase === 'draft' && s.step === 'teams';
   const goToCard = (n: number) => {
@@ -120,7 +123,7 @@ function Game() {
     '?': () => setSettings('shortcuts'),
     ...(inCase ? { '1': () => goToCard(0), '2': () => goToCard(1), '3': () => goToCard(2) } : {}),
     Enter: () => { const b = document.querySelector<HTMLButtonElement>('.draftbar .cta'); if (b && !b.disabled) b.click(); },
-  }, !!(help || showStats || twitch || settings || invite));
+  }, !!(help || showStats || twitch || settings || invite || browse));
   const goNext = () => {
     // Once today's pro is found, one button for what to do next: the daily draft if it isn't done, else free play (#129).
     const h = homeState(s, stats, today());
@@ -132,7 +135,7 @@ function Game() {
   const guessNext = { label: hs.daily === 'progress' ? "Continue today's draft" : hs.daily === 'new' ? "Play today's draft" : 'Free play', go: goNext };
 
   // The radar is scenery while you draft, so it leaves the draft screen; the lobby and the match keep it (#102).
-  const showBoard = s.phase !== 'final' && s.phase !== 'draft' && view === 'draft';
+  const showBoard = s.phase !== 'final' && s.phase !== 'draft' && s.phase !== 'live' && view === 'draft';
   // The very first screen: on phones the empty team strip would only push the intro and the case down.
   const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
   // Once the first case is open the draft has a lineup panel and a sidebar of its own (#102).
@@ -145,6 +148,7 @@ function Game() {
     <UnsavedBar run={s} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
+      {view === 'home' && <button className="ghost-btn browse-entry" onClick={() => setBrowse(true)}>Explore Major rosters</button>}
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view !== 'home' && view !== 'guess' && <main className="console">
         <div className="console__head">
@@ -157,7 +161,7 @@ function Game() {
           </div>
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
-        {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
+        {view === 'draft' && s.phase === 'draft' && <><div className={drafting ? 'desktop-strip' : ''}><TeamStrip s={s} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${s.phase}`}>
           {drafting && <LineupPanel s={s} preview={preview} />}
@@ -166,7 +170,7 @@ function Game() {
             {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onPreview={setPreview} />}
             {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
             {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
-            {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
+            {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} board={<BoardHost s={s} mine={playing} />} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>
           {drafting && <DraftSidebar s={s} preview={preview} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
@@ -185,6 +189,7 @@ function Game() {
       {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
+      {browse && <RosterBrowser hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setBrowse(false)} />}
     </div>
     </>
   );

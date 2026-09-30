@@ -1,3 +1,4 @@
+import { safeSet } from '../game/persist';
 import { useSyncExternalStore } from 'react';
 
 // Preferences (#110, #75, #77): theme, high contrast, and whether single-key shortcuts are on. Kept in this browser like the sound and tip settings,
@@ -10,8 +11,9 @@ export interface Prefs {
   contrast: boolean;
   /** Single-key shortcuts (WCAG 2.1.4 asks for a way to turn them off). */
   shortcuts: boolean;
+  fastReveals: boolean;
 }
-export const DEFAULT_PREFS: Prefs = { theme: 'system', contrast: false, shortcuts: true };
+export const DEFAULT_PREFS: Prefs = { theme: 'system', contrast: false, shortcuts: true, fastReveals: false };
 const KEY = 'mm-prefs';
 
 /** Reads what was saved, keeping only values that make sense. With nothing saved, high contrast follows the system's "more contrast" setting. */
@@ -22,6 +24,7 @@ export function parsePrefs(raw: string | null, systemContrast = false): Prefs {
     theme: v.theme === 'dark' || v.theme === 'light' || v.theme === 'system' ? v.theme : DEFAULT_PREFS.theme,
     contrast: typeof v.contrast === 'boolean' ? v.contrast : systemContrast,
     shortcuts: typeof v.shortcuts === 'boolean' ? v.shortcuts : DEFAULT_PREFS.shortcuts,
+    fastReveals: typeof v.fastReveals === 'boolean' ? v.fastReveals : DEFAULT_PREFS.fastReveals,
   };
 }
 
@@ -48,7 +51,7 @@ export function applyPrefs(p: Prefs = prefs) {
 
 export function setPrefs(patch: Partial<Prefs>) {
   prefs = { ...prefs, ...patch };
-  try { localStorage.setItem(KEY, JSON.stringify(prefs)); } catch { /* storage blocked: the choice lasts until the page is closed */ }
+  safeSet(KEY, JSON.stringify(prefs), 'your settings');
   applyPrefs();
   listeners.forEach((fn) => fn());
 }

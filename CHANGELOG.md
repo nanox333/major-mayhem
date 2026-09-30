@@ -4,7 +4,17 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- Match pause and answered buy choices survive reloads; dialogs and hidden tabs suspend playback without changing pause intent.
+- Result ratings keep shared duel players separate by side, include played bench contributors, and distinguish stronger role placements. Hard-mode pick strength uses its legal options consistently in the screen and exports.
+- Dialogs render above sticky controls and suppress draft shortcuts; roster/lineup sheets preserve the selection and restore focus.
+
 ### Added
+- A mobile lineup sheet with selected-pick chemistry beside confirmation, and a searchable roster reference with contextual event/source links (#191, #192).
+- Radar-backed veto cards and ordered series previews; a stable live-match layout with reachable tactical controls and expandable round history (#193, #194).
+- Results sections that keep the outcome and sharing first, with detailed analysis collapsed on phones (#195).
+- Skippable case openings and a remembered Fast case reveals preference (#196).
+
 - Community files: contributing guide, code of conduct, security policy, support page, roadmap.
 - Issue forms (bug, feature, roster data), a pull request template and discussion templates.
 - Dependabot updates for npm and GitHub Actions, CodeQL code scanning, label and milestone setup, and a release workflow.

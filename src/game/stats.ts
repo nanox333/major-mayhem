@@ -137,7 +137,7 @@ export function addRun(st: Stats, run: Run): Stats {
   next.byMode = date
     ? { ...bm, daily: bump(bm.daily) }
     : { ...bm, free: { ...bm.free, [optsKey(run.opts)]: bump(bm.free[optsKey(run.opts)]) } };
-  if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks).grade, share: shareText(run), ...(run.attempt ? { attempt: run.attempt } : {}) };
+  if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks, !!run.opts?.hard).grade, share: shareText(run), ...(run.attempt ? { attempt: run.attempt } : {}) };
   const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0 }, st.ach ?? {});
   // The same local date the daily uses (#26), not UTC, so both agree around midnight.
   const day = date ?? today();
