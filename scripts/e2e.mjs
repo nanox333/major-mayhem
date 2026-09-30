@@ -14,13 +14,39 @@ let challengeLink = null;
 async function draftAll(p) {
   for (let r = 0; r < 7; r++) {
     await p.locator('button.cta', { hasText: 'Open case' }).click({ force: true });
-    await p.waitForSelector('.case-item', { timeout: 6000 });
+    await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(300);
-    await p.locator('.case-item').first().click();
+    await pickFrom(p, 0);
     await p.waitForTimeout(300);
-    const chip = p.locator('.slot-chip').first();
-    if (await chip.count()) { await chip.click(); await p.waitForTimeout(200); }
   }
+}
+/**
+ * Picks from card `i` of the open case: the first player who can be drafted (opening the card first on a phone), then the draft button
+ * (the slot is their main role). In the coach round a card is one click. Returns the button's label, or 'coach'.
+ */
+async function pickFrom(p, i = 0, shot) {
+  const coach = p.locator('.case-item--coach');
+  if (await coach.count()) { await coach.nth(i).click(); return 'coach'; }
+  const card = p.locator('.case-card').nth(i);
+  const toggle = card.locator('.case-card__toggle');
+  if (await toggle.count() && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  const rows = card.locator('button.prow');
+  if (!(await rows.count())) throw new Error('no player can be drafted from card ' + i);
+  await rows.first().click();
+  const go = p.locator('.draftbar .cta:not([disabled])');
+  await go.waitFor();
+  if (shot) await p.screenshot({ path: shot, fullPage: true });
+  const label = (await go.textContent()).trim();
+  await go.click();
+  return label;
+}
+/** The top bar keeps stats, Twitch chat votes and a new run in a menu (#101). */
+const openMenu = (p) => p.click('[aria-label="More"]');
+/** Guess the pro is a link in the top bar, and an item in the menu on a phone (#140). */
+async function openGuess(p) {
+  const link = p.locator('.topbar .gamelink');
+  if (await link.isVisible()) await link.click();
+  else { await openMenu(p); await p.locator('.menu__item--game').click(); }
 }
 async function page(viewport = { width: 1280, height: 900 }) {
   const p = await b.newPage({ viewport });
@@ -38,32 +64,31 @@ async function run(viewport, tag) {
   await p.goto('http://game.local/');
   await p.evaluate(() => localStorage.clear()); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
-  await p.waitForSelector('.home__daily');
+  await p.waitForSelector('button.cta');
   await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
+  const step = async () => (await p.textContent('.progress [aria-current="step"]')).trim();
+  if (await p.locator('.topbar ol, .topbar [aria-current]').count()) throw new Error('the run steps must not be in the top bar (#140)');
+  if (!(await step()).startsWith('Draft')) throw new Error(`the progress list should be on the Draft step, got "${await step()}"`);
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   // Five players, then the coach (round 6) and the bench player (round 7).
   for (let r = 0; r < 7; r++) {
     if (r > 0) await cta('Open case'); // the Play Daily button already opened the first case
     if (r === 0) { await p.waitForTimeout(1200); await p.screenshot({ path: `shots/${tag}-1a-reel.png` }); }
-    await p.waitForSelector('.case-item', { timeout: 6000 });
+    await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(500);
     if (r === 0) await p.screenshot({ path: `shots/${tag}-1-teams.png`, fullPage: true });
     if (r === 1) { await p.click('.reroll-row .ghost-btn'); await p.waitForTimeout(600); }
-    const cards = await p.$$('.case-item');
+    const cards = await p.$$('.case-card, .case-item--coach');
     if (cards.length !== 3) throw new Error('expected 3 teams, got ' + cards.length);
     if (r === 5) {
       if (!(await p.$('.case-item--coach'))) throw new Error('round 6 is not the coach round');
       await p.screenshot({ path: `shots/${tag}-2b-coach.png`, fullPage: true });
     }
-    await cards[r % 3].click();
-    await p.waitForTimeout(500);
-    if (r === 0) await p.screenshot({ path: `shots/${tag}-2-players.png`, fullPage: true });
-    if (r === 5) continue; // picking a coach is one click
-    const chips = await p.$$('.slot-chip');
-    if (!chips.length) throw new Error('no eligible player in round ' + r);
-    if (r === 6 && !(await chips[0].textContent()).includes('Bench')) throw new Error('round 7 is not the bench round');
-    await chips[0].click();
+    // The draft screen has the lineup and the sidebar's hint from the first case on (#102, #109).
+    if (r === 0 && !(await p.locator('.side-card .chem__total').count())) throw new Error('the sidebar has no chemistry panel');
+    const picked = await pickFrom(p, r % 3, r === 0 ? `shots/${tag}-2-players.png` : undefined);
+    if (r === 6 && !/Bench/.test(picked)) throw new Error('round 7 is not the bench round, got "' + picked + '"');
     await p.waitForTimeout(300);
   }
   await p.waitForSelector('button.cta'); await p.waitForTimeout(700);
@@ -157,8 +182,9 @@ async function run(viewport, tag) {
   }
   await p.screenshot({ path: `shots/${tag}-8-review.png`, fullPage: true });
   await p.reload(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
+  if (!(await step()).startsWith('Results') || (await p.locator('.progress .pstep.is-done').count()) !== 3) throw new Error(`the progress list should be on Results with three steps done, got "${await step()}"`);
   const finalSave = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
-  await p.click('[aria-label="Your stats"]');
+  await openMenu(p); await p.click('[aria-label="Your stats"]');
   const runs = (await p.textContent('.stat-tiles div b')).trim();
   if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
   await p.waitForTimeout(500); await p.screenshot({ path: `shots/${tag}-9-stats.png` });
@@ -167,7 +193,9 @@ async function run(viewport, tag) {
   await p.locator('button.cta', { hasText: 'Play again' }).click();
   await p.waitForSelector('.daily-done');
   if (await p.locator('.home__daily', { hasText: 'Replay' }).count() === 0) throw new Error('a finished daily should show as played on the start screen');
-  console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', (await p.textContent('.daily-done .next-daily')).trim());
+  const clock = (await p.textContent('.mcard--daily .clock')).trim();
+  if (!/^\d\d:\d\d:\d\d$/.test(clock)) throw new Error('the daily card should carry the countdown clock, got "' + clock + '"');
+  console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', clock);
   await p.screenshot({ path: `shots/${tag}-10-daily-done.png`, fullPage: true });
   const sw = await p.evaluate(() => document.documentElement.scrollWidth - innerWidth);
   console.log(tag, 'horizontal overflow px:', sw, 'errors:', errs);
@@ -182,14 +210,14 @@ async function run(viewport, tag) {
   };
   // A save pointing at a player who no longer exists starts a new run instead of crashing.
   await setSave((s) => { s.picks[0].playerId = 'retired-player'; });
-  await p.waitForSelector('.spin-stage');
+  await p.waitForSelector('.home3');
   if (await p.$('.crash')) throw new Error('a save with a missing player crashed the page');
   // A save that passes the checks but still crashes shows the error screen; "Reset run" recovers and keeps stats.
   await setSave((s) => { s.t.matches[0].maps = null; });
   await p.waitForSelector('.crash');
   await p.screenshot({ path: `shots/${tag}-11-crash.png`, fullPage: true });
   await p.locator('.crash button', { hasText: 'Reset run' }).click();
-  await p.waitForSelector('.spin-stage');
+  await p.waitForSelector('.home3');
   if (!(await p.evaluate(() => localStorage.getItem('major-mayhem-stats-v1')))) throw new Error('reset run cleared lifetime stats');
   console.log(tag, 'broken saves recover OK');
   await p.close();
@@ -233,7 +261,7 @@ async function duel() {
 async function guess() {
   const { p, errs } = await page({ width: 390, height: 844 });
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.locator('.tabs button', { hasText: 'Guess the pro' }).click();
+  await openGuess(p);
   await p.waitForSelector('.guess__box input');
   for (const name of ['s1', 'niko', 'zyw', 'dev', 'donk', 'ropz', 'fallen', 'olof', 'karr', 'gla1']) {
     if (await p.$('.guess__answer')) break;
@@ -269,22 +297,24 @@ async function twitch() {
     window.__chat = (user, text) => window.__ws.onmessage({ data: `@display-name=${user} :${user}!${user}@${user}.tmi.twitch.tv PRIVMSG #testchan :${text}\r\n` });
   });
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.click('[aria-label="Twitch chat votes"]');
+  await openMenu(p); await p.click('[aria-label="Twitch chat votes"]');
   await p.fill('.twitch-form input', 'testchan');
   await p.selectOption('.twitch-form select', '10');
   await p.locator('.twitch-form button.cta').click();
   await p.waitForSelector('.twitch-status.is-live');
   await p.keyboard.press('Escape');
-  await p.locator('.home__card', { hasText: 'Free play' }).click();
+  await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.chatvote', { timeout: 8000 });
-  const second = (await p.locator('.case-item__name').nth(1).textContent()).trim();
+  // Chat votes once, on a player: option 2 is the second player who can be drafted, in the order the case lists them.
+  await p.waitForSelector('button.prow');
+  const second = (await p.locator('button.prow .prow__name b').nth(1).textContent()).trim();
   await p.evaluate(() => { window.__chat('ana', '2'); window.__chat('bo', '!2'); window.__chat('cy', '1'); window.__chat('di', 'nice case lol'); });
   await p.waitForSelector('.chatvote__opts li:nth-child(2) em:has-text("2")');
   await p.screenshot({ path: 'shots/twitch-1-vote.png', fullPage: true });
-  await p.waitForSelector('.team-heading', { timeout: 14000 });
-  const picked = (await p.textContent('.team-heading__name')).trim();
-  if (!picked.startsWith(second)) throw new Error(`chat voted for ${second} but ${picked} was opened`);
+  await p.waitForSelector('.lrow.is-full', { state: 'attached', timeout: 14000 });
+  const picked = (await p.locator('.lrow.is-full .lrow__line b').first().textContent()).trim();
+  if (picked !== second) throw new Error(`chat voted for ${second} but ${picked} was drafted`);
   console.log('twitch vote picked:', picked, 'errors:', errs);
   if (errs.length) problems.push(`twitch: page errors: ${errs.join(' | ')}`);
   await p.close();
@@ -301,9 +331,9 @@ async function sound() {
   });
   const heard = async (act, wait = 300) => { const before = await p.evaluate(() => window.__osc); await act(); await p.waitForTimeout(wait); return (await p.evaluate(() => window.__osc)) - before; };
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.waitForSelector('.home__daily'); await p.waitForTimeout(400);
+  await p.waitForSelector('button.cta'); await p.waitForTimeout(400);
   if ((await p.evaluate(() => window.__ctxs.length)) !== 0) throw new Error('an audio context was created before any click');
-  if (!(await heard(() => p.locator('.home__card', { hasText: 'Free play' }).click()))) throw new Error('a button click made no sound');
+  if (!(await heard(() => p.locator('button.mbtn', { hasText: 'Start free play' }).click()))) throw new Error('a button click made no sound');
   if (!(await p.evaluate(() => window.__ctxs[0]))) throw new Error('the audio context was created before user activation');
   const reel = await heard(() => p.locator('button.cta', { hasText: 'Open case' }).click({ force: true }), 3300);
   if (reel < 25) throw new Error(`the case reel should tick and chime, heard ${reel} notes`);
@@ -311,10 +341,10 @@ async function sound() {
   await p.waitForSelector('.reroll-row .ghost-btn');
   if (await heard(() => p.locator('.reroll-row .ghost-btn').click(), 600)) throw new Error('muted, but a reroll still made sound');
   await p.reload(); await p.waitForSelector('[aria-label="Turn sound on"]');
-  if (await heard(() => p.locator('[aria-label="Your stats"]').click())) throw new Error('mute did not survive a reload');
+  if (await heard(async () => { await openMenu(p); await p.locator('[aria-label="Your stats"]').click(); })) throw new Error('mute did not survive a reload');
   await p.keyboard.press('Escape');
   await p.locator('[aria-label="Turn sound on"]').click();
-  await p.locator('.tabs button', { hasText: 'Guess the pro' }).click();
+  await openGuess(p);
   await p.fill('.guess__box input', 'zyw');
   await p.waitForSelector('.guess__suggest button');
   const notes = await heard(() => p.locator('.guess__suggest button').first().click(), 900);

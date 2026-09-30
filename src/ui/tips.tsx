@@ -50,24 +50,29 @@ export function Tip({ id, title, children }: { id: TipId; title: string; childre
 
 const STEPS = [
   {
-    title: 'Draft your team',
-    short: 'Open cases, pick a team, then one of its players. Seven rounds: five players, a coach and a bench player.',
-    long: 'Open a case for three real rosters from Counter-Strike Major history. Pick a team, then one of its players for an open role. There are seven rounds: five players, a coach and a bench player, with two rerolls.',
+    title: 'Open a case',
+    short: 'Each case holds three real rosters from Major history. You can spin again twice.',
+    long: 'Open a case to see three real rosters from Counter-Strike Major history. If none of them suits you, spin again: you get two rerolls per draft.',
   },
   {
-    title: 'Win the Major',
-    short: 'Play a Swiss stage, then the playoffs. You veto maps and pick sides, and can call timeouts mid-map.',
+    title: 'Draft your team',
+    short: 'Pick one player at a time: five players, a coach and a bench player.',
+    long: 'Pick a player from a roster for each open role. There are seven rounds: five players, a coach and a bench player.',
+  },
+  {
+    title: 'Play the Major',
+    short: 'A Swiss stage, then the playoffs. You veto maps, pick sides and can call timeouts.',
     long: 'Find a match. In the Swiss stage three wins send you to the playoffs and three losses knock you out; then comes a quarterfinal, a semifinal and the grand final. Before each map you veto maps and pick a side, and during it you can call timeouts.',
   },
   {
-    title: 'Compare and share',
+    title: 'Share',
     short: 'The daily is the same for everyone. Compare results, try Guess the pro, or challenge a friend.',
     long: 'The daily gives everyone the same cases, so you can compare with friends. Guess the pro is a second daily, free play has extra modes, and you can challenge a friend to a draft duel.',
   },
 ];
 
-/** The whole game in three steps: the help's opening, and (in short form) what a first-time visitor sees before the first case. */
-export function ThreeSteps({ compact }: { compact?: boolean }) {
+/** The whole game in four steps, the same four the home screen shows: the help's opening, and (in short form) the duel start. */
+export function HowSteps({ compact }: { compact?: boolean }) {
   return (
     <ol className="steps">
       {STEPS.map((x) => <li key={x.title}><b>{x.title}</b><span>{compact ? x.short : x.long}</span></li>)}

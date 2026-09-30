@@ -1,6 +1,7 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ROLE_LABEL, ROLE_SHORT, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
+import { defaultSlot, placementLabel } from '../game/draftui';
 import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, poolCheck, roundOf, slotsFor, today } from '../game/state';
 import { Stats, dailyStreak } from '../game/stats';
 import { REACHED } from './Stats';
@@ -8,15 +9,17 @@ import { pageUrl } from '../game/share';
 import { NextDaily } from '../ui/Countdown';
 import { ShareBar } from './Final';
 import { Avatar, RoleIcon, Sr, TeamBadge } from '../ui/art';
-import { rarity, reduceMotion } from '../ui/util';
+import { rarity, reduceMotion, useMedia } from '../ui/util';
 import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
-import { ThreeSteps, Tip } from '../ui/tips';
+import { HowSteps, Tip, useTipSeen } from '../ui/tips';
+import { CaseIcon, ChevronDownIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
+import { DailyDone, ModePicker } from './Modes';
 
-export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, onTwitch }: {
-  s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
+export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats }: {
+  s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
 }) {
   if (s.step === 'spin') {
     const open = G.openSlots(s.picks);
@@ -24,12 +27,9 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
     const played = date ? stats.daily[date] : undefined;
     const todayN = dailyNumber(today());
     const doneToday = stats.daily[today()];
-    if (s.picks.length === 0 && s.offerKey === 0 && s.mode !== 'duel') {
-      return <Home s={s} dispatch={dispatch} setReelFor={setReelFor} stats={stats} onGuess={onGuess} onTwitch={onTwitch} />;
-    }
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
-        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><ThreeSteps compact /></Tip>}
+        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><HowSteps compact /></Tip>}
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
           {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
@@ -56,71 +56,9 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
   }
   if (s.step === 'teams') {
     if (reelFor === s.offerKey && !reduceMotion()) return <CaseReel land={s.offer[0]} onDone={() => setReelFor(null)} />;
-    return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <TeamChoices s={s} dispatch={dispatch} />;
+    return roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} /> : <CaseCards s={s} dispatch={dispatch} />;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
-}
-
-/** Today's finished (or abandoned) daily: result, share buttons and the countdown. */
-function DailyDone({ d, n }: { d: NonNullable<Stats['daily'][string]>; n: number }) {
-  return (
-    <div className="daily-done">
-      <small>Daily #{n} {d.abandoned ? 'abandoned' : 'done'}</small>
-      <strong>{d.placement}</strong>
-      <span>{d.abandoned ? 'Reset after it started, so it has no result.' : `MVP ${d.mvp}${d.grade !== null ? ` · Draft ${Math.round(d.grade * 100)}%` : ''}`}</span>
-      {d.share && !d.abandoned && <ShareBar text={() => [d.share, pageUrl()].filter(Boolean).join('\n')} props={{ mode: 'daily', daily: n, from: 'daily-done' }} />}
-      <NextDaily />
-    </div>
-  );
-}
-
-/** The first screen: today's daily is the big action, the other modes sit beneath it (#68). */
-function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
-  s: Run; dispatch: React.Dispatch<Action>; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
-}) {
-  const todayN = dailyNumber(today());
-  const done = stats.daily[today()];
-  const played = done && !done.abandoned;
-  const { current: streak } = dailyStreak(stats.daily, today());
-  const best = stats.runs > 0 ? REACHED[stats.reached.reduce((b, n, i) => (n > 0 ? i : b), 0)] : null;
-  // Free-play options stay tucked away until asked for, so the daily is the only thing that asks for attention.
-  const [free, setFree] = useState(false);
-  const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); };
-  const playDaily = () => {
-    if (s.mode !== 'daily') dispatch({ type: 'reset', mode: 'daily' });
-    setReelFor(1);
-    dispatch({ type: 'spin' });
-  };
-  return (
-    <div className="spin-stage home anim-in">
-      {done && <DailyDone d={done} n={todayN} />}
-      <button className={`home__daily ${played ? 'is-played' : ''}`} data-sfx="open" onClick={playDaily}>
-        <small>{played ? 'Played ✓' : 'Same cases for everyone'}</small>
-        <strong>{played ? `Replay Daily #${todayN}` : `Play Daily #${todayN}`}</strong>
-        <span>{played ? "Replays don't change your record" : <NextDaily />}</span>
-      </button>
-      <p className="daily-meta">
-        {streak > 0 && <span>🔥 {streak}-day streak</span>}
-        {best && <span>Best finish: {best}</span>}
-        {!streak && !best && <span>Draft five pros, then win the Major.</span>}
-      </p>
-      <div className="home__cards">
-        <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => { if (!free && s.mode !== 'free') dispatch({ type: 'reset', mode: 'free' }); setFree(!free); }}>
-          <strong>Free play</strong><small>{free ? 'Choose your options below' : 'Any era, champions or underdogs, hard mode'}</small>
-        </button>
-        <button className="home__card" onClick={onGuess}>
-          <strong>Guess the pro</strong><small>A second daily: eight guesses</small>
-        </button>
-      </div>
-      {free && s.mode === 'free' && (
-        <>
-          <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />
-          <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={openCase}>Open case</button></div>
-        </>
-      )}
-      <button type="button" className="link-btn" onClick={onTwitch}>Twitch chat votes ›</button>
-    </div>
-  );
 }
 
 /** CS-style case roulette: a strip of teams slides past a marker and stops on the first team in the offer. */
@@ -177,6 +115,32 @@ function useReroll(dispatch: React.Dispatch<Action>) {
   return { out, reroll };
 }
 
+/** The opened-case bar over the cards (#103): what this case holds and what to do with it. */
+function OpenedCase({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="opened">
+      <span className="opened__icon"><CaseIcon size={26} /></span>
+      <p><b>Opened case</b> <span>{children}</span></p>
+    </div>
+  );
+}
+
+/** "Spin again" with the real number of spins left (#103). */
+function SpinAgain({ s, reroll }: { s: Run; reroll: () => void }) {
+  return (
+    <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
+      <button className="ghost-btn ghost-btn--big" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>
+        <RefreshIcon size={16} /> Spin again · {s.rerolls <= 0 ? 'no spins left' : `${s.rerolls} spin${s.rerolls === 1 ? '' : 's'} left`}
+      </button>
+    </div>
+  );
+}
+
+/** A team's result as a placement badge: an icon and the words ("1st place"), so the colour of the card is never the only signal (#104). */
+function Placement({ roster }: { roster: Roster }) {
+  return <span className="place">{roster.result === 'Champions' ? <TrophyIcon size={14} /> : <MedalIcon size={14} />}{placementLabel(roster.result)}</span>;
+}
+
 /** The coach round: three coaches, each shown with the Major they coached at. */
 function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
   const { out, reroll } = useReroll(dispatch);
@@ -184,66 +148,162 @@ function CoachChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action
   useChatVote(`coach-${s.offerKey}-${s.rerollKey}`, s.offer.map((id) => { const c = G.rosterById.get(id)!.coach!; return { id, label: c, aliases: [c] }; }),
     (id) => dispatch({ type: 'coach', rosterId: id }));
   return (
-    <div className={`teams-col ${out ? 'is-out' : ''}`}>
-      {s.offer.map((id, i) => {
-        const r = G.rosterById.get(id)!;
-        const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
-        return (
-          <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}>
-            <div className="case-item__top">
-              <TeamBadge roster={r} size={44} />
-              <div className="case-item__id">
-                <div className="case-item__name">{r.coach}</div>
-                <div className="case-item__meta"><span>Coach · {r.org} {r.year}</span><span className="grade">{r.result}</span></div>
+    <div className="case">
+      <OpenedCase>Three coaches from Major history. Pick one to lead your team.</OpenedCase>
+      <div className={`teams-col ${out ? 'is-out' : ''}`}>
+        {s.offer.map((id, i) => {
+          const r = G.rosterById.get(id)!;
+          const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
+          return (
+            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}>
+              <div className="case-item__top">
+                <TeamBadge roster={r} size={44} />
+                <div className="case-item__id">
+                  <div className="case-item__name">{r.coach}</div>
+                  <div className="case-item__meta"><span>Coach · {r.org} {r.year}</span><Placement roster={r} /></div>
+                </div>
               </div>
-            </div>
-            {knows.length > 0 && <span className="hint hint--good"><i aria-hidden="true">+</i> <Sr>Bonus: </Sr>Coached {knows.map((p) => p.nick).join(', ')}</span>}
-            <div className="case-item__event">{r.event}</div>
-          </button>
-        );
-      })}
-      <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
-        <button className="ghost-btn" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
+              {knows.length > 0 && <span className="hint hint--good"><i aria-hidden="true">+</i> <Sr>Bonus: </Sr>Coached {knows.map((p) => p.nick).join(', ')}</span>}
+              <div className="case-item__event">{r.event}</div>
+            </button>
+          );
+        })}
       </div>
+      <SpinAgain s={s} reroll={reroll} />
     </div>
   );
 }
 
-function TeamChoices({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
+type Chosen = { r: Roster; p: Player };
+
+/**
+ * The case (#102 to #105): three team cards with all fifteen players in view. Pick a player, see the slot and what it means, then draft.
+ * It drafts through the same two steps as before (open the team, then draft the player), so a seed plays out exactly as it did.
+ */
+function CaseCards({ s, dispatch }: { s: Run; dispatch: React.Dispatch<Action> }) {
   const { out, reroll } = useReroll(dispatch);
   const bench = roundOf(s) === 'bench';
   const hard = !!s.opts?.hard;
   const taken = G.draftedIds(s.picks);
-  useChatVote(`team-${s.offerKey}-${s.rerollKey}-${bench}`, s.offer.map((id) => {
+  const drafted = s.picks.map((pk) => G.rosterById.get(pk.rosterId)!.players.find((x) => x.id === pk.playerId)!);
+  const can = (p: Player) => (bench ? !taken.has(p.id) : slotsFor(s, p).length > 0);
+  const [sel, setSel] = useState<Chosen | null>(null);
+  const [slot, setSlot] = useState<Role | null>(null);
+  // On a phone one card is open at a time, so all three fit on the screen; on wider screens every card is open.
+  const phone = useMedia('(max-width: 860px)');
+  const [openId, setOpenId] = useState<string | null>(s.offer[0] ?? null);
+  // A new case, or a spin again, clears the choice.
+  useEffect(() => { setSel(null); setSlot(null); setOpenId(s.offer[0] ?? null); }, [s.offerKey, s.rerollKey]);
+
+  const choose = (c: Chosen) => { setSel(c); setOpenId(c.r.id); setSlot(bench ? null : defaultSlot(slotsFor(s, c.p), c.p.roles[0], hard)); };
+  const draft = () => {
+    if (!sel) return;
+    dispatch({ type: 'team', id: sel.r.id });
+    if (bench) dispatch({ type: 'bench', player: sel.p });
+    else if (slot) dispatch({ type: 'draft', player: sel.p, slot });
+  };
+
+  // Chat votes once, on a player (by number or name); the slot is their main role when it's open, else the first open one they cover.
+  const chatOptions = s.offer.flatMap((id) => {
     const r = G.rosterById.get(id)!;
-    return { id, label: `${r.tag} ${r.year}`, aliases: [r.org, r.tag, `${r.tag} ${r.year}`, `${r.org} ${r.year}`] };
-  }), (id) => dispatch({ type: 'team', id }));
+    return r.players.filter(can).map((p) => ({ id: `${id}::${p.id}`, label: `${p.nick} (${r.tag} ${r.year})`, aliases: [p.nick, `${p.nick} ${r.tag}`] }));
+  });
+  useChatVote(`case-${s.offerKey}-${s.rerollKey}-${bench}`, chatOptions, (key) => {
+    const [rid, pid] = key.split('::');
+    const r = G.rosterById.get(rid)!;
+    const p = r.players.find((x) => x.id === pid)!;
+    dispatch({ type: 'team', id: rid });
+    if (bench) return dispatch({ type: 'bench', player: p });
+    const slots = slotsFor(s, p);
+    dispatch({ type: 'draft', player: p, slot: slots.includes(p.roles[0]) ? p.roles[0] : slots[0] });
+  });
+
   return (
-    <div className={`teams-col ${out ? 'is-out' : ''}`}>
-      {s.offer.map((id, i) => {
-        const r = G.rosterById.get(id)!;
-        return (
-          <button key={`${id}-${s.rerollKey}`} className={`case-item rar-${hard ? 'milspec' : rarity(r)} anim-in`} style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'team', id })}>
-            <div className="case-item__top">
-              <TeamBadge roster={r} size={44} />
-              <div className="case-item__id">
-                <div className="case-item__name">{r.org}</div>
-                <div className="case-item__meta"><span>{r.year}</span><span className="grade">{r.result}</span></div>
+    <div className="case">
+      <OpenedCase>{bench ? 'Three iconic rosters. Pick anyone, any role, for your bench.' : 'Three iconic rosters. Pick one player to add to your lineup.'}</OpenedCase>
+      <div className={`teams-col ${out ? 'is-out' : ''}`}>
+        {s.offer.map((id, i) => {
+          const r = G.rosterById.get(id)!;
+          const expanded = !phone || openId === id;
+          const top = (
+            <>
+              <TeamBadge roster={r} size={phone ? 44 : 56} />
+              <div className="case-card__id">
+                <h3 className="case-card__name">{r.org}</h3>
+                <div className="case-card__meta"><span>{r.year}</span><Placement roster={r} /></div>
               </div>
-            </div>
-            <ul className="case-item__roster">
-              {r.players.map((p) => {
-                const ok = bench ? !taken.has(p.id) : slotsFor(s, p).length > 0;
-                return <li key={p.id} className={ok ? '' : 'is-off'}>{!hard && <RoleIcon role={p.roles[0]} size={11} />}{p.nick}</li>;
-              })}
-            </ul>
-            <div className="case-item__event">{r.event}</div>
-          </button>
-        );
-      })}
-      <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
-        <button className="ghost-btn" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0}>⟳ Reroll case <b>{s.rerolls}</b></button>
+            </>
+          );
+          return (
+            <article key={`${id}-${s.rerollKey}`} className={`case-card rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms` }} aria-label={`${r.org} ${r.year}`}>
+              {phone
+                ? <button type="button" className="case-card__top case-card__toggle" aria-expanded={expanded} aria-controls={`players-${id}`} data-sfx="none" onClick={() => setOpenId(expanded ? null : id)}>{top}<ChevronDownIcon size={20} /></button>
+                : <div className="case-card__top">{top}</div>}
+              <ul className="case-players" id={`players-${id}`} hidden={!expanded}>
+                {r.players.map((p) => {
+                  const ok = can(p);
+                  const on = sel?.r.id === id && sel.p.id === p.id;
+                  const hints = !hard && ok && !bench ? draftHints(drafted, p) : [];
+                  const body = (
+                    <>
+                      <span className="prow__face"><Avatar player={p} roster={r} /></span>
+                      <span className="prow__main">
+                        <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}>{p.country}</em></span>
+                        {(!hard || hints.length > 0) && (
+                          <span className="prow__meta">
+                            {!hard && <span className="prow__role" title="Main role"><RoleIcon role={p.roles[0]} size={13} /> <Sr>Main role: </Sr>{ROLE_SHORT[p.roles[0]]}</span>}
+                            {hints.map((h) => <span key={h.text} className={`hint ${h.good ? 'hint--good' : 'hint--bad'}`}><i aria-hidden="true">{h.good ? '+' : '−'}</i> <Sr>{h.good ? 'Bonus: ' : 'Penalty: '}</Sr>{h.text}</span>)}
+                          </span>
+                        )}
+                        {!ok && <small className="prow__why" title={unavailableReason(p, s, taken)}>{rowReason(p, s, taken)}</small>}
+                      </span>
+                    </>
+                  );
+                  return (
+                    <li key={p.id}>
+                      {ok
+                        ? <button type="button" className={`prow ${on ? 'is-sel' : ''}`} aria-pressed={on} data-sfx="select" onClick={() => choose({ r, p })}>{body}</button>
+                        : <div className="prow is-off">{body}</div>}
+                    </li>
+                  );
+                })}
+              </ul>
+              {expanded && <div className="case-card__event">{r.event}</div>}
+            </article>
+          );
+        })}
       </div>
+      <span className="sr" role="status">{sel ? `${sel.p.nick} selected. Choose a slot, then draft.` : ''}</span>
+      {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
+      <SpinAgain s={s} reroll={reroll} />
+    </div>
+  );
+}
+
+/** What you are about to do: the player, the slot (with the fit written beside it, before you confirm), and the button. */
+function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel: Chosen; slot: Role | null; setSlot: (r: Role) => void; bench: boolean; hard: boolean; onDraft: () => void }) {
+  const slots = bench ? [] : slotsFor(s, sel.p);
+  const nick = sel.p.nick;
+  return (
+    <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
+      <p className="draftbar__who"><b>{nick}</b> <span>{sel.r.org} {sel.r.year}</span></p>
+      {slots.length > 0 && (
+        <div className="draftbar__slots" role="group" aria-label={`Slot for ${nick}`}>
+          {slots.map((sl) => {
+            const note = G.fitNote(sel.p, sl);
+            return (
+              <button key={sl} type="button" aria-pressed={slot === sl} data-sfx="select" className={`slot-chip slot-chip--draft ${slot === sl ? 'is-on' : ''} ${!hard && note.kind === 'main' ? 'slot-chip--main' : ''}`} onClick={() => setSlot(sl)}
+                aria-label={`${ROLE_LABEL[sl]}${hard ? '' : `, ${note.text}`}`}>
+                <span><RoleIcon role={sl} size={12} /> {ROLE_SHORT[sl]}</span>
+                {!hard && <small className={`fit fit--${note.kind}`}>{note.text}</small>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <button type="button" className="cta cta--orange" data-sfx="draft" disabled={!bench && !slot} onClick={onDraft}>
+        {bench ? `Draft ${nick} as Bench` : slot ? `Draft ${nick} as ${ROLE_SHORT[slot]}` : `Choose a slot for ${nick}`}
+      </button>
     </div>
   );
 }
@@ -324,6 +384,13 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
   );
 }
 
+/** The same reason, short enough to sit under a name on a team card. */
+function rowReason(p: Roster['players'][number], s: Run, drafted: Set<string>): string {
+  if (drafted.has(p.id)) return 'already on your team';
+  if (s.opts?.hard) return 'no open slot left';
+  return `${p.roles.map((r) => ROLE_LABEL[r]).join(' and ')} already filled`;
+}
+
 /** Why a player can't be picked, exactly (#17). Hard mode doesn't name their roles. */
 function unavailableReason(p: Roster['players'][number], s: Run, drafted: Set<string>): string {
   if (drafted.has(p.id)) {
@@ -338,23 +405,3 @@ function unavailableReason(p: Roster['players'][number], s: Run, drafted: Set<st
 /** Opens the roster-data issue form with this roster filled in (#13). */
 const reportUrl = (r: { org: string; year: number; event: string }) =>
   `https://github.com/nanox333/major-mayhem/issues/new?template=roster_data.yml&roster=${encodeURIComponent(`${r.org} ${r.year} (${r.event})`)}`;
-
-/** Free-play options, chosen before the first case. */
-function ModePicker({ opts, dispatch }: { opts: Opts; dispatch: React.Dispatch<Action> }) {
-  const set = (o: Opts) => dispatch({ type: 'opts', opts: { ...opts, ...o } });
-  // A filter that leaves too few teams can't be chosen, rather than quietly widening once the draft starts (#63).
-  const choice = <K extends keyof Opts>(key: K, value: Opts[K], label: string) => {
-    const { n, ok } = poolCheck({ ...opts, [key]: value });
-    const why = ok ? undefined : `Only ${n} team${n === 1 ? '' : 's'} match with your other settings; a full draft needs ${MIN_POOL}.`;
-    return <button className={opts[key] === value ? 'is-on' : ''} aria-pressed={opts[key] === value} disabled={!ok} title={why} aria-description={why} onClick={() => set({ [key]: value } as Opts)}>{label}</button>;
-  };
-  const blocked = ([{ era: 'csgo' }, { era: 'cs2' }, { pool: 'champions' }, { pool: 'underdogs' }] as Opts[]).some((o) => !poolCheck({ ...opts, ...o }).ok);
-  return (
-    <div className="modes" aria-label="Free-play mode">
-      <div className="modes__row"><span>Era</span><div className="seg">{choice('era', undefined, 'All')}{choice('era', 'csgo', 'CS:GO')}{choice('era', 'cs2', 'CS2')}</div></div>
-      <div className="modes__row"><span>Teams</span><div className="seg">{choice('pool', undefined, 'All')}{choice('pool', 'champions', 'Champions')}{choice('pool', 'underdogs', 'Underdogs')}</div></div>
-      <div className="modes__row"><span>Hard</span><div className="seg">{choice('hard', undefined, 'Off')}{choice('hard', true, 'No role labels')}</div></div>
-      {blocked && <p className="muted small">Greyed-out options leave fewer than {MIN_POOL} teams with your other settings, too few for a full draft.</p>}
-    </div>
-  );
-}

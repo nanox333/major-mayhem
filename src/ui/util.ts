@@ -1,4 +1,18 @@
+import { useEffect, useState } from 'react';
 import { Roster } from '../data/rosters';
+
+/** Whether a media query matches now, and again when it changes (a phone turned sideways, a window resized). */
+export function useMedia(query: string): boolean {
+  const [matches, setMatches] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.(query).matches);
+  useEffect(() => {
+    const mq = window.matchMedia(query);
+    const on = () => setMatches(mq.matches);
+    on();
+    mq.addEventListener('change', on);
+    return () => mq.removeEventListener('change', on);
+  }, [query]);
+  return matches;
+}
 
 export const reduceMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 export const fmt = (r: number) => r.toFixed(2);

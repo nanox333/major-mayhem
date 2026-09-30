@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useRef, useSt
 import { ChatMsg, TwitchChat, VoteOption, matchVote, tally, validChannel, winner } from '../game/twitch';
 import { track } from '../analytics';
 import { Modal } from './Modal';
+import { TwitchIcon } from './icons';
 
 // Twitch chat votes. The provider owns the chat connection and the one vote running at a time; each decision screen
 // calls useChatVote with its options, and the vote bar shows the count down and the tally.
@@ -119,13 +120,15 @@ export function ChatVoteBar() {
 /** The chat connection state in words, since the button only shows it as a colour. */
 const STATE_WORD: Record<string, string> = { off: '', connecting: ': connecting', live: ': connected', error: ': not connected' };
 
-/** Header button: shows the chat connection state and opens the settings. */
-export function TwitchButton({ onClick }: { onClick: () => void }) {
-  const api = useContext(Ctx);
+export const useTwitchStatus = () => useContext(Ctx)?.status ?? 'off';
+
+/** Shows the chat connection state and opens the settings: an icon in the top bar, or a row in its menu. */
+export function TwitchButton({ onClick, variant = 'icon' }: { onClick: () => void; variant?: 'icon' | 'menu' }) {
+  const status = useTwitchStatus();
   return (
-    <button className={`hud-btn twitch-btn is-${api?.status ?? 'off'}`} onClick={onClick} aria-label="Twitch chat votes" title={`Twitch chat votes${STATE_WORD[api?.status ?? 'off']}`} aria-description={STATE_WORD[api?.status ?? 'off'].replace(/^: /, '') || undefined}>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true"><path d="M4 3h16v11l-4 4h-4l-3 3v-3H4z" /><path d="M11 7v4M15 7v4" /></svg>
-      <span className="hud-btn__label">Twitch</span>
+    <button type="button" className={`${variant === 'menu' ? 'menu__item' : 'hud-btn'} twitch-btn is-${status}`} onClick={onClick} aria-label="Twitch chat votes" title={`Twitch chat votes${STATE_WORD[status]}`} aria-description={STATE_WORD[status].replace(/^: /, '') || undefined}>
+      <TwitchIcon />
+      {variant === 'menu' && <span>Twitch chat votes</span>}
     </button>
   );
 }
