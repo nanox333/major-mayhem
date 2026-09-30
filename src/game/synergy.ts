@@ -1,6 +1,6 @@
 // Synergies: what makes five players more (or less) than the sum of their ratings. All values are team-power
 // points, the same scale as ratings; see teamPower in logic.ts for how they combine and cap.
-import { COACHES, ROSTERS, Player, Roster } from '../data/rosters';
+import { COACHES, ROSTERS, Player, Roster, isCoach } from '../data/rosters';
 import type { Lineup } from './logic';
 
 export type SynergyKind = 'lineup' | 'nation' | 'duo' | 'era' | 'awp' | 'coach';
@@ -38,7 +38,7 @@ export const DUOS: [string, string, string][] = [
 /** CS:GO Majors ran to Paris 2023; everything from Copenhagen 2024 on is Counter-Strike 2. */
 export const era = (r: Roster) => (r.year >= 2024 ? 'CS2' : 'CS:GO');
 
-export const coachBonus = (coach?: string | null) => (coach && COACHES[coach] ? (COACHES[coach].rating - 75) * 0.06 : 0);
+export const coachBonus = (coach?: string | null) => (isCoach(coach) ? (COACHES[coach].rating - 75) * 0.06 : 0);
 
 /** Players who played under this coach at a Major, by player id. */
 const coached = new Map<string, Set<string>>();

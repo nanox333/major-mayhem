@@ -1,4 +1,4 @@
-import { COACHES, ROSTERS, ROLE_ORDER, Role, Roster, Player, LATEST_RULES, applyRoles } from '../data/rosters';
+import { COACHES, ROSTERS, ROLE_ORDER, Role, Roster, Player, LATEST_RULES, applyRoles, isCoach } from '../data/rosters';
 import { Synergy, chemistryOf, coachBonus, synergies } from './synergy';
 
 export const rosterById = new Map(ROSTERS.map((r) => [r.id, r]));
@@ -627,7 +627,7 @@ export function playNextMap(m: Match, mine: Lineup[], start: Side, coach?: strin
   const A = teamPower(mine, coach).total;
   // A friend's drafted team is a dream team too: no handicap in a showmatch.
   const B = rosterPower(opp).total - (m.stage === 'DUEL' ? 0 : OPP_HANDICAP) + STAGE_BOOST[m.stage];
-  const g = { ...playMap(m.next.map, start, mine, oppL, opp.org, A, B, m.form, calls, coach ? COACHES[coach]?.rating ?? 75 : 70), knife: m.next };
+  const g = { ...playMap(m.next.map, start, mine, oppL, opp.org, A, B, m.form, calls, coach ? (isCoach(coach) ? COACHES[coach].rating : 75) : 70), knife: m.next };
   const impact = { ...m.impact };
   for (const [id, v] of Object.entries(g.impact!)) impact[id] = (impact[id] ?? 0) + v;
   const maps = [...m.maps, g];

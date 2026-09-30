@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import radars from '../data/radars.json';
 import { dailyNumber, today } from '../game/state';
-import { BEST_LABEL, BEST_SHORT, CLUE_LABEL, CLUE_MARK, Clue, GuessDay, MAX_GUESSES, Pro, REVEAL, RevealPlan, addGuess, answerFor, clueMeaning, compare, guessShare, guessStreak, loadGuesses, prosOn, revealPlan, saveGuesses, searchState, spokenGuess, teamsFor } from '../game/guess';
+import { BEST_LABEL, BEST_SHORT, CLUE_LABEL, CLUE_MARK, Clue, GuessDay, MAX_GUESSES, Pro, REVEAL, RevealPlan, addGuess, answerFor, clueMeaning, compare, guessShare, guessStreak, loadGuesses, normalizeDay, prosOn, revealPlan, saveGuesses, searchState, spokenGuess, teamsFor } from '../game/guess';
 import { COUNTRY } from '../game/synergy';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
@@ -53,7 +53,7 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
   const all = useMemo(() => prosOn(date), [date]);
   const answer = useMemo(() => answerFor(date), [date]);
   const [store, setStore] = useState(loadGuesses);
-  const day: GuessDay = store[date] ?? { guesses: [], done: false, won: false };
+  const day: GuessDay = useMemo(() => normalizeDay(store[date], all, answer.id), [store, date, all, answer]);
   const [text, setText] = useState('');
   const [active, setActive] = useState(0);
   const [reveal, setReveal] = useState<Reveal | null>(null);

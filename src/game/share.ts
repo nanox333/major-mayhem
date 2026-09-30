@@ -4,14 +4,15 @@ import { Run, dailyDate, dailyNumber, squadOf } from './state';
 
 const STAGE_SHORT: Record<G.StageKey, string> = { QUAL: 'Q', QF: 'QF', SF: 'SF', F: 'F', DUEL: 'BO3' };
 
-export function shareText(run: Run, url?: string): string {
+/** `practice` marks a replay of a daily that was already played: it is shared as practice and never as a scored attempt (#162). */
+export function shareText(run: Run, url?: string, practice = false): string {
   const pl = G.placement(run.t);
   const star = G.mvp(run.t, squadOf(run));
   const rating = G.seriesRatings(run.t.matches.flatMap((m) => m.maps))[star.player.id]?.rating;
   const { grade } = G.draftReview(run.picks);
   const date = dailyDate(run);
   const duel = run.duel;
-  const head = date ? `Major Mayhem Daily #${dailyNumber(date)}` : duel ? `Major Mayhem draft duel vs ${duel.name}` : 'Major Mayhem';
+  const head = date ? `Major Mayhem Daily #${dailyNumber(date)}${practice ? ' (practice)' : ''}` : duel ? `Major Mayhem draft duel vs ${duel.name}` : 'Major Mayhem';
   const trophy = pl.key === 'CHAMP' || pl.key === 'DUEL-W' ? '🏆' : pl.key === 'F' ? '🥈' : pl.reached >= 2 ? '🎖️' : '💀';
   const m0 = run.t.matches[0];
   const title = duel && m0 ? `${m0.won ? 'Won' : 'Lost'} ${m0.score[0]}–${m0.score[1]}` : pl.key === 'CHAMP' ? 'Major Champions' : pl.label;

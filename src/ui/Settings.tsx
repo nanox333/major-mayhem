@@ -5,6 +5,8 @@ import { Theme, setPrefs, usePrefs } from './prefs';
 import { setTipsOn, useTipsOn } from './tips';
 import { useSoundOn } from './sound';
 import { RefreshIcon, TwitchIcon } from './icons';
+import { BackupPreview, applyBackup, backupFileName, backupText, createBackup, downloadText, previewBackup } from '../game/backup';
+import { Run } from '../game/state';
 
 /** An on/off control with a name a screen reader says: "Sound effects, switch, on". */
 function Switch({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (on: boolean) => void }) {
@@ -22,7 +24,7 @@ const THEMES: [Theme, string][] = [['system', 'System'], ['dark', 'Dark'], ['lig
  * Settings (#110): everything you can change about how the game looks, sounds and listens, and the things the top bar used to hold (chat votes, a new run).
  * Kept in this browser. Single-key shortcuts have an off switch here because they must (WCAG 2.1.4).
  */
-export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcuts }: { onClose: () => void; onTwitch: () => void; onNewRun: () => void; abandon: boolean; toShortcuts?: boolean }) {
+export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcuts, run }: { onClose: () => void; onTwitch: () => void; onNewRun: () => void; abandon: boolean; toShortcuts?: boolean; /** The run on screen, so a backup has it even if the browser could not save it. */ run?: Run }) {
   const prefs = usePrefs();
   const [sound, toggleSound] = useSoundOn();
   const tips = useTipsOn();
@@ -65,6 +67,8 @@ export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcu
         </table>
       </section>
 
+      <DataSection run={run} />
+
       <section className="settings__sec" aria-labelledby="set-more">
         <h4 id="set-more">More</h4>
         <div className="settings__btns">
@@ -76,5 +80,44 @@ export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcu
         </div>
       </section>
     </Modal>
+  );
+}
+
+/**
+ * A backup you keep and can restore from (#189). It holds your record, your Guess history and the run you have open, and stays on your device. Restoring
+ * shows what is in the file first, replaces what is saved here (it never adds to it, so nothing is counted twice), and changes nothing if the file is bad.
+ */
+export function DataSection({ run }: { run?: Run }) {
+  const [preview, setPreview] = useState<BackupPreview | null>(null);
+  const [failed, setFailed] = useState(false);
+  const file = useRef<HTMLInputElement>(null);
+  const choose = async (f: File | undefined) => {
+    if (!f) return;
+    setFailed(false);
+    try { setPreview(previewBackup(await f.text())); } catch { setPreview({ ok: false, problem: "That file couldn't be read." }); }
+    if (file.current) file.current.value = '';
+  };
+  return (
+    <section className="settings__sec" aria-labelledby="set-data">
+      <h4 id="set-data">Your data</h4>
+      <p className="muted small">Your record, your Guess history and the run you have open are kept in this browser only. A backup is a file you keep; restoring one replaces what is saved here.</p>
+      <div className="settings__btns">
+        <button type="button" className="ghost-btn ghost-btn--big" onClick={() => downloadText(backupFileName(), backupText(createBackup(run)))}>Download a backup</button>
+        <button type="button" className="ghost-btn ghost-btn--big" onClick={() => file.current?.click()}>Restore from a file…</button>
+        <input ref={file} type="file" accept=".json,application/json" hidden aria-label="Choose a backup file" onChange={(e) => choose(e.target.files?.[0])} />
+      </div>
+      {preview && !preview.ok && <p className="settings__warn" role="alert">{preview.problem}</p>}
+      {preview?.ok && (
+        <div className="settings__restore" role="group" aria-label="Restore this backup?">
+          <p><b>This backup{preview.summary.exportedAt ? ` (from ${preview.summary.exportedAt})` : ''} holds:</b> {preview.summary.runs} Major run{preview.summary.runs === 1 ? '' : 's'}, {preview.summary.titles} title{preview.summary.titles === 1 ? '' : 's'}, {preview.summary.dailies} daily result{preview.summary.dailies === 1 ? '' : 's'}, {preview.summary.guessDays} day{preview.summary.guessDays === 1 ? '' : 's'} of Guess history{preview.summary.run ? `, and an open run: ${preview.summary.run}` : ', and no open run'}.</p>
+          <p>Restoring <b>replaces</b> what is saved here with this. Download a backup of your current data first if you want to keep it.</p>
+          <div className="settings__btns">
+            <button type="button" className="ghost-btn ghost-btn--big is-ask" onClick={() => { if (applyBackup(preview.backup)) location.reload(); else setFailed(true); }}>Replace my data</button>
+            <button type="button" className="ghost-btn ghost-btn--big" onClick={() => { setPreview(null); setFailed(false); }}>Cancel</button>
+          </div>
+          {failed && <p className="settings__warn" role="alert">The browser would not save the restored data, so nothing was changed.</p>}
+        </div>
+      )}
+    </section>
   );
 }
