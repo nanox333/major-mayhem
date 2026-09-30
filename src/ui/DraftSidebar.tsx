@@ -4,6 +4,7 @@ import * as G from '../game/logic';
 import { Run } from '../game/state';
 import { strength } from '../game/synergy';
 import { Sr } from './art';
+import { Tip } from './tips';
 
 /** The sidebar beside the case while you draft (#107, #108, #109): the mode, live chemistry, and a hint. All of it is built from your picks and the open slots, never from ratings. */
 export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Opens the help on its Chemistry topic. */ onChemistryHelp: () => void; preview?: Preview | null }) {
@@ -11,6 +12,7 @@ export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Open
   return (
     <aside className="draft-side" aria-label="Draft details">
       <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
+      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
       <section className="side-card hint-card" aria-labelledby="hint-h">
         <h3 id="hint-h">Draft hint</h3>
         <p>{draftHint(s)}</p>

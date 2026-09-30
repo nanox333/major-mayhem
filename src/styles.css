@@ -1414,3 +1414,24 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 
 /* In the light palette the radar is only a hint of texture behind the grid. */
 :root[data-theme="light"] .gp__bg::before { opacity: .14; filter: blur(7px) grayscale(1); }
+
+
+/* ---------- first-time tips in the new look (#130): one callout style ---------- */
+.tip { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "tag tag" "text btns"; align-items: start; gap: 4px 16px; width: min(100%, 720px); justify-self: center; padding: 12px 16px; border: 1px solid var(--line-2); border-left: 4px solid var(--accent); border-radius: var(--r-m); background: var(--panel-2); text-align: left; box-shadow: var(--shadow); }
+.tip__tag { grid-area: tag; display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-family: var(--f-body); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.tip__text { grid-area: text; }
+.tip__btns { grid-area: btns; display: grid; justify-items: end; align-content: start; gap: 8px; }
+.tip__skip { font-size: var(--fs-caption); }
+@media (prefers-reduced-motion: no-preference) { .tip { animation: tip-in .22s ease-out both; } }
+@keyframes tip-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+/* The pointer: a small notch on the edge that faces the panel the tip explains. On desktop only; on a phone the tip stays inline. */
+@media (min-width: 861px) {
+  .tip--up { width: 100%; }
+  .tip--up::before { content: ''; position: absolute; top: -7px; left: 28px; width: 12px; height: 12px; transform: rotate(45deg); background: var(--panel-2); border-top: 1px solid var(--line-2); border-left: 1px solid var(--line-2); }
+  .tip--left { width: 100%; justify-self: stretch; }
+}
+@media (max-width: 520px) {
+  .tip { grid-template-columns: minmax(0, 1fr); grid-template-areas: "tag" "text" "btns"; }
+  .tip__btns { grid-auto-flow: column; justify-content: space-between; align-items: center; justify-items: stretch; }
+  .tip__ok { width: auto; min-width: 120px; }
+}
