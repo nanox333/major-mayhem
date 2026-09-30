@@ -1,9 +1,11 @@
 // The active rules version (see RULES in data/rosters.ts). The game sets it to the current run's version; the
 // simulation and role data follow it, so an old daily replays exactly as it first played.
-import { LATEST_RULES, applyRoles } from '../data/rosters';
+import { LATEST_RULES, RuleSwitch, applyRoles, rulesInclude } from '../data/rosters';
 
 let activeRules = LATEST_RULES;
 export const rules = () => activeRules;
+/** Whether the active rules include a behaviour (see RULE_SINCE). This, not the version number, is what the simulation asks. */
+export const hasRule = (f: RuleSwitch) => rulesInclude(activeRules, f);
 
 const listeners: (() => void)[] = [];
 /** Runs `fn` whenever the active rules version changes, so a cache that depends on the rules can drop what it holds. */

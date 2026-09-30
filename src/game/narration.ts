@@ -1,7 +1,7 @@
 // What the killfeed says: event lines per role, map callouts, and which lines fit the buy this round.
 import { Role } from '../data/rosters';
 import { rand } from './random';
-import { rules } from './rulesState';
+import { hasRule } from './rulesState';
 
 // {p} player, {t} opposing org, {s} a callout on the current map.
 export const EVENT_TEXT: Record<Role, string[]> = {
@@ -42,7 +42,7 @@ export const CALLOUTS: Record<string, string[]> = {
 };
 export interface Buy { ourForce: boolean; theirEco: boolean }
 /** Lines that mention a force buy or an eco only fit rounds where that is actually happening. */
-export const fitting = (lines: string[], buy: Buy): string[] => rules() < 2 ? lines : lines.filter((l) =>
+export const fitting = (lines: string[], buy: Buy): string[] => !hasRule('buyAwareNarration') ? lines : lines.filter((l) =>
   /force buy/.test(l) ? (l.startsWith('{t}') ? buy.theirEco : buy.ourForce) : /anti-eco/.test(l) ? buy.theirEco : true);
 export const fill = (tpl: string, p: string, t: string, map: string) => {
   const spots = CALLOUTS[map] ?? ['mid'];
