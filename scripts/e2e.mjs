@@ -24,6 +24,12 @@ async function draftAll(p) {
 }
 /** The top bar keeps stats, Twitch chat votes and a new run in a menu (#101). */
 const openMenu = (p) => p.click('[aria-label="More"]');
+/** Guess the pro is a link in the top bar, and an item in the menu on a phone (#140). */
+async function openGuess(p) {
+  const link = p.locator('.topbar .gamelink');
+  if (await link.isVisible()) await link.click();
+  else { await openMenu(p); await p.locator('.menu__item--game').click(); }
+}
 async function page(viewport = { width: 1280, height: 900 }) {
   const p = await b.newPage({ viewport });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
@@ -43,8 +49,9 @@ async function run(viewport, tag) {
   await p.waitForSelector('button.cta');
   await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
-  const step = async () => (await p.textContent('.topbar [aria-current="step"]')).trim();
-  if (!(await step()).startsWith('Draft')) throw new Error(`the top bar should be on the Draft step, got "${await step()}"`);
+  const step = async () => (await p.textContent('.progress [aria-current="step"]')).trim();
+  if (await p.locator('.topbar ol, .topbar [aria-current]').count()) throw new Error('the run steps must not be in the top bar (#140)');
+  if (!(await step()).startsWith('Draft')) throw new Error(`the progress list should be on the Draft step, got "${await step()}"`);
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   // Five players, then the coach (round 6) and the bench player (round 7).
   for (let r = 0; r < 7; r++) {
@@ -161,7 +168,7 @@ async function run(viewport, tag) {
   }
   await p.screenshot({ path: `shots/${tag}-8-review.png`, fullPage: true });
   await p.reload(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
-  if (!(await step()).startsWith('Results') || (await p.locator('.topbar .stab.is-done').count()) !== 3) throw new Error(`the top bar should be on Results with three steps done, got "${await step()}"`);
+  if (!(await step()).startsWith('Results') || (await p.locator('.progress .pstep.is-done').count()) !== 3) throw new Error(`the progress list should be on Results with three steps done, got "${await step()}"`);
   const finalSave = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
   await openMenu(p); await p.click('[aria-label="Your stats"]');
   const runs = (await p.textContent('.stat-tiles div b')).trim();
@@ -238,7 +245,7 @@ async function duel() {
 async function guess() {
   const { p, errs } = await page({ width: 390, height: 844 });
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.locator('.topbar [aria-label="Guess the pro"]').click();
+  await openGuess(p);
   await p.waitForSelector('.guess__box input');
   for (const name of ['s1', 'niko', 'zyw', 'dev', 'donk', 'ropz', 'fallen', 'olof', 'karr', 'gla1']) {
     if (await p.$('.guess__answer')) break;
@@ -318,7 +325,7 @@ async function sound() {
   if (await heard(async () => { await openMenu(p); await p.locator('[aria-label="Your stats"]').click(); })) throw new Error('mute did not survive a reload');
   await p.keyboard.press('Escape');
   await p.locator('[aria-label="Turn sound on"]').click();
-  await p.locator('.topbar [aria-label="Guess the pro"]').click();
+  await openGuess(p);
   await p.fill('.guess__box input', 'zyw');
   await p.waitForSelector('.guess__suggest button');
   const notes = await heard(() => p.locator('.guess__suggest button').first().click(), 900);

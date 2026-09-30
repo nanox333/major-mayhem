@@ -61,30 +61,18 @@ button { font: inherit; color: inherit; }
 
 .page { max-width: 1200px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 32px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 
-/* ---------- top bar (#101): mark and wordmark, progress steps, Guess the pro, help, sound and a menu ---------- */
+/* ---------- top bar (#101): mark and wordmark, Guess the pro, help, sound and a menu. The run's progress is not here (#140). ---------- */
 .topbar { position: relative; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line); }
-.topbar__in { max-width: 1200px; margin: 0 auto; padding-inline: 16px; min-height: 64px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: stretch; column-gap: 12px; }
-.brand { margin: 0; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.topbar__in { max-width: 1200px; margin: 0 auto; padding-inline: 16px; min-height: 60px; display: flex; align-items: center; gap: 12px; }
+.brand { margin: 0 auto 0 0; display: flex; align-items: center; gap: 10px; min-width: 0; }
 .logomark { flex: none; }
 .wordmark { font-family: var(--f-logo); font-weight: 400; font-size: 1.3rem; line-height: 1; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
 .wordmark b { font-weight: 400; color: var(--strong); }
 .wordmark i { font-style: normal; color: var(--accent); }
-/* The steps show progress and are not links; the underline and the check say where you are and what is done. */
-.stabs { list-style: none; margin: 0; padding: 0; display: flex; align-items: stretch; justify-content: center; gap: 4px; min-width: 0; }
-.stab { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); font-family: var(--f-body); font-weight: 700; font-size: 1.02rem; }
-.stab.is-done { color: var(--text-2); }
-.stab.is-on { color: var(--strong); border-bottom-color: var(--accent); }
-.stab.is-on .stab__icon { color: var(--accent); }
-.stab__icon { position: relative; display: grid; place-items: center; }
-.stab__tick { position: absolute; right: -7px; bottom: -5px; width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%; background: var(--go); color: var(--on-go); font-size: .62rem; font-weight: 800; line-height: 1; }
-button.stab { cursor: pointer; }
-button.stab:hover { color: var(--strong); }
-.gamelink { align-self: center; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: none; color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: 1.02rem; cursor: pointer; }
+.gamelink { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: none; color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: 1.02rem; cursor: pointer; }
 .gamelink:hover { color: var(--strong); border-color: var(--control); }
-.gamelink.is-on { color: var(--strong); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
-.gamelink.is-on svg { color: var(--accent); }
-.gamelink__short { display: none; }
-.topbar__end { align-self: center; display: flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
+.gamelink svg { color: var(--accent); }
+.topbar__end { display: flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
 .hud-btn {
   min-width: 40px; height: 40px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; border: 1px solid transparent; border-radius: var(--r-m); background: none;
   color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: 1.1rem; transition: background .15s, color .15s, border-color .15s;
@@ -96,21 +84,22 @@ button.stab:hover { color: var(--strong); }
 .menu__item:hover { background: var(--panel); }
 .menu__item.is-ask { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--strong); }
 .menu__item svg { flex: none; color: var(--accent); }
-/* Tablet and phone: two rows, the mark and the buttons above and the steps (with Guess the pro at the end) below, each a tall tap target. */
-@media (max-width: 979px) {
-  .topbar__in { display: flex; flex-wrap: wrap; padding-inline: 10px; column-gap: 0; min-height: 0; }
-  .brand { order: 1; flex: 1 1 0; min-height: 52px; overflow: hidden; }
-  .wordmark { font-size: clamp(.8rem, 4.2vw, 1.2rem); }
-  .topbar__end { order: 2; flex: none; padding-left: 0; border-left: 0; gap: 4px; }
-  /* A line break: the mark and the buttons are always the first row, whatever the width. */
-  .topbar__in::after { content: ''; order: 3; flex: 0 0 100%; height: 0; }
-  .stabs { order: 4; flex: 0 0 80%; justify-content: stretch; gap: 0; border-top: 1px solid var(--line); }
-  .gamelink { order: 5; flex: 0 0 20%; align-self: stretch; height: auto; margin-bottom: -1px; border: 0; border-top: 1px solid var(--line); border-bottom: 3px solid transparent; border-radius: 0; flex-direction: column; justify-content: center; gap: 2px; padding: 4px 2px; font-size: .8rem; }
-  .gamelink.is-on { border-bottom-color: var(--accent); background: none; }
-  .gamelink__long { display: none; }
-  .gamelink__short { display: inline; }
-  .stab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 2px; height: 54px; padding: 4px 2px; margin-bottom: -1px; font-size: .8rem; text-align: center; }
-  .stab__label { overflow-wrap: anywhere; }
+.menu__item--game { display: none; }
+/* Below 700px Guess the pro moves from the bar into the menu, so the bar still fits at 320px with the wordmark whole. */
+@media (max-width: 700px) {
+  .gamelink { display: none; }
+  .menu__item--game { display: flex; }
+  .topbar__end { padding-left: 0; border-left: 0; }
+}
+@media (max-width: 520px) {
+  .topbar__in { padding-inline: 10px; gap: 4px; }
+  .topbar__end { gap: 4px; }
+  .wordmark { font-size: clamp(.7rem, 4vw, 1.2rem); }
+}
+/* With chat votes connected the bar has a fourth button; on the narrowest phones the mark makes way so the wordmark isn't cut off. */
+@media (max-width: 400px) {
+  .topbar--twitch .logomark { display: none; }
+  .topbar--twitch .wordmark { font-size: clamp(.72rem, 3.7vw, .9rem); }
 }
 
 /* ---------- console ---------- */
@@ -124,6 +113,24 @@ button.stab:hover { color: var(--strong); }
 .console__title { margin: 0; font-family: var(--f-head); font-weight: 800; font-size: 1.7rem; line-height: 1.05; letter-spacing: .03em; text-transform: uppercase; }
 .back-btn { border: 1px solid var(--line); background: var(--panel); padding: 6px 10px; cursor: pointer; font-family: var(--f-body); font-weight: 700; font-size: .8rem; color: var(--text-2); }
 .back-btn:hover { color: var(--strong); border-color: var(--line-2); }
+
+/* ---------- run progress in the console head (#140): Draft, Lobby, Major, Results ---------- */
+.console__head { flex-wrap: wrap; row-gap: 8px; }
+.progress { order: 3; list-style: none; margin: 0; padding: 0; display: flex; align-items: center; gap: 4px; flex: none; }
+.pstep { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: var(--r-s); color: var(--muted); font-family: var(--f-body); font-weight: 700; font-size: .95rem; }
+.pstep.is-done { color: var(--text-2); }
+.pstep.is-on { color: var(--strong); background: color-mix(in srgb, var(--accent) 14%, transparent); box-shadow: inset 0 -2px 0 var(--accent); }
+.pstep.is-on .pstep__icon { color: var(--accent); }
+.pstep__icon { position: relative; display: grid; place-items: center; }
+.pstep__tick { position: absolute; right: -7px; bottom: -5px; width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%; background: var(--go); color: var(--on-go); font-size: .62rem; font-weight: 800; line-height: 1; }
+@media (max-width: 860px) {
+  .progress { flex: 1 0 100%; }
+  .pstep { flex: 1 1 0; justify-content: center; min-width: 0; }
+}
+/* On a phone only the current step keeps its name on screen; the others stay in the accessible name. */
+@media (max-width: 520px) {
+  .pstep:not(.is-on) .pstep__label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
 
 /* ---------- team strip: your team filling up as you draft (#69) ---------- */
 .strip { display: grid; gap: 6px; padding: 10px 16px 8px; border-bottom: 1px solid var(--line); background: var(--inset); }

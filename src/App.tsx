@@ -7,6 +7,7 @@ import { BoardHost } from './ui/Board';
 import { Modal } from './ui/Modal';
 import { useRunTracking } from './ui/useTracking';
 import { TopBar, View } from './ui/TopBar';
+import { RunProgress } from './ui/RunProgress';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
@@ -78,7 +79,7 @@ function Game() {
 
   return (
     <>
-    <TopBar steps={steps.map((x) => x.label)} stepIdx={stepIdx} view={view} setView={setView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
+    <TopBar view={view} setView={setView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
       abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''}`}>
       <main className="console">
@@ -90,6 +91,7 @@ function Game() {
             <span className="kicker">{kicker}</span>
             <h2 className="console__title">{title}</h2>
           </div>
+          {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
         {view === 'draft' && s.phase === 'draft' && <TeamStrip s={s} />}
 
