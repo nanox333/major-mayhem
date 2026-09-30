@@ -1,9 +1,10 @@
 // Guess the pro: a second daily. Everyone gets the same hidden player each day and has eight guesses; each guess
 // shows how it compares on nation, role, Majors, best finish, first year and teams. Majors, best finish and first
 // year describe the rosters included in the game, not a player's whole career (#14), and the UI labels them so.
-import { ROSTERS, Roster, Role, rostersOn, rulesOn } from '../data/rosters';
+import { ROLE_LABEL, ROLE_SHORT, ROSTERS, Roster, Role, rostersOn, rulesOn } from '../data/rosters';
 import * as G from './logic';
 import { dailyNumber } from './state';
+import { COUNTRY } from './synergy';
 
 export interface Pro {
   id: string;
@@ -150,4 +151,44 @@ export function searchState(all: Map<string, Pro>, text: string, exclude: string
   if (options.length) return { kind: 'results', options };
   const seen = suggest(all, text, [], 1)[0];
   return seen ? { kind: 'guessed', nick: seen.nick } : { kind: 'none' };
+}
+
+// ---------- what a clue shows, and the reveal (#125, #127) ----------
+
+/** What a clue shows in its cell: a nation as its code, a role by name. */
+export const clueShown = (c: Clue) => (c.key === 'role' ? ROLE_LABEL[c.text as Role] : c.text);
+/** The same in full, for the accessible name: a nation by its full name. */
+export const clueNamed = (c: Clue) => (c.key === 'country' ? COUNTRY[c.text] ?? c.text : clueShown(c));
+/** A short form for a small cell on a phone: "AWP", "SF". The full form is in the accessible name and the tooltip. */
+export const BEST_SHORT = ['QF', 'SF', 'RU', 'W'];
+export const clueCompact = (c: Clue) => (c.key === 'role' ? ROLE_SHORT[c.text as Role] : c.key === 'best' ? BEST_SHORT[BEST_LABEL.indexOf(c.text)] ?? c.text : c.text);
+
+/**
+ * The reveal after a guess: the name pops in, then each cell flips over, one after another from left to right, and shows its result at the
+ * halfway point of its flip. One set of timings (in ms) drives the CSS (through custom properties) and the sound, so they can't drift apart.
+ */
+export const REVEAL = { pop: 220, flip: 500, stagger: 250, bounce: 100 } as const;
+/** With reduced motion nothing flips, but the notes still follow the sound setting, spaced as they always were. */
+const NOTE_GAP = 70;
+
+export interface RevealPlan {
+  /** When each cell shows its result, from the guess. */
+  shows: number[];
+  /** When each cell's note plays. */
+  notes: number[];
+  /** When the last flip has finished (0 with reduced motion). */
+  total: number;
+  /** When the win or loss sound plays. */
+  verdict: number;
+}
+export function revealPlan(cells = 6, reduced = false): RevealPlan {
+  if (reduced) return { shows: Array(cells).fill(0), notes: Array.from({ length: cells }, (_, i) => i * NOTE_GAP), total: 0, verdict: cells * NOTE_GAP + 250 };
+  const shows = Array.from({ length: cells }, (_, i) => REVEAL.pop + i * REVEAL.stagger + REVEAL.flip / 2);
+  const total = REVEAL.pop + (cells - 1) * REVEAL.stagger + REVEAL.flip;
+  return { shows, notes: shows, total, verdict: total + 150 };
+}
+
+/** One guess as one sentence for a polite live region: "Guess 3, ZywOo. Nation: France. Different region. ..." Said once, not cell by cell as the flips happen. */
+export function guessAnnouncement(n: number, p: Pro, clues: Clue[], answer: Pro): string {
+  return [`Guess ${n}, ${p.nick}.${p.id === answer.id ? ' Correct.' : ''}`, ...clues.map((c) => describeClue(c, clueNamed(c)))].join(' ');
 }

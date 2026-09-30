@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { rostersOn } from '../data/rosters';
-import { CLUE_LABEL, CLUE_MARK, Clue, MAX_GUESSES, addGuess, answerFor, clueMeaning, compare, describeClue, guessShare, guessStreak, pros, searchState, suggest } from './guess';
+import { CLUE_LABEL, CLUE_MARK, Clue, MAX_GUESSES, REVEAL, addGuess, answerFor, clueCompact, clueMeaning, clueNamed, compare, describeClue, guessAnnouncement, guessShare, guessStreak, pros, revealPlan, searchState, suggest } from './guess';
 
 describe('guess the pro', () => {
   const all = pros();
@@ -80,5 +80,47 @@ describe('guess the pro', () => {
     expect(found.kind === 'results' && found.options.some((p) => p.id === 'niko')).toBe(true);
     expect(searchState(all, 'qqqqzz', [])).toEqual({ kind: 'none' });
     expect(searchState(all, 'niko', ['niko'])).toMatchObject({ kind: 'guessed', nick: expect.stringMatching(/niko/i) });
+  });
+});
+
+describe('the reveal (#127)', () => {
+  it('flips the cells one after another, showing each result at the halfway point', () => {
+    const p = revealPlan(6, false);
+    expect(p.shows[0]).toBe(REVEAL.pop + REVEAL.flip / 2);
+    for (let i = 1; i < 6; i++) expect(p.shows[i] - p.shows[i - 1]).toBe(REVEAL.stagger);
+    expect(p.total).toBe(REVEAL.pop + 5 * REVEAL.stagger + REVEAL.flip);
+    expect(p.shows[5]).toBeLessThan(p.total);
+    expect(p.verdict).toBeGreaterThan(p.total);
+  });
+  it('plays each note when its cell shows, so sound and picture share one clock', () => {
+    const p = revealPlan(6, false);
+    expect(p.notes).toEqual(p.shows);
+  });
+  it('shows everything at once with reduced motion, and keeps the notes spaced as before', () => {
+    const p = revealPlan(6, true);
+    expect(p.shows).toEqual([0, 0, 0, 0, 0, 0]);
+    expect(p.total).toBe(0);
+    expect(p.notes).toEqual([0, 70, 140, 210, 280, 350]);
+  });
+  it('a whole reveal takes about two seconds', () => {
+    expect(revealPlan(6, false).total).toBeGreaterThan(1500);
+    expect(revealPlan(6, false).total).toBeLessThan(2500);
+  });
+  it('announces a guess once, as one sentence with every clue', () => {
+    const all = pros();
+    const [g, a] = [all.get('dev1ce')!, all.get('zywoo')!];
+    const text = guessAnnouncement(3, g, compare(g, a), a);
+    expect(text.startsWith('Guess 3, dev1ce.')).toBe(true);
+    for (const label of Object.values(CLUE_LABEL)) expect(text).toContain(`${label}:`);
+    expect(text).toContain('Denmark');
+    expect(guessAnnouncement(1, a, compare(a, a), a)).toContain('Correct.');
+  });
+  it('has a short form for a small cell and a full name for the accessible one', () => {
+    const c = Object.fromEntries(compare(pros().get('dev1ce')!, pros().get('zywoo')!).map((x) => [x.key, x]));
+    expect(clueCompact(c.role)).toBe('AWP');
+    expect(clueNamed(c.role)).toBe('AWPer');
+    expect(clueNamed(c.country)).toBe('Denmark');
+    expect(clueCompact(c.country)).toBe('DK');
+    expect(['QF', 'SF', 'RU', 'W']).toContain(clueCompact(c.best));
   });
 });
