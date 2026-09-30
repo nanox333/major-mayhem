@@ -13,7 +13,7 @@ import { COUNTRY, coachKnows, draftHints } from '../game/synergy';
 import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
-import { ThreeSteps, Tip } from '../ui/tips';
+import { ThreeSteps, Tip, useTipSeen } from '../ui/tips';
 
 export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, onTwitch }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onGuess: () => void; onTwitch: () => void;
@@ -29,7 +29,7 @@ export function DraftScreen({ s, dispatch, reelFor, setReelFor, stats, onGuess, 
     }
     return (
       <div className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
-        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><ThreeSteps compact /></Tip>}
+        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><ThreeSteps compact /></Tip>}
         <div className="case-art" aria-hidden="true"><span /></div>
         <p className="spin-stage__hint">
           {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
@@ -84,6 +84,7 @@ function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
   const { current: streak } = dailyStreak(stats.daily, today());
   const best = stats.runs > 0 ? REACHED[stats.reached.reduce((b, n, i) => (n > 0 ? i : b), 0)] : null;
   const free = s.mode === 'free';
+  const introSeen = useTipSeen('intro');
   const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); };
   const playDaily = () => {
     if (s.mode !== 'daily') dispatch({ type: 'reset', mode: 'daily' });
@@ -100,8 +101,10 @@ function Home({ s, dispatch, setReelFor, stats, onGuess, onTwitch }: {
       <p className="daily-meta">
         {streak > 0 && <span>🔥 {streak}-day streak</span>}
         {best && <span>Best finish: {best}</span>}
-        {!streak && !best && <span>Draft five pros, then win the Major.</span>}
+        {!streak && !best && introSeen && <span>Draft five pros, then win the Major.</span>}
       </p>
+      {/* A first-time visitor's introduction, with the tagline that used to sit in the header (#101). It sits under the daily button so the button stays first. */}
+      <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><ThreeSteps compact /></Tip>
       {done && <DailyDone d={done} n={todayN} />}
       <div className="home__cards">
         <button className={`home__card ${free ? 'is-on' : ''}`} aria-pressed={free} onClick={() => dispatch({ type: 'reset', mode: 'free' })}>

@@ -22,6 +22,8 @@ async function draftAll(p) {
     if (await chip.count()) { await chip.click(); await p.waitForTimeout(200); }
   }
 }
+/** The top bar keeps stats, Twitch chat votes and a new run in a menu (#101). */
+const openMenu = (p) => p.click('[aria-label="More"]');
 async function page(viewport = { width: 1280, height: 900 }) {
   const p = await b.newPage({ viewport });
   const errs = []; p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && !/fonts|ERR_/.test(m.text()) && errs.push(m.text()));
@@ -41,6 +43,8 @@ async function run(viewport, tag) {
   await p.waitForSelector('button.cta');
   await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
+  const step = async () => (await p.textContent('.topbar [aria-current="step"]')).trim();
+  if (!(await step()).startsWith('Draft')) throw new Error(`the top bar should be on the Draft step, got "${await step()}"`);
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   // Five players, then the coach (round 6) and the bench player (round 7).
   for (let r = 0; r < 7; r++) {
@@ -157,8 +161,9 @@ async function run(viewport, tag) {
   }
   await p.screenshot({ path: `shots/${tag}-8-review.png`, fullPage: true });
   await p.reload(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
+  if (!(await step()).startsWith('Results') || (await p.locator('.topbar .stab.is-done').count()) !== 3) throw new Error(`the top bar should be on Results with three steps done, got "${await step()}"`);
   const finalSave = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
-  await p.click('[aria-label="Your stats"]');
+  await openMenu(p); await p.click('[aria-label="Your stats"]');
   const runs = (await p.textContent('.stat-tiles div b')).trim();
   if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
   await p.waitForTimeout(500); await p.screenshot({ path: `shots/${tag}-9-stats.png` });
@@ -233,7 +238,7 @@ async function duel() {
 async function guess() {
   const { p, errs } = await page({ width: 390, height: 844 });
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.locator('.tabs button', { hasText: 'Guess the pro' }).click();
+  await p.locator('.topbar [aria-label="Guess the pro"]').click();
   await p.waitForSelector('.guess__box input');
   for (const name of ['s1', 'niko', 'zyw', 'dev', 'donk', 'ropz', 'fallen', 'olof', 'karr', 'gla1']) {
     if (await p.$('.guess__answer')) break;
@@ -269,7 +274,7 @@ async function twitch() {
     window.__chat = (user, text) => window.__ws.onmessage({ data: `@display-name=${user} :${user}!${user}@${user}.tmi.twitch.tv PRIVMSG #testchan :${text}\r\n` });
   });
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
-  await p.click('[aria-label="Twitch chat votes"]');
+  await openMenu(p); await p.click('[aria-label="Twitch chat votes"]');
   await p.fill('.twitch-form input', 'testchan');
   await p.selectOption('.twitch-form select', '10');
   await p.locator('.twitch-form button.cta').click();
@@ -310,10 +315,10 @@ async function sound() {
   await p.waitForSelector('.reroll-row .ghost-btn');
   if (await heard(() => p.locator('.reroll-row .ghost-btn').click(), 600)) throw new Error('muted, but a reroll still made sound');
   await p.reload(); await p.waitForSelector('[aria-label="Turn sound on"]');
-  if (await heard(() => p.locator('[aria-label="Your stats"]').click())) throw new Error('mute did not survive a reload');
+  if (await heard(async () => { await openMenu(p); await p.locator('[aria-label="Your stats"]').click(); })) throw new Error('mute did not survive a reload');
   await p.keyboard.press('Escape');
   await p.locator('[aria-label="Turn sound on"]').click();
-  await p.locator('.tabs button', { hasText: 'Guess the pro' }).click();
+  await p.locator('.topbar [aria-label="Guess the pro"]').click();
   await p.fill('.guess__box input', 'zyw');
   await p.waitForSelector('.guess__suggest button');
   const notes = await heard(() => p.locator('.guess__suggest button').first().click(), 900);

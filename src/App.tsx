@@ -5,9 +5,8 @@ import { abandonDaily, dailyStarted, loadStats, recordDuel, recordRun } from './
 import { Duel, decodeDuel, duelCode } from './game/duel';
 import { BoardHost } from './ui/Board';
 import { Modal } from './ui/Modal';
-import { play, useSoundOn } from './ui/sound';
-import { track } from './analytics';
 import { useRunTracking } from './ui/useTracking';
+import { TopBar, View } from './ui/TopBar';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScreen } from './screens/Draft';
 import { ReadyScreen } from './screens/Lobby';
@@ -15,7 +14,7 @@ import { LiveScreen, PreviewScreen } from './screens/Match';
 import { FinalScreen } from './screens/Final';
 import { HelpModal, HelpTab } from './screens/Help';
 import { StatsModal } from './screens/Stats';
-import { ChatVoteBar, ChatVoteProvider, TwitchButton, TwitchPanel } from './ui/ChatVote';
+import { ChatVoteBar, ChatVoteProvider, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
 
 export default function App() {
@@ -70,47 +69,18 @@ function Game() {
   if (s.phase === 'preview' || s.phase === 'live') { title = G.STAGE_NAME[stageNow!]; kicker = `${s.duel ? 'Draft duel' : 'Major'} · Best of ${s.current?.bestOf ?? G.bestOfFor(stageNow!, s.t)}`; }
   if (s.phase === 'final') { title = s.duel ? 'Showmatch over' : 'Tournament over'; kicker = 'Results'; }
   // The second daily, Guess the pro, has its own tab and doesn't touch the draft run.
-  const [view, setView] = useState<'draft' | 'guess'>('draft');
+  const [view, setView] = useState<View>('draft');
   if (view === 'guess') { title = 'Guess the pro'; kicker = `Daily #${dailyNumber(today())} · Guess the pro`; }
 
   const showBoard = s.phase !== 'final' && view === 'draft';
-  // The very first screen keeps the tagline; once a case is open, phones drop it to leave room for the draft.
+  // The very first screen: on phones the empty team strip would only push the intro and the case down.
   const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
 
   return (
+    <>
+    <TopBar steps={steps.map((x) => x.label)} stepIdx={stepIdx} view={view} setView={setView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)}
+      abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''}`}>
-      <header className="masthead">
-        <div className="brand">
-          <h1 className="logo">Major Mayhem</h1>
-          <p className="tagline">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p>
-        </div>
-        <div className="utility" role="group" aria-label="Help, sound, chat votes, stats and new run">
-          <button className="hud-btn" onClick={() => setHelp('play')} aria-label="How to play and data sources"><span aria-hidden="true">?</span><HudLabel>How to play</HudLabel></button>
-          <SoundButton />
-          <TwitchButton onClick={() => setTwitch(true)} />
-          <button className="hud-btn" onClick={() => setShowStats(true)} aria-label="Your stats"><StatsIcon /><HudLabel>Stats</HudLabel></button>
-          <NewRunButton abandon={dailyStarted(s)} onConfirm={() => { setReelFor(null); dispatch({ type: 'reset' }); }} />
-        </div>
-      </header>
-
-      {/* Two different things, drawn differently: the game switch is a row of buttons, the progress trail is a numbered path you can't click. */}
-      <div className="navbar">
-        <nav className="tabs" aria-label="Game">
-          <button className={view === 'draft' ? 'is-on' : ''} aria-pressed={view === 'draft'} onClick={() => setView('draft')}>Draft a Major</button>
-          <button className={view === 'guess' ? 'is-on' : ''} aria-pressed={view === 'guess'} onClick={() => setView('guess')}>Guess the pro</button>
-        </nav>
-        {view === 'draft' && (
-          <ol className="trail" role="list" aria-label="Progress">
-            {steps.map((x, i) => (
-              <li key={x.label} className={`trail__step ${i === stepIdx ? 'is-on' : ''} ${i < stepIdx ? 'is-done' : ''}`} aria-current={i === stepIdx ? 'step' : undefined}>
-                <span className="trail__n" aria-hidden="true">{i < stepIdx ? '✓' : i + 1}</span>
-                <span className="trail__label">{x.label}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </div>
-
       <main className="console">
         <div className="console__head">
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
@@ -147,34 +117,7 @@ function Game() {
       {help && <HelpModal tab={help} onClose={() => setHelp(null)} />}
       {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
     </div>
-  );
-}
-
-/** The words beside a header icon: shown where there's room (desktop), hidden on phones, where the icon and its accessible name carry it. */
-const HudLabel = ({ children }: { children: React.ReactNode }) => <span className="hud-btn__label">{children}</span>;
-
-/** The master sound switch; on by default, and remembered. */
-function SoundButton() {
-  const [on, toggle] = useSoundOn();
-  return (
-    <button className="hud-btn" data-sfx="none" aria-pressed={on} aria-label={on ? 'Turn sound off' : 'Turn sound on'} title={on ? 'Sound on' : 'Sound off'}
-      onClick={() => { toggle(); if (!on) play('click'); track('sound', { on: !on }); }}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" />
-        {on ? <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" /> : <path d="M16 9.5l5 5M21 9.5l-5 5" />}
-      </svg>
-      <HudLabel>Sound</HudLabel>
-    </button>
-  );
-}
-
-function NewRunButton({ onConfirm, abandon }: { onConfirm: () => void; abandon: boolean }) {
-  const [ask, setAsk] = useState(false);
-  useEffect(() => { if (!ask) return; const t = setTimeout(() => setAsk(false), 3000); return () => clearTimeout(t); }, [ask]);
-  return ask ? (
-    <button className="hud-btn hud-btn--wide" onClick={() => { setAsk(false); onConfirm(); }} title={abandon ? "Today's daily will count as abandoned" : undefined}>{abandon ? 'Abandon daily?' : 'New run?'}</button>
-  ) : (
-    <button className="hud-btn" onClick={() => setAsk(true)} aria-label="Start a new run"><span aria-hidden="true">↺</span><HudLabel>New run</HudLabel></button>
+    </>
   );
 }
 
@@ -197,7 +140,3 @@ function DuelInvite({ duel, abandon, onAccept, onClose }: { duel: Duel | null; a
     </Modal>
   );
 }
-
-const StatsIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true"><path d="M5 20V12M12 20V5M19 20v-5" /></svg>
-);

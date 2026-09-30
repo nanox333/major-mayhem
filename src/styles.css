@@ -61,49 +61,57 @@ button { font: inherit; color: inherit; }
 
 .page { max-width: 1200px; margin: 0 auto; padding-inline: 16px; padding-block: 16px 32px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 
-/* ---------- masthead ---------- */
-.masthead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; }
-.brand { min-width: 0; }
-.logo {
-  margin: 0; font-family: var(--f-logo); font-weight: 400; font-size: clamp(2rem, 7.5vw, 3.6rem); line-height: 1; letter-spacing: .02em;
-  color: #f3f1ea; text-transform: uppercase; white-space: nowrap;
-  text-shadow: 0 2px 0 #000, 0 0 24px color-mix(in srgb, var(--accent) 25%, transparent);
-}
-.logo::after { content: ''; display: block; height: 4px; width: 42%; margin: 6px 0 0; background: linear-gradient(90deg, var(--t), transparent); }
-.tagline { margin: 6px 0 0; color: var(--muted); font-family: var(--f-read); font-size: .95rem; text-wrap: balance; }
-.utility { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+/* ---------- top bar (#101): mark and wordmark, progress steps, Guess the pro, help, sound and a menu ---------- */
+.topbar { position: relative; z-index: 20; background: var(--panel); border-bottom: 1px solid var(--line); }
+.topbar__in { max-width: 1200px; margin: 0 auto; padding-inline: 16px; min-height: 64px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: stretch; column-gap: 12px; }
+.brand { margin: 0; display: flex; align-items: center; gap: 10px; min-width: 0; }
+.logomark { flex: none; }
+.wordmark { font-family: var(--f-logo); font-weight: 400; font-size: 1.3rem; line-height: 1; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.wordmark b { font-weight: 400; color: var(--strong); }
+.wordmark i { font-style: normal; color: var(--accent); }
+/* The steps show progress and are not links; the underline and the check say where you are and what is done. */
+.stabs { list-style: none; margin: 0; padding: 0; display: flex; align-items: stretch; justify-content: center; gap: 4px; min-width: 0; }
+.stab { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; margin-bottom: -1px; border: 0; border-bottom: 3px solid transparent; background: none; color: var(--muted); font-family: var(--f-body); font-weight: 700; font-size: 1.02rem; }
+.stab.is-done { color: var(--text-2); }
+.stab.is-on { color: var(--strong); border-bottom-color: var(--accent); }
+.stab.is-on .stab__icon { color: var(--accent); }
+.stab__icon { position: relative; display: grid; place-items: center; }
+.stab__tick { position: absolute; right: -7px; bottom: -5px; width: 14px; height: 14px; display: grid; place-items: center; border-radius: 50%; background: var(--go); color: var(--on-go); font-size: .62rem; font-weight: 800; line-height: 1; }
+button.stab { cursor: pointer; }
+button.stab:hover { color: var(--strong); }
+.gamelink { align-self: center; display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: none; color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: 1.02rem; cursor: pointer; }
+.gamelink:hover { color: var(--strong); border-color: var(--control); }
+.gamelink.is-on { color: var(--strong); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.gamelink.is-on svg { color: var(--accent); }
+.gamelink__short { display: none; }
+.topbar__end { align-self: center; display: flex; align-items: center; gap: 6px; padding-left: 12px; border-left: 1px solid var(--line); }
 .hud-btn {
-  min-width: 38px; height: 38px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; border: 1px solid var(--line); border-radius: var(--r-m); background: var(--panel);
-  color: var(--accent); font-family: var(--f-body); font-weight: 700; font-size: 1.1rem;
-  transition: background .15s, color .15s, border-color .15s;
+  min-width: 40px; height: 40px; padding: 0 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; border: 1px solid transparent; border-radius: var(--r-m); background: none;
+  color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: 1.1rem; transition: background .15s, color .15s, border-color .15s;
 }
 .hud-btn:hover { background: var(--panel-2); color: var(--strong); }
-.hud-btn--wide { padding: 0 12px; font-size: .9rem; }
-/* Words beside the icons where there's room; on phones the icons and their accessible names carry it. */
-.hud-btn__label { display: none; color: var(--text-2); font-size: .92rem; }
-.hud-btn:hover .hud-btn__label { color: var(--strong); }
-@media (min-width: 861px) {
-  .hud-btn { height: 40px; padding: 0 14px; }
-  .hud-btn__label { display: inline; }
+.menu { position: relative; }
+.menu__panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; min-width: 230px; display: grid; gap: 2px; padding: 6px; border: 1px solid var(--line-2); border-radius: var(--r-m); background: var(--panel-2); box-shadow: var(--shadow); }
+.menu__item { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 44px; padding: 0 12px; border: 0; border-radius: var(--r-s); background: none; color: var(--text); font-family: var(--f-body); font-weight: 700; font-size: 1.02rem; text-align: left; cursor: pointer; }
+.menu__item:hover { background: var(--panel); }
+.menu__item.is-ask { background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--strong); }
+.menu__item svg { flex: none; color: var(--accent); }
+/* Tablet and phone: two rows, the mark and the buttons above and the steps (with Guess the pro at the end) below, each a tall tap target. */
+@media (max-width: 979px) {
+  .topbar__in { display: flex; flex-wrap: wrap; padding-inline: 10px; column-gap: 0; min-height: 0; }
+  .brand { order: 1; flex: 1 1 0; min-height: 52px; overflow: hidden; }
+  .wordmark { font-size: clamp(.8rem, 4.2vw, 1.2rem); }
+  .topbar__end { order: 2; flex: none; padding-left: 0; border-left: 0; gap: 4px; }
+  /* A line break: the mark and the buttons are always the first row, whatever the width. */
+  .topbar__in::after { content: ''; order: 3; flex: 0 0 100%; height: 0; }
+  .stabs { order: 4; flex: 0 0 80%; justify-content: stretch; gap: 0; border-top: 1px solid var(--line); }
+  .gamelink { order: 5; flex: 0 0 20%; align-self: stretch; height: auto; margin-bottom: -1px; border: 0; border-top: 1px solid var(--line); border-bottom: 3px solid transparent; border-radius: 0; flex-direction: column; justify-content: center; gap: 2px; padding: 4px 2px; font-size: .8rem; }
+  .gamelink.is-on { border-bottom-color: var(--accent); background: none; }
+  .gamelink__long { display: none; }
+  .gamelink__short { display: inline; }
+  .stab { flex: 1 1 0; min-width: 0; flex-direction: column; justify-content: center; gap: 2px; height: 54px; padding: 4px 2px; margin-bottom: -1px; font-size: .8rem; text-align: center; }
+  .stab__label { overflow-wrap: anywhere; }
 }
-
-/* ---------- navigation: the game switch and the progress trail ---------- */
-/* The switch is a row of buttons (solid gold when chosen); the trail is a numbered path you can't press. */
-.navbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; }
-.tabs { display: inline-flex; border: 1px solid var(--line); background: var(--panel); }
-.tabs button { padding: 9px 18px; background: none; border: 0; color: var(--text-2); font-family: var(--f-body); font-weight: 700; font-size: 1rem; cursor: pointer; }
-.tabs button + button { border-left: 1px solid var(--line); }
-.tabs button:hover:not(.is-on) { color: var(--strong); background: var(--panel-2); }
-.tabs button.is-on { background: var(--t); color: var(--on-accent); }
-.trail { list-style: none; margin: 0; padding: 0; display: flex; align-items: center; }
-.trail__step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-weight: 700; font-size: .95rem; }
-.trail__step + .trail__step::before { content: ''; width: 28px; height: 2px; margin-right: 8px; background: var(--line); }
-.trail__n { width: 26px; height: 26px; display: grid; place-items: center; border: 2px solid var(--line); border-radius: 50%; font-size: .8rem; }
-.trail__step.is-done { color: var(--text-2); }
-.trail__step.is-done .trail__n { border-color: var(--go); background: var(--go); color: var(--on-go); }
-.trail__step.is-done + .trail__step::before { background: var(--go); }
-.trail__step.is-on { color: var(--strong); }
-.trail__step.is-on .trail__n { border-color: var(--t); color: var(--t); }
 
 /* ---------- console ---------- */
 .console {
@@ -559,16 +567,9 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .speed button + button { border-left: 1px solid var(--line); }
 .speed button.is-on { background: var(--t); color: var(--on-accent); }
 .playback__note { flex-basis: 100%; margin: 0; text-align: right; }
-/* On phones the logo is wider than the space beside the buttons (it clipped below ~440px), so the row of buttons sits above it. */
 @media (max-width: 520px) {
-  .masthead { flex-direction: column-reverse; align-items: stretch; gap: 8px; }
-  .utility { flex-wrap: nowrap; justify-content: space-between; }
-  .brand { text-align: center; }
-  .logo::after { margin-inline: auto; background: linear-gradient(90deg, transparent, var(--t), transparent); }
-  .logo { font-size: clamp(1.9rem, 9vw, 2.4rem); }
   .hud__org { display: none; }
   .hud__tag { display: inline; }
-  .page:not(.phase-draft) .tagline { display: none; }
 }
 
 /* ---------- veto, pistols, clutches ---------- */
@@ -766,6 +767,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 
 /* ---------- onboarding: three steps, first-time tips, the help's details (#21) ---------- */
 .tip { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 8px 14px; width: min(100%, 680px); justify-self: center; padding: 10px 14px; border: 1px solid color-mix(in srgb, var(--ct) 55%, transparent); border-left-width: 4px; background: color-mix(in srgb, var(--ct) 10%, transparent); text-align: left; }
+.tip__lead { margin: 0 0 8px; font-size: 1rem; color: var(--strong); }
 .tip__text { min-width: 0; font-family: var(--f-read); font-size: .95rem; line-height: 1.45; color: var(--text-2); }
 .tip__text b { display: block; margin-bottom: 2px; font-family: var(--f-body); font-size: 1.02rem; color: var(--strong); }
 .steps, .modal__card .steps { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 10px; counter-reset: step; }
@@ -836,7 +838,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 /* At least 44px to tap, on phones and on any touch screen. */
 @media (max-width: 520px), (pointer: coarse) {
   .hud-btn { min-width: 44px; height: 44px; }
-  .ghost-btn, .back-btn, .seg button, .speed button, .tabs button, .subs__btns .ghost-btn { min-height: 44px; }
+  .ghost-btn, .back-btn, .seg button, .speed button, .subs__btns .ghost-btn { min-height: 44px; }
   .speed button { min-width: 44px; }
   .challenge input, .twitch-form input, .twitch-form select { min-height: 44px; }
   .modal__close { top: 2px; right: 4px; width: 44px; height: 44px; }
@@ -847,20 +849,7 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
   .side-btn { min-height: 64px; }
 }
 @media (max-width: 520px) {
-  /* Header: no tagline once a case is open, a smaller logo, and one row of buttons above it. */
   .page { padding-block: 8px 24px; gap: 8px; }
-  .masthead { gap: 4px 6px; }
-  .logo { font-size: clamp(1.6rem, 8vw, 2rem); }
-  .logo::after { margin-top: 3px; height: 3px; }
-  .tagline { display: none; }
-  .page.is-start .tagline { display: block; margin-top: 4px; font-size: .92rem; }
-  .navbar { flex-direction: column; align-items: stretch; gap: 8px; }
-  .tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .tabs button { padding-inline: 8px; }
-  /* The trail is four small numbers with the current step's name beside them. */
-  .trail { justify-content: center; }
-  .trail__step:not(.is-on) .trail__label { display: none; }
-  .trail__step + .trail__step::before { width: 20px; margin-right: 6px; }
   .strip { padding: 8px 10px 6px; }
   .strip__slots { gap: 4px; }
   .strip__slot > button, .strip__slot > div { min-height: 48px; padding: 4px 2px; }
@@ -922,10 +911,10 @@ img.photo { display: block; width: 100%; height: 100%; object-fit: cover; object
 .modal__card, .final__banner, .home__daily, .crash, .match-found, .knife, .veto { border-radius: var(--r-l); }
 .case-item, .agent, .lobby__row, .team-heading, .mvp-card, .review, .subs, .daily-done, .challenger, .buy, .home__card, .tip, .details details, .stat-tiles div,
 .achievements li, .new-ach, .chatvote, .guess__answer, .guess__empty, .guess__suggest, .reel, .versus__side, .hud, .sb, .syn, .side-btn, .board__map,
-.strip__slot > button, .strip__slot > div, .notes span, .cta, .hud-btn, .guess__photo, .mvp-card__photo, .lobby__avatar { border-radius: var(--r-m); }
+.strip__slot > button, .strip__slot > div, .notes span, .cta, .guess__photo, .mvp-card__photo, .lobby__avatar { border-radius: var(--r-m); }
 .ghost-btn, .back-btn, .slot-chip, .hint, .side-chip, .clue-key, .guess__row > span, .maps__pill, .offrole, .mvp-tag, .agent__main, .agent__flag, .badge-logo,
 .veto__map button, .history li, .kf, .report__rounds li, .guess__box input, .challenge input, .twitch-form input, .twitch-form select, .link-btn { border-radius: var(--r-s); }
-.seg, .speed, .tabs { border-radius: var(--r-s); overflow: hidden; }
+.seg, .speed { border-radius: var(--r-s); overflow: hidden; }
 .details details, .guess__suggest, .agent { overflow: hidden; }
 /* An input's outline has to be visible on its own (3:1), not only the text inside it. */
 .guess__box input, .challenge input, .twitch-form input, .twitch-form select { border-color: var(--control); }
