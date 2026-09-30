@@ -4,6 +4,22 @@ A running diary of what changed, what went wrong, and what we decided. Newest en
 
 ---
 
+## 30 September 2026 (later): the draft screen gets its three columns
+
+**Where we started.** With the palette and the bar in ([#100](https://github.com/nanox333/major-mayhem/issues/100), [#101](https://github.com/nanox333/major-mayhem/issues/101)), the next step was the screen the whole look is drawn around: the draft. On main it was a strip of seven icons over three cards that listed only nicks, then a second screen to see the players, with the radar taking a column beside it.
+
+**The frame ([#102](https://github.com/nanox333/major-mayhem/issues/102), [#103](https://github.com/nanox333/major-mayhem/issues/103)).** From 1280 px there are three columns: your lineup, the case, a sidebar. The page widens to 1360 px for it, because three cards with five rows each need about 200 px apiece. Below that the seven-slot strip stays on top and the sidebar drops under the case, so a phone doesn't get anything it can't fit. The radar is gone from the draft; the lobby and the match keep it. The heading is one line, "Daily #2 · Draft · Round 3 of 7 · Choose your player", with the action in the accent colour. At 1440×900 the whole screen, footer included, is 901 px tall.
+
+**The cards and the pick ([#104](https://github.com/nanox333/major-mayhem/issues/104), [#105](https://github.com/nanox333/major-mayhem/issues/105)).** Each team card now lists all five players as rows, so you can compare fifteen players at once instead of picking a team blind. Clicking a row selects the player; a bar shows the slot they would fill, what that means ("main role", "secondary role, small penalty") and a Draft button. I chose select-then-draft over drafting on the first click because a draft has no undo: one stray tap on a phone would have been permanent. It is still one screen instead of two. Drafting dispatches the same two reducer actions as before (open the team, then draft), so a seed plays out exactly as it did. I checked that two ways: a test that replays dailies with and without browsing every team first and compares the runs, and the end-to-end run, which finishes with the same team, the same three matches and the same MVP as before the change. Hard mode has no default slot, no role chips and no fit notes, as before. On a phone one card is open at a time and each player is one line, because three full cards were 1,500 px tall. Twitch chat now votes once, on a player.
+
+**The sidebar ([#107](https://github.com/nanox333/major-mayhem/issues/107), [#108](https://github.com/nanox333/major-mayhem/issues/108), [#109](https://github.com/nanox333/major-mayhem/issues/109)).** The mockup's seven-segment chemistry meter is a list of links plus one word. The word comes from the same value the lobby uses (0 to 3, minus penalties): None yet, Some, Good, Strong, or Clashing when the two-AWPers penalty outweighs the rest. With five picks the rows are exactly the lobby's; a test checks that, including a lineup drafted out of slot order. A lineup of one player doesn't get an "all one era" bonus, and hard mode leaves out the AWPer row, because it names a role. The draft hint is built from the open slots only ("You still need an AWPer, an Entry and a Lurker"). The mode card is read only for now.
+
+**What is not done.** Flags and real names (#106) need data that has to be checked against sources, so the rows show the country code for now. Switching modes from the sidebar and deciding what Hard mode is (#107) wait for a decision. The phone "lineup sheet" from the design notes isn't built; on a phone the strip's caption and the chemistry card cover it.
+
+— Claude
+
+---
+
 ## 30 September 2026: a new look starts with the colours and one slim bar
 
 **Where we started.** v1.3 was merged, and v1.5 is the new look, drawn from three target mockups (the draft screen, the home screen, Guess the pro). Before any screen is rebuilt, two things have to exist that everything else inherits: a palette and a top bar. Those are [#100](https://github.com/nanox333/major-mayhem/issues/100) and [#101](https://github.com/nanox333/major-mayhem/issues/101). The design questions were answered first (#98, #99): the introduction stays but is presented better, the tabs replace the numbered trail, the radar leaves the draft screen, and live chemistry replaces a seven-segment meter.

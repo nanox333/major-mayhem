@@ -28,6 +28,11 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **A new look:** near-black navy panels with one orange accent, flat fills with thin borders and small rounded corners instead of chamfered gradients. Every colour is a named value in one place, inputs have an outline you can see, and a test checks the text and outline colours against WCAG contrast ([#100]).
 - **One slim top bar** replaces the big logo, the row of labelled buttons and the game switch: the mark and wordmark, Guess the pro, help, sound and a menu that holds Stats, Twitch chat votes and New run. It is one row at every width, and on a phone Guess the pro moves into the menu ([#101]).
 - **The four steps (Draft, Lobby, Major, Results) sit in the head of the game panel**, beside the title, and not in the top bar: the current step is filled and underlined, finished steps are ticked, and on a phone only the current step keeps its name on screen ([#140]).
+- **The draft screen has three columns on wide screens:** your lineup on the left (photo, nick, team and year, the team's logo, and "Add player" where a slot is still open), the case in the middle, and a sidebar with the game mode, live team chemistry and a draft hint. The radar no longer takes room while you draft; the lobby and the match still have it ([#102], [#107]).
+- **One line says where you are and what to do** ("Daily #2 · Draft · Round 3 of 7 · Choose your player"), an "Opened case" bar sits over the cards, and the reroll is "Spin again · 2 spins left" ([#103]).
+- **The case shows all fifteen players at once.** Each team card has its logo, a placement in words and an icon ("1st place", "5th–8th place"), and a row per player with photo, nick, country, main role and any chemistry bonus. Pick a player, see which slot they fill and what that means, then Draft: no more choosing a team blind and finding out on the next screen. Hard mode still shows no roles and gives no default slot. A seed plays out exactly as before, and on a phone one card is open at a time ([#104], [#105]).
+- **Twitch chat votes once, on a player,** instead of on the team and then the player ([#105]).
+- **Live team chemistry** lists the links your picks make (same country, same org, famous duos, one era) with one word for the total: None yet, Some, Good or Strong. An info button opens the help on Chemistry. **The draft hint** says which slots you still need, from the open slots only ([#108], [#109]).
 - Achievement dates use the same local day as the daily, not UTC ([#26]).
 - **Draft cards:** one "Draft as …" button per slot, with the role fit written underneath; the name no longer doubles as the Liquipedia link; unavailable players say exactly why; subs show the role they take and the fit ([#17]).
 - "Draft review" is now **Pick strength**, with a note on what it does and doesn't measure ([#18]).
@@ -104,4 +109,11 @@ The first tagged release, covering everything since the initial draft game.
 [#100]: https://github.com/nanox333/major-mayhem/issues/100
 [#101]: https://github.com/nanox333/major-mayhem/issues/101
 [#140]: https://github.com/nanox333/major-mayhem/issues/140
+[#102]: https://github.com/nanox333/major-mayhem/issues/102
+[#103]: https://github.com/nanox333/major-mayhem/issues/103
+[#104]: https://github.com/nanox333/major-mayhem/issues/104
+[#105]: https://github.com/nanox333/major-mayhem/issues/105
+[#107]: https://github.com/nanox333/major-mayhem/issues/107
+[#108]: https://github.com/nanox333/major-mayhem/issues/108
+[#109]: https://github.com/nanox333/major-mayhem/issues/109
 [#63]: https://github.com/nanox333/major-mayhem/issues/63
