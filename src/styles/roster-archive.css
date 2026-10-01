@@ -1,0 +1,65 @@
+/* Roster archive, in the editorial system (docs/design/editorial-system.md): rows and rules, no fills, no glow, orange only for focus. */
+
+.modal__card--wide { width: min(820px, 100%); max-height: 90vh; padding: 28px 32px 32px; }
+
+.ra-intro h3 { margin: 0 0 6px; font-size: 2.2rem; letter-spacing: .02em; line-height: 1; color: var(--strong); text-transform: none; }
+.ra-intro p { margin: 0 0 20px; max-width: 54ch; color: var(--muted); }
+
+.roster-filters { gap: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.roster-filters label { font-size: .8rem; color: var(--muted); }
+.ra-count { margin: 12px 0 0; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ra-empty { padding: 32px 0; }
+
+/* List: a year, a rule, then one row per lineup. */
+.ra-year { margin-top: 20px; }
+.ra-year h4 { margin: 0; padding: 0 0 8px; border-bottom: 1px solid var(--line-2, var(--line)); font-size: 1.1rem; letter-spacing: .1em; color: var(--text-2); }
+.ra-rows { list-style: none; margin: 0; padding: 0; }
+.ra-rows > li { border-bottom: 1px solid var(--line); }
+.ra-row { width: 100%; display: grid; grid-template-columns: 40px minmax(0, 1fr) 96px minmax(0, 1.6fr) 18px; align-items: center; column-gap: 16px; min-height: 64px; padding: 10px 4px; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.ra-row:hover { background: var(--panel-2); }
+.ra-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ra-row > svg:last-child { color: var(--muted); }
+.ra-row__main { display: grid; min-width: 0; }
+.ra-row__main b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; font-size: 1rem; color: var(--strong); }
+.ra-row__main small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .82rem; color: var(--muted); }
+.ra-row__result { font-size: .85rem; font-weight: 600; color: var(--text-2); }
+.ra-row__result--champions { font-weight: 700; color: var(--strong); }
+.ra-row__nicks { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .85rem; color: var(--muted); }
+
+/* Detail: a heading, then the lineup as rows. */
+.roster-detail { margin-top: 12px; }
+.ra-head { display: flex; align-items: center; gap: 18px; padding: 0 40px 20px 0; border-bottom: 1px solid var(--line-2, var(--line)); }
+.ra-head__event { margin: 0 0 4px; font-size: .85rem; color: var(--muted); }
+.ra-head h3 { margin: 0; overflow-wrap: anywhere; font-size: clamp(2rem, 5vw, 2.8rem); line-height: 1; letter-spacing: .01em; text-transform: none; color: var(--strong); }
+.ra-head__meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 10px 0 0; font-size: .9rem; color: var(--text-2); }
+.ra-head__meta b { font-weight: 700; color: var(--strong); }
+
+.ra-note { margin: 16px 0 0; padding: 10px 12px; border: 1px solid var(--control, var(--line)); border-radius: var(--r-s); }
+
+.ra-people { list-style: none; margin: 0 0 20px; padding: 0; }
+.ra-people li { display: flex; align-items: center; gap: 16px; min-height: 76px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ra-people li > :is(img, svg) { flex: none; width: 56px; height: 56px; object-fit: cover; object-position: center top; border-radius: var(--r-s); background: var(--inset); }
+.ra-people__text { display: grid; gap: 2px; min-width: 0; }
+.ra-people__text b { overflow-wrap: anywhere; font-size: 1.1rem; font-weight: 700; color: var(--strong); }
+.ra-people__text small { display: flex; align-items: center; flex-wrap: wrap; gap: 0 6px; font-size: .85rem; color: var(--muted); }
+.ra-people__text .flag { flex: none; margin-right: 2px; border-radius: 2px; }
+.ra-people__coach { min-height: 56px !important; }
+.ra-people__label { flex: none; width: 56px; font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+.ra-fine { margin: 0 0 12px; font-size: .85rem; color: var(--muted); }
+.ra-links { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.ra-links a, .ra-links span { font-size: .9rem; }
+.ra-links a { color: var(--accent-hi); text-underline-offset: 3px; }
+.roster-related { margin-top: 6px; }
+
+@media (max-width: 760px) {
+  .modal__card--wide { padding: 52px 16px max(24px, env(safe-area-inset-bottom)); }
+  .ra-intro h3 { font-size: 1.8rem; }
+  .ra-row { grid-template-columns: 40px minmax(0, 1fr) 18px; grid-template-areas: 'badge main arrow' '. result result' '. nicks nicks'; row-gap: 2px; padding-block: 12px; }
+  .ra-row > :nth-child(1) { grid-area: badge; }
+  .ra-row__main { grid-area: main; }
+  .ra-row__result { grid-area: result; }
+  .ra-row__nicks { grid-area: nicks; white-space: normal; }
+  .ra-row > svg:last-child { grid-area: arrow; }
+  .ra-head { padding-right: 32px; gap: 14px; }
+}

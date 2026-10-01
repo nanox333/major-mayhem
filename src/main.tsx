@@ -8,6 +8,7 @@ import './styles/editorial-draft.css';
 import './styles/editorial-live.css';
 import './styles/editorial-results.css';
 import './styles/editorial-finish.css';
+import './styles/roster-archive.css';
 import { initAnalytics } from './analytics';
 import { initSound } from './ui/sound';
 

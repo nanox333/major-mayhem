@@ -51,7 +51,7 @@ export function TeamBadge({ roster, size = 40 }: { roster: Roster; size?: number
       </defs>
       <path d="M20 2 L36 9 V22 C36 30 29 36 20 38 C11 36 4 30 4 22 V9 Z" fill={`url(#bg-${roster.id})`} stroke={roster.color} strokeWidth="1.6" />
       <path d="M20 6 L32 11.5 V22 C32 28 27 32.6 20 34.3" fill="none" stroke={roster.color} strokeOpacity=".25" strokeWidth="1" />
-      <text x="20" y="24.5" textAnchor="middle" fontFamily="'Bebas Neue', Impact, sans-serif" fontSize={fs} letterSpacing=".4" fill={roster.color}>{roster.tag}</text>
+      <text x="20" y="24.5" textAnchor="middle" fontFamily="'Saira Condensed', 'Arial Narrow', sans-serif" fontWeight="800" fontSize={fs + 1} letterSpacing=".4" fill={roster.color}>{roster.tag}</text>
     </svg>
   );
 }
@@ -75,7 +75,7 @@ export function Avatar({ player, roster, className }: { player: Player; roster: 
       <rect x="21" y="33" width="8" height="13" rx="3" fill="#0b1620" />
       <rect x="71" y="33" width="8" height="13" rx="3" fill="#0b1620" />
       <path d="M14 100 C16 72 32 60 50 60 C68 60 84 72 86 100 Z" fill={`url(#${gid})`} />
-      <text x="50" y="88" textAnchor="middle" fontFamily="'Bebas Neue', Impact, sans-serif" fontSize="17" fill="#f1e5c8" fillOpacity=".85">{player.nick.slice(0, 2).toUpperCase()}</text>
+      <text x="50" y="88" textAnchor="middle" fontFamily="'Saira Condensed', 'Arial Narrow', sans-serif" fontWeight="800" fontSize="18" fill="#f1e5c8" fillOpacity=".85">{player.nick.slice(0, 2).toUpperCase()}</text>
     </svg>
   );
 }

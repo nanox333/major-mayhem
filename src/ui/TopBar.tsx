@@ -46,9 +46,8 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
       <div className="topbar__in">
         <h1 className="brand">
           {/* The wordmark is the way home, from anywhere; a run in progress is never touched by going there (#115). */}
-          {view === 'home'
-            ? <><LogoMark /><span className="wordmark"><b>Major</b> <i>Mayhem</i></span></>
-            : <button type="button" className="brand__btn" onClick={() => setView('home')} aria-label="Major Mayhem: home" data-sfx="none"><LogoMark /><span className="wordmark"><b>Major</b> <i>Mayhem</i></span></button>}
+          {/* On the home it stays a button, so it never turns into dead text: it just scrolls back to the top. */}
+          <button type="button" className="brand__btn" onClick={() => { setView('home'); if (view === 'home') window.scrollTo({ top: 0 }); }} aria-label="Major Mayhem: home" data-sfx="none"><LogoMark /><span className="wordmark"><b>Major</b> <i>Mayhem</i></span></button>
         </h1>
 
         <nav className="shell-nav" aria-label="Game modes">

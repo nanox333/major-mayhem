@@ -7,9 +7,10 @@
 @font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 600; font-display: swap; src: url('./fonts/saira-condensed-latin-600-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url('./fonts/saira-condensed-latin-700-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 800; font-display: swap; src: url('./fonts/saira-condensed-latin-800-normal.woff2') format('woff2'); }
-@font-face { font-family: 'Rajdhani'; font-style: normal; font-weight: 500; font-display: swap; src: url('./fonts/rajdhani-latin-500-normal.woff2') format('woff2'); }
-@font-face { font-family: 'Rajdhani'; font-style: normal; font-weight: 600; font-display: swap; src: url('./fonts/rajdhani-latin-600-normal.woff2') format('woff2'); }
-@font-face { font-family: 'Rajdhani'; font-style: normal; font-weight: 700; font-display: swap; src: url('./fonts/rajdhani-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400; font-display: swap; src: url('./fonts/inter-latin-400-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 500; font-display: swap; src: url('./fonts/inter-latin-500-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 600; font-display: swap; src: url('./fonts/inter-latin-600-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 700; font-display: swap; src: url('./fonts/inter-latin-700-normal.woff2') format('woff2'); }
 
 :root {
   /* Three surfaces; inset reuses the base. Rules group content without extra containers. */
@@ -43,9 +44,9 @@
   --glow: 0 0 0 1px var(--accent);
   --f-logo: 'Saira Stencil One', Impact, sans-serif;
   --f-head: 'Saira Condensed', 'Arial Narrow', sans-serif;
-  --f-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  /* Paragraphs and notes: the system face, which reads better at length than the game's own. The condensed face is for headings. */
-  --f-read: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --f-body: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  /* Paragraphs and notes: Inter, bundled in src/fonts so it looks the same on every device. The condensed face is for headings. */
+  --f-read: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --board: min(470px, 100%);
   /* One container for the top bar and every screen (#149): they share the same left and right edges at every width. */
   --wrap: 1200px;
@@ -121,7 +122,7 @@ html { font-size: clamp(16px, 0.42vw + 9.5px, 21px); }
 @media (min-width: 1280px) { :root { --wrap: 1360px; } }
 @media (min-width: 1800px) { :root { --wrap: 1520px; } }
 @media (min-width: 2300px) { :root { --wrap: 1720px; } }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--f-body); font-weight: 400; font-size: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--f-body); font-synthesis: none; font-weight: 400; font-size: 1rem; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 /* Links are the accent, not the browser's blue (#153): underlined, with a stronger underline on hover and a focus ring. */
 a { color: var(--accent-hi); text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
 a:hover { text-decoration-color: currentColor; }
@@ -1513,14 +1514,6 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 .roster-filters { display: grid; grid-template-columns: minmax(0, 2fr) 1fr 1fr; gap: 12px; }
 .roster-filters label { display: grid; gap: 4px; color: var(--text-2); }
 .roster-filters input, .roster-filters select { width: 100%; min-width: 0; min-height: 44px; border: 1px solid var(--control); border-radius: var(--r-m); background: var(--inset); color: var(--text); font: inherit; padding: 8px; }
-.roster-list, .roster-people { padding: 0 !important; margin: 12px 0; list-style: none; display: grid; gap: 8px; }
-.roster-list button { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 64px; text-align: left; background: var(--panel-2); color: var(--text); font: inherit; border: 1px solid var(--line); padding: 10px; border-radius: var(--r-m); cursor: pointer; }
-.roster-list span, .roster-people li > div { display: grid; min-width: 0; }
-.roster-list small, .roster-people small { color: var(--text-2); }
-.roster-detail__head { display: flex; gap: 16px; align-items: center; margin: 12px 0; padding-right: 24px; }
-.roster-detail__head h3 { overflow-wrap: anywhere; }
-.roster-people li { display: flex; gap: 12px; align-items: center; padding: 8px; background: var(--inset); border-radius: var(--r-m); }
-.roster-people li > img, .roster-people li > .avatar { width: 44px; height: 44px; object-fit: cover; flex-shrink: 0; }
 .roster-related { display: flex; flex-wrap: wrap; gap: 8px; }
 .src-links { flex-wrap: wrap; gap: 12px; }
 .src-links a { min-height: 44px; display: inline-flex; align-items: center; }
@@ -1547,7 +1540,7 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 .match-five { grid-column: 1; grid-row: 1 / span 2; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-l); background: var(--panel); }
 .match-five h3, .match-feed h3 { font-family: var(--f-head); font-size: 1.1rem; margin: 0 0 10px; }
 .match-five > div { display: flex; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
-.match-five > div > img, .match-five > div > .avatar { width: 38px; height: 38px; object-fit: cover; }
+.match-five > div > :is(img, svg, .avatar) { width: 38px; height: 38px; object-fit: cover; }
 .match-five span { display: grid; min-width: 0; }
 .match-five small { color: var(--text-2); overflow-wrap: anywhere; }
 .match-centre { grid-column: 2; min-width: 0; }

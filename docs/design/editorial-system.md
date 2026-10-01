@@ -8,7 +8,7 @@ This implements issue #200 and supplies the shared foundation for #201–#204. T
 
 Chalk `#f2f0e9` is the principal dark text. Orange `#f37a30` marks the primary action and selection; light orange is deliberately darker (`#a94a06`) to remain readable. CT blue and outcome colors always accompany words, letters or symbols. `--muted-2` is decoration only. `--control` supplies required control boundaries, while softer `--line` groups ordinary content. High contrast raises these boundaries and strengthens focus to 3px.
 
-Body copy uses the local system sans-serif stack at normal weight; short display headings use the existing bundled Saira Condensed. Draft player names use strong regular text rather than condensed metadata. The stencil wordmark stays Major Mayhem. Scores use tabular numerals. Font size remains user-zoomable; no fixed-height text containers.
+Body copy uses bundled Inter (`src/fonts`, SIL OFL, so it matches on every device) with the system stack as fallback, at normal weight; short display headings use the existing bundled Saira Condensed. Draft player names use strong regular text rather than condensed metadata. The stencil wordmark stays Major Mayhem. Scores use tabular numerals. Font size remains user-zoomable; no fixed-height text containers.
 
 Spacing is 4, 8, 12, 16, 24 and 32px (`--space-1` through `--space-6`). Radius is 3px for small controls, 5px for cards and 8px for dialogs. Flat fills and structural rules replace decorative glow. Shadows are reserved for overlays.
 
@@ -20,7 +20,7 @@ The shared shell aligns its mark, content and page gutters. Desktop mode navigat
 
 ## Assets and validation
 
-No new network-loaded fonts, generated portraits, logos or runtime dependencies are introduced. Saira fonts remain bundled under SIL OFL (licenses in `assets-src/fonts`); normal reading uses operating-system fonts. Existing photos, logos and radar assets keep their existing credits and offline embedding. Page images are reference only.
+No new network-loaded fonts, generated portraits, logos or runtime dependencies are introduced. Saira and Inter fonts are bundled under SIL OFL (Saira licenses in `assets-src/fonts`, Inter's in `src/fonts`); nothing loads from a font CDN. Existing photos, logos and radar assets keep their existing credits and offline embedding. Page images are reference only.
 
 The contrast suite checks body/secondary/muted/accent/side/outcome text at 4.5:1 and control/focus boundaries at 3:1 across dark, light and both high-contrast palettes. Responsive browser checks must include 320, 375, 768, 1440 and 1920px, keyboard focus, 200% zoom and reduced motion. Record build gzip delta and identical-state before/after screenshots in the implementation PR; do not claim conceptual images as measured browser output.
 

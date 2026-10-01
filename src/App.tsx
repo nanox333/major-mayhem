@@ -103,7 +103,8 @@ function Game() {
   if (s.phase === 'final') { title = s.duel ? 'Showmatch over' : 'Tournament over'; kicker = 'Results'; }
   // The home is the first page, and anywhere a run isn't under way; a saved run resumes where it was (#115). Guess the pro doesn't touch the run.
   const atStart = s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
-  const [chosen, setView] = useState<View>('draft');
+  // Every visit opens on the home; a saved run is one "Continue" away, never resumed on load.
+  const [chosen, setView] = useState<View>('home');
   // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
   const backView: View = atStart && s.mode !== 'duel' ? 'home' : 'draft';
   const view: View = chosen === 'draft' ? backView : chosen;

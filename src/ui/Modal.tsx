@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
 
 /** The dialog shell every popup shares: Escape or a click outside closes it, focus moves in and stays in, and goes back to the opener on close. */
-export function Modal({ label, onClose, small, sheet, children }: { label: string; onClose: () => void; small?: boolean; sheet?: boolean; children: React.ReactNode }) {
+export function Modal({ label, onClose, small, sheet, wide, children }: { label: string; onClose: () => void; small?: boolean; sheet?: boolean; wide?: boolean; children: React.ReactNode }) {
   const card = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
@@ -29,7 +29,7 @@ export function Modal({ label, onClose, small, sheet, children }: { label: strin
   }, []);
   return createPortal(
     <div className={`modal ${sheet ? 'modal--sheet' : ''}`} role="dialog" aria-modal="true" aria-label={label} onClick={() => close.current()}>
-      <div className={`modal__card ${small ? 'modal__card--small' : ''}`} ref={card} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
+      <div className={`modal__card ${small ? 'modal__card--small' : ''} ${wide ? 'modal__card--wide' : ''}`} ref={card} tabIndex={-1} onClick={(e) => e.stopPropagation()}>
         <button className="modal__close" onClick={() => close.current()} aria-label="Close">×</button>
         {children}
       </div>

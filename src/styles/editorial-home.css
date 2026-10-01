@@ -4,7 +4,7 @@
 .home-invitation__copy { min-width: 0; }
 .home-kicker { margin: 0 0 14px; color: var(--accent); font-family: var(--f-head); font-weight: 800; text-transform: uppercase; letter-spacing: .07em; font-size: 1rem; }
 .home-kicker span { margin-left: .4em; }
-.home-invitation h1 { margin: 0; color: var(--strong); font-family: var(--f-head); font-size: clamp(3rem, 6.9vw, 7rem); font-weight: 900; line-height: .98; letter-spacing: -.025em; }
+.home-invitation h1 { margin: 0; color: var(--strong); font-family: var(--f-head); font-size: clamp(3rem, 6.9vw, 7rem); font-weight: 800; line-height: .98; letter-spacing: -.025em; }
 .home-invitation h1 em { color: var(--accent); font-style: normal; }
 .home-invitation__intro { margin: 20px 0 12px; font-size: clamp(1rem, 1.5vw, 1.25rem); max-width: 38ch; line-height: 1.5; }
 .home-daily-status { color: var(--muted); font-size: .95rem; line-height: 1.55; max-width: 53ch; }
@@ -30,7 +30,7 @@
 .home-case-mark { --accent: #ff7a26; --panel-2: #111; position: absolute; left: 39%; top: 46%; transform: translate(-50%,-50%) rotate(7deg); }
 .home-case-mark .logomark { display: block; }
 .home-mode-art--guess { grid-row: 1 / 6; align-self: end; margin-bottom: -24px; }
-.home-pro-question { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); color: #ff7a26; font-family: var(--f-head); font-size: clamp(3rem,5vw,5.5rem); font-weight: 900; line-height: 1; }
+.home-pro-question { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); color: #ff7a26; font-family: var(--f-head); font-size: clamp(3rem,5vw,5.5rem); font-weight: 800; line-height: 1; }
 .home-mode-label { margin: 0 0 8px; grid-column: 1; color: var(--accent); text-transform: uppercase; font-family: var(--f-head); font-weight: 800; letter-spacing: .09em; font-size: .85rem; }
 .editorial-home .mcard__title { grid-column: 1; text-transform: none; letter-spacing: -.02em; font-size: 2rem; line-height: 1.05; margin: 0 0 14px; overflow-wrap: anywhere; }
 .editorial-home .mcard__text { grid-column: 1; font-size: 1rem; line-height: 1.5; margin: 0; }
