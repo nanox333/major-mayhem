@@ -8,7 +8,7 @@ import caseArt from '../assets/home/case.svg';
 import proArt from '../assets/home/pro-silhouette.svg';
 import { LogoMark } from '../ui/TopBar';
 import { Avatar } from '../ui/art';
-import { ArrowRightIcon, CaseIcon, FlagIcon, FlameIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
+import { ArrowRightIcon, CaseIcon, ClockIcon, FlagIcon, FlameIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
 import { dismissTip, useTipSeen } from '../ui/tips';
 import { useCountdown } from '../ui/useCountdown';
 import { DailyDone, ModePicker } from './Modes';
@@ -78,7 +78,7 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
       <section className="home-invitation" aria-labelledby="home-invitation-title">
         <div className="home-invitation__copy">
           <p className="home-kicker">Daily challenge <span>#{todayN}</span></p>
-          <h1 id="home-invitation-title">Five players.<br /><em>One Major.</em></h1>
+          <h1 id="home-invitation-title"><span>Five players.</span><em>One Major.</em></h1>
           <p className="home-invitation__intro">Draft from Major history. See how far your team goes.</p>
           <div className="home-daily-status">
             {home.daily === 'done' && doneToday
@@ -94,6 +94,7 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
               <span className="cta__main">{action}<ArrowRightIcon size={20} /></span>
             </button>
             <div className="home-daily-clock">
+              <ClockIcon size={20} />
               <span aria-hidden="true">Next daily in <b className="clock clock--inline">{cd.clock}</b></span>
               <span className="sr">{cd.spoken}</span>
               <small>At your local midnight</small>
@@ -182,7 +183,7 @@ function LineupArt({ compact = false }: { compact?: boolean }) {
   return <svg className={`home-lineup-art ${compact ? 'home-lineup-art--compact' : ''}`} viewBox={compact ? '0 0 500 260' : '0 0 500 310'} aria-hidden="true" focusable="false">
     {[0, 1, 2, 3, 4].map((i) => <g key={i} transform={`translate(${15 + i * 97},0)`}>
       <text x="41" y="25" textAnchor="middle" className="home-lineup-art__number">{i + 1}</text>
-      <rect x="3" y="40" width="76" height="135" fill="var(--inset)" stroke="var(--line)" />
+      <rect x="3" y="40" width="76" height="135" fill="var(--inset)" stroke={i === 0 ? 'var(--accent)' : 'var(--control)'} strokeWidth={i === 0 ? 2 : 1} rx="3" />
       <circle cx="41" cy="82" r="16" fill="var(--muted)" opacity=".3" />
       <path d="M15 135v-14c0-30 52-30 52 0v14" fill="var(--muted)" opacity=".3" />
       <path d="M35 153h12M41 147v12" stroke="var(--text)" strokeWidth="2" />
