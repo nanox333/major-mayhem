@@ -1,0 +1,99 @@
+/* The draft's art and effects pass (#225): the arena behind the view, team montages on the cards, a selected-player bay, and the three-lane case opening.
+   Everything here is scoped to .is-scene (the active draft view) so Home, Guess and the match keep their own looks. Light theme and high contrast
+   keep the flat editorial surfaces: the scene is hidden and the tinting below only applies on dark. */
+
+/* ---------- the arena ---------- */
+/* Two layers: the rig sits at the top of the page and scrolls away with the header, so it never competes with the cards; the crowd stays along the
+   bottom of the window. Both fade out toward the content, which sits on near-solid surfaces. */
+.draft-scene { pointer-events: none; overflow: hidden; z-index: -1; }
+.draft-scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.draft-scene--rig { position: absolute; inset: 0 0 auto 0; height: 560px; -webkit-mask-image: linear-gradient(180deg, #000 0, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, #000 0, #000 55%, transparent 100%); }
+.draft-scene--rig::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 52% 70% at 12% 34%, rgba(11, 12, 11, .8), transparent 72%); }
+.draft-scene--floor { position: fixed; inset: auto 0 0 0; height: 170px; opacity: .45; -webkit-mask-image: linear-gradient(0deg, #000 0, transparent 100%); mask-image: linear-gradient(0deg, #000 0, transparent 100%); }
+:root[data-theme="light"] .draft-scene, :root[data-contrast="high"] .draft-scene { display: none; }
+@media (forced-colors: active) { .draft-scene { display: none; } }
+
+.is-scene .console { background: transparent; }
+.is-scene .console__title { font-size: clamp(2.3rem, 4.4vw, 3.8rem); line-height: 1.02; letter-spacing: -.015em; text-transform: none; }
+.is-scene .console__title em { color: var(--accent); font-style: normal; }
+.console__picks { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0 0; color: var(--text-2); font-size: .95rem; }
+.console__picks b { color: var(--strong); font-weight: 700; font-variant-numeric: tabular-nums; }
+.console__pips { display: inline-flex; gap: 3px; }
+.console__pips i { width: 26px; height: 8px; border-radius: 2px; background: color-mix(in srgb, var(--text) 18%, transparent); }
+.console__pips i.is-done { background: var(--accent); }
+.console__pips i.is-now { background: color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ---------- team cards ---------- */
+:root:not([data-theme="light"]) .is-scene .case-card { border-color: color-mix(in srgb, var(--team, var(--accent)) 34%, var(--line)); background: color-mix(in srgb, var(--team, var(--accent)) 5%, #0d0f0e); box-shadow: 0 16px 36px -22px rgba(0, 0, 0, .9); overflow: hidden; }
+:root:not([data-theme="light"]) .is-scene .case-card__top { position: relative; isolation: isolate; min-height: 152px; border-top: 3px solid var(--team, var(--accent)); border-bottom-color: color-mix(in srgb, var(--team, var(--accent)) 40%, var(--line));
+  background: linear-gradient(100deg, color-mix(in srgb, var(--team, var(--accent)) 32%, #0b0c0b), color-mix(in srgb, var(--team, var(--accent)) 12%, #0b0c0b) 58%, #0b0c0b); }
+.is-scene .case-card__top > :not(.montage) { position: relative; z-index: 1; }
+/* The names keep the left 58% of the header to themselves (and wrap if they must); the faces own the rest and fade into the wash on their left edge. */
+.is-scene .case-card__top { position: relative; isolation: isolate; }
+.is-scene .case-card__id { max-width: 54%; }
+.montage { position: absolute; inset: 0 0 0 auto; width: 44%; z-index: 0; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 38%); mask-image: linear-gradient(90deg, transparent 0, #000 38%); }
+.montage__mark { position: absolute; right: 10%; top: 50%; height: 150%; width: auto; transform: translateY(-50%); opacity: .1; filter: grayscale(1) brightness(1.6); }
+.montage__faces { position: absolute; inset: 0 -4px 0 0; display: flex; align-items: stretch; }
+.montage__faces img { flex: 1 1 0; min-width: 0; max-width: 64px; margin-left: -9px; object-fit: cover; object-position: center 14%; clip-path: polygon(24% 0, 100% 0, 76% 100%, 0 100%); filter: contrast(1.06) saturate(.92); background: color-mix(in srgb, var(--team, var(--accent)) 30%, #0b0c0b); }
+:root:not([data-theme="light"]) .is-scene .case-players { background: linear-gradient(180deg, color-mix(in srgb, var(--team, var(--accent)) 7%, transparent), transparent 70%); }
+.is-scene .prow { border-left-color: color-mix(in srgb, var(--team, var(--accent)) 55%, transparent); }
+.is-scene .prow__face { box-shadow: 0 0 0 1px color-mix(in srgb, var(--team, var(--accent)) 45%, transparent); }
+.is-scene button.prow:hover:not(.is-sel) { background: color-mix(in srgb, var(--team, var(--accent)) 12%, transparent); }
+.prow__cc { display: inline-flex; align-items: center; gap: 5px; }
+.prow__cc .flag { border-radius: 2px; flex: none; }
+/* One chosen candidate: an orange perimeter and a local warm light on that row only. Hover and focus preview stay quieter. */
+.is-scene .prow.is-sel, .is-scene button.prow.is-sel:hover { border-color: var(--accent); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 26%, var(--panel-2)), var(--panel-2) 78%); box-shadow: 0 0 0 1px var(--accent), 0 0 22px -8px var(--accent); }
+.is-scene .prow:focus-visible { outline: 2px solid var(--strong); outline-offset: 1px; }
+
+/* ---------- the decision strip ---------- */
+:root:not([data-theme="light"]) .is-scene .draftbar, :root:not([data-theme="light"]) .is-scene .draft-decision-empty { border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); background: color-mix(in srgb, #0d0f0e 94%, transparent); }
+.draftbar__portrait { position: relative; isolation: isolate; }
+.draftbar__emblem { position: absolute; z-index: 0; right: -22%; top: -8%; height: 116%; width: auto; opacity: .2; pointer-events: none; }
+.draftbar__portrait img.photo, .draftbar__portrait > svg { position: relative; z-index: 1; }
+:root:not([data-theme="light"]) .is-scene .draftbar__portrait { background: linear-gradient(160deg, color-mix(in srgb, var(--team, var(--accent)) 52%, #0b0c0b), #0b0c0b 82%); box-shadow: inset 0 -3px 0 var(--team, var(--accent)); }
+.draft-decision-empty { display: flex; align-items: center; gap: 16px; }
+.draft-decision-empty p { display: grid; gap: 4px; margin: 0; }
+.draftbar__portrait.is-empty { flex: none; width: 64px; height: 64px; overflow: hidden; border-radius: var(--r-s); background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--line); }
+.draftbar__portrait.is-empty svg { display: block; width: 100%; height: 100%; fill: color-mix(in srgb, var(--muted) 40%, transparent); }
+.draftbar__why { display: block; margin-bottom: 4px; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+@media (min-width: 1100px) {
+  .is-scene .draftbar__portrait { width: 96px; height: 112px; }
+  .is-scene .draftbar, .is-scene .draft-decision-empty { min-height: 176px; }
+  .is-scene .draftbar__portrait.is-empty { width: 96px; height: 112px; }
+  .is-scene .draftbar__who b { font-size: 1.5rem; }
+}
+
+/* ---------- the three-lane case opening ---------- */
+.reveal { gap: 16px; }
+.reveal__bar { justify-content: space-between; }
+.reveal__skip { flex: none; min-height: 44px; border-color: var(--accent); color: var(--strong); }
+.reveal__lanes { align-items: start; }
+.lane { display: grid; gap: 8px; min-width: 0; }
+.lane__label { margin: 0; color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.lane__window { position: relative; height: 352px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line)); border-radius: var(--r-m); background: #0b0c0b; transition: border-color .25s, box-shadow .25s; }
+.reveal__lanes.is-landed .lane__window { border-color: var(--accent); box-shadow: 0 0 26px -10px var(--accent); }
+.lane__strip { position: absolute; inset: 0 0 auto 0; will-change: transform; }
+.lane__item { height: var(--step); display: flex; align-items: center; gap: 14px; padding: 0 20px; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.lane__item > span { display: grid; min-width: 0; }
+.lane__item strong { font-family: var(--f-head); font-weight: 800; font-size: 1.4rem; line-height: 1.05; letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
+.lane__item small { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
+.lane__item.is-landed { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+/* Rows that are passing are softened with a blur above and below a clear centre window; it lifts when the lanes land. */
+.lane__blur { position: absolute; left: 0; right: 0; z-index: 1; height: calc(50% - var(--step) / 2); pointer-events: none; -webkit-backdrop-filter: blur(2.5px); backdrop-filter: blur(2.5px); transition: opacity .3s; }
+.lane__blur--top { top: 0; background: linear-gradient(rgba(11, 12, 11, .8), rgba(11, 12, 11, 0)); }
+.lane__blur--bottom { bottom: 0; background: linear-gradient(rgba(11, 12, 11, 0), rgba(11, 12, 11, .8)); }
+.reveal__lanes.is-landed .lane__blur { opacity: 0; }
+/* The stop line: a band exactly one row tall at the middle, with a marker on each side. */
+.lane__marker { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; height: var(--step); transform: translateY(-50%); border-block: 2px solid var(--accent); pointer-events: none; }
+.lane__marker::before, .lane__marker::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -7px; border: 7px solid transparent; }
+.lane__marker::before { left: 0; border-left-color: var(--accent); }
+.lane__marker::after { right: 0; border-right-color: var(--accent); }
+.reveal__lanes.is-landed .lane__marker { animation: lane-release .3s ease-out; }
+@keyframes lane-release { from { box-shadow: inset 0 0 22px 2px color-mix(in srgb, var(--accent) 60%, transparent); } to { box-shadow: inset 0 0 0 0 transparent; } }
+@media (max-width: 860px) {
+  .reveal__lanes { gap: 10px; }
+  .lane { gap: 4px; }
+  .lane__window { height: 120px; }
+  .lane__item strong { font-size: 1.2rem; }
+}
+@media (prefers-reduced-motion: reduce) { .reveal__lanes.is-landed .lane__marker { animation: none; } .lane__window { transition: none; } }

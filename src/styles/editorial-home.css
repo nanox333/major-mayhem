@@ -15,6 +15,7 @@
 .home-daily-status .dots { margin-bottom: 16px; }
 .home-daily-action { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 18px; }
 .home-daily-action .cta { flex: 0 1 auto; min-width: 220px; border-radius: 3px; }
+.home-last-result { margin: 8px 0 0; }
 .home-daily-clock { display: grid; gap: 4px; font-size: .9rem; color: var(--text); }
 .home-daily-clock .clock { display: inline; font-size: inherit; color: var(--accent); }
 .home-daily-clock small { color: var(--muted); }

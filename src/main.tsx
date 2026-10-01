@@ -9,6 +9,7 @@ import './styles/editorial-live.css';
 import './styles/editorial-results.css';
 import './styles/editorial-finish.css';
 import './styles/roster-archive.css';
+import './styles/draft-scene.css';
 import { initAnalytics } from './analytics';
 import { initSound } from './ui/sound';
 

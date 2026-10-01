@@ -20,6 +20,7 @@ import { DailyDone, ModePicker } from './Modes';
 import { usePrefs } from '../ui/prefs';
 import { RosterBrowser } from '../ui/RosterBrowser';
 import { ArrivalFocus } from '../ui/ArrivalFocus';
+import { Flag } from '../ui/flags';
 
 /**
  * The draft (#180): the stage for the round, with a short announcement of where you are for a screen reader each time it changes, and keyboard focus
@@ -84,56 +85,80 @@ function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
     );
   }
   if (s.step === 'teams') {
-    if (reelFor === s.offerKey && !reduceMotion() && !prefs.fastReveals) return <CaseReel land={s.offer[0]} hard={!!s.opts?.hard} onDone={() => setReelFor(null)} />;
+    if (reelFor === s.offerKey && !reduceMotion() && !prefs.fastReveals) return <CaseReveal offer={s.offer} hard={!!s.opts?.hard} picks={s.picks.length} total={draftRounds(s)} onDone={() => setReelFor(null)} />;
     return <div ref={caseRoot}>{roundOf(s) === 'coach' ? <CoachChoices s={s} dispatch={dispatch} onPreview={onPreview} /> : <CaseCards s={s} dispatch={dispatch} onPreview={onPreview} />}</div>;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
 }
 
-/** CS-style case roulette: a strip of teams slides past a marker and stops on the first team in the offer. */
-function CaseReel({ land, hard, onDone }: { land: string; hard: boolean; onDone: () => void }) {
-  const STEP = 112, LAND = 32;
-  const items = useMemo(() => {
-    const pool = G.shuffle(ROSTERS);
-    const arr = Array.from({ length: LAND + 5 }, (_, i) => pool[i % pool.length]);
-    arr[LAND] = G.rosterById.get(land)!;
+/** Items in each lane and where the real roster stops. The reducer already drew the offer; this is only what the lanes show on the way. */
+const LANE_LAND = 30, LANE_EXTRA = 4, LANE_STAGGER_MS = 40;
+
+/**
+ * The case opening (#225): three vertical lanes, one per roster in the offer, each stopping on the roster `offer[i]` that will then take its place as a card.
+ * It is presentation only. The offer is already drawn and saved, the passing rosters come from the whole pool and touch no game state, and finishing
+ * (or Show case) only hands over to the cards, so skipping, reloading or a late timer can never change what the case holds.
+ */
+function CaseReveal({ offer, hard, picks, total, onDone }: { offer: string[]; hard: boolean; picks: number; total: number; onDone: () => void }) {
+  const phone = useMedia('(max-width: 860px)');
+  const step = phone ? 72 : 88;
+  const lanes = useMemo(() => offer.map((id) => {
+    const pool = G.shuffle(ROSTERS.filter((r) => r.id !== id));
+    const arr = Array.from({ length: LANE_LAND + LANE_EXTRA }, (_, i) => pool[i % pool.length]);
+    arr[LANE_LAND] = G.rosterById.get(id)!;
     return arr;
-  }, [land]);
-  const box = useRef<HTMLDivElement>(null);
-  const strip = useRef<HTMLDivElement>(null);
+  }), [offer.join('|')]);
+  const wins = useRef<(HTMLDivElement | null)[]>([]);
+  const strips = useRef<(HTMLDivElement | null)[]>([]);
   const [landed, setLanded] = useState(false);
   useLayoutEffect(() => {
-    const w = box.current?.clientWidth ?? 600;
-    const target = LAND * STEP + STEP / 2 - w / 2 + (Math.random() - 0.5) * (STEP * 0.6);
-    const el = strip.current!;
-    el.style.transform = 'translateX(0)';
+    const h = wins.current[0]?.clientHeight ?? 336;
+    const target = LANE_LAND * step + step / 2 - h / 2;
+    strips.current.forEach((el) => { if (el) { el.style.transition = 'none'; el.style.transform = 'translateY(0)'; } });
     const raf = requestAnimationFrame(() => requestAnimationFrame(() => {
-      el.style.transition = `transform ${REEL_MS}ms cubic-bezier(${REEL_CURVE.join(',')})`;
-      el.style.transform = `translateX(${-target}px)`;
+      strips.current.forEach((el, i) => {
+        if (!el) return;
+        el.style.transition = `transform ${REEL_MS}ms cubic-bezier(${REEL_CURVE.join(',')}) ${i * LANE_STAGGER_MS}ms`;
+        el.style.transform = `translateY(${-target}px)`;
+      });
     }));
-    const t = setTimeout(onDone, 2900);
-    const glow = setTimeout(() => setLanded(true), REEL_MS);
-    // A tick each time an item passes the marker (the strip starts moving a couple of frames in), then a chime for the team it stops on.
-    const ticks = playTicks(reelTickTimes(target, w / 2, STEP), 40);
-    const chime = play('reveal', { rarity: hard ? 'milspec' : rarity(items[LAND]), delay: REEL_MS + 40 });
-    return () => { cancelAnimationFrame(raf); clearTimeout(t); clearTimeout(glow); ticks(); chime(); };
-  }, [items]);
+    const done = setTimeout(onDone, 2900);
+    const glow = setTimeout(() => setLanded(true), REEL_MS + LANE_STAGGER_MS * 2);
+    // One stream of ticks, from the first lane, so three lanes don't make three overlapping machines; then one chime for the landing.
+    const ticks = playTicks(reelTickTimes(target, h / 2, step), 40);
+    const chime = play('reveal', { rarity: hard ? 'milspec' : rarity(lanes[0][LANE_LAND]), delay: REEL_MS + LANE_STAGGER_MS * 2 + 40 });
+    return () => { cancelAnimationFrame(raf); clearTimeout(done); clearTimeout(glow); ticks(); chime(); };
+  }, [lanes, step]);
   return (
-    <div className="reel-stage">
-      <p className="reel-stage__caption" aria-hidden="true">Opening your case</p>
-    <div className={`reel anim-in rar-${hard ? 'milspec' : rarity(items[LAND])} ${landed ? 'is-landed' : ''}`} ref={box} aria-label="Opening case">
-      <button type="button" className="ghost-btn reel__skip" onClick={onDone}>Show case</button>
-      <div className="reel__strip" ref={strip}>
-        {items.map((r, i) => (
-          <div key={i} className={`reel__item rar-${hard ? 'milspec' : rarity(r)} ${landed && i === LAND ? 'is-landed' : ''}`}>
-            <TeamBadge roster={r} size={44} />
-            <strong>{r.tag}</strong>
-            <small>{r.year}</small>
+    <div className="case reveal" style={{ ['--step' as string]: `${step}px` }}>
+      <span className="sr" role="status">Revealing three rosters.</span>
+      <div className="opened reveal__bar">
+        <p><b>Opening your case</b> <span>{picks} / {total} picks made</span></p>
+        <button type="button" className="ghost-btn reveal__skip" onClick={onDone}>Show case</button>
+      </div>
+      <div className={`teams-col reveal__lanes ${landed ? 'is-landed' : ''}`} aria-hidden="true">
+        {lanes.map((items, i) => (
+          <div key={i} className="lane">
+            <p className="lane__label">Roster {i + 1}</p>
+            <div className="lane__window" ref={(el) => { wins.current[i] = el; }}>
+              <div className="lane__strip" ref={(el) => { strips.current[i] = el; }}>
+                {items.map((r, k) => (
+                  <div key={k} className={`lane__item rar-${hard ? 'milspec' : rarity(r)} ${landed && k === LANE_LAND ? 'is-landed' : ''}`}>
+                    <TeamBadge roster={r} size={40} />
+                    <span><strong>{r.tag}</strong><small>{r.year}</small></span>
+                  </div>
+                ))}
+              </div>
+              <i className="lane__blur lane__blur--top" />
+              <i className="lane__blur lane__blur--bottom" />
+              <i className="lane__marker" />
+            </div>
           </div>
         ))}
       </div>
-      <div className="reel__marker" />
-    </div>
+      <div className="draft-decision">
+        <div className="draft-decision-empty"><b>Revealing three rosters</b><span>Show case skips ahead to the same three. Opening a case never spends a spin.</span></div>
+      </div>
     </div>
   );
 }
@@ -182,6 +207,21 @@ function SpinAgain({ s, reroll, busy }: { s: Run; reroll: () => void; busy?: boo
         <RefreshIcon size={16} /> Spin again · {s.rerolls <= 0 ? 'no spins left' : `${s.rerolls} spin${s.rerolls === 1 ? '' : 's'} left`}
       </button>
     </div>
+  );
+}
+
+/**
+ * The team's header art (#225): that roster's own five players, side by side from the right edge, behind a wash of the team's colour, with the logo
+ * enlarged as a watermark. It is decoration made from the same credited portraits the rows use; a player without a photo is simply left out, and with
+ * fewer than three the strip is dropped so a card never shows a half-empty montage. Names, years and results stay HTML.
+ */
+function Montage({ roster }: { roster: Roster }) {
+  const faces = roster.players.filter((p) => p.portrait);
+  return (
+    <span className="montage" aria-hidden="true">
+      {roster.logo && <img className="montage__mark" src={roster.logo} alt="" loading="lazy" />}
+      {faces.length >= 3 && <span className="montage__faces">{faces.map((p) => <img key={p.id} src={p.portrait} alt="" loading="lazy" />)}</span>}
+    </span>
   );
 }
 
@@ -323,6 +363,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
           const expanded = !phone || openId === id;
           const top = (
             <>
+              <Montage roster={r} />
               <TeamBadge roster={r} size={48} />
               <div className="case-card__id">
                 <h3 className="case-card__name">{r.org} <span>{r.year}</span></h3>
@@ -332,7 +373,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
             </>
           );
           return (
-            <article key={`${id}-${s.rerollKey}`} className={`case-card ${hard ? '' : 'case-card--revealed'} rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms` }} aria-label={`${r.org} ${r.year}`} hidden={phone && !expanded}>
+            <article key={`${id}-${s.rerollKey}`} className={`case-card ${hard ? '' : 'case-card--revealed'} rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms`, ['--team' as string]: r.color }} aria-label={`${r.org} ${r.year}`} hidden={phone && !expanded}>
               <div className="case-card__top">{top}</div>
               <ul className="case-players" id={`players-${id}`} hidden={!expanded}>
                 {r.players.map((p) => {
@@ -344,7 +385,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
                     <>
                       <span className="prow__face"><Avatar player={p} roster={r} /></span>
                       <span className="prow__main">
-                        <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}>{p.country}</em></span>
+                        <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}><Flag code={p.country} size={11} decorative />{p.country}</em></span>
                         <span className="prow__meta">
                           {!ok && <small className="prow__why" title={unavailableReason(p, s, taken)}>{rowReason(p, s, taken)}</small>}
                           {ok && !hard && st.state === 'main' && <span className="prow__role" title="Main role"><RoleIcon role={p.roles[0]} size={13} /> <Sr>Main role: </Sr>{ROLE_SHORT[p.roles[0]]}</span>}
@@ -377,7 +418,14 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
       </div>
       <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
       <div className="draft-decision">
-        {!sel && <div className="draft-decision-empty"><b>Select a player</b><span>{bench ? "Choose a bench player from any roster." : "Review their slot and chemistry here before committing."}</span></div>}
+        {!sel && (
+          <div className="draft-decision-empty">
+            <span className="draftbar__portrait is-empty" aria-hidden="true">
+              <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet"><circle cx="50" cy="38" r="17" /><path d="M14 100 C16 72 32 60 50 60 C68 60 84 72 86 100 Z" /></svg>
+            </span>
+            <p><b>Select a player</b><span>{bench ? "Choose a bench player from any roster." : "Review their slot and chemistry here before committing."}</span></p>
+          </div>
+        )}
         {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
         <SpinAgain s={s} reroll={reroll} busy={out} />
       </div>
@@ -395,10 +443,13 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
   return (
     <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
       <div className="draftbar__identity">
-        <span className="draftbar__portrait"><Avatar player={sel.p} roster={sel.r} /></span>
-        <p className="draftbar__who"><b>{nick}</b><span>{sel.p.country} · {sel.r.org} {sel.r.year}</span><small>Selected candidate · not yet drafted</small></p>
+        <span className="draftbar__portrait" style={{ ['--team' as string]: sel.r.color }}>
+          {sel.r.logo && <img className="draftbar__emblem" src={sel.r.logo} alt="" />}
+          <Avatar player={sel.p} roster={sel.r} />
+        </span>
+        <p className="draftbar__who"><b>{nick}</b><span><Flag code={sel.p.country} size={13} decorative /> {sel.p.country} · {sel.r.org} {sel.r.year}</span><small>Selected candidate · not yet drafted</small></p>
       </div>
-      {preview && <div className="draftbar__chem small"><b>Chemistry: {preview.before} → {preview.after}</b><span>{[...preview.added.map(x => `${x.value < 0 ? '−' : '+'} ${x.label}`), ...preview.removed.map(x => `Loses ${x.label}`)].join(' · ') || 'No new links.'}{preview.capped ? ' At maximum.' : ''}</span></div>}
+      {preview && <div className="draftbar__chem small"><small className="draftbar__why">Why pick this player</small><b>Chemistry: {preview.before} → {preview.after}</b><span>{[...preview.added.map(x => `${x.value < 0 ? '−' : '+'} ${x.label}`), ...preview.removed.map(x => `Loses ${x.label}`)].join(' · ') || 'No new links.'}{preview.capped ? ' At maximum.' : ''}</span></div>}
       {slots.length > 0 && (
         <div className="draftbar__slots" role="group" aria-label={`Slot for ${nick}`}>
           {!hard && st?.state === 'secondary' && (

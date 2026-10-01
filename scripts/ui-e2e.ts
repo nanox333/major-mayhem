@@ -48,6 +48,9 @@ async function load(p: Page, run: Run, prefs: Record<string, unknown> = {}, stat
     localStorage.setItem('mm-prefs', JSON.stringify(prefs)); localStorage.setItem('mm-tips', JSON.stringify(tips));
   }, { key: KEY, run, prefs, tips: run.offerKey > 0 ? TIP_IDS : [], statsKey: STATS_KEY, stats });
   await p.reload();
+  // The site always opens on the home; a saved run is one Continue away.
+  const resume = p.getByRole('button', { name: /^(Continue|View your)/ });
+  if (run.offerKey > 0 && await resume.count()) await resume.first().click();
 }
 const saved = (p: Page) => p.evaluate(key => localStorage.getItem(key), KEY);
 /** The left and right edge of the content column. Every screen shares one, so moving through a run never resizes what you are looking at. */
@@ -76,7 +79,7 @@ try {
     const picked = await p.locator('.draftbar__who').innerText();
     await p.getByRole('button', { name: /^View roster:/ }).first().click();
     const dialog = p.getByRole('dialog'); await dialog.waitFor();
-    assert.equal(await dialog.locator('.roster-people li').count(), 5);
+    assert.equal(await dialog.locator('.ra-people li:not(.ra-people__coach)').count(), 5);
     await p.keyboard.press('1');
     assert.equal(await saved(p), before, 'a dialog shortcut changed the draft');
     await p.keyboard.press('Escape');
@@ -103,7 +106,7 @@ try {
     await load(p, { ...opened, opts: { hard: true } });
     await p.getByRole('button', { name: /^View roster:/ }).first().click();
     assert((await p.getByRole('dialog').innerText()).includes('Role hints are hidden'));
-    assert(!await p.getByRole('dialog').locator('.roster-people').innerText().then(t => t.includes('AWPer')));
+    assert(!await p.getByRole('dialog').locator('.ra-people').innerText().then(t => t.includes('AWPer')));
     await p.keyboard.press('Escape');
 
     await load(p, start);
@@ -111,7 +114,7 @@ try {
     await p.getByRole('searchbox', { name: 'Team or player' }).fill('no such roster');
     await p.getByRole('button', { name: 'Clear filters' }).click();
     await p.getByRole('searchbox', { name: 'Team or player' }).fill('Natus');
-    assert(await p.locator('.roster-list li').count() > 0);
+    assert(await p.locator('.ra-rows li').count() > 0);
     await fits(p); await p.keyboard.press('Escape');
 
     const preview = reducer(reducer(draft(start), { type: 'play' }), { type: 'start' });
@@ -152,7 +155,8 @@ try {
     await p.getByRole('button', { name: 'Return to live', exact: true }).click();
     edges.push(await contentEdges(p));
     await fits(p); await p.evaluate(() => scrollTo(0, 0)); await p.screenshot({ path: `shots/ui/live-${width}.png`, fullPage: true });
-    await p.reload(); assert(await p.getByRole('button', { name: 'Resume', exact: true }).count() === 1, 'pause lost on reload');
+    await p.reload(); await p.getByRole('button', { name: /^Continue/ }).first().click();
+    assert(await p.getByRole('button', { name: 'Resume', exact: true }).count() === 1, 'pause lost on reload');
     await p.getByRole('button', { name: 'Resume', exact: true }).click();
     await p.getByRole('button', { name: 'How to play and data sources', exact: true }).click();
     const seen = await p.evaluate(() => localStorage.getItem('mm-seen'));

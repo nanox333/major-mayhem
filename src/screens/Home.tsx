@@ -99,6 +99,10 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
               <small>At your local midnight</small>
             </div>
           </div>
+          {/* The site opens on this page, so a run that has just finished (and isn't today's daily, which has its own button above) stays one press from its results. */}
+          {s.phase === 'final' && s.offerKey > 0 && !resultAvailable && (
+            <p className="home-last-result"><button type="button" className="link-btn" onClick={showDraft}>View your last result</button></p>
+          )}
           {ask === 'daily' && risk && (
             <div className="mcard__ask" role="alert">
               <p>{risk}</p>

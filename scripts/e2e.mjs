@@ -212,7 +212,8 @@ async function run(viewport, tag) {
     if (!/#duel=[A-Za-z0-9_-]+$/.test(challengeLink ?? '')) throw new Error('no challenge link: ' + challengeLink);
   }
   await p.screenshot({ path: `shots/${tag}-8-review.png`, fullPage: true });
-  await p.reload(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
+  // The site always opens on the home, where a finished daily offers its result.
+  await p.reload(); await p.getByRole('button', { name: /^View your/ }).first().click(); await p.waitForSelector('.final'); console.log(tag, 'save restored OK');
   if (!(await step()).startsWith('Results') || (await p.locator('.progress .pstep.is-done').count()) !== 3) throw new Error(`the progress list should be on Results with three steps done, got "${await step()}"`);
   const finalSave = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
   await openMenu(p); await p.click('[aria-label="Your stats"]');
@@ -708,8 +709,6 @@ async function runGuards() {
   await p.waitForSelector('.case-card');
   await ctx.clock.setSystemTime(new Date('2026-10-02T10:00:00'));
   await p.reload();
-  await p.waitForSelector('.case-card, .spin-stage');
-  await p.locator('.brand__btn').first().click();
   await p.waitForSelector('.home3');
   const old = await p.locator('.mcard__old').innerText();
   if (!/Daily #4 \(2026-10-01\) is unfinished/.test(old)) throw new Error('an earlier day\'s daily should be shown as that day\'s: ' + old);

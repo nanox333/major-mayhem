@@ -20,6 +20,7 @@ import { useSoundOn } from './ui/sound';
 import { DatabaseIcon, RosterIcon, GamepadIcon } from './ui/icons';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
+import { DraftScene } from './ui/DraftScene';
 import { MobileLineup } from './ui/MobileLineup';
 import { RosterBrowser } from './ui/RosterBrowser';
 import { DraftScreen } from './screens/Draft';
@@ -148,13 +149,16 @@ function Game() {
   const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
   // Once the first case is open the draft has a lineup panel and a sidebar of its own (#102).
   const drafting = view === 'draft' && s.phase === 'draft' && !start;
+  // The arena sits behind the draft only. A saved run can be mid-draft while you are on Home or Guess, which have their own scenes (#225).
+  const scene = view === 'draft' && s.phase === 'draft';
 
   return (
     <>
     <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
       onBrowse={() => setBrowse(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
     <UnsavedBar run={s} />
-    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
+    {scene && <DraftScene />}
+    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} onBrowse={() => setBrowse(true)} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view !== 'home' && view !== 'guess' && <main className="console">
@@ -164,7 +168,12 @@ function Game() {
           )}
           {s.phase === 'live' || s.phase === 'final'
             ? <h2 className="sr">{title}</h2>
-            : <div className="console__titles"><p className="console__eyebrow kicker">{kicker}</p><h2 className="console__title">{title}</h2></div>}
+            : <div className="console__titles"><p className="console__eyebrow kicker">{kicker}</p>
+              <h2 className="console__title">{scene ? <>{title.split(' ')[0]} <em>{title.split(' ').slice(1).join(' ')}</em></> : title}</h2>
+              {scene && !start && (
+                <p className="console__picks"><b>{roundNumber(s) - 1} / {draftRounds(s)}</b> picks made
+                  <span className="console__pips" aria-hidden="true">{Array.from({ length: draftRounds(s) }, (_, i) => <i key={i} className={i < roundNumber(s) - 1 ? 'is-done' : i === roundNumber(s) - 1 ? 'is-now' : ''} />)}</span></p>
+              )}</div>}
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
         {view === 'draft' && s.phase === 'draft' && <><div className={drafting ? 'desktop-strip' : ''}><TeamStrip s={s} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
