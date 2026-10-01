@@ -1282,7 +1282,6 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
 .how:not(.is-open) .how__head { align-items: center; flex-wrap: wrap; column-gap: 16px; }
 .how__line { margin: 0 auto 0 0; font-family: var(--f-read); font-size: var(--fs-caption); color: var(--muted); }
 .home3:has(.how:not(.is-open)) .stats-panel { grid-column: 1 / -1; }
-.home3:has(.how:not(.is-open)) .stats-panel__tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .how__steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; counter-reset: how; }
 .how__step { display: grid; align-content: start; gap: 6px; counter-increment: how; }
 .how__step b { font-family: var(--f-head); font-weight: 800; font-size: var(--fs-label); letter-spacing: .04em; text-transform: uppercase; }
@@ -1312,7 +1311,6 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
   .clock--inline { display: block; font-size: 1.7rem; }
   .how__steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .how__face { width: 22px; height: 22px; }
-  .home3:has(.how:not(.is-open)) .stats-panel__tiles { grid-template-columns: 1fr 1fr; }
   .foot { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 999px) { .hero__scrim { background: linear-gradient(180deg, color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 60%, transparent)); } }

@@ -155,11 +155,23 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
         </article>
       </div>
 
-      {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><CaseIcon size={24} /><span><b>Roster archive</b><small>Explore historical Major rosters.</small></span><ArrowRightIcon size={20} /></button>}
+      {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><ArchiveArt /><span><b>Roster archive</b><small>Explore historical Major rosters.</small></span><ArrowRightIcon size={20} /></button>}
       <StatsPanel stats={stats} streak={streak} onStats={onStats} />
       <HowItWorks />
     </div>
   );
+}
+
+/** Decorative archive cards: neutral silhouettes, no invented historical player. */
+function ArchiveArt() {
+  return <svg className="home-archive-art" width="72" height="48" viewBox="0 0 72 48" aria-hidden="true" focusable="false">
+    {[-12, 0, 12].map((angle, i) => <g key={angle} transform={`translate(${8 + i * 12},5) rotate(${angle},15,20)`}>
+      <rect width="30" height="38" rx="2" fill="var(--inset)" stroke="var(--control)" />
+      <path d="M4 5h4" stroke="var(--accent)" strokeWidth="2" />
+      <circle cx="15" cy="15" r="5" fill="var(--muted)" opacity=".4" />
+      <path d="M6 31v-3c0-10 18-10 18 0v3z" fill="var(--muted)" opacity=".4" />
+    </g>)}
+  </svg>;
 }
 
 /** An original, deliberately schematic five-starter path, not a simulated bracket. */
@@ -192,10 +204,10 @@ function StatsPanel({ stats, streak, onStats }: { stats: Stats; streak: number; 
   const ach = achievementCount(stats);
   const empty = statsSections(stats).empty;
   const tiles: { icon: React.ReactNode; label: string; value: string }[] = [
-    { icon: <TrophyIcon size={16} />, label: 'Best finish', value: best ?? '–' },
-    { icon: <FlameIcon size={16} />, label: 'Daily streak', value: streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '–' },
-    { icon: <StatsIcon size={16} />, label: 'Runs', value: String(stats.runs) },
-    { icon: <StarIcon size={16} />, label: 'Achievements', value: `${ach.earned} / ${ach.total}` },
+    { icon: <TrophyIcon size={30} />, label: 'Best finish', value: best === 'Out in the Swiss stage' ? 'Swiss exit' : best ?? '–' },
+    { icon: <FlameIcon size={30} />, label: 'Daily streak', value: streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '–' },
+    { icon: <StatsIcon size={30} />, label: 'Runs', value: String(stats.runs) },
+    { icon: <StarIcon size={30} />, label: 'Achievements', value: `${ach.earned} / ${ach.total}` },
   ];
   return (
     <section className="stats-panel" aria-labelledby="stats-panel-h">
@@ -206,7 +218,7 @@ function StatsPanel({ stats, streak, onStats }: { stats: Stats; streak: number; 
       {empty
         ? <p className="stats-panel__empty">No runs yet. Finish a run to set your best finish, and play the daily to start a streak. Your record stays in this browser.</p>
         : <ul className="stats-panel__tiles">
-          {tiles.map((x) => <li key={x.label}><b>{x.value}</b><small><span className="stats-panel__icon" aria-hidden="true">{x.icon}</span>{x.label}</small></li>)}
+          {tiles.map((x) => <li key={x.label}><span className="stats-panel__icon" aria-hidden="true">{x.icon}</span><b>{x.value}</b><small>{x.label}</small></li>)}
         </ul>}
     </section>
   );

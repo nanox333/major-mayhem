@@ -238,3 +238,32 @@ details[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px
   .ledger-columns { padding-left: 11px; }
   .ledger-columns span:last-child { text-align: right; }
 }
+
+/* Compact shared rail: content sets height when text is enlarged. */
+.topbar__in { min-height: 56px; padding-block: 4px; }
+.shell-link, .shell-nav .gamelink { min-height: 44px; }
+.foot { grid-template-columns: 1.2fr 1fr .8fr; gap: 24px; }
+.foot__group { display: grid; grid-template-columns: 24px minmax(0,1fr); align-content: start; gap: 16px; }
+.foot__group + .foot__group { border-left: 1px solid var(--line); padding-left: 24px; }
+.foot__group > svg { color: var(--text-2); }
+.foot .link-btn, .editorial-home .link-btn { min-height: 44px; }
+/* The completed case retains a static rarity edge, even when its reel was skipped.
+   Hard-mode cards never receive this class; placement words carry the meaning. */
+.case-card--revealed .case-card__top { border-bottom: 2px solid var(--rar); box-shadow: 0 4px 8px -6px var(--rar); }
+@media (max-width: 800px) {
+  .foot { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  .foot__group + .foot__group { border-left: 0; border-top: 1px solid var(--line); padding: 16px 0 0; }
+}
+@media (forced-colors: active) {
+  .case-card--revealed .case-card__top { border-bottom-color: CanvasText; box-shadow: none; }
+}
+
+/* Autocomplete preview is a candidate, never a clue result or an extra guess. */
+.guess__row--preview .guess__n { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; color: var(--text); font-size: .875rem; overflow-wrap: anywhere; }
+.guess__row--preview .guess__n small { color: var(--muted); font-size: .6875rem; font-weight: 400; }
+
+@media (max-width: 800px) {
+  .wordmark { white-space: normal; overflow-wrap: anywhere; }
+  .brand__btn { min-width: 0; }
+  .topbar__end { flex: none; }
+}
