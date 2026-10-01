@@ -174,8 +174,9 @@ async function run(viewport, tag) {
         if (!called) throw new Error('calling a timeout did not show in the killfeed');
         let used = null;
         for (let i = 0; i < 100 && used === null; i++) {
-          const btn = await p.$('.calls__timeout');
-          if (btn) used = await btn.isDisabled(); else { await answerBuy(); await p.waitForTimeout(60); }
+          // Read it in the page in one step: an element handle can be detached by a redraw between finding the button and asking about it.
+          const disabled = await p.evaluate(() => { const b = document.querySelector('.calls__timeout'); return b ? b.disabled : null; });
+          if (disabled !== null) used = disabled; else { await answerBuy(); await p.waitForTimeout(60); }
         }
         if (used !== true) throw new Error('second timeout allowed in the same half');
       }
