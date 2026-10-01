@@ -15,7 +15,7 @@ import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
 import { HowSteps, Tip, useTipSeen } from '../ui/tips';
-import { CaseIcon, ChevronDownIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
+import { CaseIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
 import { DailyDone, ModePicker } from './Modes';
 import { usePrefs } from '../ui/prefs';
 import { RosterBrowser } from '../ui/RosterBrowser';
@@ -119,6 +119,8 @@ function CaseReel({ land, hard, onDone }: { land: string; hard: boolean; onDone:
     return () => { cancelAnimationFrame(raf); clearTimeout(t); clearTimeout(glow); ticks(); chime(); };
   }, [items]);
   return (
+    <div className="reel-stage">
+      <p className="reel-stage__caption" aria-hidden="true">Opening your case</p>
     <div className={`reel anim-in rar-${hard ? 'milspec' : rarity(items[LAND])} ${landed ? 'is-landed' : ''}`} ref={box} aria-label="Opening case">
       <button type="button" className="ghost-btn reel__skip" onClick={onDone}>Show case</button>
       <div className="reel__strip" ref={strip}>
@@ -131,6 +133,7 @@ function CaseReel({ land, hard, onDone }: { land: string; hard: boolean; onDone:
         ))}
       </div>
       <div className="reel__marker" />
+    </div>
     </div>
   );
 }
@@ -249,7 +252,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   // Choosing a player with the keyboard moves focus to the Draft button, so the next Enter drafts them (#77).
   const [focusDraft, setFocusDraft] = useState(false);
   useEffect(() => { if (focusDraft && sel) { document.querySelector<HTMLElement>('.draftbar .cta')?.focus(); setFocusDraft(false); } }, [focusDraft, sel]);
-  // On a phone one card is open at a time, so all three fit on the screen; on wider screens every card is open.
+  // On a phone a compact selector exposes the eligible counts; only its roster is visible. Wider screens show all three.
   const phone = useMedia('(max-width: 860px)');
   const [openId, setOpenId] = useState<string | null>(s.offer[0] ?? null);
   // A new case, or a spin again, clears the choice.
@@ -300,25 +303,37 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
       {!bench && (hard
         ? <Tip id="fit" title="Hard mode" anchor="left">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
         : <Tip id="fit" title="Roles and fit" anchor="left">Each player has a main role: draft them there for the best fit. A role they also cover costs a little, and the card says so ("2nd role"). The + and − marks are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
+      {phone && (
+        <div className="roster-selector" role="group" aria-label="Choose a roster to view">
+          {s.offer.map(id => {
+            const r = G.rosterById.get(id)!;
+            return (
+              <button key={id} type="button" aria-pressed={openId === id} aria-controls={`players-${id}`}
+                onClick={() => { setOpenId(id); setHov(null); }}>
+                <span>{r.tag}</span><small>{r.year} · {r.players.filter(can).length} available</small>
+                <span className="sr case-card__sum">{cardSummary(r, s, taken, bench, hard)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div className={`teams-col ${out ? 'is-out' : ''}`}>
         {s.offer.map((id, i) => {
           const r = G.rosterById.get(id)!;
           const expanded = !phone || openId === id;
           const top = (
             <>
-              <TeamBadge roster={r} size={phone ? 44 : 68} />
+              <TeamBadge roster={r} size={48} />
               <div className="case-card__id">
-                <h3 className="case-card__name">{r.org}</h3>
-                <div className="case-card__meta"><span>{r.year}</span><Placement roster={r} /></div>
-                {phone && <small className="case-card__sum">{cardSummary(r, s, taken, bench, hard)}</small>}
+                <h3 className="case-card__name">{r.org} <span>{r.year}</span></h3>
+                <div className="case-card__meta"><Placement roster={r} /></div>
+                <p className="case-card__major">{r.event}</p>
               </div>
             </>
           );
           return (
-            <article key={`${id}-${s.rerollKey}`} className={`case-card rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms` }} aria-label={`${r.org} ${r.year}`}>
-              {phone
-                ? <button type="button" className="case-card__top case-card__toggle" aria-expanded={expanded} aria-controls={`players-${id}`} data-sfx="none" onClick={() => setOpenId(expanded ? null : id)}>{top}<ChevronDownIcon size={20} /></button>
-                : <div className="case-card__top">{top}</div>}
+            <article key={`${id}-${s.rerollKey}`} className={`case-card rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms` }} aria-label={`${r.org} ${r.year}`} hidden={phone && !expanded}>
+              <div className="case-card__top">{top}</div>
               <ul className="case-players" id={`players-${id}`} hidden={!expanded}>
                 {r.players.map((p) => {
                   const ok = can(p);
@@ -355,15 +370,17 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
                   );
                 })}
               </ul>
-              {expanded && <div className="case-card__event">{r.event}</div>}
               <button type="button" className="roster-details-link" onClick={() => setDetails(id)} aria-label={`View roster: ${r.org} ${r.year}`}>View roster & sources</button>
             </article>
           );
         })}
       </div>
       <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
-      {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
-      <SpinAgain s={s} reroll={reroll} busy={out} />
+      <div className="draft-decision">
+        {!sel && <div className="draft-decision-empty"><b>Select a player</b><span>{bench ? "Choose a bench player from any roster." : "Review their slot and chemistry here before committing."}</span></div>}
+        {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
+        <SpinAgain s={s} reroll={reroll} busy={out} />
+      </div>
       {details && <RosterBrowser initialId={details} hard={hard} onClose={() => setDetails(null)} />}
     </div>
   );
@@ -377,7 +394,10 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
   const preview = !hard && !bench && slot ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot, rosterId: sel.r.id, playerId: sel.p.id }], coach: s.coach }, false) : null;
   return (
     <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
-      <p className="draftbar__who"><b>{nick}</b> <span>{sel.r.org} {sel.r.year}</span></p>
+      <div className="draftbar__identity">
+        <span className="draftbar__portrait"><Avatar player={sel.p} roster={sel.r} /></span>
+        <p className="draftbar__who"><b>{nick}</b><span>{sel.p.country} · {sel.r.org} {sel.r.year}</span><small>Selected candidate · not yet drafted</small></p>
+      </div>
       {preview && <div className="draftbar__chem small"><b>Chemistry: {preview.before} → {preview.after}</b><span>{[...preview.added.map(x => `${x.value < 0 ? '−' : '+'} ${x.label}`), ...preview.removed.map(x => `Loses ${x.label}`)].join(' · ') || 'No new links.'}{preview.capped ? ' At maximum.' : ''}</span></div>}
       {slots.length > 0 && (
         <div className="draftbar__slots" role="group" aria-label={`Slot for ${nick}`}>
@@ -504,7 +524,7 @@ const reportUrl = (r: { org: string; year: number; event: string }) =>
   `https://github.com/nanox333/major-mayhem/issues/new?template=roster_data.yml&roster=${encodeURIComponent(`${r.org} ${r.year} (${r.event})`)}`;
 
 /**
- * What a roster card can tell you before you open it, on a phone (#185): how many of its players can fill a slot you still need, how many of those in
+ * What a roster selector can tell you before you view it, on a phone (#185): how many of its players can fill a slot you still need, how many of those in
  * their main role and how many as a second role, and how many are already on your team. Counts only: no ratings, and in hard mode no roles.
  */
 function cardSummary(r: Roster, s: Run, taken: Set<string>, bench: boolean, hard: boolean): string {

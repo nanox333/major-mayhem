@@ -13,9 +13,9 @@ import { cleanName, duelFrom, duelLink } from '../game/duel';
 import { reportError, track } from '../analytics';
 import { RosterList, Staff } from './Lobby';
 import { achievementById } from '../game/achievements';
-import { StageTrack } from './Match';
 import { teamReview } from '../game/review';
 import { Modal } from '../ui/Modal';
+import { CopyIcon, DownloadIcon, ShareIcon } from '../ui/icons';
 
 export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s: Run; stats: Stats; dispatch: React.Dispatch<Action> }) {
   const pl = G.placement(s.t);
@@ -31,6 +31,8 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
     const t = setTimeout(() => play(champ ? 'champion' : pl.key === 'DUEL-W' ? 'mapWin' : 'mapLose'), 350);
     return () => clearTimeout(t);
   }, []);
+  const [preview, setPreview] = useState<string | null>(null);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
   const [report, setReport] = useState<number | null>(null);
   const newAch = s.recorded ? stats.lastNew?.length ?? 0 : 0;
   useEffect(() => {
@@ -40,28 +42,23 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
   }, [newAch]);
   return (
     <div className="final">
-      <div className={`final__banner ${champ || pl.key === 'DUEL-W' ? 'is-champ' : ''}`}>
-        {s.duel ? (
-          <>
-            <small>Draft duel vs {s.duel.name}'s team</small>
-            <h3>{pl.key === 'DUEL-W' ? 'You won' : 'They won'} {s.t.matches[0]?.score.join('–')}</h3>
-          </>
-        ) : (
-          <>
-            <small>{date ? `Daily #${dailyNumber(date)} · ` : ''}Your Major Mayhem team finished</small>
-            <h3>{champ ? 'Major champions' : pl.label}</h3>
-          </>
-        )}
-      </div>
-      {practice && <p className="practice" role="note">Practice run: Daily #{dailyNumber(date!)} already has a result, so this one doesn't change your record, your streak or your achievements.</p>}
-      <div className="mvp-card anim-in">
-        <span className="mvp-card__photo"><Avatar player={star.player} roster={star.roster} /></span>
-        <div>
-          <small>★ Tournament MVP</small>
-          <strong>{star.player.nick}</strong>
-          <span>{ROLE_LABEL[star.slot]} · {star.roster.org} {star.roster.year}</span>
+      <div className="result-hero">
+        <div className="result-hero__outcome">
+          <div className={`final__banner ${champ || pl.key === 'DUEL-W' ? 'is-champ' : ''}`}>
+            <small>{s.duel ? 'Draft duel · ' : practice ? 'Practice · ' : date ? `Daily #${dailyNumber(date)} · ` : 'Free play · '}Run complete</small>
+            <h3>{s.duel ? <>{pl.key === 'DUEL-W' ? 'You win' : 'Your opponent wins'} <em>the draft duel.</em></> : champ ? <>Your team are <em>Major champions.</em></> : <>Your run ends <em>{pl.key === 'F' ? 'as runner-up.' : pl.key === 'SF' ? 'at the semifinals.' : pl.key === 'QF' ? 'at the quarterfinals.' : s.t.qual.need ? 'in the Swiss stage.' : 'in qualification.'}</em></>}</h3>
+            {s.duel && <p>Against {s.duel.name}'s team · Series {s.t.matches[0]?.score.join('–')}</p>}
+          </div>
+          <ol className="result-path" aria-label="Your played matches">
+            {s.t.matches.map((m, i) => <li key={i}><b className={m.won ? 'is-win' : 'is-loss'} aria-label={m.won ? 'Won' : 'Lost'}>{m.won ? 'W' : 'L'}</b><span>{m.stage === 'QUAL' ? s.t.qual.need ? 'Swiss' : 'Qualifier' : G.STAGE_NAME[m.stage]}</span></li>)}
+          </ol>
+          <ShareBar onImageReady={blob => setPreview(URL.createObjectURL(blob))} text={() => shareText(s, pageUrl(), practice)} image={{ draw: () => drawResultCard(s, siteHost(), practice), name: cardFileName(s) }} props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }} />
+          {practice && <p className="practice" role="note">Practice run: Daily #{dailyNumber(date!)} already has a result, so this one doesn't change your record, your streak or your achievements.</p>}
         </div>
-        <div className="mvp-card__rating"><b>{fmt(ratings[star.player.id].rating)}</b><small>Event rating</small></div>
+        <div className="mvp-card">
+          <span className="mvp-card__photo"><Avatar player={star.player} roster={star.roster} /></span>
+          <div><small>{s.duel ? 'Your team MVP' : 'Tournament MVP'}</small><strong>{star.player.nick}</strong><span>{ROLE_LABEL[star.slot]} · {star.roster.org} {star.roster.year}</span><div className="mvp-card__rating"><b>{fmt(ratings[star.player.id]?.rating ?? 0)}</b><small>Simulated event rating</small></div></div>
+        </div>
       </div>
       {s.recorded && stats.lastNew?.length > 0 && (
         <div className="new-ach anim-in" role="status">
@@ -69,34 +66,38 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           {stats.lastNew.map((id) => <span key={id} title={achievementById.get(id)?.desc}>★ {achievementById.get(id)?.name ?? id}</span>)}
         </div>
       )}
-      <ShareBar
-        text={() => shareText(s, pageUrl(), practice)}
-        image={{ draw: () => drawResultCard(s, siteHost()), name: cardFileName(s) }}
-        props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }}
-      />
       {date && (
         <p className="daily-meta">
           {streak > 1 && <span>🔥 {streak}-day daily streak</span>}
           <NextDaily />
         </p>
       )}
-      {!s.duel && <StageTrack t={s.t} />}
-      <PathView s={s} onOpen={setReport} />
+      <div className="result-recap">
+        <PathView s={s} onOpen={setReport} />
+        <aside className="result-export" aria-label="Exported result image">
+          <h4>Share image</h4><p>The image saved or shared above.</p>
+          {preview ? <img src={preview} alt="Preview of your exported result card, including placement, played match path, lineup and MVP." /> : <p role="status">Preparing image…</p>}
+        </aside>
+      </div>
       {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
-      <AnalysisSection title="Roster and staff" note={`${squadOf(s).length} players · ${s.coach ?? 'no coach recorded'}`}>
+      <div className="result-analysis">
+      <AnalysisSection title="Roster and staff" note={`Five starters${s.bench ? ', bench' : ''} · ${s.coach ? `Coach: ${s.coach}` : 'No coach recorded'}`}>
         <RosterList mine={mine} stats={ratings} mvpId={star.player.id} /><Staff s={s} stats={ratings} />
       </AnalysisSection>
-      <AnalysisSection title="Team review" note="Draft composition and actual match contributors" desktopOpen><TeamReviewCard mine={mine} s={s} /></AnalysisSection>
+      <AnalysisSection title="Team review" note="Draft composition and actual match contributors"><TeamReviewCard mine={mine} s={s} /></AnalysisSection>
       <AnalysisSection title="Pick strength" note="Individual role-adjusted model values, not a win prediction"><DraftReview picks={s.picks} hard={!!s.opts?.hard} /></AnalysisSection>
-      {stats.runs > 0 && (
-        <p className="muted small">
-          Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
-          {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
-        </p>
-      )}
-      <ChallengeBar s={s} />
-      <div className="final__actions action-bar">
-        <button className="ghost-btn ghost-btn--big" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
+      </div>
+      <div className="result-next">
+        <div className="final__actions action-bar">
+          <button className="ghost-btn ghost-btn--big" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
+        </div>
+        <ChallengeBar s={s} />
+        {stats.runs > 0 && (
+          <p className="result-next__record">
+            Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
+            {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -116,7 +117,8 @@ const canShareImage = () => {
  * Copy the spoiler-light text, and optionally share or save the result card. The card is drawn as soon as the bar
  * mounts: Safari only lets a page open the share sheet straight from a tap, with no slow work in between.
  */
-export function ShareBar({ text, image, props = {} }: {
+export function ShareBar({ text, image, props = {}, onImageReady }: {
+  onImageReady?: (blob: Blob) => void;
   text: () => string; props?: Record<string, string | number>;
   image?: { draw: () => Promise<Blob>; name: string };
 }) {
@@ -126,8 +128,10 @@ export function ShareBar({ text, image, props = {} }: {
   useEffect(() => {
     if (!image) return;
     const p = image.draw();
-    p.catch((e) => reportError(e, 'result-card'));
+    let active = true;
+    p.then(blob => { if (active) onImageReady?.(blob); }).catch((e) => reportError(e, 'result-card'));
     card.current = p;
+    return () => { active = false; };
   }, [image?.name]);
   const done = (s: ShareState) => { setState(s); setTimeout(() => setState('idle'), 2200); };
   const copy = async () => {
@@ -160,10 +164,10 @@ export function ShareBar({ text, image, props = {} }: {
   };
   return (
     <div className="share-bar">
-      <button className="ghost-btn" onClick={copy}>{state === 'copied' || state === 'copyFailed' ? SHARE_LABEL[state] : '⧉ Copy result'}</button>
+      <button className="ghost-btn" onClick={copy}>{state === 'copied' || state === 'copyFailed' ? SHARE_LABEL[state] : <><CopyIcon size={16} /> Copy result</>}</button>
       {image && (
         <button className="ghost-btn" onClick={sendImage}>
-          {state === 'shared' || state === 'saved' || state === 'failed' ? SHARE_LABEL[state] : share ? '↗ Share image' : '⤓ Save image'}
+          {state === 'shared' || state === 'saved' || state === 'failed' ? SHARE_LABEL[state] : share ? <><ShareIcon size={16} /> Share image</> : <><DownloadIcon size={16} /> Save image</>}
         </button>
       )}
     </div>
@@ -195,7 +199,7 @@ function ChallengeBar({ s }: { s: Run }) {
         <input value={name} maxLength={24} placeholder="Your name" onChange={(e) => setName(e.target.value)} aria-label="Your name for the challenge" />
       </label>
       <button className="ghost-btn" onClick={send}>
-        {state === 'copied' ? '✓ Link copied' : state === 'shared' ? '✓ Sent' : state === 'failed' ? 'Copy blocked by the browser' : '⚔ Challenge'}
+        {state === 'copied' ? '✓ Link copied' : state === 'shared' ? '✓ Sent' : state === 'failed' ? 'Copy blocked by the browser' : <><ShareIcon size={16} /> Send challenge</>}
       </button>
     </div>
   );
@@ -319,7 +323,6 @@ function DraftReview({ picks, hard }: { picks: G.Pick[]; hard: boolean }) {
  */
 function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
   const t = s.t;
-  const pl = G.placement(t);
   const items = t.matches.map((m, i) => ({ m, i }));
   const swiss = items.filter(({ m }) => m.stage === 'QUAL');
   const playoffs = items.filter(({ m }) => m.stage !== 'QUAL' && m.stage !== 'DUEL');
@@ -327,7 +330,7 @@ function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
   const need = G.qualNeed(t);
   const row = ({ m, i }: { m: G.Match; i: number }) => {
     const o = G.rosterById.get(m.opponentId)!;
-    const stage = m.stage === 'QUAL' ? `Bo${m.bestOf}` : m.stage === 'DUEL' ? 'Bo3' : m.stage === 'F' ? 'Final' : m.stage;
+    const stage = G.STAGE_NAME[m.stage];
     return (
       <li key={i} className={m.won ? 'w' : 'l'}>
         {/* Each row opens the saved report for that match (#66). */}
@@ -335,14 +338,15 @@ function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
           <span>{stage}</span>
           <span className="history__opp">{o.org} {o.year}</span>
           <span className="history__maps">{m.maps.map((g) => `${g.map} ${g.score[0]}–${g.score[1]}`).join(', ')}</span>
-          <b>{m.won ? '✓' : '✗'} {m.score[0]}–{m.score[1]} ›</b>
+          <b><span>{m.won ? 'W · Won' : 'L · Lost'}</span> {m.score[0]}–{m.score[1]} <small>{m.bestOf === 1 ? 'rounds' : 'maps'}</small> ›</b>
         </button>
       </li>
     );
   };
-  if (duel.length) return <ul className="history">{duel.map(row)}</ul>;
+  const columns = <div className="ledger-columns" aria-hidden="true"><span>Stage</span><span>Opponent (year)</span><span>Maps · round scores</span><span>Result · match score</span></div>;
+  if (duel.length) return <section className="path"><h4>Match ledger</h4>{columns}<ul className="history">{duel.map(row)}</ul></section>;
   return (
-    <div className="path">
+    <div className="path"><h4>Match ledger</h4>{columns}
       {swiss.length > 0 && (
         <section aria-labelledby="path-swiss">
           <h4 id="path-swiss">{t.qual.need ? 'Swiss stage' : 'Qualification'} <span>{t.qual.w}–{t.qual.l}{t.qual.w >= need ? ' · advanced' : t.qual.l >= need ? ' · out' : ''}</span></h4>
@@ -355,7 +359,6 @@ function PathView({ s, onOpen }: { s: Run; onOpen: (i: number) => void }) {
           <ul className="history path__rail">{playoffs.map(row)}</ul>
         </section>
       )}
-      <p className={`path__end ${pl.key === 'CHAMP' ? 'is-champ' : ''}`}><span>Finished</span><b>{pl.label}</b></p>
     </div>
   );
 }

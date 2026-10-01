@@ -5,6 +5,8 @@ import { Run } from '../game/state';
 import { Avatar, MapArt, POSITIONS, RoleIcon, TeamBadge, boardMap } from './art';
 import { reduceMotion } from './util';
 
+const sideCls = (side: G.Side) => side === 'T' ? 't' : 'ct';
+
 // ---------------- board (stays mounted across phases so tokens don't re-animate) ----------------
 
 export function BoardHost({ s, mine }: { s: Run; mine: G.Lineup[] | null }) {
@@ -41,7 +43,7 @@ export function BoardHost({ s, mine }: { s: Run; mine: G.Lineup[] | null }) {
     return () => window.removeEventListener('mm-side', h);
   }, []);
   const live = s.phase === 'live';
-  return <TacticalBoard picks={s.picks} mine={mine ?? undefined} opp={opp} concealed={concealed} pulses={pulses} playing={live ? map : null} side={live ? side : 'T'} />;
+  return <TacticalBoard picks={s.picks} mine={mine ?? undefined} opp={opp} concealed={concealed} pulses={pulses} playing={live ? map : null} side={live ? side : 'T'} compact={live} />;
 }
 
 function MapToken({ l, side, pulse, opponent }: { l: { player: Player; roster: Roster }; side: G.Side; pulse?: 'pos' | 'neg'; opponent?: boolean }) {
@@ -56,8 +58,8 @@ function MapToken({ l, side, pulse, opponent }: { l: { player: Player; roster: R
   );
 }
 
-function TacticalBoard({ picks, mine, opp, concealed, pulses, playing, side }: {
-  picks: G.Pick[]; mine?: G.Lineup[]; opp?: G.Lineup[]; concealed?: boolean; pulses?: Record<string, 'pos' | 'neg'>; playing?: string | null; side: G.Side;
+function TacticalBoard({ picks, mine, opp, concealed, pulses, playing, side, compact = false }: {
+  picks: G.Pick[]; mine?: G.Lineup[]; opp?: G.Lineup[]; concealed?: boolean; pulses?: Record<string, 'pos' | 'neg'>; playing?: string | null; side: G.Side; compact?: boolean;
 }) {
   const lineup: (G.Lineup | null)[] = mine ?? ROLE_ORDER.map((slot) => {
     const pk = picks.find((p) => p.slot === slot);
@@ -65,12 +67,41 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing, side }: {
     const roster = G.rosterById.get(pk.rosterId)!;
     return { slot, roster, player: roster.players.find((p) => p.id === pk.playerId)! };
   });
+  const [selected, setSelected] = useState<string | null>(null);
   const map = boardMap(playing);
   const { T, CT } = POSITIONS[map];
   // On T each role starts from its usual spot; on CT your five hold the defensive spots, and the opponent attacks.
   const ourPos = (slot: typeof ROLE_ORDER[number], i: number) => (side === 'T' ? T[slot] : CT[i]);
   const theirPos = (l: G.Lineup, i: number) => (side === 'T' ? CT[i] : T[l.slot]);
   const theirSide = G.otherSide(side);
+  const markers = [
+    ...lineup.flatMap((l, i) => l ? [{ l, code: `Y${i + 1}`, side, pos: ourPos(l.slot, i), team: 'Your team' }] : []),
+    ...(opp ?? []).map((l, i) => ({ l, code: `O${i + 1}`, side: theirSide, pos: theirPos(l, i), team: 'Opponent' })),
+  ];
+  // Static illustrative spots are separated for touch access, never presented as positional telemetry.
+  const placed: { x: number; y: number }[] = [];
+  const spots = markers.map(({ pos }) => {
+    let point = { x: Math.max(9, Math.min(91, pos.x)), y: Math.max(9, Math.min(91, pos.y)) };
+    if (placed.some(p => Math.max(Math.abs(p.x - point.x), Math.abs(p.y - point.y)) < 17)) {
+      const candidates = Array.from({ length: 25 }, (_, i) => ({ x: 9 + (i % 5) * 20.5, y: 9 + Math.floor(i / 5) * 20.5 }))
+        .filter(c => placed.every(p => Math.max(Math.abs(p.x - c.x), Math.abs(p.y - c.y)) >= 17))
+        .sort((a, b) => Math.hypot(a.x - pos.x, a.y - pos.y) - Math.hypot(b.x - pos.x, b.y - pos.y));
+      point = candidates[0] ?? point;
+    }
+    placed.push(point);
+    return point;
+  });
+  const active = markers.find(x => x.code === selected);
+  if (compact) return <aside className="board board--broadcast" aria-label={`${map} illustrative radar`}>
+    <div className="board__map"><MapArt map={map} />{markers.map((x, i) => <button key={x.code}
+      className={`radar-marker radar-marker--${sideCls(x.side)} ${selected === x.code ? 'is-selected' : ''} ${pulses?.[x.l.player.id] ? `radar-marker--${pulses[x.l.player.id]}` : ''}`}
+      style={{ left: `${spots[i].x}%`, top: `${spots[i].y}%` }} aria-pressed={selected === x.code}
+      aria-label={`${x.code}: ${x.team}, ${x.l.player.nick}, ${ROLE_LABEL[x.l.slot]}, ${x.side}, illustrative ${x.pos.hint}`}
+      onClick={() => setSelected(x.code)}><span>{x.code}</span></button>)}</div>
+    <p className="radar-disclosure">Illustrative positions · not a live tactical simulation{playing && playing !== map ? ` · ${playing} shown on Dust2` : ''}</p>
+    <div className="radar-detail" role="status">{active ? <><b>{active.code} · {active.l.player.nick}</b><span>{active.team} · {active.side} · {ROLE_LABEL[active.l.slot]} · {active.pos.hint}</span></> : <span>Select a marker for player and role.</span>}</div>
+    <details className="radar-lineups"><summary>Both fielded fives · marker key</summary><div>{markers.map(x => <div key={x.code}><b className={sideCls(x.side)}>{x.code} · {x.side}</b><span>{x.l.player.nick}<small>{x.team} · {ROLE_SHORT[x.l.slot]} · {x.l.roster.org} {x.l.roster.year}</small></span></div>)}</div></details>
+  </aside>;
   return (
     <aside className="board" aria-label={`${map} positions`}>
       <div className="board__map">

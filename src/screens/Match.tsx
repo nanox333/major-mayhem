@@ -9,6 +9,7 @@ import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 import { play } from '../ui/sound';
 import { Tip } from '../ui/tips';
+import { PauseIcon, PlayIcon } from '../ui/icons';
 import { getPrefs } from '../ui/prefs';
 import { BUY_LABEL, BUY_MARK, economyFor, momentumAt, momentumText } from '../game/momentum';
 
@@ -66,7 +67,8 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
           </button>
         ))}
       </div>
-      {out && <p className={`subs__tradeoff small ${!hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`}>{tradeoff(out)}.</p>}
+      {/* Always present, so choosing a sub never moves the buttons below it; a live region so the change is announced. */}
+      <p className={`subs__tradeoff small ${out && !hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`} aria-live="polite">{out ? `${tradeoff(out)}.` : ''}</p>
       <Tip id="form" title="Match-day form">The arrows show how each player is playing today: ▲▲ hot, ▲ good, ▼ cold. Your bench player can replace one starter for this match only, and takes that starter's role.</Tip>
     </div>
   );
@@ -256,11 +258,23 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
   const series = G.seriesRatings(m.maps, 'mine');
   const setSpeedSaved = (v: number) => { setSpeed(v); track('speed', { speed: v }); try { localStorage.setItem('mm-speed', String(v)); } catch { /* storage unavailable */ } };
   const ot = total > 24 && n > 24;
+  const liveRoot = useRef<HTMLDivElement>(null);
+  const dock = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = dock.current;
+    if (!el) return;
+    const size = () => liveRoot.current?.style.setProperty('--match-dock-height', `${el.getBoundingClientRect().height}px`);
+    const observer = new ResizeObserver(size);
+    observer.observe(el); size();
+    return () => observer.disconnect();
+  }, [!!game, mapDone, buyQuestion]);
+  const playbackState = vetoing ? 'Map veto' : !game ? 'Ready' : mapDone ? 'Map complete' : buyQuestion ? 'Buy decision' : covered ? 'Playback covered' : paused ? 'Paused' : 'Playing';
 
   return (
-    <div className={`stack match-live ${vetoing || !game || mapDone ? 'match-live--decision' : ''}`}>
+    <div ref={liveRoot} className={`stack match-live ${vetoing || !game || mapDone ? 'match-live--decision' : ''}`}>
       <div className={`hud ${vetoing ? 'hud--veto' : ''}`}>
         <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{vetoing ? ' · Map veto' : `${m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · ${mapName}${game ? ` · Round ${Math.min(n, total)}` : ''}${ot ? ' · OT' : ''}`}</div>
+        <p className="match-state">{playbackState}{history ? ` · Viewing history through R${historyAt}` : ''}</p>
         <div className="hud__score">
           <div className={`hud__team hud__team--${sideCls(side)}`}><i className="side-chip">{side}</i><span className="hud__org">Your team</span><span className="hud__tag">You</span>{m.bestOf === 3 && <em>{mapsWon}</em>}</div>
           <div className="hud__nums">
@@ -285,7 +299,6 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
             return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}`} />;
           })}
         </div>
-        {game && !vetoing && !mapDone && <Momentum rounds={game.rounds} n={n} total={total} forced={game.calls?.force ?? []} theirTag={opp.tag} />}
         {m.bestOf === 3 && !vetoing && (
           <div className="maps">
             {[0, 1, 2].map((i) => {
@@ -308,9 +321,10 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
         m.next && <><SeriesPreview m={m} opp={opp} /><KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} dispatch={dispatch} /></>
       ) : !mapDone ? (
         <div className="match-workspace">
-          <aside className="match-five" aria-label="Your fielded five"><h3>Playing this map</h3>{mine.map(x => <div key={x.player.id}><Avatar player={x.player} roster={x.roster} /><span><b>{x.player.nick}</b><small>{ROLE_SHORT[x.slot]} · {x.roster.org} {x.roster.year}</small></span><FormTag v={m.playerForm?.[x.player.id] ?? 0} /></div>)}</aside>
+          <aside className="match-five" aria-label="Your fielded five"><h3>Your fielded five · {side}</h3>{mine.map((x, i) => <div key={x.player.id}><Avatar player={x.player} roster={x.roster} /><span><b><i className="lineup-marker">Y{i + 1}</i> {x.player.nick}</b><small>{ROLE_SHORT[x.slot]} · {x.roster.org} {x.roster.year}</small></span><FormTag v={m.playerForm?.[x.player.id] ?? 0} /></div>)}</aside>
           <div className="match-centre">{board}
           {/* Everything you can press sits above the killfeed, so the feed can grow downward without moving a button. */}
+          <div className="match-dock" ref={dock}>
           {buyQuestion && (
             <div className="buy anim-in" role="group" aria-label="Buy after the lost pistol">
               <strong>Pistol lost. Save or force?</strong>
@@ -327,20 +341,21 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
               <div className="calls">
                 <button className={`ghost-btn calls__timeout ${nudge ? 'is-nudge' : ''}`} data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout}
                   title={`One per half. Stops the opponent's run and lifts your next three rounds${coach ? `; ${coach} makes it count for more` : ''}.`}>
-                  Timeout
+                  Call timeout
                 </button>
                 {!canTimeout && <span className="small muted">{n < 1 ? 'Available after the first round' : 'Timeout used this half'}</span>}
               </div>
             )}
             <div className="playback">
-              <button className="ghost-btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? '▶ Resume' : '❚❚ Pause'}</button>
+              <button className="ghost-btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? <><PlayIcon size={14} /> Resume</> : <><PauseIcon size={14} /> Pause</>}</button>
               {paused && <button className="ghost-btn" disabled={buyQuestion} onClick={() => setN((x) => Math.min(x + 1, total))} title="Right arrow">Next round ›</button>}
               <div className="speed" role="group" aria-label="Playback speed">
                 {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{speedLabel(v)}</button>)}
               </div>
-              {!buyQuestion && <button className="ghost-btn" onClick={() => setN(total)}>Skip map</button>}
+              {!buyQuestion && <button className="ghost-btn playback__skip" title="Reveal this map’s simulated result; this does not forfeit" onClick={() => setN(total)}>Skip map</button>}
             </div>
             {paused && <p className="muted small playback__note">Paused after round {Math.min(n, total)}. Timeouts can still be called.</p>}
+          </div>
           </div>
           </div>
           {!buyQuestion && <Tip id="calls" title="Timeouts and buys">You get one timeout per half: it stops the opponent's run and lifts your next three rounds. After a lost pistol you choose whether to save or force buy. You can pause, step through rounds and slow the playback whenever you like.</Tip>}
@@ -355,6 +370,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
             ))}
             {shown.length === 0 && <div className="kf kf--idle"><small>Pistol</small>You start on {game.start}. Both teams buy and head out.</div>}
           </div>
+          <Momentum rounds={game.rounds} n={n} total={total} forced={game.calls?.force ?? []} theirTag={opp.tag} />
           </section>
         </div>
       ) : (

@@ -12,12 +12,13 @@ export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Open
   const chem = liveChemistry(s.picks, s.coach, !!s.opts?.hard);
   return (
     <aside className="draft-side" aria-label="Draft details">
-      <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
-      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
+      {/* The hint is steady; the chemistry preview below it changes height as you point at players, so nothing sits under the part that moves. */}
       <section className="side-card hint-card" aria-labelledby={hint_h}>
         <h3 id={hint_h}>Draft hint</h3>
         <p>{draftHint(s)}</p>
       </section>
+      <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
+      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
     </aside>
   );
 }
@@ -39,7 +40,7 @@ function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () 
             <li key={x.label} className={`syn syn--${x.kind} ${x.value < 0 ? 'is-bad' : ''}`}><b>{strength(x.value)}</b><span>{x.label}</span></li>
           ))}
         </ul>
-      ) : <p className="muted small">No links yet. Players from the same country, org or era build chemistry.</p>}
+      ) : <p className="muted small">Same country, org or era builds links.</p>}
       <ChemIf preview={preview} />
     </section>
   );
@@ -47,7 +48,7 @@ function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () 
 
 /**
  * What the player you are pointing at would add (#143): the word before and after, and the links behind the change, as text with a mark.
- * The panel keeps its height whether or not you are pointing at anyone, so nothing below it moves.
+ * The current consequence stays visible; longer historical context is available on demand.
  */
 function ChemIf({ preview }: { preview: Preview | null }) {
   const pv = preview?.chem ?? null;
@@ -58,7 +59,7 @@ function ChemIf({ preview }: { preview: Preview | null }) {
       {!pv ? <p className="muted small">Point at a player to see what they would add.</p> : (
         <>
           <h4>If you draft {who}</h4>
-          {preview?.playerId && <Majors id={preview.playerId} />}
+          {preview?.playerId && <details className="chem__history"><summary>Major history</summary><Majors id={preview.playerId} /></details>}
           <p className="chem__total chem__total--if">
             {pv.before === pv.after
               ? <><b>{pv.after}</b><span className="muted small"> no change</span></>
@@ -82,5 +83,5 @@ function ChemIf({ preview }: { preview: Preview | null }) {
 function Majors({ id }: { id: string }) {
   const list = majorsOf(id);
   if (!list.length) return null;
-  return <p className="chem__majors"><b>Majors</b> {list.map((m) => `${m.year} ${m.result}`).join(' · ')}</p>;
+  return <p className="chem__majors"><b>Majors</b> {list.map((m, i) => <React.Fragment key={i}>{i > 0 && ' · '}<span>{m.year} {m.result}</span></React.Fragment>)}</p>;
 }

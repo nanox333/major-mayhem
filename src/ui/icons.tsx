@@ -51,3 +51,9 @@ export const ClockIcon = (p: P) => <Svg {...p}><path d="M12 21a9 9 0 1 0 0-18 9 
 /** A medal: a placement below first. */
 export const MedalIcon = (p: P) => <Svg {...p}><path d="M12 21a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM9 10.5 7 3h4l1 4 1-4h4l-2 7.5" /></Svg>;
 export const PlusIcon = (p: P) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
+/** Playback: resume and pause, drawn as shapes so no platform substitutes a coloured emoji. */
+export const PlayIcon = (p: P) => <Svg {...p} fill><path d="M8 5.5v13l10.5-6.5z" stroke="none" /></Svg>;
+/** Copy and save, for the share buttons. */
+export const CopyIcon = (p: P) => <Svg {...p}><path d="M9 9h10v11H9zM15 9V5H5v11h4" /></Svg>;
+export const DownloadIcon = (p: P) => <Svg {...p}><path d="M4 14v6h16v-6M12 4v11M8 11l4 4 4-4" /></Svg>;
+export const PauseIcon = (p: P) => <Svg {...p} fill><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" stroke="none" /></Svg>;

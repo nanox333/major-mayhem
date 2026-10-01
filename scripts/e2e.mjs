@@ -28,6 +28,8 @@ async function pickFrom(p, i = 0, shot) {
   const coach = p.locator('.case-item--coach');
   if (await coach.count()) { await coach.nth(i).click(); return 'coach'; }
   const card = p.locator('.case-card').nth(i);
+  const roster = p.locator('.roster-selector button').nth(i);
+  if (await roster.count()) await roster.click();
   const toggle = card.locator('.case-card__toggle');
   if (await toggle.count() && (await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
   const rows = card.locator('button.prow');
@@ -62,13 +64,21 @@ async function run(viewport, tag) {
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/', r => r.fulfill({ contentType: 'text/html', body: html }));
   await p.goto('http://game.local/');
+  // Every screen sits in the same column, so moving through a run never resizes the content; and the scrollbar keeps its space, so opening a dialog doesn't either.
+  let edges = null;
+  const same = async (where) => {
+    const e = await p.evaluate(() => { const r = document.querySelector('.console__body, .editorial-home').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; });
+    if (!edges) edges = e;
+    else if (e[0] !== edges[0] || e[1] !== edges[1]) throw new Error(tag + ': the content moved from ' + edges + ' to ' + e + ' on ' + where);
+  };
+  if ((await p.evaluate(() => getComputedStyle(document.documentElement).scrollbarGutter)) !== 'stable') throw new Error(tag + ': the scrollbar gutter should stay reserved so dialogs do not resize the page');
   await p.evaluate((prefs) => { localStorage.clear(); if (prefs) localStorage.setItem('mm-prefs', prefs); }, process.env.MM_PREFS ?? null); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
   await p.waitForSelector('button.cta');
   await p.locator('.home__daily').click();
   if (!(await p.textContent('.kicker')).includes('Daily #')) throw new Error('daily mode did not start');
   const step = async () => (await p.textContent('.progress [aria-current="step"]')).trim();
-  if (await p.locator('.topbar ol, .topbar [aria-current]').count()) throw new Error('the run steps must not be in the top bar (#140)');
+  if (await p.locator('.topbar .progress, .topbar [aria-current="step"]').count()) throw new Error('the run steps must not be in the top bar (#140)');
   if (!(await step()).startsWith('Draft')) throw new Error(`the progress list should be on the Draft step, got "${await step()}"`);
   await p.screenshot({ path: `shots/${tag}-0-spin.png`, fullPage: true });
   // Five players, then the coach (round 6) and the bench player (round 7).
@@ -93,6 +103,7 @@ async function run(viewport, tag) {
   }
   await p.waitForSelector('button.cta'); await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-3-ready.png`, fullPage: true });
+  await same('the lobby');
   if ((await p.locator('.comfort li').count()) !== 7) throw new Error('the lobby should list all seven maps with how at home your team is (#49)');
   if (await p.$('.lobby__stat')) throw new Error('ratings visible in lobby');
   await cta('Find match');
@@ -105,11 +116,13 @@ async function run(viewport, tag) {
       await p.locator('.subs__btns .ghost-btn', { hasText: 'Sub out' }).first().click();
       await p.waitForSelector('.subs__btns .is-on:has-text("Sub out")');
       await p.screenshot({ path: `shots/${tag}-4-preview.png`, fullPage: true });
+      await same('the match-ready screen');
     }
     await cta('Accept');
     // Map veto: take the first open map on each of our turns until the first map is set up.
     await p.waitForSelector('.veto');
     if (n === 1) await p.screenshot({ path: `shots/${tag}-4b-veto.png`, fullPage: true });
+    await same('the map veto');
     while (await p.$('.veto')) {
       await p.locator('.veto__map button:not([disabled])').first().click();
       await p.waitForTimeout(100);
@@ -127,6 +140,7 @@ async function run(viewport, tag) {
       if (g === 0 && n === 1) {
         await p.waitForTimeout(3200); await answerBuy();
         await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true });
+        await same('the live match');
         if (tag === 'desk') {
           // A dialog over the controls holds playback where it is, and it carries on after (#181).
           await p.locator('.speed button', { hasText: 'Tactical' }).click();
@@ -172,7 +186,8 @@ async function run(viewport, tag) {
   }
   await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-7-final.png`, fullPage: true });
-  if (!(await p.locator('.path .history__row').count()) || !(await p.locator('.path__end').count())) throw new Error('the results should show the path through the Major (#72)');
+  await same('the results');
+  if (!(await p.locator('.path .history__row').count()) || !(await p.locator('.result-path li').count())) throw new Error('the results should show the played matches and path through the Major');
   console.log(tag, 'final:', (await p.textContent('.final__banner h3')).trim(), '| MVP', (await p.textContent('.mvp-card strong')).trim(), (await p.textContent('.mvp-card__rating b')).trim());
   if (!(await p.$('.review__list li'))) throw new Error('no draft review');
   const grade = (await p.textContent('.review__head b')).trim();
@@ -210,7 +225,7 @@ async function run(viewport, tag) {
   await p.getByRole('button', { name: 'Play again', exact: true }).click();
   await p.waitForSelector('.daily-done');
   if (await p.locator('.home__daily', { hasText: 'Replay' }).count() === 0) throw new Error('a finished daily should show as played on the start screen');
-  const clock = (await p.textContent('.mcard--daily .clock')).trim();
+  const clock = (await p.textContent('.home-daily-clock .clock')).trim();
   if (!/^\d\d:\d\d:\d\d$/.test(clock)) throw new Error('the daily card should carry the countdown clock, got "' + clock + '"');
   console.log(tag, 'daily done card:', (await p.textContent('.daily-done strong')).trim(), '|', clock);
   await p.screenshot({ path: `shots/${tag}-10-daily-done.png`, fullPage: true });
@@ -276,7 +291,7 @@ async function duel() {
   await p.locator('button.cta', { hasText: 'See results' }).click();
   await p.waitForSelector('.final');
   const result = (await p.textContent('.final__banner h3')).trim();
-  if (!/^(You|They) won \d–\d$/.test(result)) throw new Error('unexpected duel result: ' + result);
+  if (!/^(You win|Your opponent wins) the draft duel\.$/.test(result) || !/Series \d–\d/.test(await p.textContent('.final__banner p'))) throw new Error('unexpected duel result: ' + result);
   await p.screenshot({ path: 'shots/duel-3-result.png', fullPage: true });
   console.log('duel result:', result, 'errors:', errs);
   if (errs.length) problems.push(`duel: page errors: ${errs.join(' | ')}`);
@@ -698,7 +713,7 @@ async function runGuards() {
   await p.waitForSelector('.home3');
   const old = await p.locator('.mcard__old').innerText();
   if (!/Daily #4 \(2026-10-01\) is unfinished/.test(old)) throw new Error('an earlier day\'s daily should be shown as that day\'s: ' + old);
-  if (!/#5/.test(await p.locator('.mcard--daily .mcard__title').innerText())) throw new Error('the daily card should be today\'s');
+  if (!/#5/.test(await p.locator('.home-kicker').innerText())) throw new Error('the daily card should be today\'s');
   if (/Continue today/i.test(await p.locator('.home__daily').innerText())) throw new Error('an earlier day\'s daily must not be offered as today\'s');
   await p.locator('.home__daily').click();
   await p.waitForSelector('.mcard__ask');
@@ -711,16 +726,29 @@ async function runGuards() {
   await ctx.close();
 }
 
-/** The phone draft (#185): each collapsed card says how many of its players fit what you still need, before you open it. */
+/** The phone draft (#185): every roster option exposes fit before navigation, which never commits a pick. */
 async function phoneDraft() {
   const { p, errs } = await page({ width: 390, height: 844 }, 'reduce');
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.case-card');
-  const sums = await p.$$eval('.case-card__sum', (els) => els.map((e) => e.textContent));
-  if (sums.length !== 3 || !sums.every((x) => /main role|Nobody|you can draft/.test(x))) throw new Error('every collapsed card should summarise its players: ' + JSON.stringify(sums));
-  console.log('phone draft: card summaries ok errors:', errs);
+  const tabs = p.getByRole('group', { name: 'Choose a roster to view' }).getByRole('button');
+  const sums = await tabs.locator('.case-card__sum').allTextContents();
+  if (sums.length !== 3 || !sums.every((x) => /main role|Nobody|you can draft/.test(x))) throw new Error('every roster option should summarise its players before navigation: ' + JSON.stringify(sums));
+  const available = await tabs.allInnerTexts();
+  if (!available.every(label => /\d+ available/.test(label))) throw new Error('each roster selector must show an available-player count');
+  const saved = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
+  for (let i = 0; i < 3; i++) {
+    await tabs.nth(i).click();
+    if (await tabs.nth(i).getAttribute('aria-pressed') !== 'true') throw new Error('the visible roster must be identified by its selector');
+    if (await p.locator('.case-card:visible').count() !== 1) throw new Error('phone should show one readable roster at a time');
+    if (await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2')) !== saved) throw new Error('browsing rosters should not draft a player or alter the run');
+  }
+  await p.keyboard.press('1');
+  await p.waitForFunction(() => document.activeElement?.classList.contains('prow'), null, { timeout: 3000 });
+  if (await tabs.first().getAttribute('aria-pressed') !== 'true') throw new Error('roster keyboard shortcut must expose its roster before focusing a player');
+  console.log('phone draft: visible roster summaries, navigation and keyboard focus ok errors:', errs);
   if (errs.length) problems.push(`phone draft: page errors: ${errs.join(' | ')}`);
   await p.close();
 }

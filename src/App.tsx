@@ -114,6 +114,8 @@ function Game() {
   const goToCard = (n: number) => {
     const card = document.querySelectorAll<HTMLElement>('.case-card')[n];
     if (!card) return;
+    const roster = document.querySelectorAll<HTMLButtonElement>('.roster-selector button')[n];
+    if (roster) roster.click();
     const toggle = card.querySelector<HTMLElement>('.case-card__toggle');
     if (toggle && toggle.getAttribute('aria-expanded') !== 'true') toggle.click();
     setTimeout(() => card.querySelector<HTMLElement>('button.prow')?.focus(), 0);
@@ -148,21 +150,19 @@ function Game() {
   return (
     <>
     <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
-      abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
+      onBrowse={() => setBrowse(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
     <UnsavedBar run={s} />
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
-      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} />}
-      {view === 'home' && <button className="ghost-btn browse-entry" onClick={() => setBrowse(true)}>Explore Major rosters</button>}
+      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} onBrowse={() => setBrowse(true)} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view !== 'home' && view !== 'guess' && <main className="console">
-        <div className="console__head">
+        <div className={`console__head ${s.phase === 'live' || s.phase === 'final' ? 'console__head--progress' : ''}`}>
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
           )}
-          <div className="console__titles">
-            {/* One heading, in one line where there is room: where you are, then what to do (#103). */}
-            <h2 className="console__title"><span className="kicker">{kicker}</span><span className="sep"> · </span><span className="console__action">{title}</span></h2>
-          </div>
+          {s.phase === 'live' || s.phase === 'final'
+            ? <h2 className="sr">{title}</h2>
+            : <div className="console__titles"><p className="console__eyebrow kicker">{kicker}</p><h2 className="console__title">{title}</h2></div>}
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
         {view === 'draft' && s.phase === 'draft' && <><div className={drafting ? 'desktop-strip' : ''}><TeamStrip s={s} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
