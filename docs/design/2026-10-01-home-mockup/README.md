@@ -2,11 +2,11 @@
 
 Generated with OpenAI image generation for Major Mayhem, prepared and traced by Codex on October 1, 2026. These original anonymous compositions use no official game renders, player photographs or team branding. The repository's ISC license applies; no third-party license or exclusivity guarantee is asserted.
 
-The original full-resolution transparent PNGs are retained under `assets/sources/`, unchanged. `assets/case.svg` (74 paths) and `assets/pro-silhouette.svg` (6 paths) are simplified genuine color-path traces, with no embedded raster image. The production copies live in `src/assets/home/`; only those two assets are imported into the offline page. The question mark and existing interim Major Mayhem shield remain separate HTML/SVG layers. #112 owns the final brand identity.
+The original full-resolution transparent PNGs are retained under `assets/sources/`, unchanged. `assets/case.svg` (74 paths) and `assets/pro-silhouette.svg` (6 paths) are simplified genuine color-path traces, with no embedded raster image. The production copies live in `src/assets/home/`; those two assets and the compressed arena backdrop are imported into the offline page. The question mark and existing interim Major Mayhem shield remain separate HTML/SVG layers. #112 owns the final brand identity.
 
 ![Generated sources beside simplified traces](asset-reference.jpg)
 
-This historical asset sheet also shows the arena prepared for #214. That arena is not included in this implementation; its source remains on the `design/home-mockup-followups` branch. The sheet is an asset comparison, not a screenshot of the implemented page. Actual production screenshots and validation are in [mode-cards](../mode-cards/README.md).
+This historical asset sheet also shows the arena prepared for #214. The arena is now used by #214: `src/assets/home/arena.webp` is a 1920×640, 48,694-byte WebP (quality 80, Pillow method 6). Its unchanged 2172×724 generated PNG is retained under `assets/sources/arena.png`. Keep the detailed arena as compressed raster; the cutouts remain genuine vector paths. The sheet is an asset comparison, not a screenshot of the implemented page. Actual production screenshots and validation are in [mode-cards](../mode-cards/README.md).
 
 ## Reproduction
 
@@ -26,3 +26,5 @@ Generation briefs: rugged black equipment case with orange edge rails, transpare
 | pro-silhouette.webp | 49,236 | 49,198 |
 
 At production card size the trace keeps the case rails, handle and silhouette rim while dropping fine scratches, fabric and hair texture. The traces look more graphic than their raster sources; this is a deliberate simplification, not pixel equivalence. Their combined individual gzip size is about 43 KB versus 93 KB for the raster alternatives. The final single-file build is measured separately because data-URL encoding affects the result.
+
+Arena generation brief: original near-black esports arena with orange spotlights, quiet left headline zone, right-edge anonymous tactical silhouette, no recognizable game characters or interface. Generated separately with OpenAI image generation from the supplied mockup direction, October 1, 2026.

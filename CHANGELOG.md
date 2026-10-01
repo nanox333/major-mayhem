@@ -12,6 +12,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - Dialogs render above sticky controls and suppress draft shortcuts; roster/lineup sheets preserve the selection and restore focus.
 
 ### Added
+- An arena-backed Home hero with a compact daily action/clock cluster and a five-starter diagram; light and high-contrast themes retain an art-free treatment (#214).
 - Home mode cards use original traced equipment-case and anonymous pro artwork beside the copy, with visible stateful actions (#215).
 - Guess autocomplete previews the next unsubmitted player without consuming a guess (#123).
 - A mobile lineup sheet with selected-pick chemistry beside confirmation, and a searchable roster reference with contextual event/source links (#191, #192).
