@@ -15,6 +15,7 @@ import { RosterList, Staff } from './Lobby';
 import { achievementById } from '../game/achievements';
 import { teamReview } from '../game/review';
 import { Modal } from '../ui/Modal';
+import { CopyIcon, DownloadIcon, ShareIcon } from '../ui/icons';
 
 export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s: Run; stats: Stats; dispatch: React.Dispatch<Action> }) {
   const pl = G.placement(s.t);
@@ -86,15 +87,17 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
       <AnalysisSection title="Team review" note="Draft composition and actual match contributors"><TeamReviewCard mine={mine} s={s} /></AnalysisSection>
       <AnalysisSection title="Pick strength" note="Individual role-adjusted model values, not a win prediction"><DraftReview picks={s.picks} hard={!!s.opts?.hard} /></AnalysisSection>
       </div>
-      {stats.runs > 0 && (
-        <p className="muted small">
-          Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
-          {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
-        </p>
-      )}
-      <ChallengeBar s={s} />
-      <div className="final__actions action-bar">
-        <button className="ghost-btn ghost-btn--big" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
+      <div className="result-next">
+        <div className="final__actions action-bar">
+          <button className="ghost-btn ghost-btn--big" onClick={() => dispatch({ type: 'reset' })}>Play again</button>
+        </div>
+        <ChallengeBar s={s} />
+        {stats.runs > 0 && (
+          <p className="result-next__record">
+            Lifetime: {stats.titles} title{stats.titles === 1 ? '' : 's'} in {stats.runs} run{stats.runs === 1 ? '' : 's'}
+            {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -161,10 +164,10 @@ export function ShareBar({ text, image, props = {}, onImageReady }: {
   };
   return (
     <div className="share-bar">
-      <button className="ghost-btn" onClick={copy}>{state === 'copied' || state === 'copyFailed' ? SHARE_LABEL[state] : '⧉ Copy result'}</button>
+      <button className="ghost-btn" onClick={copy}>{state === 'copied' || state === 'copyFailed' ? SHARE_LABEL[state] : <><CopyIcon size={16} /> Copy result</>}</button>
       {image && (
         <button className="ghost-btn" onClick={sendImage}>
-          {state === 'shared' || state === 'saved' || state === 'failed' ? SHARE_LABEL[state] : share ? '↗ Share image' : '⤓ Save image'}
+          {state === 'shared' || state === 'saved' || state === 'failed' ? SHARE_LABEL[state] : share ? <><ShareIcon size={16} /> Share image</> : <><DownloadIcon size={16} /> Save image</>}
         </button>
       )}
     </div>
@@ -196,7 +199,7 @@ function ChallengeBar({ s }: { s: Run }) {
         <input value={name} maxLength={24} placeholder="Your name" onChange={(e) => setName(e.target.value)} aria-label="Your name for the challenge" />
       </label>
       <button className="ghost-btn" onClick={send}>
-        {state === 'copied' ? '✓ Link copied' : state === 'shared' ? '✓ Sent' : state === 'failed' ? 'Copy blocked by the browser' : '⚔ Challenge'}
+        {state === 'copied' ? '✓ Link copied' : state === 'shared' ? '✓ Sent' : state === 'failed' ? 'Copy blocked by the browser' : <><ShareIcon size={16} /> Send challenge</>}
       </button>
     </div>
   );

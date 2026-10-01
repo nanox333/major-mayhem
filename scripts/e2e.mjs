@@ -64,6 +64,14 @@ async function run(viewport, tag) {
   await p.route('https://fonts.**', r => r.fulfill({ body: '' }));
   await p.route('http://game.local/', r => r.fulfill({ contentType: 'text/html', body: html }));
   await p.goto('http://game.local/');
+  // Every screen sits in the same column, so moving through a run never resizes the content; and the scrollbar keeps its space, so opening a dialog doesn't either.
+  let edges = null;
+  const same = async (where) => {
+    const e = await p.evaluate(() => { const r = document.querySelector('.console__body, .editorial-home').getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; });
+    if (!edges) edges = e;
+    else if (e[0] !== edges[0] || e[1] !== edges[1]) throw new Error(tag + ': the content moved from ' + edges + ' to ' + e + ' on ' + where);
+  };
+  if ((await p.evaluate(() => getComputedStyle(document.documentElement).scrollbarGutter)) !== 'stable') throw new Error(tag + ': the scrollbar gutter should stay reserved so dialogs do not resize the page');
   await p.evaluate((prefs) => { localStorage.clear(); if (prefs) localStorage.setItem('mm-prefs', prefs); }, process.env.MM_PREFS ?? null); await p.reload();
   const cta = (t) => p.locator('button.cta', { hasText: t }).click({ force: true });
   await p.waitForSelector('button.cta');
@@ -95,6 +103,7 @@ async function run(viewport, tag) {
   }
   await p.waitForSelector('button.cta'); await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-3-ready.png`, fullPage: true });
+  await same('the lobby');
   if ((await p.locator('.comfort li').count()) !== 7) throw new Error('the lobby should list all seven maps with how at home your team is (#49)');
   if (await p.$('.lobby__stat')) throw new Error('ratings visible in lobby');
   await cta('Find match');
@@ -107,11 +116,13 @@ async function run(viewport, tag) {
       await p.locator('.subs__btns .ghost-btn', { hasText: 'Sub out' }).first().click();
       await p.waitForSelector('.subs__btns .is-on:has-text("Sub out")');
       await p.screenshot({ path: `shots/${tag}-4-preview.png`, fullPage: true });
+      await same('the match-ready screen');
     }
     await cta('Accept');
     // Map veto: take the first open map on each of our turns until the first map is set up.
     await p.waitForSelector('.veto');
     if (n === 1) await p.screenshot({ path: `shots/${tag}-4b-veto.png`, fullPage: true });
+    await same('the map veto');
     while (await p.$('.veto')) {
       await p.locator('.veto__map button:not([disabled])').first().click();
       await p.waitForTimeout(100);
@@ -129,6 +140,7 @@ async function run(viewport, tag) {
       if (g === 0 && n === 1) {
         await p.waitForTimeout(3200); await answerBuy();
         await p.screenshot({ path: `shots/${tag}-5-live.png`, fullPage: true });
+        await same('the live match');
         if (tag === 'desk') {
           // A dialog over the controls holds playback where it is, and it carries on after (#181).
           await p.locator('.speed button', { hasText: 'Tactical' }).click();
@@ -174,6 +186,7 @@ async function run(viewport, tag) {
   }
   await p.waitForTimeout(700);
   await p.screenshot({ path: `shots/${tag}-7-final.png`, fullPage: true });
+  await same('the results');
   if (!(await p.locator('.path .history__row').count()) || !(await p.locator('.result-path li').count())) throw new Error('the results should show the played matches and path through the Major');
   console.log(tag, 'final:', (await p.textContent('.final__banner h3')).trim(), '| MVP', (await p.textContent('.mvp-card strong')).trim(), (await p.textContent('.mvp-card__rating b')).trim());
   if (!(await p.$('.review__list li'))) throw new Error('no draft review');

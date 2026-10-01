@@ -119,6 +119,8 @@ function CaseReel({ land, hard, onDone }: { land: string; hard: boolean; onDone:
     return () => { cancelAnimationFrame(raf); clearTimeout(t); clearTimeout(glow); ticks(); chime(); };
   }, [items]);
   return (
+    <div className="reel-stage">
+      <p className="reel-stage__caption" aria-hidden="true">Opening your case</p>
     <div className={`reel anim-in rar-${hard ? 'milspec' : rarity(items[LAND])} ${landed ? 'is-landed' : ''}`} ref={box} aria-label="Opening case">
       <button type="button" className="ghost-btn reel__skip" onClick={onDone}>Show case</button>
       <div className="reel__strip" ref={strip}>
@@ -131,6 +133,7 @@ function CaseReel({ land, hard, onDone }: { land: string; hard: boolean; onDone:
         ))}
       </div>
       <div className="reel__marker" />
+    </div>
     </div>
   );
 }
@@ -373,9 +376,11 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
         })}
       </div>
       <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
-      {!sel && <div className="draft-decision-empty"><b>Select a player</b><span>{bench ? "Choose a bench player from any roster." : "Review their slot and chemistry here before committing."}</span></div>}
-      {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
-      <SpinAgain s={s} reroll={reroll} busy={out} />
+      <div className="draft-decision">
+        {!sel && <div className="draft-decision-empty"><b>Select a player</b><span>{bench ? "Choose a bench player from any roster." : "Review their slot and chemistry here before committing."}</span></div>}
+        {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
+        <SpinAgain s={s} reroll={reroll} busy={out} />
+      </div>
       {details && <RosterBrowser initialId={details} hard={hard} onClose={() => setDetails(null)} />}
     </div>
   );

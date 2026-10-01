@@ -27,3 +27,16 @@ The home uses original theme-aware lineup and faceless-player SVG illustrations.
 
 ![Implemented results, desktop](results-1440-after.png)
 
+
+## After the finishing pass
+
+Captured from the final build with a fresh free-play run at 1440×900 and 390×844, reduced motion off, first-time tips dismissed except on the home. These are not identical-state pairs with the "before" set above: the run is a different seeded draft, so compare layout and styling, not names.
+
+| Screen | Desktop | Phone |
+| --- | --- | --- |
+| Home, first visit | [1440](finish-1440-home.png) | |
+| Lobby | [1440](finish-1440-lobby.png) | |
+| Match ready | [1440](finish-1440-match-ready.png) | [390](finish-390-match-ready.png) |
+| Knife round | [1440](finish-1440-knife.png) | |
+| Live, paused | [1440](finish-1440-live.png) | [390](finish-390-live.png) |
+| Results | [1440](finish-1440-results.png) | [390](finish-390-results.png) |

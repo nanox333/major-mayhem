@@ -7,6 +7,7 @@ import './styles/editorial-home.css';
 import './styles/editorial-draft.css';
 import './styles/editorial-live.css';
 import './styles/editorial-results.css';
+import './styles/editorial-finish.css';
 import { initAnalytics } from './analytics';
 import { initSound } from './ui/sound';
 

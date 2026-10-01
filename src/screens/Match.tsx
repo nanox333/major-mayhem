@@ -9,6 +9,7 @@ import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
 import { play } from '../ui/sound';
 import { Tip } from '../ui/tips';
+import { PauseIcon, PlayIcon } from '../ui/icons';
 import { getPrefs } from '../ui/prefs';
 import { BUY_LABEL, BUY_MARK, economyFor, momentumAt, momentumText } from '../game/momentum';
 
@@ -66,7 +67,8 @@ function SubPanel({ s, pending, dispatch }: { s: Run; pending: Pending; dispatch
           </button>
         ))}
       </div>
-      {out && <p className={`subs__tradeoff small ${!hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`}>{tradeoff(out)}.</p>}
+      {/* Always present, so choosing a sub never moves the buttons below it; a live region so the change is announced. */}
+      <p className={`subs__tradeoff small ${out && !hard && G.fitNote(bench.player, out.slot).kind === 'off' ? 'is-bad' : ''}`} aria-live="polite">{out ? `${tradeoff(out)}.` : ''}</p>
       <Tip id="form" title="Match-day form">The arrows show how each player is playing today: ▲▲ hot, ▲ good, ▼ cold. Your bench player can replace one starter for this match only, and takes that starter's role.</Tip>
     </div>
   );
@@ -345,7 +347,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
               </div>
             )}
             <div className="playback">
-              <button className="ghost-btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? '▶ Resume' : '❚❚ Pause'}</button>
+              <button className="ghost-btn" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? <><PlayIcon size={14} /> Resume</> : <><PauseIcon size={14} /> Pause</>}</button>
               {paused && <button className="ghost-btn" disabled={buyQuestion} onClick={() => setN((x) => Math.min(x + 1, total))} title="Right arrow">Next round ›</button>}
               <div className="speed" role="group" aria-label="Playback speed">
                 {SPEEDS.map((v) => <button key={v} className={speed === v ? 'is-on' : ''} aria-pressed={speed === v} onClick={() => setSpeedSaved(v)}>{speedLabel(v)}</button>)}

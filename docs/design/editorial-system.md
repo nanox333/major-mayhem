@@ -23,3 +23,15 @@ The shared shell aligns its mark, content and page gutters. Desktop mode navigat
 No new network-loaded fonts, generated portraits, logos or runtime dependencies are introduced. Saira fonts remain bundled under SIL OFL (licenses in `assets-src/fonts`); normal reading uses operating-system fonts. Existing photos, logos and radar assets keep their existing credits and offline embedding. Page images are reference only.
 
 The contrast suite checks body/secondary/muted/accent/side/outcome text at 4.5:1 and control/focus boundaries at 3:1 across dark, light and both high-contrast palettes. Responsive browser checks must include 320, 375, 768, 1440 and 1920px, keyboard focus, 200% zoom and reduced motion. Record build gzip delta and identical-state before/after screenshots in the implementation PR; do not claim conceptual images as measured browser output.
+
+## Finishing rules
+
+These came from reviewing every screen of a run, not just the four in the concepts. `src/styles/editorial-finish.css` carries them and loads last.
+
+- **Orange is the only primary action.** Green and red mark outcomes (a win, a loss, a positive or negative link), never buttons or panels. A "match ready" screen is an opponent and a decision, not an alert.
+- **Sections are flat.** A rule and space group things; a box stays only where something is chosen (a candidate, a map to ban, a dialog). A player row looks the same in the draft rail, the lobby, the live lineup and the results.
+- **One column.** Every screen uses the page width, so nothing resizes as a run moves from draft to match to results. `html { scrollbar-gutter: stable }` keeps the scrollbar's space while a dialog locks scrolling.
+- **Nothing moves when you point.** Reserve the decision region from empty to chosen, put steady content above content that changes height, and render a note that appears on a choice (the substitute's role) in a reserved line. Lineup rows keep one height whether a slot is empty, previewed or filled.
+- **One disclosure.** `details > summary` draws a chevron that turns; the browser's triangle is never shown. Row disclosures put it on the right, inline ones (marker key, Major history) on the left.
+- **Drawn icons, not glyphs.** Emoji and symbol characters render differently per platform; playback, copy, save and share use the icon set.
+- **Every class is styled.** `src/ui/styled.test.ts` fails if a component uses a class no stylesheet defines, so new work can't ship as browser defaults. `scripts/ui-e2e.ts` fails if the content column differs between screens at any width.

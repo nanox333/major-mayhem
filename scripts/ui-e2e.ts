@@ -50,17 +50,25 @@ async function load(p: Page, run: Run, prefs: Record<string, unknown> = {}, stat
   await p.reload();
 }
 const saved = (p: Page) => p.evaluate(key => localStorage.getItem(key), KEY);
+/** The left and right edge of the content column. Every screen shares one, so moving through a run never resizes what you are looking at. */
+async function contentEdges(p: Page) {
+  return p.evaluate(() => { const r = document.querySelector('.console__body, .editorial-home')!.getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; });
+}
 async function fits(p: Page) { assert(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'horizontal overflow'); }
 try {
   for (const width of [1440, 375, 320, 768, 1920]) {
     const context = await browser.newContext({ viewport: { width, height: width === 320 ? 568 : 900 }, reducedMotion: 'reduce' });
     const errors: string[] = [];
+    const edges: number[][] = [];
     const p = await context.newPage(); p.on('pageerror', e => errors.push(e.message));
     await load(p, start);
+    // A dialog locks scrolling, which removes the scrollbar; the gutter stays reserved so the page behind it does not resize.
+    assert.equal(await p.evaluate(() => getComputedStyle(document.documentElement).scrollbarGutter), 'stable', 'the scrollbar gutter should stay reserved');
     const dailyAction = p.getByRole('button', { name: "Start today's run", exact: true });
     const dailyBox = await dailyAction.boundingBox();
     assert(dailyBox && dailyBox.y >= 0 && dailyBox.y + dailyBox.height <= p.viewportSize()!.height, 'daily action is outside the first viewport');
     assert((await p.locator('.home-daily-status').innerText()).includes('a coach and a bench player'), 'five-starter illustration hid the seven-pick explanation');
+    edges.push(await contentEdges(p));
     await fits(p); await p.screenshot({ path: `shots/ui/home-${width}.png`, fullPage: true });
     await load(p, opened);
     await p.locator('button.prow').first().click();
@@ -87,6 +95,7 @@ try {
       assert(await p.getByRole('button', { name: /^Your lineup/ }).evaluate(e => e === document.activeElement));
       assert.equal(await saved(p), before);
     }
+    edges.push(await contentEdges(p));
     await fits(p); await p.evaluate(() => scrollTo(0, 0)); await p.screenshot({ path: `shots/ui/draft-${width}.png`, fullPage: true });
     await p.locator('.draftbar .cta').click();
     await p.getByRole('button', { name: 'Open case', exact: true }).waitFor();
@@ -108,6 +117,7 @@ try {
     const preview = reducer(reducer(draft(start), { type: 'play' }), { type: 'start' });
     await load(p, preview);
     assert.equal(await p.locator('.veto__map .map-art').count(), 7);
+    edges.push(await contentEdges(p));
     await fits(p); await p.evaluate(() => scrollTo(0, 0)); await p.screenshot({ path: `shots/ui/veto-${width}.png`, fullPage: true });
 
     const bo3 = { ...preview, current: G.seeded('ui-veto', () => G.startMatch('QF', G.lineupFromPicks(preview.picks), preview.current!.opponentId, 3)) };
@@ -135,21 +145,22 @@ try {
     for (const label of markerLabels) assert(label.includes('illustrative') && /, (CT|T),/.test(label), 'radar marker lacks side or positioning context');
     await markers.first().click();
     assert((await p.locator('.radar-detail').innerText()).includes(markerLabels[0].split(':')[0]), 'marker selection does not expose its identity');
-    await p.getByRole('button', { name: '❚❚ Pause', exact: true }).click();
+    await p.getByRole('button', { name: 'Pause', exact: true }).click();
     await p.getByRole('button', { name: 'Next round ›', exact: true }).click();
     if (await p.getByRole('button', { name: 'Save (eco)', exact: true }).isVisible()) await p.getByRole('button', { name: 'Save (eco)', exact: true }).click();
     await p.getByRole('button', { name: 'Earlier rounds', exact: true }).click();
     await p.getByRole('button', { name: 'Return to live', exact: true }).click();
+    edges.push(await contentEdges(p));
     await fits(p); await p.evaluate(() => scrollTo(0, 0)); await p.screenshot({ path: `shots/ui/live-${width}.png`, fullPage: true });
-    await p.reload(); assert(await p.getByRole('button', { name: '▶ Resume', exact: true }).count() === 1, 'pause lost on reload');
-    await p.getByRole('button', { name: '▶ Resume', exact: true }).click();
+    await p.reload(); assert(await p.getByRole('button', { name: 'Resume', exact: true }).count() === 1, 'pause lost on reload');
+    await p.getByRole('button', { name: 'Resume', exact: true }).click();
     await p.getByRole('button', { name: 'How to play and data sources', exact: true }).click();
     const seen = await p.evaluate(() => localStorage.getItem('mm-seen'));
     await p.waitForTimeout(300);
     assert.equal(await p.evaluate(() => localStorage.getItem('mm-seen')), seen, 'dialog advanced playback');
     await p.keyboard.press('Escape');
-    await p.getByRole('button', { name: '❚❚ Pause', exact: true }).click();
-    assert(await p.getByRole('button', { name: '▶ Resume', exact: true }).count() === 1);
+    await p.getByRole('button', { name: 'Pause', exact: true }).click();
+    assert(await p.getByRole('button', { name: 'Resume', exact: true }).count() === 1);
 
 
     await load(p, { ...final, recorded: true });
@@ -157,7 +168,9 @@ try {
     if (width < 861) assert.equal(await p.locator('.analysis-section[open]').count(), 0);
     await p.locator('.analysis-section summary').last().click();
     assert(await p.locator('.final__actions').evaluate(e => getComputedStyle(e).position === 'static'), 'Play again obscures result analysis');
+    edges.push(await contentEdges(p));
     await fits(p); await p.evaluate(() => scrollTo(0, 0)); await p.screenshot({ path: `shots/ui/results-${width}.png`, fullPage: true });
+    assert(edges.every((e) => e[0] === edges[0][0] && e[1] === edges[0][1]), `the content column moves between screens at ${width}px: home, draft, veto, live, results = ${JSON.stringify(edges)}`);
     assert.deepEqual(errors, []);
     await context.close();
     console.log(`UI flows passed at ${width}px`);
@@ -175,7 +188,7 @@ try {
         await fits(p);
         const primary = name === 'home' ? p.getByRole('button', { name: "Start today's run", exact: true })
           : name === 'draft' ? p.locator('button.prow:visible').first()
-          : name === 'live' ? p.getByRole('button', { name: '❚❚ Pause', exact: true })
+          : name === 'live' ? p.getByRole('button', { name: 'Pause', exact: true })
           : p.locator('.share-bar button').first();
         await primary.focus();
         assert(await primary.evaluate(e => e === document.activeElement), `${name} primary control cannot receive keyboard focus`);

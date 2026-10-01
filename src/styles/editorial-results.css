@@ -1,5 +1,5 @@
 /* Tournament recap: outcome first, a saved-match ledger, then optional analysis. */
-.final { max-width: 1240px; gap: 20px; }
+.final { max-width: none; gap: 20px; }
 .result-hero { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 32px; padding: 20px 0 28px; border-bottom: 1px solid var(--line); }
 .result-hero__outcome { min-width: 0; }
 .final .final__banner { padding: 0; text-align: left; border: 0; border-radius: 0; background: transparent; animation: none; }

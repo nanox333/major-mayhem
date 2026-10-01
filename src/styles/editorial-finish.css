@@ -1,0 +1,240 @@
+/* Finishing pass for the editorial system. Loaded last. Three rules it enforces everywhere:
+   1. Orange is the only primary action. Green and red belong to outcomes, never to buttons or panels.
+   2. Sections are flat: a rule and some space group things; a box is kept only for something you can choose.
+   3. Rows look the same wherever a player appears: draft, lobby, live and results. */
+
+/* ---------- one shell ---------- */
+/* Every screen sits in the same column (the .page width), and the scrollbar keeps its space when a dialog locks scrolling, so opening something never resizes the content behind it. */
+html { scrollbar-gutter: stable; }
+.page, .final, .editorial-home { min-width: 0; }
+
+/* ---------- one primary action ---------- */
+.cta--go { background: var(--accent); color: var(--on-accent); animation: none; }
+.cta--go:hover { background: var(--accent-hi); }
+.searching__ring { border-top-color: var(--accent); }
+.accept-bar { height: 3px; justify-self: stretch; background: var(--line); }
+.accept-bar span { background: var(--accent); }
+.stack > .action-bar, .match-found .action-bar, .final__actions.action-bar { justify-items: start; }
+
+/* ---------- a player row is one thing everywhere (lobby, results) ---------- */
+.lobby { gap: 0; }
+.lobby__row { grid-template-columns: 48px minmax(0, 1fr) auto auto; gap: 12px; padding: 10px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; box-shadow: none; }
+.lobby__row.is-mvp { padding-left: 12px; background: none; box-shadow: inset 3px 0 0 var(--accent); }
+.lobby__avatar { width: 48px; height: 48px; border: 0; border-radius: 2px; background: var(--panel-2); }
+.lobby__who strong { font: 700 1.0625rem/1.25 var(--f-read); }
+.lobby__who small { font-size: .8125rem; }
+.lobby__slot { font-size: .8125rem; font-weight: 600; color: var(--text-2); }
+.lobby__slot svg { color: var(--accent); }
+.offrole { margin-left: 8px; padding: 2px 6px; border: 0; border-radius: 2px; background: var(--panel-2); color: var(--text-2); font-size: .6875rem; font-weight: 600; letter-spacing: .02em; }
+.lobby--staff .lobby__row { opacity: 1; }
+.notes { margin-top: 4px; }
+.notes span { padding: 0; border: 0; background: none; font-size: .875rem; color: var(--muted); }
+.synergies { gap: 0; }
+.syn { padding: 8px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; font-size: .9375rem; }
+.syn b { color: var(--go-text); }
+.syn.is-bad b { color: var(--loss-text); }
+.comfort { gap: 8px; margin-top: 12px; }
+.comfort ul { gap: 0 24px; }
+.comfort li { padding: 8px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; }
+
+/* ---------- one heading for the label above a panel ---------- */
+.comfort h4, .result-export h4, .match-five h3, .feed-heading h3, .match-feed .momentum__label {
+  margin: 0; font: 700 1.0625rem/1.2 var(--f-head); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2);
+}
+.comfort h4 small { font: 400 .875rem/1.45 var(--f-read); letter-spacing: 0; text-transform: none; color: var(--muted); }
+
+/* ---------- match ready: an opponent, not an alert ---------- */
+.match-found { gap: 24px; padding: 0; border: 0; border-radius: 0; background: none; }
+.match-found__title { text-align: left; font: 800 clamp(1.9rem, 3.2vw, 2.8rem)/1.05 var(--f-head); letter-spacing: 0; text-transform: none; color: var(--strong); }
+.versus { gap: 28px; align-items: stretch; }
+.versus__side { padding: 12px 0 0; background: none; border-top: 2px solid var(--t); }
+.versus__side--ct { border-top-color: var(--ct); }
+.versus__side small { margin-bottom: 8px; font: 700 .8125rem var(--f-body); }
+.versus__team { gap: 10px; margin-bottom: 2px; font-size: 1.5rem; }
+.versus__sub { margin-bottom: 10px; font-size: .875rem; }
+.versus ul { gap: 0; }
+.versus li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 1rem; font-weight: 500; }
+.versus__vs { color: var(--muted); font-size: 1.1rem; letter-spacing: .1em; }
+.subs { padding: 16px 0 0; border: 0; border-top: 1px solid var(--line); background: none; }
+
+/* ---------- knife and veto: a decision, stated plainly ---------- */
+.knife, .veto { gap: 12px; padding: 4px 0 0; border: 0; border-radius: 0; background: none; text-align: left; }
+.knife { justify-items: start; }
+.knife .cta { justify-self: start; }
+.knife > .tip { justify-self: start; }
+.knife.is-won { border: 0; }
+.knife__kicker { color: var(--accent); font-weight: 700; letter-spacing: .02em; }
+.knife__title { font: 800 clamp(1.8rem, 3vw, 2.6rem)/1.05 var(--f-head); letter-spacing: 0; text-transform: none; }
+.veto .knife__kicker, .veto .knife__title, .veto .knife__advice { text-align: left; justify-self: start; }
+.knife > .map-art { margin: 0; }
+.veto__map.is-picked button { border-color: var(--accent); }
+.veto__map.is-picked .veto__state { color: var(--accent); }
+
+/* ---------- the map scoreboard ---------- */
+.result-stamp { justify-self: start; padding: 0; border: 0; animation: none; font: 800 clamp(2rem, 4vw, 3rem)/1 var(--f-head); letter-spacing: 0; text-transform: none; }
+.result-stamp.w { color: var(--outcome-win); }
+.result-stamp.l { color: var(--outcome-loss); }
+.sb { border: 0; background: none; }
+.sb__head { padding: 8px 0; background: none; border-bottom: 1px solid var(--line-2); font: 700 1.0625rem/1.2 var(--f-head); letter-spacing: .07em; }
+.sb tbody tr:nth-child(odd) { background: none; }
+.sb td, .sb th { padding-inline: 8px; }
+.sb td { padding-block: 7px; border-bottom: 1px solid var(--line); }
+.sb th { padding-block: 10px 6px; border-top: 0; border-bottom: 1px solid var(--line-2); }
+
+/* ---------- live: three columns that read as one desk ---------- */
+.match-live .match-five, .match-live .match-feed { padding: 12px 0 0; border: 0; border-top: 2px solid var(--line-2); background: none; }
+.match-live .match-five > div { padding: 10px 0; border-top: 1px solid var(--line); }
+.match-live .match-five > h3 + div { border-top: 0; }
+.match-live .match-five h3 { margin-bottom: 4px; }
+.feed-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.feed-heading .ghost-btn { min-height: 44px; padding: 0; border: 0; background: none; color: var(--text-2); font-size: .875rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.feed-heading .ghost-btn:hover { color: var(--strong); }
+.match-live .killfeed .kf, .match-live .killfeed .kf[class*="kf--"] {
+  padding: 10px 0; border-radius: 0; background: none; border-right: 0; border-top: 1px solid var(--line); color: var(--text);
+  font: 400 .9375rem/1.45 var(--f-read); letter-spacing: 0; text-transform: none;
+}
+.match-live .killfeed .kf small { display: block; margin-bottom: 2px; font: 600 .8125rem var(--f-body); color: var(--muted); }
+.match-live .killfeed .kf--half small, .match-live .killfeed .kf--pistol small, .match-live .killfeed .kf--clutch small, .match-live .killfeed .kf--call small, .match-live .killfeed .kf--ot small { color: var(--accent); }
+.match-live .killfeed .kf--run small { color: var(--loss-text); }
+.match-live .killfeed .kf--run { color: var(--loss-text); }
+.match-live .killfeed .kf--idle { color: var(--text-2); }
+.playback .ghost-btn svg { flex: none; }
+.playback .ghost-btn, .match-live .calls__timeout { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.match-live .calls__timeout:disabled { background: none; border-color: var(--line); color: var(--muted); }
+
+@media (min-width: 861px) {
+  /* The marker key sits beside the hint, wide enough to read on one line. */
+  .match-live .board--broadcast { grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; }
+  .match-live .radar-lineups summary { white-space: nowrap; }
+  .match-live .radar-disclosure { text-align: left; }
+}
+
+/* ---------- draft: the decision is one panel, reroll included ---------- */
+.phase-draft .draft-decision { display: grid; border: 1px solid var(--line); border-radius: var(--r-s); background: var(--panel); }
+.phase-draft .draft-decision .draftbar, .phase-draft .draft-decision .draft-decision-empty { border: 0; border-radius: 0; background: none; }
+.phase-draft .draft-decision .reroll-row { margin: 0; padding: 10px 16px; border-top: 1px solid var(--line); justify-content: flex-end; }
+@media (max-width: 860px) { .phase-draft .draft-decision .reroll-row { padding: 12px; } }
+
+/* ---------- results: end on what to do next ---------- */
+.new-ach { justify-content: flex-start; align-items: baseline; gap: 4px 14px; padding: 10px 14px; border: 0; border-left: 3px solid var(--accent); border-radius: 0; background: var(--panel); }
+.new-ach small { width: auto; text-align: left; font-size: .8125rem; }
+.daily-meta { justify-content: flex-start; }
+.result-next { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 40px; padding-top: 24px; border-top: 1px solid var(--line); }
+.result-next .action-bar { display: block; }
+.result-next .challenge { justify-content: flex-start; }
+.result-next__record { flex: 1 0 100%; margin: 0; color: var(--muted); font-size: .875rem; }
+.share-bar .ghost-btn, .challenge .ghost-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.final .final__actions.action-bar { margin: 0; }
+@media (max-width: 860px) {
+  .result-next { gap: 16px; }
+  .result-next .challenge { flex: 1 0 100%; }
+}
+
+/* ---------- second pass ---------- */
+/* .cta centres itself, so the container's alignment never reached it. */
+.stack > .action-bar .cta, .match-found .action-bar .cta, .final__actions .cta { justify-self: start; }
+@media (min-width: 861px) {
+  /* The ledger's result column holds "W · Won 16–14 rounds ›" on one line. */
+  .final .history__row, .ledger-columns { grid-template-columns: 98px minmax(0, 1fr) minmax(0, 1.25fr) 184px; }
+  .final .history__row > b { flex-wrap: nowrap; white-space: nowrap; justify-content: flex-end; }
+  /* The timeout, pause and speed controls stay in view whatever the window height: they are the match's decisions. */
+  .match-live .match-dock { position: sticky; bottom: 0; z-index: 6; padding: 4px 0 max(4px, env(safe-area-inset-bottom)); background: var(--bg); }
+  .match-live .radar-detail, .match-live .radar-detail:has(> span:only-child) { min-height: 28px; }
+  .match-live .radar-lineups summary { min-height: 28px; padding-block: 4px; }
+}
+/* Progress is the only thing on the row above a live match or a result, so the row stays slim. */
+.console__head--progress { padding-block: 0 8px; }
+.page.phase-live, .page.phase-final { padding-top: var(--space-3); }
+
+/* ---------- phone ---------- */
+@media (max-width: 860px) {
+  /* The ledger keeps its heading close to its first row, and a result never wraps under its own arrow. */
+  .final .path { gap: 0; }
+  .final .path > h4 { margin-bottom: 4px; }
+  .final .path section h4 { margin-top: 8px; }
+  .final .history__row > b { max-width: none; white-space: nowrap; }
+  /* Substitutions read as a tidy choice: two to a row, "keep" across the top. */
+  .subs__btns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .subs__btns > :first-child { grid-column: 1 / -1; }
+  .subs__btns .ghost-btn { width: 100%; min-height: 44px; }
+  /* Playback controls sit in two even rows. */
+  .match-live .match-centre .controls .playback { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .match-live .playback .speed { width: 100%; }
+  .match-live .playback .speed button { flex: 1; }
+  .match-live .playback__skip { margin-left: 0; }
+  .match-live .playback .ghost-btn { width: 100%; }
+}
+
+/* ---------- the two quiet moments: the case reel and the knife round ---------- */
+.reel-stage { display: grid; gap: 16px; align-content: center; min-height: 360px; }
+.reel-stage__caption { margin: 0; font: 700 1.0625rem/1.2 var(--f-head); letter-spacing: .07em; text-transform: uppercase; color: var(--text-2); }
+.reel-stage .reel { margin-top: 0; }
+@media (min-width: 861px) {
+  /* The decision on the left, the map it is about on the right, so the screen isn't half empty. */
+  .knife { grid-template-columns: minmax(0, 560px) minmax(220px, 340px); column-gap: 56px; align-items: start; justify-content: start; }
+  .knife > * { grid-column: 1; }
+  .knife > .map-art { grid-column: 2; grid-row: 1 / span 8; width: 100%; height: auto; aspect-ratio: 1; margin: 0; padding: 16px; border: 1px solid var(--line); background: var(--inset); object-fit: contain; }
+}
+
+/* ---------- home: how it works, as numbered steps ---------- */
+.home-practice-note { margin: 8px 0 0; color: var(--muted); font-size: .875rem; }
+/* The pictures repeated what the words say inside empty boxes; the numbers lead instead. */
+.editorial-home .how__art, .editorial-home .how__sample { display: none; }
+.editorial-home .how__steps { gap: 0; margin-top: 18px; }
+.editorial-home .how__step { grid-template-columns: auto minmax(0, 1fr); column-gap: 16px; row-gap: 4px; align-content: start; padding: 0 20px; }
+.editorial-home .how__step:first-child { padding-left: 0; }
+.editorial-home .how__step + .how__step { border-left: 1px solid var(--line); }
+.editorial-home .how__step::before { content: counter(how); grid-row: 1 / span 2; color: var(--accent); font: 800 3.25rem/.9 var(--f-head); }
+.editorial-home .how__step b { font: 700 1.25rem/1.2 var(--f-head); letter-spacing: 0; text-transform: none; color: var(--strong); }
+.editorial-home .how__step b::before { content: none; }
+.editorial-home .how__text { font-size: .9375rem; }
+@media (max-width: 860px) {
+  .editorial-home .how__steps { grid-template-columns: minmax(0, 1fr); }
+  .editorial-home .how__step { padding: 14px 0; }
+  .editorial-home .how__step + .how__step { border-left: 0; border-top: 1px solid var(--line); }
+  .editorial-home .how__step::before { font-size: 2.5rem; }
+}
+
+/* ---------- nothing below the chemistry preview moves when you point at a player ---------- */
+.chem__majors span { white-space: nowrap; }
+.chem__history summary { min-height: 28px; display: flex; align-items: center; }
+
+@media (min-width: 861px) {
+  /* A reserved decision region: the empty state is as tall as the chosen state, so selecting a player pushes nothing down. */
+  .phase-draft .draft-decision-empty { min-height: 147px; }
+}
+
+.subs__tradeoff { min-height: 1.5em; }
+
+/* ---------- one disclosure: a chevron that turns, never the browser's triangle ---------- */
+details > summary { display: flex; align-items: center; gap: 12px; list-style: none; cursor: pointer; }
+details > summary::-webkit-details-marker { display: none; }
+details > summary::marker { content: ''; }
+details > summary::after {
+  content: ''; flex: none; margin-left: auto; width: 8px; height: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translate(-2px, -2px); transition: transform .15s ease;
+}
+details[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px); }
+@media (prefers-reduced-motion: reduce) { details > summary::after, details > summary::before { transition: none; } }
+/* Small, inline disclosures put the chevron first, pointing right until opened. */
+.radar-lineups > summary::after, .chem__history > summary::after { display: none; }
+.radar-lineups > summary::before, .chem__history > summary::before {
+  content: ''; flex: none; width: 6px; height: 6px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg); transition: transform .15s ease;
+}
+.radar-lineups[open] > summary::before, .chem__history[open] > summary::before { transform: rotate(45deg); }
+.radar-lineups > summary, .chem__history > summary { gap: 8px; }
+/* The results' analysis rows: title and what is inside on the left, the chevron on the right. */
+.analysis-section > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 16px; align-items: center; }
+.analysis-section > summary b, .final .analysis-section > summary span { grid-column: 1; }
+.final .analysis-section > summary span { margin: 2px 0 0; }
+.analysis-section > summary::after { grid-column: 2; grid-row: 1 / span 2; margin-right: 8px; color: var(--text-2); }
+.analysis-section > summary:hover::after { color: var(--strong); }
+/* The Help dialog's sections. */
+.details summary { justify-content: space-between; }
+.details summary:hover { color: var(--strong); }
+.analysis-section > summary { align-content: center; row-gap: 2px; }
+@media (min-width: 861px) {
+  .ledger-columns { padding-left: 11px; }
+  .ledger-columns span:last-child { text-align: right; }
+}

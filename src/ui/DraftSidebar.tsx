@@ -12,12 +12,13 @@ export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Open
   const chem = liveChemistry(s.picks, s.coach, !!s.opts?.hard);
   return (
     <aside className="draft-side" aria-label="Draft details">
-      <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
-      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
+      {/* The hint is steady; the chemistry preview below it changes height as you point at players, so nothing sits under the part that moves. */}
       <section className="side-card hint-card" aria-labelledby={hint_h}>
         <h3 id={hint_h}>Draft hint</h3>
         <p>{draftHint(s)}</p>
       </section>
+      <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
+      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
     </aside>
   );
 }
@@ -82,5 +83,5 @@ function ChemIf({ preview }: { preview: Preview | null }) {
 function Majors({ id }: { id: string }) {
   const list = majorsOf(id);
   if (!list.length) return null;
-  return <p className="chem__majors"><b>Majors</b> {list.map((m) => `${m.year} ${m.result}`).join(' · ')}</p>;
+  return <p className="chem__majors"><b>Majors</b> {list.map((m, i) => <React.Fragment key={i}>{i > 0 && ' · '}<span>{m.year} {m.result}</span></React.Fragment>)}</p>;
 }
