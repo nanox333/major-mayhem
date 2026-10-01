@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Role, Roster, Player } from '../data/rosters';
 import radars from '../data/radars.json';
+import PLACEHOLDER from '../assets/draft/player-placeholder.webp';
 
 const RADARS = radars as Record<string, string>;
 
@@ -56,28 +57,15 @@ export function TeamBadge({ roster, size = 40 }: { roster: Roster; size?: number
   );
 }
 
-/** Player portrait with a clean silhouette fallback tinted by team color. */
+/**
+ * Player portrait. When there is no photo (or it fails to load) it is an anonymous, faceless player in orange rim light, a bundled picture drawn for this game
+ * (src/assets/draft/player-placeholder.webp), so a missing photo looks deliberate and never like a broken image.
+ */
 export function Avatar({ player, roster, className }: { player: Player; roster: Roster; className?: string }) {
   const [broken, setBroken] = useState(false);
   if (player.portrait && !broken)
     return <img className={`photo ${className ?? ''}`} src={player.portrait} alt={player.nick} loading="lazy" onError={() => setBroken(true)} />;
-  const gid = `av-${roster.id}-${player.id}`;
-  return (
-    <svg className={className} viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet" role="img" aria-label={player.nick}>
-      <defs>
-        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={roster.color} stopOpacity=".55" />
-          <stop offset="1" stopColor="#0a1a26" stopOpacity=".95" />
-        </linearGradient>
-      </defs>
-      <circle cx="50" cy="38" r="17" fill={`url(#${gid})`} />
-      <path d="M26 36 a24 22 0 0 1 48 0" fill="none" stroke="#0b1620" strokeWidth="5" />
-      <rect x="21" y="33" width="8" height="13" rx="3" fill="#0b1620" />
-      <rect x="71" y="33" width="8" height="13" rx="3" fill="#0b1620" />
-      <path d="M14 100 C16 72 32 60 50 60 C68 60 84 72 86 100 Z" fill={`url(#${gid})`} />
-      <text x="50" y="88" textAnchor="middle" fontFamily="'Saira Condensed', 'Arial Narrow', sans-serif" fontWeight="800" fontSize="18" fill="#f1e5c8" fillOpacity=".85">{player.nick.slice(0, 2).toUpperCase()}</text>
-    </svg>
-  );
+  return <img className={`photo photo--none ${className ?? ''}`} src={PLACEHOLDER} alt={`${player.nick} (no photo)`} loading="lazy" data-roster={roster.id} />;
 }
 
 /** Map radar (images supplied by the player, built by scripts/build-radars.mjs). Coordinates on it are 0–100 of the square. */

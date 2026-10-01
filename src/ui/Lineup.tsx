@@ -40,7 +40,7 @@ export function LineupPanel({ s, preview }: { s: Run; /** The player or coach yo
                 {x.who.badge}
               </>
             ) : (
-              <span className="lrow__text"><b className="lrow__add"><PlusIcon size={13} /> Add player</b><small>{x.label}</small></span>
+              <span className="lrow__text"><b className="lrow__add"><PlusIcon size={12} /><Sr>Add player: </Sr>{x.label}</b></span>
             )}
           </li>
         ))}

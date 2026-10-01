@@ -15,6 +15,7 @@ import { LineupPanel } from './ui/Lineup';
 import { DraftSidebar } from './ui/DraftSidebar';
 import { SettingsDialog } from './ui/Settings';
 import { usePrefs } from './ui/prefs';
+import { reduceMotion } from './ui/util';
 import { useShortcuts } from './ui/shortcuts';
 import { useSoundOn } from './ui/sound';
 import { DatabaseIcon, RosterIcon, GamepadIcon } from './ui/icons';
@@ -151,6 +152,9 @@ function Game() {
   const drafting = view === 'draft' && s.phase === 'draft' && !start;
   // The arena sits behind the draft only. A saved run can be mid-draft while you are on Home or Guess, which have their own scenes (#225).
   const scene = view === 'draft' && s.phase === 'draft';
+  // While the three reels turn, the heading says so; it goes back to the round's own title when they have landed (#225). Fast reveals and reduced motion skip the reels.
+  const opening = scene && s.step === 'teams' && reelFor === s.offerKey && !prefs.fastReveals && !reduceMotion();
+  const heading = opening ? 'Opening your case' : title;
 
   return (
     <>
@@ -169,7 +173,7 @@ function Game() {
           {s.phase === 'live' || s.phase === 'final'
             ? <h2 className="sr">{title}</h2>
             : <div className="console__titles"><p className="console__eyebrow kicker">{kicker}</p>
-              <h2 className="console__title">{scene ? <>{title.split(' ')[0]} <em>{title.split(' ').slice(1).join(' ')}</em></> : title}</h2>
+              <h2 className="console__title" key={heading}>{scene ? <>{heading.split(' ')[0]} <em>{heading.split(' ').slice(1).join(' ')}</em></> : title}</h2>
               {scene && !start && (
                 <p className="console__picks"><b>{roundNumber(s) - 1} / {draftRounds(s)}</b> picks made
                   <span className="console__pips" aria-hidden="true">{Array.from({ length: draftRounds(s) }, (_, i) => <i key={i} className={i < roundNumber(s) - 1 ? 'is-done' : i === roundNumber(s) - 1 ? 'is-now' : ''} />)}</span></p>

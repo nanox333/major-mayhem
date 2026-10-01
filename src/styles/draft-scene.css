@@ -1,99 +1,208 @@
-/* The draft's art and effects pass (#225): the arena behind the view, team montages on the cards, a selected-player bay, and the three-lane case opening.
-   Everything here is scoped to .is-scene (the active draft view) so Home, Guess and the match keep their own looks. Light theme and high contrast
-   keep the flat editorial surfaces: the scene is hidden and the tinting below only applies on dark. */
+/* The draft's art and effects pass (#225). A premium tactical esports look over the existing draft: near-black surfaces, one orange, condensed type, thin lines,
+   small radii, light that comes from somewhere and stays at the edges. Everything is scoped to .is-scene (the active draft view), so Home, Guess and the match
+   keep their own looks. The surface colours are variables: dark by default, and the light theme maps them back to its own paper tones. */
 
-/* ---------- the arena ---------- */
-/* Two layers: the rig sits at the top of the page and scrolls away with the header, so it never competes with the cards; the crowd stays along the
-   bottom of the window. Both fade out toward the content, which sits on near-solid surfaces. */
-.draft-scene { pointer-events: none; overflow: hidden; z-index: -1; }
-.draft-scene svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.draft-scene--rig { position: absolute; inset: 0 0 auto 0; height: 560px; -webkit-mask-image: linear-gradient(180deg, #000 0, #000 55%, transparent 100%); mask-image: linear-gradient(180deg, #000 0, #000 55%, transparent 100%); }
-.draft-scene--rig::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 52% 70% at 12% 34%, rgba(11, 12, 11, .8), transparent 72%); }
-.draft-scene--floor { position: fixed; inset: auto 0 0 0; height: 170px; opacity: .45; -webkit-mask-image: linear-gradient(0deg, #000 0, transparent 100%); mask-image: linear-gradient(0deg, #000 0, transparent 100%); }
+.is-scene {
+  --ds-bg: #070807; --ds-panel: #0b0c0c; --ds-raise: #121413; --ds-line: #252926; --ds-line-2: #363b37;
+  --ds-orange-glow: rgba(243, 122, 48, .5);
+}
+:root[data-theme="light"] .is-scene { --ds-bg: var(--bg); --ds-panel: var(--panel); --ds-raise: var(--panel-2); --ds-line: var(--line); --ds-line-2: var(--line-2); --ds-orange-glow: rgba(169, 74, 6, .3); }
+
+/* ---------- atmosphere: grain, the arena, warm light ---------- */
+/* Back to front: a near-black page with a faint tactical grain, the arena photograph across the top, a dark scrim with warm radial light, the interface. */
+:root:not([data-theme="light"]):not([data-contrast="high"]):has(.is-scene) body { background: var(--ds-bg, #070807) url('../assets/draft/tactical-noise.webp') repeat; background-size: 256px 256px; }
+.draft-scene { position: absolute; top: 0; left: 0; width: 100%; height: 640px; z-index: -1; pointer-events: none; overflow: hidden; }
+.draft-scene__arena { position: absolute; inset: 0; background: url('../assets/draft/major-arena-bg.webp') center top / cover no-repeat; }
+.draft-scene__light { position: absolute; inset: 0; background:
+  radial-gradient(ellipse 46% 62% at 18% 38%, rgba(7, 8, 7, .78), transparent 72%),
+  radial-gradient(ellipse 52% 70% at 92% 0%, rgba(243, 122, 48, .2), transparent 70%),
+  radial-gradient(ellipse 40% 55% at 6% 6%, rgba(243, 122, 48, .12), transparent 70%),
+  linear-gradient(180deg, rgba(7, 8, 7, .34) 0, rgba(7, 8, 7, .6) 46%, rgba(7, 8, 7, .93) 82%, #070807 100%); }
 :root[data-theme="light"] .draft-scene, :root[data-contrast="high"] .draft-scene { display: none; }
 @media (forced-colors: active) { .draft-scene { display: none; } }
 
+/* The no-photo portrait is a tall picture of an anonymous player; show the head and shoulders wherever it is cropped to a square. */
+.photo--none { object-fit: cover; object-position: center 22%; background: #050505; }
+
+/* ---------- heading ---------- */
 .is-scene .console { background: transparent; }
-.is-scene .console__title { font-size: clamp(2.3rem, 4.4vw, 3.8rem); line-height: 1.02; letter-spacing: -.015em; text-transform: none; }
+.is-scene .console__titles { position: relative; }
+.is-scene .console__title { font-size: clamp(2.4rem, 4.4vw, 3.9rem); line-height: 1; letter-spacing: -.01em; text-transform: none; animation: heading-in .26s ease-out both; }
 .is-scene .console__title em { color: var(--accent); font-style: normal; }
-.console__picks { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0 0; color: var(--text-2); font-size: .95rem; }
+@keyframes heading-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.console__picks { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; margin: 8px 0 0; color: var(--text-2); font-size: .92rem; }
 .console__picks b { color: var(--strong); font-weight: 700; font-variant-numeric: tabular-nums; }
 .console__pips { display: inline-flex; gap: 3px; }
-.console__pips i { width: 26px; height: 8px; border-radius: 2px; background: color-mix(in srgb, var(--text) 18%, transparent); }
+.console__pips i { width: 26px; height: 6px; background: color-mix(in srgb, var(--text) 18%, transparent); }
 .console__pips i.is-done { background: var(--accent); }
 .console__pips i.is-now { background: color-mix(in srgb, var(--accent) 45%, transparent); }
 
-/* ---------- team cards ---------- */
-:root:not([data-theme="light"]) .is-scene .case-card { border-color: color-mix(in srgb, var(--team, var(--accent)) 34%, var(--line)); background: color-mix(in srgb, var(--team, var(--accent)) 5%, #0d0f0e); box-shadow: 0 16px 36px -22px rgba(0, 0, 0, .9); overflow: hidden; }
-:root:not([data-theme="light"]) .is-scene .case-card__top { position: relative; isolation: isolate; min-height: 152px; border-top: 3px solid var(--team, var(--accent)); border-bottom-color: color-mix(in srgb, var(--team, var(--accent)) 40%, var(--line));
-  background: linear-gradient(100deg, color-mix(in srgb, var(--team, var(--accent)) 32%, #0b0c0b), color-mix(in srgb, var(--team, var(--accent)) 12%, #0b0c0b) 58%, #0b0c0b); }
-.is-scene .case-card__top > :not(.montage) { position: relative; z-index: 1; }
-/* The names keep the left 58% of the header to themselves (and wrap if they must); the faces own the rest and fade into the wash on their left edge. */
-.is-scene .case-card__top { position: relative; isolation: isolate; }
-.is-scene .case-card__id { max-width: 54%; }
-.montage { position: absolute; inset: 0 0 0 auto; width: 44%; z-index: 0; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 38%); mask-image: linear-gradient(90deg, transparent 0, #000 38%); }
-.montage__mark { position: absolute; right: 10%; top: 50%; height: 150%; width: auto; transform: translateY(-50%); opacity: .1; filter: grayscale(1) brightness(1.6); }
-.montage__faces { position: absolute; inset: 0 -4px 0 0; display: flex; align-items: stretch; }
-.montage__faces img { flex: 1 1 0; min-width: 0; max-width: 64px; margin-left: -9px; object-fit: cover; object-position: center 14%; clip-path: polygon(24% 0, 100% 0, 76% 100%, 0 100%); filter: contrast(1.06) saturate(.92); background: color-mix(in srgb, var(--team, var(--accent)) 30%, #0b0c0b); }
-:root:not([data-theme="light"]) .is-scene .case-players { background: linear-gradient(180deg, color-mix(in srgb, var(--team, var(--accent)) 7%, transparent), transparent 70%); }
-.is-scene .prow { border-left-color: color-mix(in srgb, var(--team, var(--accent)) 55%, transparent); }
-.is-scene .prow__face { box-shadow: 0 0 0 1px color-mix(in srgb, var(--team, var(--accent)) 45%, transparent); }
-.is-scene button.prow:hover:not(.is-sel) { background: color-mix(in srgb, var(--team, var(--accent)) 12%, transparent); }
-.prow__cc { display: inline-flex; align-items: center; gap: 5px; }
-.prow__cc .flag { border-radius: 2px; flex: none; }
-/* One chosen candidate: an orange perimeter and a local warm light on that row only. Hover and focus preview stay quieter. */
-.is-scene .prow.is-sel, .is-scene button.prow.is-sel:hover { border-color: var(--accent); background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 26%, var(--panel-2)), var(--panel-2) 78%); box-shadow: 0 0 0 1px var(--accent), 0 0 22px -8px var(--accent); }
-.is-scene .prow:focus-visible { outline: 2px solid var(--strong); outline-offset: 1px; }
-
-/* ---------- the decision strip ---------- */
-:root:not([data-theme="light"]) .is-scene .draftbar, :root:not([data-theme="light"]) .is-scene .draft-decision-empty { border-color: color-mix(in srgb, var(--accent) 22%, var(--line)); background: color-mix(in srgb, #0d0f0e 94%, transparent); }
-.draftbar__portrait { position: relative; isolation: isolate; }
-.draftbar__emblem { position: absolute; z-index: 0; right: -22%; top: -8%; height: 116%; width: auto; opacity: .2; pointer-events: none; }
-.draftbar__portrait img.photo, .draftbar__portrait > svg { position: relative; z-index: 1; }
-:root:not([data-theme="light"]) .is-scene .draftbar__portrait { background: linear-gradient(160deg, color-mix(in srgb, var(--team, var(--accent)) 52%, #0b0c0b), #0b0c0b 82%); box-shadow: inset 0 -3px 0 var(--team, var(--accent)); }
-.draft-decision-empty { display: flex; align-items: center; gap: 16px; }
-.draft-decision-empty p { display: grid; gap: 4px; margin: 0; }
-.draftbar__portrait.is-empty { flex: none; width: 64px; height: 64px; overflow: hidden; border-radius: var(--r-s); background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--line); }
-.draftbar__portrait.is-empty svg { display: block; width: 100%; height: 100%; fill: color-mix(in srgb, var(--muted) 40%, transparent); }
-.draftbar__why { display: block; margin-bottom: 4px; color: var(--muted); font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
-@media (min-width: 1100px) {
-  .is-scene .draftbar__portrait { width: 96px; height: 112px; }
-  .is-scene .draftbar, .is-scene .draft-decision-empty { min-height: 176px; }
-  .is-scene .draftbar__portrait.is-empty { width: 96px; height: 112px; }
-  .is-scene .draftbar__who b { font-size: 1.5rem; }
-}
-
-/* ---------- the three-lane case opening ---------- */
-.reveal { gap: 16px; }
+/* ---------- the case opening: three reels ---------- */
+.reveal { gap: 14px; }
 .reveal__bar { justify-content: space-between; }
 .reveal__skip { flex: none; min-height: 44px; border-color: var(--accent); color: var(--strong); }
-.reveal__lanes { align-items: start; }
-.lane { display: grid; gap: 8px; min-width: 0; }
-.lane__label { margin: 0; color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-.lane__window { position: relative; height: 352px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line)); border-radius: var(--r-m); background: #0b0c0b; transition: border-color .25s, box-shadow .25s; }
-.reveal__lanes.is-landed .lane__window { border-color: var(--accent); box-shadow: 0 0 26px -10px var(--accent); }
-.lane__strip { position: absolute; inset: 0 0 auto 0; will-change: transform; }
-.lane__item { height: var(--step); display: flex; align-items: center; gap: 14px; padding: 0 20px; border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.reveal__lanes { align-items: start; transition: opacity .22s ease, transform .22s ease; }
+.reveal.is-leave .reveal__lanes { opacity: 0; transform: translateY(6px); }
+.lane { position: relative; isolation: isolate; display: grid; gap: 8px; min-width: 0; }
+.lane__label { margin: 0; color: var(--muted); font: 700 .78rem var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+/* The orange light spilling out from behind each reel. */
+.lane::before { content: ''; position: absolute; z-index: -1; inset: 18% -6% -2%; background: radial-gradient(ellipse at 50% 50%, rgba(243, 122, 48, .26), transparent 70%); filter: blur(22px); opacity: .7; transition: opacity .3s; }
+.lane.is-locked::before { opacity: 1; }
+.lane__window { position: relative; height: 430px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--accent) 50%, var(--ds-line)); border-radius: 3px; background: var(--ds-panel);
+  box-shadow: inset 0 0 44px rgba(0, 0, 0, .85), 0 0 0 1px rgba(243, 122, 48, .08), 0 0 26px -10px var(--ds-orange-glow); transition: border-color .25s, box-shadow .25s; }
+.lane.is-locked .lane__window, .reveal.is-hold .lane__window { border-color: var(--accent); box-shadow: inset 0 0 44px rgba(0, 0, 0, .8), 0 0 0 1px rgba(243, 122, 48, .35), 0 0 36px -8px var(--ds-orange-glow); }
+.lane__strip { position: absolute; inset: 0 0 auto 0; will-change: transform, filter; }
+.lane__item { height: var(--step); display: flex; align-items: center; gap: 16px; padding: 0 22px; border-bottom: 1px solid color-mix(in srgb, var(--ds-line) 70%, transparent); transition: transform .18s ease-out, background .18s ease-out; }
 .lane__item > span { display: grid; min-width: 0; }
-.lane__item strong { font-family: var(--f-head); font-weight: 800; font-size: 1.4rem; line-height: 1.05; letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
-.lane__item small { color: var(--muted); font-size: .85rem; font-variant-numeric: tabular-nums; }
-.lane__item.is-landed { background: color-mix(in srgb, var(--accent) 12%, transparent); }
-/* Rows that are passing are softened with a blur above and below a clear centre window; it lifts when the lanes land. */
-.lane__blur { position: absolute; left: 0; right: 0; z-index: 1; height: calc(50% - var(--step) / 2); pointer-events: none; -webkit-backdrop-filter: blur(2.5px); backdrop-filter: blur(2.5px); transition: opacity .3s; }
-.lane__blur--top { top: 0; background: linear-gradient(rgba(11, 12, 11, .8), rgba(11, 12, 11, 0)); }
-.lane__blur--bottom { bottom: 0; background: linear-gradient(rgba(11, 12, 11, 0), rgba(11, 12, 11, .8)); }
-.reveal__lanes.is-landed .lane__blur { opacity: 0; }
-/* The stop line: a band exactly one row tall at the middle, with a marker on each side. */
-.lane__marker { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; height: var(--step); transform: translateY(-50%); border-block: 2px solid var(--accent); pointer-events: none; }
-.lane__marker::before, .lane__marker::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -7px; border: 7px solid transparent; }
-.lane__marker::before { left: 0; border-left-color: var(--accent); }
-.lane__marker::after { right: 0; border-right-color: var(--accent); }
-.reveal__lanes.is-landed .lane__marker { animation: lane-release .3s ease-out; }
-@keyframes lane-release { from { box-shadow: inset 0 0 22px 2px color-mix(in srgb, var(--accent) 60%, transparent); } to { box-shadow: inset 0 0 0 0 transparent; } }
+.lane__item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--f-head); font-weight: 800; font-size: 1.55rem; line-height: 1.05; letter-spacing: .04em; text-transform: uppercase; color: var(--strong); }
+.lane__item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; color: var(--muted); font-size: .84rem; font-variant-numeric: tabular-nums; }
+.lane__item.is-winner { transform: scale(1.045); background: rgba(243, 122, 48, .12); }
+/* Dark fades at the top and bottom of the window; the blur lives under them, so passing rows soften toward the edges and stay crisp at the line. */
+.lane__fade { position: absolute; left: 0; right: 0; z-index: 1; height: 34%; pointer-events: none; }
+.lane__fade--top { top: 0; background: linear-gradient(#08090a 4%, rgba(8, 9, 10, .0)); -webkit-backdrop-filter: blur(2.5px); backdrop-filter: blur(2.5px); -webkit-mask-image: linear-gradient(#000 20%, transparent); mask-image: linear-gradient(#000 20%, transparent); }
+.lane__fade--bottom { bottom: 0; background: linear-gradient(rgba(8, 9, 10, 0), #08090a 96%); -webkit-backdrop-filter: blur(2.5px); backdrop-filter: blur(2.5px); -webkit-mask-image: linear-gradient(transparent, #000 80%); mask-image: linear-gradient(transparent, #000 80%); }
+/* The selection line: a strong line through the exact middle, a band one row tall around it, and an orange marker pointing in from each side. */
+.lane__marker { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; height: var(--step); transform: translateY(-50%); pointer-events: none; border-block: 1px solid rgba(243, 122, 48, .55);
+  background: linear-gradient(var(--accent), var(--accent)) 50% 50% / 100% 2px no-repeat, linear-gradient(90deg, rgba(243, 122, 48, .1), rgba(243, 122, 48, .02) 50%, rgba(243, 122, 48, .1)); }
+.lane__marker::before, .lane__marker::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -9px; border: 9px solid transparent; filter: drop-shadow(0 0 5px var(--accent)); }
+.lane__marker::before { left: -1px; border-left: 12px solid var(--accent); border-right: 0; }
+.lane__marker::after { right: -1px; border-right: 12px solid var(--accent); border-left: 0; }
+/* The lock: one short flash of light along the band as the reel settles. */
+.lane.is-locked .lane__marker { animation: lane-lock .5s ease-out; }
+@keyframes lane-lock { 0% { box-shadow: inset 0 0 38px 8px rgba(255, 170, 90, .8), 0 0 30px 4px rgba(243, 122, 48, .6); } 100% { box-shadow: inset 0 0 0 0 transparent, 0 0 0 0 transparent; } }
+
+/* ---------- the three roster cards ---------- */
+.is-scene .case-card { --team: var(--accent); gap: 0; padding: 0; overflow: hidden; border: 1px solid var(--ds-line); border-radius: 3px; background: var(--ds-panel); box-shadow: 0 20px 44px -28px #000; }
+.is-scene .case-card__top { position: relative; isolation: isolate; min-height: 150px; padding: 20px 16px 16px; align-items: flex-start; gap: 14px; border-top: 2px solid var(--team); border-bottom: 1px solid var(--ds-line-2);
+  background: radial-gradient(ellipse 90% 150% at 0% 0%, color-mix(in srgb, var(--team) 34%, transparent), transparent 72%), var(--ds-raise); }
+.is-scene .case-card__top > :not(.montage) { position: relative; z-index: 1; }
+.is-scene .case-card__id { max-width: 56%; }
+.is-scene .case-card__name { font-size: 1.7rem; line-height: 1.05; letter-spacing: .02em; color: var(--strong); }
+.is-scene .case-card__name span { color: var(--text-2); }
+.is-scene .case-card__major { margin-top: 6px; color: var(--muted); font-size: .8rem; line-height: 1.35; }
+.is-scene .case-card .place { color: var(--text-2); font-size: .9rem; font-weight: 600; }
+.montage { position: absolute; inset: 0 0 0 auto; width: 42%; z-index: 0; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 40%); mask-image: linear-gradient(90deg, transparent 0, #000 40%); }
+.montage__mark { position: absolute; right: 8%; top: 50%; height: 150%; width: auto; transform: translateY(-50%); opacity: .09; filter: grayscale(1) brightness(1.6); }
+.montage__faces { position: absolute; inset: 0 -4px 0 0; display: flex; align-items: stretch; }
+.montage__faces img { flex: 1 1 0; min-width: 0; max-width: 64px; margin-left: -9px; object-fit: cover; object-position: center 14%; clip-path: polygon(24% 0, 100% 0, 76% 100%, 0 100%); filter: contrast(1.06) saturate(.9) brightness(.92); background: color-mix(in srgb, var(--team) 26%, #000); }
+
+.is-scene .case-players { padding: 6px 10px 4px; }
+.is-scene .prow { position: relative; min-height: 70px; grid-template-columns: 56px minmax(0, 1fr); gap: 14px; padding: 7px 10px 7px 7px; border: 0; border-bottom: 1px solid var(--ds-line); border-left: 2px solid transparent; border-radius: 0; background: transparent;
+  transition: transform .14s ease-out, background .14s ease-out, box-shadow .14s ease-out; }
+.is-scene li:last-child > .prow { border-bottom-color: transparent; }
+.is-scene .prow__face { width: 56px; height: 56px; border-radius: 2px; background: var(--ds-raise); box-shadow: 0 0 0 1px var(--ds-line-2), inset 0 -2px 0 var(--team); }
+.is-scene .prow__face img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; }
+.is-scene .prow__name b { font-size: 1.12rem; font-weight: 700; color: var(--strong); }
+.is-scene .prow__cc { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: .8rem; }
+.is-scene .prow__cc .flag { border-radius: 2px; flex: none; }
+.is-scene .prow__role { display: inline-flex; align-items: center; gap: 5px; margin: 0; color: var(--text-2); font-size: .82rem; font-weight: 600; letter-spacing: .02em; }
+.is-scene .prow__role svg { color: var(--accent-hi); }
+.is-scene button.prow:hover:not(.is-sel) { transform: translateY(-1px); background: rgba(255, 255, 255, .045); box-shadow: inset 2px 0 0 var(--accent); }
+/* One chosen candidate: an orange outline and a local warm light, on that row only. Hover and focus stay quieter, and focus draws its own white ring. */
+.is-scene .prow.is-sel, .is-scene button.prow.is-sel:hover { transform: none; border-color: transparent; background: linear-gradient(90deg, rgba(243, 122, 48, .22), rgba(243, 122, 48, .05) 70%); box-shadow: inset 0 0 0 1px var(--accent), 0 0 22px -8px var(--accent); }
+.is-scene .prow:focus-visible { outline: 2px solid var(--strong); outline-offset: -2px; }
+.is-scene .roster-details-link { margin: 4px 12px 12px; min-height: 36px; color: var(--muted); font-size: .78rem; }
+
+/* ---------- the decision panel ---------- */
+.draft-decision { display: grid; gap: 10px; }
+/* Quiet and small until you point at someone; then it opens up. */
+.is-scene .draft-decision-empty.is-compact { display: flex; align-items: baseline; gap: 12px; min-height: 0; padding: 12px 16px; border: 1px solid var(--ds-line); border-radius: 3px; background: var(--ds-panel); font-size: .9rem; }
+.is-scene .draft-decision-empty.is-compact b { color: var(--text-2); font-weight: 700; }
+.is-scene .draft-decision-empty.is-compact span { color: var(--muted); }
+.is-scene .draftbar, .is-scene .peekbar { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 28px; align-items: center; padding: 18px 20px; border: 1px solid var(--ds-line-2); border-radius: 3px; background: var(--ds-panel); box-shadow: none; animation: panel-in .24s ease-out both; }
+.is-scene .draftbar { border-color: color-mix(in srgb, var(--accent) 55%, var(--ds-line)); box-shadow: 0 0 34px -18px var(--accent); }
+@keyframes panel-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* A corner of orange tactical pattern, behind the content on the right. */
+.is-scene .draftbar::after, .is-scene .peekbar::after { content: ''; position: absolute; z-index: 0; right: -30px; bottom: -34px; width: 230px; height: 230px; background: url('../assets/draft/orange-tech-pattern.webp') center / contain no-repeat; opacity: .2; pointer-events: none; }
+.is-scene .draftbar > *, .is-scene .peekbar > * { position: relative; z-index: 1; }
+.draftbar__identity { display: flex; align-items: center; gap: 18px; min-width: 0; }
+.draftbar__portrait { position: relative; isolation: isolate; flex: none; width: 96px; height: 116px; overflow: hidden; border-radius: 2px; background: linear-gradient(165deg, color-mix(in srgb, var(--team, var(--accent)) 50%, #000), #050505 85%); box-shadow: inset 0 -3px 0 var(--team, var(--accent)), 0 0 0 1px var(--ds-line-2); }
+.draftbar__emblem { position: absolute; z-index: 0; right: -24%; top: -6%; height: 112%; width: auto; opacity: .2; pointer-events: none; }
+.draftbar__portrait img.photo { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+.is-scene .draftbar__who { display: grid; gap: 3px; min-width: 0; margin: 0; font: .9rem/1.35 var(--f-read); color: var(--text-2); }
+.is-scene .draftbar__who b { font: 800 2rem/1 var(--f-head); letter-spacing: .02em; color: var(--strong); }
+.draftbar__meta { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--text); }
+.draftbar__meta svg { color: var(--accent-hi); }
+.is-scene .draftbar__who small { color: var(--muted); font-size: .74rem; }
+.draftbar__chem { min-width: 0; padding-left: 24px; border-left: 1px solid var(--ds-line-2); }
+.draftbar__why { display: block; margin-bottom: 8px; color: var(--muted); font: 700 .74rem var(--f-read); letter-spacing: .12em; text-transform: uppercase; }
+.why { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.why li { display: flex; align-items: baseline; gap: 10px; font-size: .92rem; line-height: 1.35; color: var(--text); }
+.why__mark { flex: none; width: 18px; display: inline-grid; place-items: center; align-self: center; color: var(--accent-hi); font-weight: 800; }
+.why li.is-good .why__mark { color: var(--go-text); }
+.why li.is-bad .why__mark { color: var(--loss-text); }
+.draftbar__total { margin: 8px 0 0; color: var(--muted); font-size: .8rem; }
+.is-scene .draftbar__slots { gap: 6px; }
+.is-scene .draftbar .slot-chip { min-height: 44px; border-radius: 2px; }
+/* The strongest control on the page. */
+.is-scene .draftbar .cta { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 66px; width: 100%; padding: 0 22px; border-radius: 2px; font: 800 1.3rem/1.05 var(--f-head); letter-spacing: .06em; text-transform: uppercase; box-shadow: 0 0 32px -10px var(--accent), inset 0 -3px 0 rgba(0, 0, 0, .25); transition: transform .14s ease-out, box-shadow .14s ease-out, filter .14s; }
+.is-scene .draftbar .cta:not([disabled]):hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 0 40px -6px var(--accent), inset 0 -3px 0 rgba(0, 0, 0, .25); }
+.peekbar__hint { margin: 0; justify-self: end; color: var(--muted); font: 700 .78rem var(--f-read); letter-spacing: .12em; text-transform: uppercase; }
+.is-scene .reroll-row { margin: 0; justify-content: flex-end; }
+.is-scene .reroll-row .ghost-btn { min-height: 40px; padding: .35rem 1rem; border-color: var(--ds-line-2); background: transparent; color: var(--text-2); font-size: .9rem; font-weight: 600; }
+.is-scene .reroll-row .ghost-btn:hover:not([disabled]) { border-color: var(--control); color: var(--strong); }
+@media (min-width: 1100px) {
+  .is-scene .draftbar, .is-scene .peekbar { grid-template-columns: minmax(270px, 1.05fr) minmax(220px, 1.1fr) minmax(220px, .85fr); }
+  .is-scene .draftbar .draftbar__slots { grid-column: 1; grid-row: 2; }
+  .is-scene .draftbar .draftbar__chem { grid-column: 2; grid-row: 1 / span 2; }
+  .is-scene .draftbar .cta { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
+}
+@media (max-width: 1099px) { .draftbar__chem { padding: 12px 0 0; border-left: 0; border-top: 1px solid var(--ds-line-2); } .peekbar__hint { justify-self: start; } }
+@media (max-width: 520px) { .draftbar__portrait { width: 76px; height: 92px; } .is-scene .draftbar__who b { font-size: 1.6rem; } }
+
+/* ---------- your lineup: slots ---------- */
+.is-scene .lineup__rows { grid-template-columns: 1fr 1fr; gap: 8px; }
+.is-scene .lrow { grid-column: 1 / -1; position: relative; min-height: 58px; padding: 8px 10px 8px 8px; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; border: 1px solid var(--ds-line); border-radius: 3px; background: var(--ds-panel); }
+.is-scene .lrow:nth-last-child(-n+2) { grid-column: auto; grid-template-columns: 34px minmax(0, 1fr); padding: 6px 8px; }
+.is-scene .lrow:nth-last-child(-n+2) .lrow__face { width: 34px; height: 34px; }
+.is-scene .lrow.is-full { border-color: var(--ds-line-2); background: var(--ds-raise); box-shadow: inset 2px 0 0 var(--accent); }
+.is-scene .lrow__face { width: 40px; height: 40px; border-radius: 2px; background: var(--ds-raise); }
+.is-scene .lrow__face.is-empty { width: 40px; height: 40px; border: 1px dashed var(--ds-line-2); border-radius: 2px; background: transparent; color: var(--accent-hi); }
+.is-scene .lrow:nth-last-child(-n+2) .lrow__face.is-empty { width: 34px; height: 34px; }
+.is-scene .lrow__face.is-empty > svg { width: 18px; height: 18px; }
+.is-scene .lrow__face img { object-position: center 18%; }
+.is-scene .lrow__add { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font: 700 .95rem var(--f-read); }
+.is-scene .lrow__add svg { color: var(--accent-hi); }
+.is-scene .lrow__text b { font: 700 .98rem/1.2 var(--f-read); color: var(--strong); }
+.is-scene .lrow__text small { font: .74rem/1.3 var(--f-read); color: var(--muted); }
+.is-scene .lrow__slot { border: 0; padding: 0; color: var(--accent-hi); font: 700 .7rem var(--f-read); letter-spacing: .06em; text-transform: uppercase; }
+.is-scene .lrow.is-preview { border: 1px dashed var(--accent); background: rgba(243, 122, 48, .07); }
+.is-scene .lineup__head { margin-bottom: 10px; font-size: 1.05rem; letter-spacing: .1em; }
+
+/* ---------- the opened-case bar and the tip ---------- */
+.is-scene .case { position: relative; }
+.is-scene .opened { padding: 0 0 10px; border: 0; border-bottom: 1px solid var(--ds-line); border-radius: 0; background: none; }
+.is-scene .opened p { font-size: .9rem; color: var(--muted); }
+.is-scene .opened b { color: var(--text-2); }
+/* A one-line tip, up in the corner of the game, not a paragraph in the middle of it. */
+.tip--compact { display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; margin: 0; padding: 5px 6px 5px 12px; border: 1px solid var(--ds-line-2, var(--line-2)); border-left: 2px solid var(--accent); border-radius: 2px; background: color-mix(in srgb, var(--ds-panel, var(--panel)) 92%, transparent); color: var(--text-2); font-size: .82rem; line-height: 1.3; }
+.tip--compact svg { flex: none; color: var(--accent-hi); }
+.tip--compact b { color: var(--strong); font-weight: 700; }
+.tip__line { flex: 1 1 120px; min-width: 0; }
+.tip--compact .tip__skip { flex: none; min-height: 0; padding: 0 2px; color: var(--muted); font-size: .74rem; white-space: nowrap; }
+.tip--compact .tip__x { flex: none; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 2px; background: transparent; color: var(--text-2); font-size: 1.2rem; line-height: 1; cursor: pointer; }
+.tip--compact .tip__x:hover { background: rgba(255, 255, 255, .08); color: var(--strong); }
+@media (min-width: 1100px) { .is-scene .case > .tip--compact { position: absolute; z-index: 3; top: -4px; right: 0; } }
+@media (max-width: 1099px) { .is-scene .case > .tip--compact { margin-bottom: 4px; } }
+
+/* ---------- the rest of the page steps back ---------- */
+.is-scene .draft-side .side-card p, .is-scene .draft-side .side-card .muted { color: var(--muted); }
+.is-scene .foot { margin-top: 28px; padding-top: 14px; opacity: .55; }
+.is-scene .foot p { font-size: .75rem; line-height: 1.45; }
+.is-scene .foot strong { font-size: .75rem; font-weight: 600; }
+.is-scene .foot:hover, .is-scene .foot:focus-within { opacity: .85; }
+
 @media (max-width: 860px) {
   .reveal__lanes { gap: 10px; }
   .lane { gap: 4px; }
-  .lane__window { height: 120px; }
-  .lane__item strong { font-size: 1.2rem; }
+  .lane__window { height: 132px; }
+  .lane__item strong { font-size: 1.25rem; }
+  .lane__item { padding: 0 16px; gap: 12px; }
+  .is-scene .case-card__id { max-width: 54%; }
+  .is-scene .case-card__name { font-size: 1.55rem; }
 }
-@media (prefers-reduced-motion: reduce) { .reveal__lanes.is-landed .lane__marker { animation: none; } .lane__window { transition: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .lane.is-locked .lane__marker, .is-scene .console__title, .is-scene .draftbar, .is-scene .peekbar { animation: none; }
+  .is-scene .prow, .lane__item, .lane__window, .reveal__lanes { transition: none; }
+  .is-scene button.prow:hover:not(.is-sel) { transform: none; }
+}

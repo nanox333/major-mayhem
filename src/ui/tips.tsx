@@ -61,10 +61,20 @@ const useIsVisible = (id: TipId, wanted: boolean) => {
  * with an accent rule on its left edge, a "Tip" label, a title and "Got it", and a quiet "Skip tips" for everyone who would rather not. It never takes
  * focus, never dims the page, and `anchor` only says which way its small pointer faces (towards the panel it explains).
  */
-export function Tip({ id, title, children, anchor }: { id: TipId; title: string; children: React.ReactNode; anchor?: 'left' | 'up' }) {
+export function Tip({ id, title, children, anchor, short }: { id: TipId; title: string; children: React.ReactNode; anchor?: 'left' | 'up'; /** A one-line version: with it the tip is a slim strip (the full text stays in the Help). */ short?: string }) {
   const done = useTipSeen(id);
   const visible = useIsVisible(id, !done);
   if (done || !visible) return null;
+  if (short) {
+    return (
+      <div className="tip tip--compact" role="note" aria-label={`Tip: ${title}`}>
+        <TipIcon size={14} />
+        <span className="tip__line"><b>{title}</b> {short}</span>
+        <button type="button" className="link-btn tip__skip" onClick={() => setTipsOn(false)}>Skip tips</button>
+        <button type="button" className="tip__ok tip__x" onClick={() => dismissTip(id)} aria-label={`Dismiss tip: ${title}`}>×</button>
+      </div>
+    );
+  }
   return (
     <div className={`tip ${anchor ? `tip--${anchor}` : ''}`} role="note" aria-label={`Tip: ${title}`}>
       <span className="tip__tag"><TipIcon size={14} /> Tip</span>

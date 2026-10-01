@@ -15,7 +15,7 @@ import { useChatVote } from '../ui/ChatVote';
 import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
 import { HowSteps, Tip, useTipSeen } from '../ui/tips';
-import { CaseIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
+import { ArrowRightIcon, CaseIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
 import { DailyDone, ModePicker } from './Modes';
 import { usePrefs } from '../ui/prefs';
 import { RosterBrowser } from '../ui/RosterBrowser';
@@ -92,16 +92,25 @@ function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
 }
 
 /** Items in each lane and where the real roster stops. The reducer already drew the offer; this is only what the lanes show on the way. */
-const LANE_LAND = 30, LANE_EXTRA = 4, LANE_STAGGER_MS = 40;
+const LANE_LAND = 34, LANE_EXTRA = 4;
+/** When each lane locks (ms after they all start together), the share of that time the lane spends travelling (the rest is the overshoot settling back), and its size. */
+const LANE_MS = [2300, 2800, 3400];
+const TRAVEL_SHARE = 0.93, OVERSHOOT_PX = 9;
+/** After the last lane locks: how long the three winners are held, then how long the lanes take to give way to the cards. */
+const HOLD_MS = 420, LEAVE_MS = 220;
+
+/** "PGL Major Stockholm 2021" -> "PGL Major Stockholm": the year is shown on its own. */
+const eventName = (r: Roster) => r.event.replace(/\s*\b(19|20)\d{2}\s*$/, '');
 
 /**
- * The case opening (#225): three vertical lanes, one per roster in the offer, each stopping on the roster `offer[i]` that will then take its place as a card.
- * It is presentation only. The offer is already drawn and saved, the passing rosters come from the whole pool and touch no game state, and finishing
- * (or Show case) only hands over to the cards, so skipping, reloading or a late timer can never change what the case holds.
+ * The case opening (#225): three vertical reels, one per roster in the offer, side by side where the three cards will be. They start together and lock one
+ * after another, each stopping on the roster `offer[i]`, with a little overshoot and a settle. It is presentation only. The offer is already drawn and saved,
+ * the passing rosters come from the whole pool and touch no game state, and finishing (or Show case) only hands over to the cards, so skipping, reloading
+ * or a late timer can never change what the case holds.
  */
 function CaseReveal({ offer, hard, picks, total, onDone }: { offer: string[]; hard: boolean; picks: number; total: number; onDone: () => void }) {
   const phone = useMedia('(max-width: 860px)');
-  const step = phone ? 72 : 88;
+  const step = phone ? 76 : 92;
   const lanes = useMemo(() => offer.map((id) => {
     const pool = G.shuffle(ROSTERS.filter((r) => r.id !== id));
     const arr = Array.from({ length: LANE_LAND + LANE_EXTRA }, (_, i) => pool[i % pool.length]);
@@ -110,54 +119,70 @@ function CaseReveal({ offer, hard, picks, total, onDone }: { offer: string[]; ha
   }), [offer.join('|')]);
   const wins = useRef<(HTMLDivElement | null)[]>([]);
   const strips = useRef<(HTMLDivElement | null)[]>([]);
-  const [landed, setLanded] = useState(false);
+  const [locked, setLocked] = useState<boolean[]>([false, false, false]);
+  const [phase, setPhase] = useState<'turn' | 'hold' | 'leave'>('turn');
   useLayoutEffect(() => {
-    const h = wins.current[0]?.clientHeight ?? 336;
+    const h = wins.current[0]?.clientHeight ?? 430;
     const target = LANE_LAND * step + step / 2 - h / 2;
-    strips.current.forEach((el) => { if (el) { el.style.transition = 'none'; el.style.transform = 'translateY(0)'; } });
-    const raf = requestAnimationFrame(() => requestAnimationFrame(() => {
-      strips.current.forEach((el, i) => {
-        if (!el) return;
-        el.style.transition = `transform ${REEL_MS}ms cubic-bezier(${REEL_CURVE.join(',')}) ${i * LANE_STAGGER_MS}ms`;
-        el.style.transform = `translateY(${-target}px)`;
-      });
-    }));
-    const done = setTimeout(onDone, 2900);
-    const glow = setTimeout(() => setLanded(true), REEL_MS + LANE_STAGGER_MS * 2);
-    // One stream of ticks, from the first lane, so three lanes don't make three overlapping machines; then one chime for the landing.
-    const ticks = playTicks(reelTickTimes(target, h / 2, step), 40);
-    const chime = play('reveal', { rarity: hard ? 'milspec' : rarity(lanes[0][LANE_LAND]), delay: REEL_MS + LANE_STAGGER_MS * 2 + 40 });
-    return () => { cancelAnimationFrame(raf); clearTimeout(done); clearTimeout(glow); ticks(); chime(); };
+    const anims: Animation[] = [];
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const later = (fn: () => void, ms: number) => { timers.push(setTimeout(fn, ms)); };
+    strips.current.forEach((el, i) => {
+      if (!el) return;
+      const ms = LANE_MS[i];
+      if (typeof el.animate !== 'function') { el.style.transform = `translateY(${-target}px)`; }
+      else {
+        // Fast away, a long deceleration to a hair past the stop line, then back onto it.
+        anims.push(el.animate([
+          { transform: 'translateY(0)', offset: 0, easing: `cubic-bezier(${REEL_CURVE.join(',')})` },
+          { transform: `translateY(${-(target + OVERSHOOT_PX)}px)`, offset: TRAVEL_SHARE, easing: 'cubic-bezier(.3,0,.4,1)' },
+          { transform: `translateY(${-target}px)`, offset: 1 },
+        ], { duration: ms, fill: 'forwards' }));
+        // Motion blur is strongest while the reel is fastest and gone before it stops.
+        anims.push(el.animate([
+          { filter: 'blur(3.2px)', offset: 0 }, { filter: 'blur(2.4px)', offset: .3 }, { filter: 'blur(.7px)', offset: .75 }, { filter: 'blur(0px)', offset: 1 },
+        ], { duration: ms * TRAVEL_SHARE, easing: 'linear', fill: 'forwards' }));
+      }
+      later(() => setLocked((l) => l.map((v, k) => (k === i ? true : v))), ms);
+    });
+    const last = LANE_MS[LANE_MS.length - 1];
+    later(() => setPhase('hold'), last);
+    later(() => setPhase('leave'), last + HOLD_MS);
+    later(onDone, last + HOLD_MS + LEAVE_MS);
+    // One stream of ticks, following the longest reel, so three reels don't make three overlapping machines; then a soft chime as each one locks.
+    const ticks = playTicks(reelTickTimes(target, h / 2, step, last * TRAVEL_SHARE), 40);
+    const chimes = LANE_MS.map((ms, i) => play('reveal', { rarity: hard ? 'milspec' : rarity(lanes[i][LANE_LAND]), delay: ms + 40 }));
+    return () => { timers.forEach(clearTimeout); anims.forEach((a) => a.cancel()); ticks(); chimes.forEach((c) => c()); };
   }, [lanes, step]);
   return (
-    <div className="case reveal" style={{ ['--step' as string]: `${step}px` }}>
+    <div className={`case reveal is-${phase}`} style={{ ['--step' as string]: `${step}px` }}>
       <span className="sr" role="status">Revealing three rosters.</span>
       <div className="opened reveal__bar">
         <p><b>Opening your case</b> <span>{picks} / {total} picks made</span></p>
         <button type="button" className="ghost-btn reveal__skip" onClick={onDone}>Show case</button>
       </div>
-      <div className={`teams-col reveal__lanes ${landed ? 'is-landed' : ''}`} aria-hidden="true">
+      <div className="teams-col reveal__lanes" aria-hidden="true">
         {lanes.map((items, i) => (
-          <div key={i} className="lane">
+          <div key={i} className={`lane ${locked[i] ? 'is-locked' : ''}`}>
             <p className="lane__label">Roster {i + 1}</p>
             <div className="lane__window" ref={(el) => { wins.current[i] = el; }}>
               <div className="lane__strip" ref={(el) => { strips.current[i] = el; }}>
                 {items.map((r, k) => (
-                  <div key={k} className={`lane__item rar-${hard ? 'milspec' : rarity(r)} ${landed && k === LANE_LAND ? 'is-landed' : ''}`}>
-                    <TeamBadge roster={r} size={40} />
-                    <span><strong>{r.tag}</strong><small>{r.year}</small></span>
+                  <div key={k} className={`lane__item ${locked[i] && k === LANE_LAND ? 'is-winner' : ''}`}>
+                    <TeamBadge roster={r} size={48} />
+                    <span><strong>{r.org}</strong><small>{r.year} · {eventName(r)}</small></span>
                   </div>
                 ))}
               </div>
-              <i className="lane__blur lane__blur--top" />
-              <i className="lane__blur lane__blur--bottom" />
+              <i className="lane__fade lane__fade--top" />
+              <i className="lane__fade lane__fade--bottom" />
               <i className="lane__marker" />
             </div>
           </div>
         ))}
       </div>
       <div className="draft-decision">
-        <div className="draft-decision-empty"><b>Revealing three rosters</b><span>Show case skips ahead to the same three. Opening a case never spends a spin.</span></div>
+        <div className="draft-decision-empty is-compact"><b>Revealing three rosters</b><span>Show case skips ahead to the same three. Opening a case never spends a spin.</span></div>
       </div>
     </div>
   );
@@ -339,10 +364,10 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   return (
     <div className="case">
       <ArrivalFocus selector=".case-card button.prow" />
-      <OpenedCase>{bench ? 'Three iconic rosters. Pick anyone, any role, for your bench.' : 'Three iconic rosters. Pick one player to add to your lineup.'}</OpenedCase>
+      <OpenedCase>{bench ? 'Three iconic rosters. Pick anyone for your bench.' : 'Three iconic rosters. Pick one player.'}</OpenedCase>
       {!bench && (hard
-        ? <Tip id="fit" title="Hard mode" anchor="left">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
-        : <Tip id="fit" title="Roles and fit" anchor="left">Each player has a main role: draft them there for the best fit. A role they also cover costs a little, and the card says so ("2nd role"). The + and − marks are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
+        ? <Tip id="fit" title="Hard mode" anchor="left" short="No role labels: put each player where you think they fit.">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
+        : <Tip id="fit" title="Roles and fit" anchor="left" short="Main-role picks give the best fit.">Each player has a main role: draft them there for the best fit. A role they also cover costs a little, and the card says so ("2nd role"). The + and − marks are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
       {phone && (
         <div className="roster-selector" role="group" aria-label="Choose a roster to view">
           {s.offer.map(id => {
@@ -364,7 +389,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
           const top = (
             <>
               <Montage roster={r} />
-              <TeamBadge roster={r} size={48} />
+              <TeamBadge roster={r} size={64} />
               <div className="case-card__id">
                 <h3 className="case-card__name">{r.org} <span>{r.year}</span></h3>
                 <div className="case-card__meta"><Placement roster={r} /></div>
@@ -418,14 +443,12 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
       </div>
       <span className="sr" role="status">{sel ? `${sel.p.nick} selected.${chem && isSel ? (chem.before === chem.after ? ' Chemistry stays the same.' : ` Chemistry would go from ${chem.before} to ${chem.after}.`) : ''} Choose a slot, then draft.` : ''}</span>
       <div className="draft-decision">
-        {!sel && (
-          <div className="draft-decision-empty">
-            <span className="draftbar__portrait is-empty" aria-hidden="true">
-              <svg viewBox="0 0 100 100" preserveAspectRatio="xMidYMax meet"><circle cx="50" cy="38" r="17" /><path d="M14 100 C16 72 32 60 50 60 C68 60 84 72 86 100 Z" /></svg>
-            </span>
-            <p><b>Select a player</b><span>{bench ? "Choose a bench player from any roster." : "Review their slot and chemistry here before committing."}</span></p>
+        {!sel && !hov && (
+          <div className="draft-decision-empty is-compact">
+            <b>Select a player</b><span>{bench ? 'Choose a bench player from any roster.' : 'Point at a player to see where they fit.'}</span>
           </div>
         )}
+        {!sel && hov && <PeekBar s={s} cand={hov} slot={candSlot} chem={chem} bench={bench} hard={hard} />}
         {sel && <DraftBar s={s} sel={sel} slot={slot} setSlot={setSlot} bench={bench} hard={hard} onDraft={draft} />}
         <SpinAgain s={s} reroll={reroll} busy={out} />
       </div>
@@ -434,7 +457,72 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
   );
 }
 
-/** What you are about to do: the player, the slot (with the fit written beside it, before you confirm), and the button. */
+type Why = { key: string; text: string; role?: Role; sign?: '+' | '−' };
+
+/**
+ * The reasons under "Why pick" (#225), all from the real model: the slot they would fill and how well it suits them, and each chemistry link their pick
+ * would add or break, named as the model names it. Hard mode keeps its promise: no fit and no chemistry, only the slot you chose.
+ */
+function whyLines(s: Run, cand: Chosen, slot: Role | 'bench' | null, chem: ChemPreview | null, bench: boolean, hard: boolean): Why[] {
+  if (bench) return [{ key: 'bench', text: 'Joins as your bench player' }, { key: 'sub', text: "Subs in for a starter who's off form" }];
+  const out: Why[] = [];
+  if (slot && slot !== 'bench') {
+    const note = G.fitNote(cand.p, slot);
+    out.push({ key: 'slot', role: slot, text: hard ? `Would play ${ROLE_LABEL[slot]}` : `Fills ${ROLE_LABEL[slot]} slot · ${note.kind === 'main' ? 'main role' : note.text}` });
+  } else out.push({ key: 'slot', text: 'Choose a slot' });
+  if (!hard) {
+    if (chem && (chem.added.length || chem.removed.length)) {
+      chem.added.forEach((x, i) => out.push({ key: `a${i}`, sign: x.value < 0 ? '−' : '+', text: x.label }));
+      chem.removed.forEach((x, i) => out.push({ key: `r${i}`, sign: '−', text: `Loses ${x.label}` }));
+      if (chem.capped) out.push({ key: 'cap', text: 'Chemistry is already at its maximum' });
+    } else out.push({ key: 'none', text: s.picks.length === 0 ? 'No chemistry links yet' : 'No new chemistry links' });
+  }
+  return out;
+}
+
+function WhyList({ lines }: { lines: Why[] }) {
+  return (
+    <ul className="why">
+      {lines.map((x) => (
+        <li key={x.key} className={x.sign ? (x.sign === '+' ? 'is-good' : 'is-bad') : ''}>
+          <span className="why__mark" aria-hidden="true">{x.role ? <RoleIcon role={x.role} size={15} /> : x.sign ?? '•'}</span>
+          <span>{x.sign && <Sr>{x.sign === '+' ? 'Bonus: ' : 'Penalty: '}</Sr>}{x.text}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** The portrait, name and team of whoever you are pointing at or have chosen: one block, so the two states look like the same panel. */
+function Candidate({ cand, hard, state }: { cand: Chosen; hard: boolean; state: string }) {
+  return (
+    <div className="draftbar__identity">
+      <span className="draftbar__portrait" style={{ ['--team' as string]: cand.r.color }}>
+        {cand.r.logo && <img className="draftbar__emblem" src={cand.r.logo} alt="" />}
+        <Avatar player={cand.p} roster={cand.r} />
+      </span>
+      <p className="draftbar__who">
+        <b>{cand.p.nick}</b>
+        <span className="draftbar__meta"><Flag code={cand.p.country} size={13} decorative /> {cand.p.country}{!hard && <> · <RoleIcon role={cand.p.roles[0]} size={13} /> {ROLE_SHORT[cand.p.roles[0]]}</>}</span>
+        <span>{cand.r.org} {cand.r.year}</span>
+        <small>{state}</small>
+      </p>
+    </div>
+  );
+}
+
+/** Pointing at a player before choosing anyone: the same panel, opened up, without the commit. */
+function PeekBar({ s, cand, slot, chem, bench, hard }: { s: Run; cand: Chosen; slot: Role | 'bench' | null; chem: ChemPreview | null; bench: boolean; hard: boolean }) {
+  return (
+    <div className="peekbar anim-in" aria-label={`${cand.p.nick}, not selected`}>
+      <Candidate cand={cand} hard={hard} state="Preview · press to select" />
+      <div className="draftbar__chem"><small className="draftbar__why">Why pick {cand.p.nick}?</small><WhyList lines={whyLines(s, cand, slot, chem, bench, hard)} /></div>
+      <p className="peekbar__hint">Select to draft</p>
+    </div>
+  );
+}
+
+/** What you are about to do: the player, why (the slot and the chemistry it would make), the slot choice, and the strongest button on the page. */
 function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel: Chosen; slot: Role | null; setSlot: (r: Role) => void; bench: boolean; hard: boolean; onDraft: () => void }) {
   const slots = bench ? [] : slotsFor(s, sel.p);
   const nick = sel.p.nick;
@@ -442,14 +530,12 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
   const preview = !hard && !bench && slot ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot, rosterId: sel.r.id, playerId: sel.p.id }], coach: s.coach }, false) : null;
   return (
     <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
-      <div className="draftbar__identity">
-        <span className="draftbar__portrait" style={{ ['--team' as string]: sel.r.color }}>
-          {sel.r.logo && <img className="draftbar__emblem" src={sel.r.logo} alt="" />}
-          <Avatar player={sel.p} roster={sel.r} />
-        </span>
-        <p className="draftbar__who"><b>{nick}</b><span><Flag code={sel.p.country} size={13} decorative /> {sel.p.country} · {sel.r.org} {sel.r.year}</span><small>Selected candidate · not yet drafted</small></p>
+      <Candidate cand={sel} hard={hard} state="Selected candidate · not yet drafted" />
+      <div className="draftbar__chem">
+        <small className="draftbar__why">Why pick {nick}?</small>
+        <WhyList lines={whyLines(s, sel, bench ? 'bench' : slot, preview, bench, hard)} />
+        {preview && preview.before !== preview.after && <p className="draftbar__total">Chemistry: {preview.before} → {preview.after}</p>}
       </div>
-      {preview && <div className="draftbar__chem small"><small className="draftbar__why">Why pick this player</small><b>Chemistry: {preview.before} → {preview.after}</b><span>{[...preview.added.map(x => `${x.value < 0 ? '−' : '+'} ${x.label}`), ...preview.removed.map(x => `Loses ${x.label}`)].join(' · ') || 'No new links.'}{preview.capped ? ' At maximum.' : ''}</span></div>}
       {slots.length > 0 && (
         <div className="draftbar__slots" role="group" aria-label={`Slot for ${nick}`}>
           {!hard && st?.state === 'secondary' && (
@@ -470,7 +556,7 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
         </div>
       )}
       <button type="button" className="cta cta--orange" data-sfx="draft" disabled={!bench && !slot} onClick={onDraft}>
-        {bench ? `Draft ${nick} as Bench` : slot ? `Draft ${nick} as ${ROLE_SHORT[slot]}` : `Choose a slot for ${nick}`}
+        {bench ? `Draft ${nick} as Bench` : slot ? `Draft ${nick} as ${ROLE_SHORT[slot]}` : `Choose a slot for ${nick}`}<ArrowRightIcon size={20} />
       </button>
     </div>
   );
@@ -506,8 +592,8 @@ function PlayerChoices({ roster, s, bench, dispatch }: { roster: Roster; s: Run;
         </div>
       </div>
       {!bench && (hard
-        ? <Tip id="fit" title="Hard mode">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
-        : <Tip id="fit" title="Roles and fit">Each player has a main role. Draft them there for the best fit: another role they cover costs a little, and an off-role costs more. The line under each Draft button says which. The + and − chips are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
+        ? <Tip id="fit" title="Hard mode" short="No role labels: put each player where you think they fit.">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
+        : <Tip id="fit" title="Roles and fit" short="Main-role picks give the best fit.">Each player has a main role. Draft them there for the best fit: another role they cover costs a little, and an off-role costs more. The line under each Draft button says which. The + and − chips are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
       <div className="players-grid">
         {players.map((p, i) => {
           const slots = slotsFor(s, p);

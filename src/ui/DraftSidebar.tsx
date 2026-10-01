@@ -18,7 +18,7 @@ export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Open
         <p>{draftHint(s)}</p>
       </section>
       <ChemistryCard chem={chem} onHelp={onChemistryHelp} preview={preview ?? null} />
-      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
+      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up" short="Same country, team or era works better together.">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
     </aside>
   );
 }
