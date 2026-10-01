@@ -12,6 +12,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - Dialogs render above sticky controls and suppress draft shortcuts; roster/lineup sheets preserve the selection and restore focus.
 
 ### Added
+- Home mode cards use original traced equipment-case and anonymous pro artwork beside the copy, with visible stateful actions (#215).
 - Guess autocomplete previews the next unsubmitted player without consuming a guess (#123).
 - A mobile lineup sheet with selected-pick chemistry beside confirmation, and a searchable roster reference with contextual event/source links (#191, #192).
 - Radar-backed veto cards and ordered series previews; a stable live-match layout with reachable tactical controls and expandable round history (#193, #194).

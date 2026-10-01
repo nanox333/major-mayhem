@@ -4,6 +4,9 @@ import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
 import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, howExpanded, replaceRisk, runWhere } from '../game/home';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
+import caseArt from '../assets/home/case.svg';
+import proArt from '../assets/home/pro-silhouette.svg';
+import { LogoMark } from '../ui/TopBar';
 import { Avatar } from '../ui/art';
 import { ArrowRightIcon, CaseIcon, FlagIcon, FlameIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
 import { dismissTip, useTipSeen } from '../ui/tips';
@@ -117,8 +120,8 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
       </section>
 
       <div className="modes3 home-secondary-modes">
-        <article className={`mcard home-mode-card ${freeShown || home.freeInProgress || ask === 'free' ? 'home-mode-card--expanded' : ''}`} aria-labelledby="mcard-free-h">
-          <span className="home-mode-art home-mode-art--free" aria-hidden="true"><LineupArt compact /></span>
+        <article className={`mcard home-mode-card home-mode-card--free ${freeShown || home.freeInProgress || ask === 'free' ? 'home-mode-card--expanded' : ''}`} aria-labelledby="mcard-free-h">
+          <span className="home-mode-art home-mode-art--free" aria-hidden="true"><img src={caseArt} alt="" width="480" height="240" /><span className="home-case-mark"><LogoMark size={30} /></span></span>
           <p className="home-mode-label">Free play</p><h2 className="mcard__title" id="mcard-free-h">Draft anytime.<br />Any era.</h2>
           <p className="mcard__text">Draft as often as you like, in any era.</p>
           <div className="mcard__foot">
@@ -135,13 +138,13 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
             {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}>Continue free play · {runWhere(s)}<ArrowRightIcon size={18} /></button>}
             {freeShown
               ? <button type="button" className="cta cta--orange" data-sfx="open" onClick={openCase}><span className="cta__main">Open case<ArrowRightIcon size={18} /></span></button>
-              : ask !== 'free' && <button type="button" className={`mbtn ${home.freeInProgress ? '' : 'home-mode-start'}`} onClick={startFree}><span className={home.freeInProgress ? undefined : 'sr'}>{home.freeInProgress ? 'New free play' : 'Start free play'}</span><ArrowRightIcon size={22} /></button>}
+              : ask !== 'free' && <button type="button" className={`mbtn ${home.freeInProgress ? '' : 'home-mode-start'}`} onClick={startFree}><span>{home.freeInProgress ? 'New free play' : 'Start free play'}</span><ArrowRightIcon size={22} /></button>}
           </div>
         </article>
 
-        <article className="mcard home-mode-card" aria-labelledby="mcard-guess-h">
+        <article className="mcard home-mode-card home-mode-card--guess" aria-labelledby="mcard-guess-h">
           <span className="home-mode-art home-mode-art--guess" aria-hidden="true">
-            <svg viewBox="0 0 150 155" focusable="false"><path d="M14 149v-15c0-12 17-22 39-32V87c-8-7-13-18-13-31V45C40 6 110 6 110 45v11c0 13-5 24-13 31v15c22 10 39 20 39 32v15" fill="none" stroke="var(--muted)" strokeWidth="3" /><text x="75" y="88" textAnchor="middle">?</text></svg>
+            <img src={proArt} alt="" width="480" height="456" /><span className="home-pro-question">?</span>
           </span>
           <p className="home-mode-label">Guess the Pro</p><h2 className="mcard__title" id="mcard-guess-h">Eight guesses.<br />One pro.</h2>
           <p className="mcard__text">Name the pro in eight guesses.</p>
@@ -150,7 +153,7 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
               {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : 'A new pro every day.'}
               {gStreak > 0 && ` · ${gStreak}-day streak`}
             </p>
-            <button type="button" className="mbtn home-mode-start" onClick={showGuess}><span className="sr">{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="mbtn home-mode-start" onClick={showGuess}><span>{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
           </div>
         </article>
       </div>
