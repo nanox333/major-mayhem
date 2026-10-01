@@ -1,0 +1,48 @@
+name: Extended checks
+
+# Expensive gameplay and UI regressions remain available without slowing every iteration.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * 1'
+
+concurrency:
+  group: extended-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Full regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Balance check (9,000 simulated runs)
+        run: npm run check
+      - name: Typecheck and build
+        run: npm run build
+      - name: Cache Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-shell-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - name: Install Chromium
+        run: npx playwright install --with-deps --only-shell chromium
+      - name: End-to-end playthrough
+        run: npm run e2e
+      - name: Responsive UI flows
+        run: npm run e2e:ui
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: extended-screenshots
+          path: shots/
+          if-no-files-found: ignore

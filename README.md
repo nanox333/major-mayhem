@@ -42,10 +42,11 @@ npm run dev      # local dev server
 npm test         # unit tests
 npm run check    # balance check: 9,000 simulated runs
 npm run build    # typecheck + single-file build in dist/
+npm run e2e:smoke # quick desktop/phone browser check
 npm run e2e      # full playthrough in headless Chromium (needs: npx playwright install chromium)
 ```
 
-The build is one self-contained HTML file with React and the fonts inside, so it works offline and makes no third-party requests. Built with React 18, TypeScript and Vite. CI runs all of the above and, on `main`, deploys to GitHub Pages once everything passes.
+The build is one self-contained HTML file with React and the fonts inside, so it works offline and makes no third-party requests. Built with React 18, TypeScript and Vite. Routine CI runs unit tests, the typecheck/build and a short desktop/phone browser check, then deploys that build on `main`. The full browser suites and 9,000 balance simulations run weekly or manually through the **Extended checks** workflow.
 
 ## What to know
 
