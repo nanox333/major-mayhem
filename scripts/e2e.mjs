@@ -14,7 +14,7 @@ let challengeLink = null;
 async function draftAll(p) {
   for (let r = 0; r < 7; r++) {
     await p.locator('button.cta', { hasText: 'Open case' }).click({ force: true });
-    await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
+    await p.waitForSelector('.case-card:not(.case-card--preview), .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(300);
     await pickFrom(p, 0);
     await p.waitForTimeout(300);
@@ -27,7 +27,7 @@ async function draftAll(p) {
 async function pickFrom(p, i = 0, shot) {
   const coach = p.locator('.case-item--coach');
   if (await coach.count()) { await coach.nth(i).click(); return 'coach'; }
-  const card = p.locator('.case-card').nth(i);
+  const card = p.locator('.case-card:not(.case-card--preview)').nth(i);
   const roster = p.locator('.roster-selector button').nth(i);
   if (await roster.count()) await roster.click();
   const toggle = card.locator('.case-card__toggle');
@@ -85,11 +85,11 @@ async function run(viewport, tag) {
   for (let r = 0; r < 7; r++) {
     if (r > 0) await cta('Open case'); // the Play Daily button already opened the first case
     if (r === 0) { await p.waitForTimeout(1200); await p.screenshot({ path: `shots/${tag}-1a-reel.png` }); }
-    await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
+    await p.waitForSelector('.case-card:not(.case-card--preview), .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(500);
     if (r === 0) await p.screenshot({ path: `shots/${tag}-1-teams.png`, fullPage: true });
     if (r === 1) { await p.click('.reroll-row .ghost-btn'); await p.waitForTimeout(600); }
-    const cards = await p.$$('.case-card, .case-item--coach');
+    const cards = await p.$$('.case-card:not(.case-card--preview), .case-item--coach');
     if (cards.length !== 3) throw new Error('expected 3 teams, got ' + cards.length);
     if (r === 5) {
       if (!(await p.$('.case-item--coach'))) throw new Error('round 6 is not the coach round');
@@ -155,11 +155,29 @@ async function run(viewport, tag) {
           await p.locator('.speed button', { hasText: '1×' }).click();
         }
         if (!(await p.locator('.hud__extra .momentum__bar').count()) || !(await p.locator('.hud__extra .economy__side').count())) throw new Error('the live match should show momentum and the economy of each side (#71)');
-        // A tactical timeout shows up in the killfeed and can't be called twice in a half.
-        await p.waitForSelector('.calls__timeout:not([disabled])', { timeout: 6000 });
-        await p.click('.calls__timeout');
-        await p.waitForSelector('.kf:has-text("Tactical timeout")', { timeout: 4000 });
-        if (!(await p.$('.calls__timeout[disabled]'))) throw new Error('second timeout allowed in the same half');
+        // A tactical timeout shows up in the killfeed and can't be called twice in a half. A lost pistol round puts a buy question up and playback waits for it,
+        // and the timeout button is not drawn while it is, so these steps answer it and look again: they wait on the match's state, not on a clock.
+        let callable = false;
+        for (let i = 0; i < 200 && !callable; i++) {
+          callable = !!(await p.$('.calls__timeout:not([disabled])'));
+          if (!callable) { await answerBuy(); await p.waitForTimeout(60); }
+        }
+        if (!callable) throw new Error('the timeout button never became available');
+        // The button pulses while the opponent is on a run and is redrawn as playback goes on, so Playwright's "stable" check can fail on it: press it in the page, and look
+        // for the killfeed line to know it took.
+        let called = false;
+        for (let i = 0; i < 6 && !called; i++) {
+          await p.evaluate(() => document.querySelector('.calls__timeout:not([disabled])')?.click());
+          called = await p.waitForSelector('.kf:has-text("Tactical timeout")', { timeout: 1500 }).then(() => true, () => false);
+          if (!called) await answerBuy();
+        }
+        if (!called) throw new Error('calling a timeout did not show in the killfeed');
+        let used = null;
+        for (let i = 0; i < 100 && used === null; i++) {
+          const btn = await p.$('.calls__timeout');
+          if (btn) used = await btn.isDisabled(); else { await answerBuy(); await p.waitForTimeout(60); }
+        }
+        if (used !== true) throw new Error('second timeout allowed in the same half');
       }
       if (g === 0 && n === 1 && !shotHalf) {
         await p.locator('.speed button', { hasText: '4×' }).click();
@@ -387,9 +405,9 @@ async function draftui() {
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card', { timeout: 8000 });
+  await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 });
   await p.waitForTimeout(700);
-  const rects = await p.$$eval('.case-card', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height), Math.round(r.width)].join(','); }));
+  const rects = await p.$$eval('.case-card:not(.case-card--preview)', (cs) => cs.map((c) => { const r = c.getBoundingClientRect(); return [Math.round(r.top), Math.round(r.height), Math.round(r.width)].join(','); }));
   if (new Set(rects).size !== 1) throw new Error('the three team cards are not the same size: ' + rects.join(' | '));
   const w = Number(rects[0].split(',')[2]);
   if (w < 290) throw new Error(`the team cards should be at least about 300px wide at 1440, got ${w}`);
@@ -398,7 +416,7 @@ async function draftui() {
   await p.evaluate(() => { const b = document.querySelector('.reroll-row button'); b.click(); b.click(); });
   await p.waitForTimeout(700);
   if (!/1 spin left/.test(await p.locator('.reroll-row').innerText())) throw new Error('a double click on Spin again should use one reroll: ' + (await p.locator('.reroll-row').innerText()));
-  await p.waitForSelector('.case-card');
+  await p.waitForSelector('.case-card:not(.case-card--preview)');
   const row = p.locator('button.prow').first();
   await row.hover();
   if ((await p.locator('.lrow.is-preview').count()) !== 1) throw new Error('hovering a player should preview them in the lineup');
@@ -417,7 +435,7 @@ async function draftui() {
   await p.locator('.draftbar .cta').click();
   for (let r = 1; r < 5 && !checked; r++) {
     await p.locator('button.cta', { hasText: 'Open case' }).click({ force: true });
-    await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(500);
+    await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 }); await p.waitForTimeout(500);
     const second = p.locator('button.prow.is-second').first();
     if (await second.count()) {
       const named = (await second.locator('.prow__role.is-second').textContent()).replace(/2nd role/, '').replace(/^[^A-Za-z]*/, '').trim().split(/\s+/)[0];
@@ -538,11 +556,11 @@ async function settingsAndKeys() {
   // Drafting from the keyboard: 1 goes to the first player of the first team, Enter chooses, Enter drafts.
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card', { timeout: 8000 });
+  await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 });
   await p.waitForTimeout(600);
   await p.locator('body').click({ position: { x: 5, y: 300 } });
   await p.keyboard.press('1');
-  await p.waitForFunction(() => document.activeElement?.closest('.case-card') === document.querySelector('.case-card') && document.activeElement?.classList.contains('prow'), null, { timeout: 3000 }).catch(() => { throw new Error('1 should focus the first player in the first team'); });
+  await p.waitForFunction(() => document.activeElement?.closest('.case-card:not(.case-card--preview)') === document.querySelector('.case-card:not(.case-card--preview)') && document.activeElement?.classList.contains('prow'), null, { timeout: 3000 }).catch(() => { throw new Error('1 should focus the first player in the first team'); });
   await p.keyboard.press('Enter');
   await p.waitForSelector('.draftbar .cta');
   await p.waitForFunction(() => document.activeElement?.classList.contains('cta'), null, { timeout: 3000 }).catch(() => { throw new Error('choosing a player by keyboard should move focus to the Draft button'); });
@@ -563,7 +581,7 @@ async function tips() {
   await p.waitForSelector('.how__steps');
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(600);
+  await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 }); await p.waitForTimeout(600);
   if ((await p.locator('.tip').count()) !== 1) throw new Error(`a first-time player should see exactly one tip at a time, saw ${await p.locator('.tip').count()}`);
   if (!(await p.locator('.tip', { hasText: 'Roles and fit' }).count())) throw new Error('the first tip while drafting should be Roles and fit');
   await p.screenshot({ path: 'shots/tip-fit.png' });
@@ -578,7 +596,7 @@ async function tips() {
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.seg, .seg button', { hasText: 'No role labels' }).first().click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(600);
+  await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 }); await p.waitForTimeout(600);
   const hardTip = await p.locator('.tip').first().innerText();
   if (/IGL|AWP|Entry|Lurker|Support/.test(hardTip)) throw new Error('the hard-mode tip should name no roles: ' + hardTip);
   // A player with a record sees none of it.
@@ -587,7 +605,7 @@ async function tips() {
   if (await p.locator('.how__steps').count()) throw new Error('a returning player should get the slim How it works row');
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card', { timeout: 8000 }); await p.waitForTimeout(400);
+  await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 }); await p.waitForTimeout(400);
   if (await p.locator('.tip').count()) throw new Error('a player who has finished a run should see no tips');
   console.log('tips: intro, one at a time, skip, hard mode and returning player ok errors:', errs);
   if (errs.length) problems.push(`tips: page errors: ${errs.join(' | ')}`);
@@ -642,12 +660,12 @@ async function keyboardDraft() {
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card', { timeout: 8000 });
+  await p.waitForSelector('.case-card:not(.case-card--preview)', { timeout: 8000 });
   // An open More menu keeps the keyboard: 1 must not jump to a roster behind it (#179).
   await p.click('[aria-label="More"]');
   await p.keyboard.press('1');
   if (!(await p.locator('.menu__panel').count())) throw new Error('pressing 1 should not close the open menu');
-  if (await p.evaluate(() => !!document.activeElement?.closest('.case-card'))) throw new Error('pressing 1 in an open menu should not move focus to a roster');
+  if (await p.evaluate(() => !!document.activeElement?.closest('.case-card:not(.case-card--preview)'))) throw new Error('pressing 1 in an open menu should not move focus to a roster');
   await p.keyboard.press('Escape');
   if (!(await p.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'More'))) throw new Error('Escape should give focus back to More');
   const adrift = () => p.evaluate(() => !document.activeElement || document.activeElement === document.body);
@@ -656,7 +674,7 @@ async function keyboardDraft() {
     if (round > 0) {
       if (await adrift()) throw new Error(`focus was lost after round ${round}`);
       await p.keyboard.press('Enter'); // the Open case button holds focus
-      await p.waitForSelector('.case-card, .case-item--coach', { timeout: 6000 });
+      await p.waitForSelector('.case-card:not(.case-card--preview), .case-item--coach', { timeout: 6000 });
       await p.waitForTimeout(250);
     } else {
       await p.locator('body').click({ position: { x: 5, y: 300 } });
@@ -695,7 +713,7 @@ async function runGuards() {
   // A free run under way: starting today's daily asks, and keeping it leaves the run alone.
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card');
+  await p.waitForSelector('.case-card:not(.case-card--preview)');
   const seed = await p.evaluate(() => JSON.parse(localStorage.getItem('major-mayhem-run-v2')).seed);
   await p.locator('.brand__btn').first().click();
   await p.locator('.home__daily').click();
@@ -706,7 +724,7 @@ async function runGuards() {
   // Start a daily for the 1st (replacing the free run, confirmed), then let the day roll over.
   await p.locator('.home__daily').click();
   await p.locator('button', { hasText: 'Replace it' }).click();
-  await p.waitForSelector('.case-card');
+  await p.waitForSelector('.case-card:not(.case-card--preview)');
   await ctx.clock.setSystemTime(new Date('2026-10-02T10:00:00'));
   await p.reload();
   await p.waitForSelector('.home3');
@@ -719,7 +737,7 @@ async function runGuards() {
   if (!/Daily #4.*abandons it/.test(await p.locator('.mcard__ask').innerText())) throw new Error('starting today should say the old daily would be abandoned');
   await p.locator('button', { hasText: 'Keep it' }).click();
   await p.locator('.mcard__old .mbtn').click();
-  await p.waitForSelector('.case-card');
+  await p.waitForSelector('.case-card:not(.case-card--preview)');
   console.log('run guards: asks before replacing, old daily shown as its own errors:', errs);
   if (errs.length) problems.push(`run guards: page errors: ${errs.join(' | ')}`);
   await ctx.close();
@@ -731,7 +749,7 @@ async function phoneDraft() {
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Open case' }).click();
-  await p.waitForSelector('.case-card');
+  await p.waitForSelector('.case-card:not(.case-card--preview)');
   const tabs = p.getByRole('group', { name: 'Choose a roster to view' }).getByRole('button');
   const sums = await tabs.locator('.case-card__sum').allTextContents();
   if (sums.length !== 3 || !sums.every((x) => /main role|Nobody|you can draft/.test(x))) throw new Error('every roster option should summarise its players before navigation: ' + JSON.stringify(sums));
@@ -741,7 +759,11 @@ async function phoneDraft() {
   for (let i = 0; i < 3; i++) {
     await tabs.nth(i).click();
     if (await tabs.nth(i).getAttribute('aria-pressed') !== 'true') throw new Error('the visible roster must be identified by its selector');
-    if (await p.locator('.case-card:visible').count() !== 1) throw new Error('phone should show one readable roster at a time');
+    // The rosters sit in a swipeable rail; the one the selector names is the one in view (centred, filling most of the width).
+    await p.waitForTimeout(700);
+    const box = await p.locator('.case-card:not(.case-card--preview)').nth(i).boundingBox();
+    const vw = p.viewportSize().width;
+    if (await p.locator('.case-card:not(.case-card--preview)').count() !== 3 || !box || box.width < vw * 0.75 || box.x < -2 || box.x + box.width > vw + 2) throw new Error(`phone should show the chosen roster in full in the rail: ${JSON.stringify(box)}`);
     if (await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2')) !== saved) throw new Error('browsing rosters should not draft a player or alter the run');
   }
   await p.keyboard.press('1');

@@ -242,13 +242,13 @@ try {
   await load(p, start);
   await p.getByRole('button', { name: "Start today's run", exact: true }).click();
   await p.getByRole('button', { name: 'Show case', exact: true }).click();
-  await p.locator('.case-card').first().waitFor();
+  await p.locator('.case-card:not(.case-card--preview)').first().waitFor();
   const dealt = JSON.parse((await saved(p))!);
   await p.waitForTimeout(3000);
   assert.equal(JSON.parse((await saved(p))!).offerKey, dealt.offerKey, 'late reel timer changed the case');
   await load(p, start, { fastReveals: true });
   await p.getByRole('button', { name: "Start today's run", exact: true }).click();
-  await p.locator('.case-card').first().waitFor();
+  await p.locator('.case-card:not(.case-card--preview)').first().waitFor();
   assert.equal(await p.locator('.reel').count(), 0);
   assert.deepEqual(JSON.parse((await saved(p))!).offer, dealt.offer, 'fast reveal changed the dealt offer');
   await p.close();

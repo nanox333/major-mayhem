@@ -69,7 +69,7 @@ export function Tip({ id, title, children, anchor, short }: { id: TipId; title: 
     return (
       <div className="tip tip--compact" role="note" aria-label={`Tip: ${title}`}>
         <TipIcon size={14} />
-        <span className="tip__line"><b>{title}</b> {short}</span>
+        <span className="tip__line"><b className="tip__title">{title}</b> {short}</span>
         <button type="button" className="link-btn tip__skip" onClick={() => setTipsOn(false)}>Skip tips</button>
         <button type="button" className="tip__ok tip__x" onClick={() => dismissTip(id)} aria-label={`Dismiss tip: ${title}`}>×</button>
       </div>
