@@ -1,0 +1,50 @@
+[
+  {
+    "path": "current-draft-1440.png",
+    "bytes": 261431,
+    "width": 1440,
+    "height": 1194,
+    "sha256": "8fbf227fca022d38373daab731bee92de99f59bb2c55f98ac2d9623762c24155",
+    "kind": "browser baseline"
+  },
+  {
+    "path": "current-draft-375.png",
+    "bytes": 135838,
+    "width": 375,
+    "height": 1856,
+    "sha256": "ac5aa685def6f4a100062884f796cf1dc325d26c650471ae55a6b12568209faf",
+    "kind": "browser baseline"
+  },
+  {
+    "path": "mockups/01-selected-desktop.png",
+    "bytes": 1731281,
+    "width": 1586,
+    "height": 992,
+    "sha256": "b1d8d9aa4a8557f65c08c2f9db9566ebb01672f7edf00f3d40bd6b481de65044",
+    "kind": "generated study"
+  },
+  {
+    "path": "mockups/02-opening-desktop.png",
+    "bytes": 1708802,
+    "width": 1586,
+    "height": 992,
+    "sha256": "239d4062493d29caea1a0884b509e61092368b509727875bab02cef3e4e5acd1",
+    "kind": "generated study"
+  },
+  {
+    "path": "mockups/03-motion-storyboard.png",
+    "bytes": 1910843,
+    "width": 1586,
+    "height": 992,
+    "sha256": "4a0bf81694e9a88133448092ea3189678f6ef6a15723001be3bab7f4991aa00f",
+    "kind": "generated study"
+  },
+  {
+    "path": "mockups/04-phone-studies.png",
+    "bytes": 1782218,
+    "width": 1586,
+    "height": 992,
+    "sha256": "e15e1ea4a1e0b68d9e4c62ec3a1f7befcc138fc03a58ede2d0ce436b6eb01c1f",
+    "kind": "generated study"
+  }
+]
