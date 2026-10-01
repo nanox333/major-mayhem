@@ -18,18 +18,26 @@ npm test             # unit tests (vitest)
 npm run check        # balance check: seeded simulations with pass/fail targets
 npm run build        # typecheck + single-file build in dist/
 npx playwright install chromium
-npm run e2e          # headless playthrough at desktop and phone width
+npm run e2e:smoke    # quick Home → draft → Guess check at desktop and phone width
+npm run e2e          # full headless playthrough at desktop and phone width
 npm run e2e:ui       # responsive UI flows against dist/ (starts its own local preview)
 ```
 
 For the UI checks against an existing dev server, set `UI_BASE_URL` (for example
-`http://127.0.0.1:5173`). Both browser scripts honor `CHROMIUM_PATH` when using a
+`http://127.0.0.1:5173`). All browser scripts honor `CHROMIUM_PATH` when using a
 locally installed Chromium. Run `npm run build` before checking production output.
+
+The **Extended checks** workflow runs the full playthrough, responsive UI suite
+and all 9,000 balance simulations weekly. You can also run it on a selected branch
+from GitHub Actions → Extended checks → Run workflow. It runs independently of
+routine CI and deployment. The smoke test uses installed Playwright Chromium
+locally (`CHROMIUM_PATH` is supported), and the Ubuntu runner's preinstalled Chrome
+in CI, avoiding a browser download and system-package installation on each change.
 
 ## Making a change
 
 1. Branch from `main`. Keep a PR to one topic.
-2. Run `npm test`, `npm run check` and `npm run build` before pushing. CI runs those plus the e2e playthrough, and `main` only deploys when all of them pass.
+2. Run `npm test`, `npm run build` and `npm run e2e:smoke` before pushing. Routine CI runs these checks and deploys their exact build on `main`. For gameplay or rules changes, also run `npm run check` and the full browser suites.
 3. Fill in the PR template. Link the issue it closes (`Closes #123`).
 4. Changes that affect players get a line in [CHANGELOG.md](CHANGELOG.md) under *Unreleased*.
 

@@ -16,7 +16,8 @@
     "e2e": "node scripts/e2e.mjs",
     "fetch-data": "tsx scripts/fetch-data.ts",
     "sounds": "node scripts/prepare-sounds.mjs",
-    "e2e:ui": "tsx scripts/ui-e2e.ts"
+    "e2e:ui": "tsx scripts/ui-e2e.ts",
+    "e2e:smoke": "tsx scripts/smoke-e2e.ts"
   },
   "keywords": [],
   "author": "Kristian",
