@@ -332,7 +332,7 @@ function CaseCards({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatc
             </>
           );
           return (
-            <article key={`${id}-${s.rerollKey}`} className={`case-card rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms` }} aria-label={`${r.org} ${r.year}`} hidden={phone && !expanded}>
+            <article key={`${id}-${s.rerollKey}`} className={`case-card ${hard ? '' : 'case-card--revealed'} rar-${hard ? 'milspec' : rarity(r)} ${sel?.r.id === id ? 'is-sel' : ''} anim-in`} style={{ animationDelay: `${i * 70}ms` }} aria-label={`${r.org} ${r.year}`} hidden={phone && !expanded}>
               <div className="case-card__top">{top}</div>
               <ul className="case-players" id={`players-${id}`} hidden={!expanded}>
                 {r.players.map((p) => {

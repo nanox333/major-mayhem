@@ -57,3 +57,7 @@ export const PlayIcon = (p: P) => <Svg {...p} fill><path d="M8 5.5v13l10.5-6.5z"
 export const CopyIcon = (p: P) => <Svg {...p}><path d="M9 9h10v11H9zM15 9V5H5v11h4" /></Svg>;
 export const DownloadIcon = (p: P) => <Svg {...p}><path d="M4 14v6h16v-6M12 4v11M8 11l4 4 4-4" /></Svg>;
 export const PauseIcon = (p: P) => <Svg {...p} fill><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" stroke="none" /></Svg>;
+
+/** Footer: data provenance and the fan-made game. */
+export const DatabaseIcon = (p: P) => <Svg {...p}><ellipse cx="12" cy="5" rx="8" ry="3" /><path d="M4 5v13c0 4 16 4 16 0V5M4 11c0 4 16 4 16 0" /></Svg>;
+export const GamepadIcon = (p: P) => <Svg {...p}><path d="M7 7h10c3 0 5 10 3 12-1 1-4-3-5-3H9c-1 0-4 4-5 3C2 17 4 7 7 7zM7 10v5M4.5 12.5h5M15 11h.01M18 14h.01" /></Svg>;

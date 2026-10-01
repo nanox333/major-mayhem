@@ -139,7 +139,10 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
         <div className="guess__row guess__row--head" role="row"><span role="columnheader">Player</span>{COLUMNS.map((k) => <span key={k} role="columnheader" title={HEAD_TIP[k]}>{HEAD[k]}</span>)}</div>
         {Array.from({ length: MAX_GUESSES }, (_, i) => {
           const id = day.guesses[i];
-          if (!id) return <div key={`e${i}`} className="guess__row guess__row--empty" role="row" aria-hidden="true"><span className="guess__n">{i + 1}</span>{COLUMNS.map((k) => <span key={k} className="guess__ph" />)}</div>;
+          if (!id) {
+            const candidate = i === day.guesses.length && !day.done && !reveal ? options[active] : null;
+            return <div key={`e${i}`} className={`guess__row guess__row--empty ${candidate ? 'guess__row--preview' : ''}`} role="row" aria-hidden="true"><span className="guess__n">{candidate ? <>{candidate.nick}<small>Not submitted</small></> : i + 1}</span>{COLUMNS.map((k) => <span key={k} className="guess__ph" />)}</div>;
+          }
           const p = all.get(id)!;
           const right = id === answer.id;
           const live = reveal?.id === id ? reveal : null;

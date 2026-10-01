@@ -5,12 +5,14 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Fixed
+- Skipped case openings retain a static rarity edge; hard-mode cases omit it (#74).
 - **Nothing resizes under you:** every screen now uses the same content column (the map veto, knife round and live match were wider, and the results narrower), and the scrollbar keeps its space while a dialog is open, so opening settings or a roster no longer nudges the page. In the draft, the lineup rows keep one height, the chemistry preview no longer moves the hint, the decision panel holds its height from empty to chosen, and picking a substitute no longer moves the Accept button.
 - Match pause and answered buy choices survive reloads; dialogs and hidden tabs suspend playback without changing pause intent.
 - Result ratings keep shared duel players separate by side, include played bench contributors, and distinguish stronger role placements. Hard-mode pick strength uses its legal options consistently in the screen and exports.
 - Dialogs render above sticky controls and suppress draft shortcuts; roster/lineup sheets preserve the selection and restore focus.
 
 ### Added
+- Guess autocomplete previews the next unsubmitted player without consuming a guess (#123).
 - A mobile lineup sheet with selected-pick chemistry beside confirmation, and a searchable roster reference with contextual event/source links (#191, #192).
 - Radar-backed veto cards and ordered series previews; a stable live-match layout with reachable tactical controls and expandable round history (#193, #194).
 - Results sections that keep the outcome and sharing first, with detailed analysis collapsed on phones (#195).
@@ -30,6 +32,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Symbols next to colours** on won and lost maps and matches, above- and below-average ratings, killfeed lines, draft bonuses and penalties, and the round strip in match reports (lost rounds are striped) ([#22], [#38]).
 
 ### Changed
+- A compact header, illustrated archive strip, icon-led Home stats and three-part credits footer; enlarged text and narrow stats tiles wrap cleanly (#217, #218).
 - **Finishing the redesign:** the lobby, match-ready, map veto, knife round and map scoreboard follow the same flat, orange-led look (no more green buttons or panels; green and red only mark outcomes). The run's progress is plain text steps with no overlapping badges, every disclosure shares one chevron instead of the browser's triangle, the live controls stay on screen, the reroll sits in the draft's decision panel, and "How it works" is four numbered steps. Playback and share buttons use drawn icons instead of emoji glyphs.
 - Home, draft, match and results share a charcoal/chalk visual system with readable body text, quieter surfaces and clear action priority (#200–#204). The home groups the daily action and countdown; phone drafting uses a roster selector; live radar markers have an accessible player key; results lead with the outcome and sharing.
 - **On a phone, the main button stays in reach:** Open case, Find match, Accept, Next map and Play again are pinned to the bottom of the screen instead of sitting a screen or two down. Players are rows with their Draft buttons beside the face, both teams show side by side before a match, the header is smaller, the map veto is about a third shorter with the note on comfort under the list, and every button is at least 44 px tall. Guess the pro shows each guess as a card of labelled clues rather than a table that scrolls sideways ([#19]).
