@@ -359,7 +359,7 @@ function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Disp
           const r = G.rosterById.get(id)!;
           const knows = drafted.filter((p) => coachKnows(r.coach!, p.id));
           return (
-            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${s.opts?.hard ? 'milspec' : rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms` }} onClick={() => dispatch({ type: 'coach', rosterId: id })}
+            <button key={`${id}-${s.rerollKey}`} className={`case-item case-item--coach rar-${s.opts?.hard ? 'milspec' : rarity(r)} anim-in`} data-sfx="draft" style={{ animationDelay: `${i * 70}ms`, ['--team' as string]: r.color }} onClick={() => dispatch({ type: 'coach', rosterId: id })}
               onMouseEnter={() => pointAt(id)} onMouseLeave={() => pointAt(null)} onFocus={() => pointAt(id)} onBlur={() => pointAt(null)}>
               <div className="case-item__top">
                 <TeamBadge roster={r} size={44} />
@@ -617,7 +617,7 @@ function Candidate({ cand, hard, state }: { cand: Chosen; hard: boolean; state: 
 /** Pointing at a player before choosing anyone: the same panel, opened up, without the commit. */
 function PeekBar({ s, cand, slot, chem, bench, hard }: { s: Run; cand: Chosen; slot: Role | 'bench' | null; chem: ChemPreview | null; bench: boolean; hard: boolean }) {
   return (
-    <div className="peekbar anim-in" aria-label={`${cand.p.nick}, not selected`}>
+    <div className="peekbar anim-in" aria-label={`${cand.p.nick}, not selected`} style={{ ['--team' as string]: cand.r.color }}>
       <Candidate cand={cand} hard={hard} state="Preview · press to select" />
       <div className="draftbar__chem"><small className="draftbar__why">Why pick {cand.p.nick}?</small><WhyList lines={whyLines(s, cand, slot, chem, bench, hard)} /></div>
       <p className="peekbar__hint">Select to draft</p>
@@ -632,7 +632,7 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
   const st = bench ? null : playerState(sel.p, slots, hard);
   const preview = !hard && !bench && slot ? chemPreview({ picks: s.picks, coach: s.coach }, { picks: [...s.picks, { slot, rosterId: sel.r.id, playerId: sel.p.id }], coach: s.coach }, false) : null;
   return (
-    <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`}>
+    <div className="action-bar draftbar anim-in" role="region" aria-label={`Draft ${nick}`} style={{ ['--team' as string]: sel.r.color }}>
       <Candidate cand={sel} hard={hard} state="Selected candidate · not yet drafted" />
       <div className="draftbar__chem">
         <small className="draftbar__why">Why pick {nick}?</small>

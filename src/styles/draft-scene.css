@@ -5,24 +5,26 @@
 
 .is-scene {
   --ds-bg: #070807; --ds-panel: #0b0c0c; --ds-raise: #111312; --ds-line: #222623; --ds-line-2: #313632;
-  --ds-glow: rgba(229, 124, 62, .4);
+  --ds-glow: rgba(249, 132, 37, .5);
+  --ds-deep: #0d0e0e; --ds-deeper: #080909; --ds-sel-bg: #130f0b; --ds-name: #fff; --ds-meta: #8d948d; --ds-text-shadow: 0 1px 14px rgba(0, 0, 0, .75);
+  --ds-slot: #090a0a; --ds-slot-hover: #0d0f0e; --ds-slot-line: rgba(255, 255, 255, .07); --ds-slot-line-hover: rgba(255, 255, 255, .15);
   --ds-label: 600 .72rem/1.2 var(--f-read);
 }
-/* A little less saturated than the app's orange, across the whole draft page (the top bar included, so the two match). */
-:root.has-scene:not([data-theme="light"]) { --accent: #e57c3e; --accent-hi: #ee9a68; }
-:root[data-theme="light"] .is-scene { --ds-bg: var(--bg); --ds-panel: var(--panel); --ds-raise: var(--panel-2); --ds-line: var(--line); --ds-line-2: var(--line-2); --ds-glow: rgba(169, 74, 6, .3); }
+/* A rich, warm orange across the whole draft page (the top bar included, so the two match). It is strongest where it means something: the selected row, the active step, the reel's lock line and the Draft button. */
+:root.has-scene:not([data-theme="light"]) { --accent: #f98425; --accent-hi: #ffa24f; }
+:root[data-theme="light"] .is-scene { --ds-bg: var(--bg); --ds-panel: var(--panel); --ds-raise: var(--panel-2); --ds-line: var(--line); --ds-line-2: var(--line-2); --ds-glow: rgba(169, 74, 6, .3); --ds-deep: var(--panel); --ds-deeper: var(--panel-2); --ds-sel-bg: var(--panel); --ds-name: var(--strong); --ds-meta: var(--muted); --ds-text-shadow: none; --ds-slot: var(--panel-2); --ds-slot-hover: var(--panel); --ds-slot-line: var(--line); --ds-slot-line-hover: var(--line-2); }
 
 /* ---------- atmosphere ---------- */
 /* Back to front: a near-black page with a grain you only see when you look for it, the arena photograph across the top edge, a strong vertical black fade,
    a horizontal vignette that keeps the middle (behind the cards) almost black, a faint warm glow by the lights, then the interface. */
 :root.has-scene:not([data-theme="light"]):not([data-contrast="high"]) body { background: linear-gradient(rgba(7, 8, 7, .78), rgba(7, 8, 7, .78)), url('../assets/draft/tactical-noise.webp') repeat #070807; background-size: auto, 256px 256px; }
-.draft-scene { position: absolute; top: 0; left: 0; width: 100%; height: 520px; z-index: -1; pointer-events: none; overflow: hidden; }
-.draft-scene__arena { position: absolute; inset: 0; background: url('../assets/draft/major-arena-bg.webp') center top / cover no-repeat; }
+.draft-scene { position: absolute; top: 0; left: 0; width: 100%; height: 560px; z-index: -1; pointer-events: none; overflow: hidden; }
+.draft-scene__arena { position: absolute; inset: 0; background: url('../assets/draft/major-arena-bg.webp') center top / cover no-repeat; filter: saturate(1.3) brightness(1.4); }
 .draft-scene__light { position: absolute; inset: 0; background:
-  radial-gradient(ellipse 26% 44% at 95% 2%, rgba(229, 124, 62, .13), transparent 72%),
-  radial-gradient(ellipse 24% 40% at 4% 4%, rgba(229, 124, 62, .08), transparent 72%),
-  linear-gradient(90deg, rgba(7, 8, 7, 0) 0, rgba(7, 8, 7, .62) 13%, rgba(7, 8, 7, .84) 30%, rgba(7, 8, 7, .84) 70%, rgba(7, 8, 7, .62) 87%, rgba(7, 8, 7, 0) 100%),
-  linear-gradient(180deg, rgba(7, 8, 7, .5) 0, rgba(7, 8, 7, .74) 22%, rgba(7, 8, 7, .93) 46%, #070807 70%); }
+  radial-gradient(ellipse 30% 52% at 94% 0%, rgba(249, 132, 37, .36), transparent 72%),
+  radial-gradient(ellipse 26% 46% at 5% 2%, rgba(249, 132, 37, .24), transparent 72%),
+  linear-gradient(90deg, rgba(7, 8, 7, 0) 0, rgba(7, 8, 7, .4) 10%, rgba(7, 8, 7, .74) 26%, rgba(7, 8, 7, .78) 56%, rgba(7, 8, 7, .5) 82%, rgba(7, 8, 7, .26) 100%),
+  linear-gradient(180deg, rgba(7, 8, 7, .18) 0, rgba(7, 8, 7, .5) 20%, rgba(7, 8, 7, .9) 46%, #070807 74%); }
 :root[data-theme="light"] .draft-scene, :root[data-contrast="high"] .draft-scene { display: none; }
 @media (forced-colors: active) { .draft-scene { display: none; } }
 
@@ -36,7 +38,7 @@
 .is-scene .console__head { margin-bottom: 0; padding-bottom: 8px; gap: 6px 20px; }
 .is-scene .console__titles { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'kicker kicker' 'title picks'; column-gap: 22px; row-gap: 0; align-items: end; }
 .is-scene .console__eyebrow { grid-area: kicker; margin: 0 0 2px; color: var(--muted); font: 600 .7rem/1.3 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
-.is-scene .console__title { grid-area: title; margin: 0; font-size: clamp(2.1rem, 3.4vw, 3.1rem); line-height: 1; letter-spacing: -.01em; text-transform: none; animation: heading-in .26s ease-out both; }
+.is-scene .console__title { grid-area: title; margin: 0; font-size: clamp(2.2rem, 3.6vw, 3.3rem); line-height: 1; letter-spacing: -.012em; text-shadow: var(--ds-text-shadow); text-transform: none; animation: heading-in .26s ease-out both; }
 .is-scene .console__title em { color: var(--accent); font-style: normal; }
 @keyframes heading-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 .console__picks { grid-area: picks; display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin: 0 0 .5em; color: var(--muted); font-size: .85rem; }
@@ -62,12 +64,12 @@
 .lane__label { position: absolute; top: -17px; left: 2px; margin: 0; color: var(--muted); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; transition: opacity .2s; }
 .reveal.is-fade .lane__label, .reveal.is-grow .lane__label { opacity: 0; }
 /* The orange light spilling out from behind each reel: a soft gradient, no filter. */
-.lane::before { content: ''; position: absolute; z-index: -1; inset: 14% -7% -3%; background: radial-gradient(ellipse at 50% 50%, rgba(229, 124, 62, .2), transparent 68%); opacity: .75; transition: opacity .3s; }
+.lane::before { content: ''; position: absolute; z-index: -1; inset: 12% -9% -4%; background: radial-gradient(ellipse at 50% 50%, rgba(249, 132, 37, .46), transparent 68%); opacity: .9; transition: opacity .3s; }
 .lane.is-locked::before { opacity: 1; }
 .reveal.is-grow .lane::before { opacity: 0; }
 .lane__window { position: relative; height: 430px; overflow: hidden; border-radius: 3px; background: var(--ds-panel);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 48%, var(--ds-line)), inset 0 0 42px rgba(0, 0, 0, .85), 0 0 24px -12px var(--ds-glow); transition: box-shadow .25s, height .34s cubic-bezier(.3, 0, .2, 1); }
-.lane.is-locked .lane__window, .reveal.is-hold .lane__window { box-shadow: inset 0 0 0 1px var(--accent), inset 0 0 42px rgba(0, 0, 0, .8), 0 0 30px -10px var(--ds-glow); }
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 82%, var(--ds-line)), inset 18px 0 28px -16px rgba(249, 132, 37, .72), inset -18px 0 28px -16px rgba(249, 132, 37, .72), inset 0 0 46px rgba(0, 0, 0, .85), 0 0 52px -8px var(--ds-glow); transition: box-shadow .25s, height .34s cubic-bezier(.3, 0, .2, 1); }
+.lane.is-locked .lane__window, .reveal.is-hold .lane__window { box-shadow: inset 0 0 0 2px var(--accent), inset 18px 0 28px -12px rgba(249, 132, 37, .9), inset -18px 0 28px -12px rgba(249, 132, 37, .9), inset 0 0 46px rgba(0, 0, 0, .8), 0 0 60px -6px var(--ds-glow); animation: lane-window-flash .34s ease-out; }
 .reveal.is-grow .lane__window { box-shadow: inset 0 0 0 1px var(--ds-line); }
 .lane__strip { position: absolute; inset: 0 0 auto 0; will-change: transform; }
 /* Rows are sized, dimmed and blurred per frame by CaseReveal as they move; this is only their resting look. */
@@ -75,22 +77,25 @@
 .lane__item > span { display: grid; min-width: 0; }
 .lane__item strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--f-head); font-weight: 800; font-size: 1.5rem; line-height: 1.05; letter-spacing: .04em; text-transform: uppercase; color: var(--strong); }
 .lane__item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
-.lane__item.is-winner { background: rgba(229, 124, 62, .1); animation: lane-win .24s ease-out; }
+.lane__item.is-winner { background: rgba(249, 132, 37, .18); animation: lane-win .24s ease-out; }
 @keyframes lane-win { 0% { transform: scale(1.035); } 40% { transform: scale(1.065); } 100% { transform: scale(1.035); } }
 /* Dark fades at the top and bottom of the window. */
-.lane__fade { position: absolute; left: 0; right: 0; z-index: 1; height: 32%; pointer-events: none; }
-.lane__fade--top { top: 0; background: linear-gradient(#08090a 6%, rgba(8, 9, 10, 0)); }
-.lane__fade--bottom { bottom: 0; background: linear-gradient(rgba(8, 9, 10, 0), #08090a 94%); }
+.lane__fade { position: absolute; left: 0; right: 0; z-index: 1; height: 36%; pointer-events: none; }
+.lane__fade--top { top: 0; background: linear-gradient(#08090a 10%, rgba(8, 9, 10, 0)); }
+.lane__fade--bottom { bottom: 0; background: linear-gradient(rgba(8, 9, 10, 0), #08090a 90%); }
 /* The lock zone: thin lines above and below one row, a faint band, a fine line through the middle that fades out at the ends, and a marker on each side. */
-.lane__marker { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; height: var(--step); transform: translateY(-50%); pointer-events: none; border-block: 1px solid rgba(229, 124, 62, .4); transition: opacity .2s;
-  background: linear-gradient(90deg, var(--accent) 0, var(--accent) 11%, transparent 20%, transparent 80%, var(--accent) 89%, var(--accent) 100%) 50% 50% / 100% 1px no-repeat, linear-gradient(90deg, rgba(229, 124, 62, .07), rgba(229, 124, 62, .012) 50%, rgba(229, 124, 62, .07)); }
-.lane__marker::before, .lane__marker::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -8px; border: 8px solid transparent; }
-.lane__marker::before { left: -1px; border-left: 11px solid var(--accent); border-right: 0; }
-.lane__marker::after { right: -1px; border-right: 11px solid var(--accent); border-left: 0; }
+.lane__marker { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; height: var(--step); transform: translateY(-50%); pointer-events: none; border-block: 1px solid rgba(255, 170, 90, .95); box-shadow: 0 0 22px rgba(249, 132, 37, .4), inset 0 0 22px rgba(249, 132, 37, .16); transition: opacity .2s;
+  background: linear-gradient(90deg, var(--accent) 0, var(--accent) 11%, transparent 20%, transparent 80%, var(--accent) 89%, var(--accent) 100%) 50% 50% / 100% 1px no-repeat, linear-gradient(90deg, rgba(249, 132, 37, .16), rgba(249, 132, 37, .035) 50%, rgba(249, 132, 37, .16)); }
+.lane__marker::before, .lane__marker::after { content: ''; position: absolute; top: 50%; width: 0; height: 0; margin-top: -12px; border: 12px solid transparent; filter: drop-shadow(0 0 6px rgba(249, 132, 37, .85)); }
+.lane__marker::before { left: -1px; border-left: 17px solid var(--accent-hi); border-right: 0; }
+.lane__marker::after { right: -1px; border-right: 17px solid var(--accent-hi); border-left: 0; }
 .reveal.is-fade .lane__marker, .reveal.is-grow .lane__marker, .reveal.is-fade .lane__fade, .reveal.is-grow .lane__fade { opacity: 0; }
 /* The lock: one short pulse of light along the band as the reel settles. */
-.lane.is-locked .lane__marker { animation: lane-lock .17s ease-out; }
-@keyframes lane-lock { 0% { box-shadow: inset 0 0 26px 3px rgba(255, 175, 110, .6); } 100% { box-shadow: inset 0 0 0 0 transparent; } }
+.lane.is-locked .lane__marker { animation: lane-lock .3s ease-out; }
+@keyframes lane-lock { 0% { box-shadow: inset 0 0 40px 6px rgba(255, 190, 120, .8), 0 0 30px rgba(249, 132, 37, .65); } 100% { box-shadow: 0 0 18px rgba(249, 132, 37, .3), inset 0 0 18px rgba(249, 132, 37, .12); } }
+@keyframes lane-window-flash { 0% { filter: brightness(1.4); } 100% { filter: none; } }
+/* The logos stay clear as the rows slow: a thin light rim and a shadow lift each one off the dark. */
+.lane__item .badge-logo, .lane__item .team-badge { box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 5px 14px -4px #000; }
 
 /* The hand-off: the other rows fade, the winner's card appears where its row was, and then rises and the reel grows to the card's size. */
 .reveal.is-fade .lane__strip, .reveal.is-grow .lane__strip { opacity: 0; transition: opacity .2s ease-out; }
@@ -106,32 +111,34 @@
 
 /* ---------- team cards ---------- */
 .is-scene .teams-col { gap: 18px; }
-.is-scene .case-card { --team: var(--accent); gap: 0; padding: 0; overflow: hidden; border: 1px solid var(--ds-line); border-radius: 3px; background: var(--ds-panel); box-shadow: 0 18px 40px -28px #000; }
-.is-scene .case-card__top { position: relative; isolation: isolate; min-height: 116px; padding: 14px 14px 12px; align-items: center; gap: 14px; border-top: 2px solid var(--team); border-bottom: 1px solid var(--ds-line);
-  background: radial-gradient(ellipse 80% 140% at 0% 0%, color-mix(in srgb, var(--team) 20%, transparent), transparent 70%), var(--ds-raise); }
+.is-scene .case-card { --team: var(--accent); gap: 0; padding: 0; overflow: hidden; border: 1px solid color-mix(in srgb, var(--team) 52%, var(--ds-line)); border-radius: 3px; background: linear-gradient(180deg, var(--ds-deep), var(--ds-panel) 120px); box-shadow: 0 24px 46px -26px #000, 0 0 0 1px rgba(255, 255, 255, .03), 0 0 34px -10px color-mix(in srgb, var(--team) 62%, transparent); }
+.is-scene .case-card.is-sel { border-color: color-mix(in srgb, var(--team) 74%, var(--ds-line)); box-shadow: 0 24px 46px -26px #000, 0 0 44px -8px color-mix(in srgb, var(--team) 78%, transparent); }
+.is-scene .case-card__top { position: relative; z-index: 2; isolation: isolate; min-height: 116px; padding: 14px 14px 12px; align-items: center; gap: 14px; border-top: 3px solid var(--team); border-bottom: 1px solid color-mix(in srgb, var(--team) 46%, var(--ds-line)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 -1px 16px -2px color-mix(in srgb, var(--team) 55%, transparent), 0 14px 18px -14px rgba(0, 0, 0, .9);
+  background: radial-gradient(ellipse 72% 150% at 0% 0%, color-mix(in srgb, var(--team) 56%, transparent), transparent 70%), radial-gradient(ellipse 60% 130% at 100% 0%, color-mix(in srgb, var(--team) 36%, transparent), transparent 72%), linear-gradient(180deg, color-mix(in srgb, var(--team) 24%, var(--ds-deep)), var(--ds-deeper)); }
 .is-scene .case-card__top > :not(.montage) { position: relative; z-index: 2; }
 .is-scene .case-card__id { max-width: 54%; }
-.is-scene .case-card__name { font-size: 1.6rem; line-height: 1.04; letter-spacing: .02em; color: var(--strong); }
+.is-scene .case-card__name { font-size: 1.6rem; line-height: 1.04; letter-spacing: .02em; color: var(--strong); text-shadow: var(--ds-text-shadow); }
 .is-scene .case-card__name span { color: var(--text-2); }
 .is-scene .case-card .place { color: var(--text-2); font-size: .85rem; font-weight: 500; }
 .is-scene .case-card__major { margin-top: 4px; color: var(--muted); font-size: .76rem; line-height: 1.35; }
 /* The montage: the roster's own five, dimmed and desaturated, each feathered at the edges, fading to nothing behind the text. */
-.montage { position: absolute; inset: 0 0 0 auto; width: 48%; z-index: 0; overflow: hidden; pointer-events: none; }
-.montage::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, var(--ds-raise) 0, color-mix(in srgb, var(--ds-raise) 70%, transparent) 34%, transparent 82%); }
+.montage { position: absolute; inset: 0 0 0 auto; width: 56%; z-index: 0; overflow: hidden; pointer-events: none; }
+.montage::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(0deg, color-mix(in srgb, var(--team) 36%, transparent), transparent 62%), linear-gradient(180deg, rgba(0, 0, 0, .3), transparent 45%); }
+.montage::after { content: ''; position: absolute; inset: 0; z-index: 2; background: linear-gradient(90deg, var(--ds-raise) 0, color-mix(in srgb, var(--ds-raise) 72%, transparent) 40%, transparent 88%); }
 .montage__mark { position: absolute; right: 8%; top: 50%; height: 150%; width: auto; transform: translateY(-50%); opacity: .07; filter: grayscale(1) brightness(1.6); }
 .montage__faces { position: absolute; inset: 0 -6px 0 0; display: flex; align-items: stretch; }
-.montage__faces img { flex: 1 1 0; min-width: 0; max-width: 64px; margin-left: -16px; object-fit: cover; object-position: center 14%; filter: grayscale(.4) brightness(.7) contrast(.96); background: color-mix(in srgb, var(--team) 20%, #000);
+.montage__faces img { flex: 1 1 0; min-width: 0; max-width: 70px; margin-left: -16px; object-fit: cover; object-position: center 14%; filter: grayscale(.2) brightness(1) contrast(1.08); background: color-mix(in srgb, var(--team) 30%, #000);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 38%, #000 62%, transparent); mask-image: linear-gradient(90deg, transparent, #000 38%, #000 62%, transparent); }
 
 .is-scene .case-players { padding: 2px 8px 2px; }
-.is-scene .prow { position: relative; min-height: 64px; grid-template-columns: 50px minmax(0, 1fr); gap: 12px; padding: 7px 10px 7px 8px; border: 0; border-bottom: 1px solid var(--ds-line); border-left: 2px solid transparent; border-radius: 0; background: transparent;
+.is-scene .prow { position: relative; min-height: 64px; grid-template-columns: 52px minmax(0, 1fr); gap: 12px; padding: 6px 10px 6px 8px; border: 0; border-bottom: 1px solid var(--ds-line); border-left: 2px solid transparent; border-radius: 0; background: transparent;
   transition: transform .14s ease-out, background .14s ease-out, box-shadow .14s ease-out, border-color .14s; }
 .is-scene li:last-child > .prow { border-bottom-color: transparent; }
-.is-scene .prow__face { width: 50px; height: 50px; overflow: hidden; border-radius: 2px; background: var(--ds-raise); box-shadow: 0 0 0 1px var(--ds-line-2); }
-.is-scene .prow__face img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; transition: transform .14s ease-out, filter .14s ease-out; filter: brightness(.94); }
+.is-scene .prow__face { width: 52px; height: 52px; overflow: hidden; border-radius: 2px; background: var(--ds-raise); box-shadow: 0 0 0 1px color-mix(in srgb, var(--team, var(--accent)) 42%, rgba(255, 255, 255, .14)), 0 4px 10px -3px rgba(0, 0, 0, .8); }
+.is-scene .prow__face img { width: 100%; height: 100%; object-fit: cover; object-position: center 18%; transition: transform .14s ease-out, filter .14s ease-out; filter: brightness(1) contrast(1.07) saturate(1.05); }
 .is-scene .prow__main { gap: 3px; }
-.is-scene .prow__name b { font-size: 1.08rem; font-weight: 700; color: var(--strong); }
-.is-scene .prow__cc { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: .76rem; }
+.is-scene .prow__name b { font-size: 1.1rem; font-weight: 700; color: var(--ds-name); }
+.is-scene .prow__cc { display: inline-flex; align-items: center; gap: 5px; color: var(--ds-meta); font-size: .76rem; }
 .is-scene .prow__cc .flag { border-radius: 2px; flex: none; opacity: .9; }
 .is-scene .prow__meta { align-items: center; }
 .is-scene .prow__role { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--text-2); font-size: .78rem; font-weight: 600; letter-spacing: .03em; }
@@ -139,7 +146,9 @@
 /* Hover is quiet: a slightly brighter row, the portrait a touch more present, a 2px shift and an orange edge. Selection is the outline. */
 .is-scene button.prow:hover:not(.is-sel) { transform: translateX(2px); background: rgba(255, 255, 255, .04); box-shadow: inset 2px 0 0 var(--accent); }
 .is-scene button.prow:hover:not(.is-sel) .prow__face img, .is-scene button.prow.is-sel .prow__face img { filter: brightness(1.08); transform: scale(1.04); }
-.is-scene .prow.is-sel, .is-scene button.prow.is-sel:hover { transform: none; border-color: transparent; background: rgba(229, 124, 62, .11); box-shadow: inset 0 0 0 1px var(--accent); }
+.is-scene .prow.is-sel, .is-scene button.prow.is-sel:hover { z-index: 1; transform: translateY(-1px); border-color: transparent; border-radius: 3px; background: linear-gradient(90deg, rgba(249, 132, 37, .24), rgba(249, 132, 37, .09) 62%, rgba(249, 132, 37, .05)), var(--ds-sel-bg); box-shadow: inset 0 0 0 2px var(--accent), inset 0 0 24px rgba(249, 132, 37, .14), 0 8px 20px -8px rgba(249, 132, 37, .5), 0 2px 0 rgba(0, 0, 0, .45); }
+/* The chosen portrait is a game piece: a ring in the accent and a little light. */
+.is-scene .prow.is-sel .prow__face { box-shadow: 0 0 0 2px var(--accent), 0 0 16px -2px rgba(249, 132, 37, .6); }
 .is-scene .prow:focus-visible { outline: 2px solid var(--strong); outline-offset: -2px; }
 /* Notes on a row (a second role, a chemistry link) are plain coloured text, not boxes. */
 .is-scene .prow .hint, .is-scene .prow__role.is-second, .is-scene .prow__role.is-taken { padding: 0; border: 0; background: none; border-radius: 0; }
@@ -148,9 +157,12 @@
 .is-scene .prow__role.is-taken { color: var(--muted); }
 
 /* The coach round: three flat cards, same family as the rosters. */
-.is-scene .case-item--coach { gap: 8px; padding: 16px; border: 1px solid var(--ds-line); border-top: 2px solid var(--accent); border-radius: 3px; background: var(--ds-panel); box-shadow: none; transition: border-color .14s, background .14s, transform .14s; }
-.is-scene .case-item--coach:hover { transform: none; border-color: var(--ds-line-2); background: var(--ds-raise); box-shadow: inset 2px 0 0 var(--accent); }
-.is-scene .case-item--coach .case-item__name { font-size: 1.6rem; color: var(--strong); }
+.is-scene .case-item--coach { --team: var(--accent); position: relative; isolation: isolate; overflow: hidden; gap: 8px; min-height: 176px; padding: 18px 18px 16px; align-content: start; border: 1px solid color-mix(in srgb, var(--team) 52%, var(--ds-line)); border-top: 3px solid var(--team); border-radius: 3px;
+  background: radial-gradient(ellipse 80% 120% at 0% 0%, color-mix(in srgb, var(--team) 52%, transparent), transparent 70%), radial-gradient(ellipse 60% 110% at 100% 0%, color-mix(in srgb, var(--team) 32%, transparent), transparent 72%), linear-gradient(180deg, color-mix(in srgb, var(--team) 20%, var(--ds-deep)), var(--ds-deeper));
+  box-shadow: 0 24px 46px -26px #000, 0 0 0 1px rgba(255, 255, 255, .03), 0 0 34px -10px color-mix(in srgb, var(--team) 62%, transparent), inset 0 1px 0 rgba(255, 255, 255, .16); transition: border-color .14s, box-shadow .14s, transform .14s; }
+.is-scene .case-item--coach:hover, .is-scene .case-item--coach:focus-visible { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), inset 0 0 26px rgba(249, 132, 37, .12), 0 16px 34px -10px rgba(249, 132, 37, .5); }
+.is-scene .case-item--coach .case-item__meta { display: grid; gap: 4px; justify-items: start; }
+.is-scene .case-item--coach .case-item__name { font-size: 1.95rem; color: var(--ds-name); text-shadow: var(--ds-text-shadow); }
 .is-scene .case-item--coach .case-item__meta { color: var(--muted); font-size: .8rem; }
 .is-scene .case-item--coach .place { padding: 0; border: 0; background: none; color: var(--text-2); font-weight: 500; }
 .is-scene .case-item--coach .hint { padding: 0; border: 0; background: none; color: var(--go-text); font-size: .8rem; }
@@ -166,23 +178,23 @@
 .is-scene .draft-decision .draft-decision-empty.is-compact { display: flex; align-items: baseline; gap: 12px; min-height: 0; padding: 11px 16px; border: 1px solid var(--ds-line); border-radius: 3px; background: var(--ds-panel); font-size: .86rem; }
 .is-scene .draft-decision .draft-decision-empty.is-compact b { color: var(--text-2); font-weight: 600; }
 .is-scene .draft-decision .draft-decision-empty.is-compact span { color: var(--muted); }
-.is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 26px; align-items: center; padding: 14px 18px; border: 1px solid var(--ds-line-2); border-radius: 3px; background: var(--ds-panel); box-shadow: none; animation: panel-in .24s ease-out both; }
-.is-scene .draft-decision .draftbar { border-color: color-mix(in srgb, var(--accent) 50%, var(--ds-line)); }
+.is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 26px; align-items: center; padding: 12px 18px; border: 1px solid var(--ds-line-2); border-radius: 3px; background: radial-gradient(ellipse 46% 160% at 0% 50%, color-mix(in srgb, var(--team, var(--accent)) 42%, transparent), transparent 72%), radial-gradient(ellipse 34% 140% at 100% 55%, rgba(249, 132, 37, .2), transparent 72%), linear-gradient(180deg, var(--ds-deep), var(--ds-deeper)); box-shadow: 0 22px 46px -28px #000, inset 0 1px 0 rgba(255, 255, 255, .08); animation: panel-in .24s ease-out both; }
+.is-scene .draft-decision .draftbar { border-color: color-mix(in srgb, var(--accent) 62%, var(--ds-line)); }
 @keyframes panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 /* A corner of orange tactical pattern, very faint, behind the content on the right. */
-.is-scene .draftbar::after, .is-scene .peekbar::after { content: ''; position: absolute; z-index: 0; right: -34px; bottom: -40px; width: 210px; height: 210px; background: url('../assets/draft/orange-tech-pattern.webp') center / contain no-repeat; opacity: .12; pointer-events: none; }
+.is-scene .draftbar::after, .is-scene .peekbar::after { content: ''; position: absolute; z-index: 0; right: -34px; bottom: -40px; width: 210px; height: 210px; background: url('../assets/draft/orange-tech-pattern.webp') center / contain no-repeat; opacity: .18; pointer-events: none; }
 .is-scene .draftbar > *, .is-scene .peekbar > * { position: relative; z-index: 1; }
 .draftbar__identity { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.draftbar__portrait { position: relative; isolation: isolate; flex: none; width: 84px; height: 100px; overflow: hidden; border-radius: 2px; background: linear-gradient(165deg, color-mix(in srgb, var(--team, var(--accent)) 40%, #000), #050505 85%); box-shadow: inset 0 -2px 0 var(--team, var(--accent)), 0 0 0 1px var(--ds-line-2); }
-.draftbar__emblem { position: absolute; z-index: 0; right: -24%; top: -6%; height: 112%; width: auto; opacity: .16; pointer-events: none; }
+.draftbar__portrait { position: relative; isolation: isolate; flex: none; width: 100px; height: 104px; overflow: hidden; border-radius: 2px; background: linear-gradient(165deg, color-mix(in srgb, var(--team, var(--accent)) 52%, #000), #050505 85%); box-shadow: inset 0 -3px 0 var(--team, var(--accent)), 0 0 0 1px rgba(255, 255, 255, .18), 0 10px 24px -8px rgba(0, 0, 0, .85); }
+.draftbar__emblem { position: absolute; z-index: 0; right: -24%; top: -6%; height: 112%; width: auto; opacity: .26; pointer-events: none; }
 .draftbar__portrait img.photo { position: relative; z-index: 1; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
 .is-scene .draftbar__who { display: grid; gap: 2px; min-width: 0; margin: 0; font: .86rem/1.35 var(--f-read); color: var(--text-2); }
-.is-scene .draftbar__who b { font: 800 1.8rem/1 var(--f-head); letter-spacing: .02em; color: var(--strong); }
+.is-scene .draftbar__who b { font: 800 1.9rem/1 var(--f-head); letter-spacing: .02em; color: var(--ds-name); }
 .draftbar__meta { display: inline-flex; align-items: center; gap: 6px; font-weight: 500; color: var(--text); }
 .draftbar__meta svg { color: var(--muted); }
 .is-scene .draftbar__who small { color: var(--muted); font-size: .72rem; }
-.draftbar__chem { min-width: 0; padding-left: 22px; border-left: 1px solid var(--ds-line-2); }
-.draftbar__why { display: block; margin-bottom: 6px; color: var(--muted); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; }
+.draftbar__chem { min-width: 0; padding-left: 24px; border-left: 1px solid rgba(255, 255, 255, .12); }
+.draftbar__why { display: block; margin-bottom: 8px; color: var(--text-2); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; }
 .why { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
 .why li { display: flex; align-items: baseline; gap: 9px; font-size: .86rem; line-height: 1.35; color: var(--text); }
 .why__mark { flex: none; width: 16px; display: inline-grid; place-items: center; align-self: center; color: var(--muted); font-weight: 700; }
@@ -193,9 +205,9 @@
 .is-scene .draftbar .slot-chip { min-height: 34px; padding: 3px 8px; border-radius: 2px; font-size: .74rem; }
 .is-scene .draftbar .slot-chip .fit { font-size: .66rem; }
 /* The strongest control on the page: the name, the slot under it, an arrow. */
-.is-scene .draftbar .cta { display: inline-flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 60px; width: 100%; padding: 0 20px; border-radius: 2px; box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .22); transition: transform .14s ease-out, filter .14s; }
+.is-scene .draftbar .cta { display: inline-flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 64px; width: 100%; padding: 0 20px; border-radius: 2px; background: linear-gradient(180deg, var(--accent-hi), var(--accent) 58%, #ec7316); box-shadow: 0 12px 30px -10px rgba(249, 132, 37, .6), inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -3px 0 rgba(0, 0, 0, .2); transition: transform .14s ease-out, filter .14s; }
 .cta__stack { display: grid; gap: 1px; text-align: left; }
-.cta__stack b { font: 800 1.3rem/1.05 var(--f-head); letter-spacing: .05em; text-transform: uppercase; }
+.cta__stack b { font: 800 1.4rem/1.05 var(--f-head); letter-spacing: .05em; text-transform: uppercase; }
 .cta__stack small { font: 600 .8rem/1.2 var(--f-read); letter-spacing: .02em; opacity: .85; }
 .is-scene .draftbar .cta:not([disabled]):hover { transform: translateY(-1px); filter: brightness(1.07); }
 .peekbar__hint { margin: 0; justify-self: end; color: var(--muted); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; }
@@ -204,6 +216,11 @@
 .is-scene .reroll-row .ghost-btn { min-height: 32px; padding: 0 4px; border: 0; background: transparent; color: var(--muted); font-size: .8rem; font-weight: 500; }
 .is-scene .reroll-row .ghost-btn:hover:not([disabled]) { color: var(--strong); }
 @media (min-width: 1100px) {
+  /* The portrait is a game piece: it fills the left end of the panel, edge to edge, with the player's team in its light. */
+  .is-scene .draftbar__portrait { position: absolute; z-index: 0; left: 0; top: 0; bottom: 0; width: 138px; height: auto; border-radius: 0; box-shadow: inset 0 -3px 0 var(--team, var(--accent)), inset -1px 0 0 rgba(255, 255, 255, .12); }
+  /* Every child of the panel is a positioning context; the identity stays static here so the portrait is placed against the panel itself. */
+  .is-scene .draftbar > .draftbar__identity, .is-scene .peekbar > .draftbar__identity { position: static; }
+  .is-scene .draftbar__who { margin-left: 138px; }
   .is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { grid-template-columns: minmax(290px, 1.1fr) minmax(220px, 1.1fr) minmax(210px, .8fr); }
   .is-scene .draftbar .draftbar__slots { grid-column: 1; grid-row: 2; }
   .is-scene .draftbar .draftbar__chem { grid-column: 2; grid-row: 1 / span 2; }
@@ -219,8 +236,8 @@
 .is-scene .lineup__head { margin: 0 0 8px; font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .is-scene .lineup__head span { color: var(--muted); font-variant-numeric: tabular-nums; }
 .is-scene .lineup__rows { grid-template-columns: 1fr 1fr; gap: 6px; }
-.is-scene .lrow { grid-column: 1 / -1; position: relative; min-height: 46px; padding: 6px 10px 6px 7px; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; border: 1px solid rgba(255, 255, 255, .07); border-radius: 3px; background: #090a0a; transition: border-color .14s, background .14s; }
-.is-scene .lrow:not(.is-full):not(.is-preview):hover { border-color: rgba(255, 255, 255, .15); background: #0d0f0e; }
+.is-scene .lrow { grid-column: 1 / -1; position: relative; min-height: 46px; padding: 6px 10px 6px 7px; grid-template-columns: 32px minmax(0, 1fr) auto; gap: 10px; border: 1px solid var(--ds-slot-line); border-radius: 3px; background: var(--ds-slot); transition: border-color .14s, background .14s; }
+.is-scene .lrow:not(.is-full):not(.is-preview):hover { border-color: var(--ds-slot-line-hover); background: var(--ds-slot-hover); }
 .is-scene .lrow:nth-last-child(-n+2) { grid-column: auto; grid-template-columns: 28px minmax(0, 1fr); min-height: 42px; padding: 5px 8px 5px 6px; gap: 8px; }
 /* Once the coach or the bench has someone (or a preview), both take a full row so the name and team have room. */
 .is-scene .lineup__rows:has(.lrow:nth-last-child(-n+2):is(.is-full, .is-preview)) .lrow:nth-last-child(-n+2) { grid-column: 1 / -1; grid-template-columns: 38px minmax(0, 1fr) auto; }
@@ -237,7 +254,7 @@
 .is-scene .lrow__text b { font: 700 .95rem/1.2 var(--f-read); color: var(--strong); }
 .is-scene .lrow__text small { font: .72rem/1.3 var(--f-read); color: var(--muted); }
 .is-scene .lrow__slot { border: 0; padding: 0; color: var(--text-2); font: 600 .68rem var(--f-read); letter-spacing: .06em; text-transform: uppercase; }
-.is-scene .lrow.is-preview { min-height: 52px; border: 1px solid var(--accent); background: rgba(229, 124, 62, .08); }
+.is-scene .lrow.is-preview { min-height: 52px; border: 1px solid var(--accent); background: rgba(249, 132, 37, .1); box-shadow: 0 0 18px -6px rgba(249, 132, 37, .5); }
 .is-scene .lrow__pv { color: var(--accent-hi); }
 .is-scene .side-card { padding: 10px 0; }
 .is-scene .side-card h3 { margin: 0 0 4px; font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
@@ -299,7 +316,7 @@
   .is-scene .roster-selector button[aria-pressed=true] { color: var(--strong); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lane.is-locked .lane__marker, .lane__item.is-winner, .is-scene .console__title, .is-scene .draftbar, .is-scene .peekbar, .lane__slot, .lane__slot.is-grown .prow, .lane__slot.is-grown .roster-details-link { animation: none; }
+  .lane.is-locked .lane__marker, .lane.is-locked .lane__window, .lane__item.is-winner, .is-scene .console__title, .is-scene .draftbar, .is-scene .peekbar, .lane__slot, .lane__slot.is-grown .prow, .lane__slot.is-grown .roster-details-link { animation: none; }
   .lane__slot .prow, .lane__slot .roster-details-link { opacity: 1; }
   .is-scene .prow, .is-scene .prow__face img, .lane__item, .lane__window, .lane__slot, .reveal.is-fade .lane__strip { transition: none; }
   .is-scene button.prow:hover:not(.is-sel) { transform: none; }
