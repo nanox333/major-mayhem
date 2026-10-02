@@ -10,6 +10,13 @@ import './styles/editorial-results.css';
 import './styles/editorial-finish.css';
 import './styles/roster-archive.css';
 import './styles/draft-scene.css';
+import './styles/draft-open.css';
+import './styles/stats-page.css';
+import './styles/guess-page.css';
+import './styles/setup-page.css';
+import './styles/lobby-page.css';
+import './styles/match-page.css';
+import './styles/shell.css';
 import { initAnalytics } from './analytics';
 import { initSound } from './ui/sound';
 

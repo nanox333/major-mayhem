@@ -33,9 +33,13 @@ export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcu
   useEffect(() => { if (toShortcuts) keys.current?.scrollIntoView({ block: 'start' }); }, [toShortcuts]);
   useEffect(() => { if (!ask) return; const t = setTimeout(() => setAsk(false), 3000); return () => clearTimeout(t); }, [ask]);
   return (
-    <Modal label="Settings" onClose={onClose}>
-      <h3>Settings</h3>
-      <p className="muted small">Saved in this browser.</p>
+    <Modal label="Settings" onClose={onClose} wide>
+     <div className="st">
+      <header className="st__head">
+        <span className="st__kick">Preferences</span>
+        <h3>Settings</h3>
+        <p>Saved in this browser.</p>
+      </header>
 
       <section className="settings__sec" aria-labelledby="set-sound">
         <h4 id="set-sound">Sound</h4>
@@ -73,13 +77,14 @@ export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcu
       <section className="settings__sec" aria-labelledby="set-more">
         <h4 id="set-more">More</h4>
         <div className="settings__btns">
-          <button type="button" className="ghost-btn ghost-btn--big" onClick={() => { onClose(); onTwitch(); }}><TwitchIcon size={16} /> Twitch chat votes</button>
-          <button type="button" className={`ghost-btn ghost-btn--big ${ask ? 'is-ask' : ''}`} title={ask && abandon ? "Today's daily will count as abandoned" : undefined}
+          <button type="button" className="st-btn" onClick={() => { onClose(); onTwitch(); }}><TwitchIcon size={16} /> Twitch chat votes</button>
+          <button type="button" className={`st-btn ${ask ? 'is-ask' : ''}`} title={ask && abandon ? "Today's daily will count as abandoned" : undefined}
             onClick={() => { if (ask) { setAsk(false); onClose(); onNewRun(); } else setAsk(true); }}>
             <RefreshIcon size={16} /> {ask ? (abandon ? 'Abandon daily?' : 'Start a new run?') : 'New run'}
           </button>
         </div>
       </section>
+     </div>
     </Modal>
   );
 }
@@ -103,8 +108,8 @@ export function DataSection({ run }: { run?: Run }) {
       <h4 id="set-data">Your data</h4>
       <p className="muted small">Your record, your Guess history and the run you have open are kept in this browser only. A backup is a file you keep; restoring one replaces what is saved here.</p>
       <div className="settings__btns">
-        <button type="button" className="ghost-btn ghost-btn--big" onClick={() => downloadText(backupFileName(), backupText(createBackup(run)))}>Download a backup</button>
-        <button type="button" className="ghost-btn ghost-btn--big" onClick={() => file.current?.click()}>Restore from a file…</button>
+        <button type="button" className="st-btn" onClick={() => downloadText(backupFileName(), backupText(createBackup(run)))}>Download a backup</button>
+        <button type="button" className="st-btn" onClick={() => file.current?.click()}>Restore from a file…</button>
         <input ref={file} type="file" accept=".json,application/json" hidden aria-label="Choose a backup file" onChange={(e) => choose(e.target.files?.[0])} />
       </div>
       {preview && !preview.ok && <p className="settings__warn" role="alert">{preview.problem}</p>}
@@ -113,8 +118,8 @@ export function DataSection({ run }: { run?: Run }) {
           <p><b>This backup{preview.summary.exportedAt ? ` (from ${preview.summary.exportedAt})` : ''} holds:</b> {preview.summary.runs} Major run{preview.summary.runs === 1 ? '' : 's'}, {preview.summary.titles} title{preview.summary.titles === 1 ? '' : 's'}, {preview.summary.dailies} daily result{preview.summary.dailies === 1 ? '' : 's'}, {preview.summary.guessDays} day{preview.summary.guessDays === 1 ? '' : 's'} of Guess history{preview.summary.run ? `, and an open run: ${preview.summary.run}` : ', and no open run'}.</p>
           <p>Restoring <b>replaces</b> what is saved here with this. Download a backup of your current data first if you want to keep it.</p>
           <div className="settings__btns">
-            <button type="button" className="ghost-btn ghost-btn--big is-ask" onClick={() => { if (applyBackup(preview.backup)) location.reload(); else setFailed(true); }}>Replace my data</button>
-            <button type="button" className="ghost-btn ghost-btn--big" onClick={() => { setPreview(null); setFailed(false); }}>Cancel</button>
+            <button type="button" className="st-btn is-ask" onClick={() => { if (applyBackup(preview.backup)) location.reload(); else setFailed(true); }}>Replace my data</button>
+            <button type="button" className="st-btn" onClick={() => { setPreview(null); setFailed(false); }}>Cancel</button>
           </div>
           {failed && <p className="settings__warn" role="alert">The browser would not save the restored data, so nothing was changed.</p>}
         </div>

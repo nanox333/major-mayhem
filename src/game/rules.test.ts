@@ -31,6 +31,15 @@ const PINNED: Record<number, ReturnType<typeof fingerprints>> = {
     lineups: '383254de',
     guesses: 'f539f431',
   },
+  // Recorded from the code at the end of v3 (before the stronger timeout).
+  3: {
+    runs: {
+      'daily 2026-09-28': 'c33f075b', 'daily 2026-09-29': 'b8787ff3', 'daily 2026-09-30': '9d5d95e0',
+      'free a': '2e496025', 'free b': '71bfafaf', 'free c': 'f0c0cc7', 'free d': '2f593148',
+    },
+    lineups: '383254de',
+    guesses: 'f539f431',
+  },
 };
 
 describe('rules versions (#24)', () => {
@@ -44,6 +53,9 @@ describe('rules versions (#24)', () => {
   });
   it('replays rules v2 as it was when v3 was added', () => {
     expect(fingerprints(2)).toEqual(PINNED[2]);
+  });
+  it('replays rules v3 as it was when v4 was added', () => {
+    expect(fingerprints(3)).toEqual(PINNED[3]);
   });
   it('names every behaviour switch after a version that exists', () => {
     const versions = RULES.map((r) => r.v as number);
@@ -68,6 +80,7 @@ describe('rules versions (#24)', () => {
     expect(rulesOn('2026-09-29')).toBe(1);
     expect(rulesOn('2026-09-30')).toBe(2);
     expect(rulesOn('2026-10-01')).toBe(3);
+    expect(rulesOn('2026-10-04')).toBe(4);
     expect(rulesOn('2027-01-01')).toBe(LATEST_RULES);
     expect(fresh('daily', '2026-09-29').rules).toBe(1);
     expect(fresh('daily', '2026-09-30').rules).toBe(2);

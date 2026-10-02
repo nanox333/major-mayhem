@@ -125,7 +125,7 @@ try {
 
     const bo3 = { ...preview, current: G.seeded('ui-veto', () => G.startMatch('QF', G.lineupFromPicks(preview.picks), preview.current!.opponentId, 3)) };
     await load(p, bo3);
-    while (await p.locator('.veto').count()) await p.locator('.veto__map button:not(:disabled)').first().click();
+    while (await p.locator('.veto').count()) { const open = p.locator('.veto__map button:not(:disabled)').first(); if (await open.count()) await open.click(); await p.waitForTimeout(200); }
     assert.equal(await p.locator('.veto-series li').count(), 3);
     await fits(p);
 
@@ -147,17 +147,18 @@ try {
     assert.equal(new Set(markerLabels.map(label => label.split(':')[0])).size, 10, 'radar marker codes are not unique');
     for (const label of markerLabels) assert(label.includes('illustrative') && /, (CT|T),/.test(label), 'radar marker lacks side or positioning context');
     await markers.first().click();
-    assert((await p.locator('.radar-detail').innerText()).includes(markerLabels[0].split(':')[0]), 'marker selection does not expose its identity');
+    assert((await p.locator('.radar-detail').innerText()).includes(markerLabels[0].split(', ')[1]), 'marker selection does not expose its identity');
     await p.getByRole('button', { name: 'Pause', exact: true }).click();
     await p.getByRole('button', { name: 'Next round ›', exact: true }).click();
-    if (await p.getByRole('button', { name: 'Save (eco)', exact: true }).isVisible()) await p.getByRole('button', { name: 'Save (eco)', exact: true }).click();
-    await p.getByRole('button', { name: 'Earlier rounds', exact: true }).click();
-    await p.getByRole('button', { name: 'Return to live', exact: true }).click();
+    if (await p.locator('.buy__opt--eco').isVisible()) await p.locator('.buy__opt--eco').click();
+    await p.getByRole('button', { name: 'All rounds', exact: true }).click();
+    await p.getByRole('button', { name: 'Latest only', exact: true }).click();
     edges.push(await contentEdges(p));
     await fits(p); await p.evaluate(() => scrollTo(0, 0)); await p.screenshot({ path: `shots/ui/live-${width}.png`, fullPage: true });
     await p.reload(); await p.getByRole('button', { name: /^Continue/ }).first().click();
     assert(await p.getByRole('button', { name: 'Resume', exact: true }).count() === 1, 'pause lost on reload');
     await p.getByRole('button', { name: 'Resume', exact: true }).click();
+    await p.getByRole('button', { name: 'More', exact: true }).click();
     await p.getByRole('button', { name: 'How to play and data sources', exact: true }).click();
     const seen = await p.evaluate(() => localStorage.getItem('mm-seen'));
     await p.waitForTimeout(300);
@@ -241,13 +242,15 @@ try {
   const p = await browser.newPage({ reducedMotion: 'no-preference' });
   await load(p, start);
   await p.getByRole('button', { name: "Start today's run", exact: true }).click();
-  await p.getByRole('button', { name: 'Show case', exact: true }).click();
+  await p.getByRole('button', { name: 'Open case', exact: true }).click();
+  await p.getByRole('button', { name: 'Skip animation', exact: true }).click();
   await p.locator('.case-card:not(.case-card--preview)').first().waitFor();
   const dealt = JSON.parse((await saved(p))!);
   await p.waitForTimeout(3000);
   assert.equal(JSON.parse((await saved(p))!).offerKey, dealt.offerKey, 'late reel timer changed the case');
   await load(p, start, { fastReveals: true });
   await p.getByRole('button', { name: "Start today's run", exact: true }).click();
+  await p.getByRole('button', { name: 'Open case', exact: true }).click();
   await p.locator('.case-card:not(.case-card--preview)').first().waitFor();
   assert.equal(await p.locator('.reel').count(), 0);
   assert.deepEqual(JSON.parse((await saved(p))!).offer, dealt.offer, 'fast reveal changed the dealt offer');

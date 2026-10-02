@@ -1194,15 +1194,6 @@ button.prow:hover { border-color: var(--line-2); background: var(--panel-2); }
 @media (min-width: 861px) {
   .case .teams-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-/* With room, the case gets the space (#144): your lineup and the chemistry stack in a narrow column on the left, and the three cards take the rest,
-   about 300px each at 1440 and more on bigger windows. The strip above the case is not needed then. */
-@media (min-width: 1280px) {
-  .console__body.phase-draft { grid-template-columns: 272px minmax(0, 1fr); column-gap: 20px; }
-  .console__body.phase-draft > .lineup { display: block; grid-column: 1; grid-row: 1; }
-  .console__body.phase-draft > .console__main { grid-column: 2; grid-row: 1 / span 2; }
-  .console__body.phase-draft > .draft-side { grid-template-columns: minmax(0, 1fr); grid-column: 1; grid-row: 2; }
-  .page.is-wide .strip { display: none; }
-}
 .info-btn { width: 22px; height: 22px; margin-left: 6px; padding: 0; border: 1px solid var(--line-2); border-radius: 50%; background: none; color: var(--text-2); font: 700 .8rem var(--f-body); cursor: pointer; vertical-align: middle; }
 .info-btn:hover { color: var(--strong); border-color: var(--control); }
 @media (max-width: 520px), (pointer: coarse) { .info-btn { width: 44px; height: 44px; margin: -12px -10px -12px 0; } }

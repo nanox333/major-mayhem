@@ -23,6 +23,15 @@ const HEAD_TIP: Partial<Record<Clue['key'], string>> = {
   best: 'Best finish among the rosters included in this game',
   first: 'Year of their earliest roster included in this game',
 };
+/** What each column compares, and what counts as close (the grid's tooltips say the same for one cell). */
+const COLUMN_HELP: readonly (readonly [Clue['key'], string, string])[] = [
+  ['country', 'Where the pro is from.', 'Same region, such as Nordic, CIS or Baltic'],
+  ['orgs', 'The teams they played for.', 'You share at least one team'],
+  ['first', 'Year of their earliest roster in this game.', 'Within a year; the arrow points to the answer'],
+  ['role', 'Their main role.', 'A role they also played'],
+  ['majors', 'How many Major rosters of theirs are in this game.', 'Exact only; the arrow shows more or fewer'],
+  ['best', 'Their best finish among those rosters.', 'Exact only; the arrow shows higher or lower'],
+];
 /** The columns, left to right. The clue for each comes from `compare`, which has its own order. */
 const COLUMNS: readonly Clue['key'][] = CLUE_ORDER;
 
@@ -132,7 +141,16 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
         <button type="button" className="gp__help" onClick={() => setHelp(true)} aria-label="How Guess the pro works" data-sfx="none"><HelpIcon size={22} /></button>
       </header>
 
-      <Tip id="guess" title="How to read the grid"><p>Each guess shows how your pick compares with the answer. ✓ is a match, ≈ is close, ✗ is no match, and an arrow points to where the answer is. The ? button explains every clue.</p></Tip>
+      <Tip id="guess" title="How to read the grid">
+        <p className="tip-lead">Every guess is compared with today's pro, one column at a time.</p>
+        <ul className="tip-legend">
+          <li className="is-hit"><i>{CLUE_MARK.hit}</i><b>Match</b><span>Same as the answer</span></li>
+          <li className="is-near"><i>{CLUE_MARK.near}</i><b>Close</b><span>Shares something</span></li>
+          <li className="is-miss"><i>{CLUE_MARK.miss}</i><b>No match</b><span>Nothing in common</span></li>
+          <li className="is-dir"><i>↑↓</i><b>Higher or lower</b><span>The arrow points to the answer</span></li>
+        </ul>
+        <p className="tip-foot">Want the detail on each column? Press the <b>?</b> button at the top right of this page.</p>
+      </Tip>
 
       {/* Always eight rows: the ones you have used, then the ones you have left, so you can see how many remain without a counter. Oldest first. */}
       <div className="guess__grid" role="table" aria-label="Your guesses" ref={grid}>
@@ -158,6 +176,7 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
 
       {!day.done && (
         <div className={`guess__bar ${shake ? 'is-shake' : ''}`}>
+          <div className="guess__entry">
           <div className="guess__box">
             <SearchIcon size={20} />
             <input value={text} onChange={(e) => { setText(e.target.value); setActive(0); }} placeholder="Type a player's name"
@@ -170,7 +189,6 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
                 if (e.key === 'Enter') { e.preventDefault(); submit(); }
                 if (e.key === 'Escape' && text) { e.preventDefault(); setText(''); setActive(0); }
               }} />
-            <button type="button" className="cta cta--orange guess__go" data-sfx="none" disabled={!options[active] && !reveal} onClick={submit}>Guess</button>
             {options.length > 0 && (
               <ul className="guess__suggest" id="guess-options" role="listbox" aria-label="Matching players">
                 {options.map((p, i) => (
@@ -183,10 +201,12 @@ export function GuessScreen({ next }: { /** What to do next once today's pro is 
               </ul>
             )}
           </div>
+          <button type="button" className="cta cta--orange guess__go" data-sfx="none" disabled={!options[active] && !reveal} onClick={submit}>Guess</button>
+          </div>
           <div className="sr" role="status" aria-live="polite">{spoken}</div>
           {found.kind === 'none' && <p className="guess__empty">No players found for “{text.trim()}”. Check the spelling, or try part of a nickname.</p>}
           {found.kind === 'guessed' && <p className="guess__empty">You've already guessed {found.nick}. Try someone else.</p>}
-          <p className="guess__left">{left} guess{left === 1 ? '' : 'es'} left{hint && <> · Hint: one of their teams was {hint}</>}</p>
+          <p className="guess__left"><span className="guess__pips" aria-hidden="true">{Array.from({ length: MAX_GUESSES }, (_, i) => <i key={i} className={i < left ? 'on' : ''} />)}</span><span>{left} guess{left === 1 ? '' : 'es'} left{hint && <> · Hint: one of their teams was {hint}</>}</span></p>
         </div>
       )}
       {/* The result of each guess as one sentence, said once, not cell by cell as the tiles turn (#127). */}
@@ -256,16 +276,33 @@ function meaning(c: Clue, p: Pro, a: Pro): string {
 /** The legend (#126): what the marks and arrows mean. Off the page until asked for, so the grid has the room. */
 function GuessHelp({ onClose }: { onClose: () => void }) {
   return (
-    <Modal label="How Guess the pro works" onClose={onClose}>
-      <h3>How Guess the pro works</h3>
-      <p>One pro from Major history, the same for everyone today. You have {MAX_GUESSES} guesses: each shows how your pick compares with the answer.</p>
-      <ul className="guess__legend" aria-label="What the marks mean">
-        <li><span className="clue-key clue--hit" aria-hidden="true">{CLUE_MARK.hit}</span> Match</li>
-        <li><span className="clue-key clue--near" aria-hidden="true">{CLUE_MARK.near}</span> Close</li>
-        <li><span className="clue-key clue--miss" aria-hidden="true">{CLUE_MARK.miss}</span> No match</li>
-        <li><span className="clue-key" aria-hidden="true">↑ ↓</span> The answer is higher or lower</li>
-      </ul>
-      <p className="muted small">Close means the same region, a role they also played, a year off, or a shared team. Shared teams are ticked. * Majors, best finish and first year count only the Major rosters in this game, not whole careers.</p>
+    <Modal label="How Guess the pro works" onClose={onClose} wide>
+      <div className="gh">
+        <header className="gh__head">
+          <span className="gh__kick">Guide</span>
+          <h3>How Guess the pro works</h3>
+          <p>One pro from Major history, the same for everyone today. You have {MAX_GUESSES} guesses, and each one shows how your pick compares with the answer.</p>
+        </header>
+
+        <h4 className="gh__title">Reading a cell</h4>
+        <ul className="tip-legend gh__legend" aria-label="What the marks mean">
+          <li className="is-hit"><i>{CLUE_MARK.hit}</i><b>Match</b><span>Same as the answer</span></li>
+          <li className="is-near"><i>{CLUE_MARK.near}</i><b>Close</b><span>Shares something</span></li>
+          <li className="is-miss"><i>{CLUE_MARK.miss}</i><b>No match</b><span>Nothing in common</span></li>
+          <li className="is-dir"><i>↑↓</i><b>Higher or lower</b><span>The arrow points to the answer</span></li>
+        </ul>
+
+        <h4 className="gh__title">The columns</h4>
+        <dl className="gh__cols">
+          {COLUMN_HELP.map(([k, what, close]) => (
+            <div key={k} className="gh__col">
+              <dt>{CLUE_LABEL[k]}</dt>
+              <dd><span>{what}</span><em><i aria-hidden="true">{CLUE_MARK.near}</i>{close}</em></dd>
+            </div>
+          ))}
+        </dl>
+        <p className="gh__note">Shared teams are ticked. First year, Majors and best finish count only the Major rosters in this game, not whole careers.</p>
+      </div>
     </Modal>
   );
 }

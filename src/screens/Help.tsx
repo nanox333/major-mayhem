@@ -20,7 +20,13 @@ export function HelpModal({ onClose, tab: first = 'play', topic }: { onClose: ()
     d.querySelector('summary')?.focus();
   }, [topic]);
   return (
-    <Modal label={tab === 'play' ? 'How to play' : 'Sources and credits'} onClose={onClose}>
+    <Modal label={tab === 'play' ? 'How to play' : 'Sources and credits'} onClose={onClose} wide>
+     <div className="hp">
+      <header className="hp__head">
+        <span className="hp__kick">Guide</span>
+        <h3 className="hp__title">{tab === 'play' ? 'How to play' : 'Sources and credits'}</h3>
+        <p>{tab === 'play' ? 'Draft five players, a coach and a bench from real Major rosters, then take the team through the Major.' : 'Where the rosters, photos, logos and sounds come from.'}</p>
+      </header>
       <div className="seg help__tabs" role="tablist" aria-label="Help">
         <button role="tab" id="help-tab-play" aria-selected={tab === 'play'} aria-controls="help-panel" className={tab === 'play' ? 'is-on' : ''} onClick={() => setTab('play')}>How to play</button>
         <button role="tab" id="help-tab-sources" aria-selected={tab === 'sources'} aria-controls="help-panel" className={tab === 'sources' ? 'is-on' : ''} onClick={() => setTab('sources')}>Sources and credits</button>
@@ -28,6 +34,7 @@ export function HelpModal({ onClose, tab: first = 'play', topic }: { onClose: ()
       <div role="tabpanel" id="help-panel" aria-labelledby={`help-tab-${tab}`}>
         {tab === 'play' ? <HowToPlay /> : <Sources />}
       </div>
+     </div>
     </Modal>
   );
 }
@@ -36,7 +43,6 @@ function HowToPlay() {
   const [reset, setReset] = useState(false);
   return (
     <>
-      <h3>How to play</h3>
       <HowSteps />
       <h3>The details</h3>
       <p className="muted small">The game explains each of these the first time it comes up. They're all here as well.</p>
@@ -91,7 +97,7 @@ function HowToPlay() {
         </details>
       </div>
       <div className="help__foot">
-        <button className="ghost-btn" onClick={() => { resetTips(); setReset(true); }}>{reset ? '✓ The first-time tips will show again' : 'Show the first-time tips again'}</button>
+        <button className="st-btn" onClick={() => { resetTips(); setReset(true); }}>{reset ? '✓ The first-time tips will show again' : 'Show the first-time tips again'}</button>
       </div>
     </>
   );

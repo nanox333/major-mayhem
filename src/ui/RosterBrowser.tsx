@@ -3,11 +3,11 @@ import { ROSTERS, ROLE_LABEL, Roster } from '../data/rosters';
 import { COUNTRY } from '../game/synergy';
 import { Avatar, TeamBadge } from './art';
 import { Flag } from './flags';
-import { ArrowRightIcon } from './icons';
+import { ArrowRightIcon, RosterIcon } from './icons';
 import { Modal } from './Modal';
 
 /** Reference data only: inspecting a roster never dispatches a game action. */
-export function RosterBrowser({ initialId, hard, onClose }: { initialId?: string; hard: boolean; onClose: () => void }) {
+export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: string; hard: boolean; onClose: () => void; /** Shown as its own page (the Roster archive) instead of a pop-up. */ page?: boolean }) {
   const [id, setId] = useState(initialId ?? null);
   const [query, setQuery] = useState('');
   const [year, setYear] = useState('');
@@ -18,7 +18,7 @@ export function RosterBrowser({ initialId, hard, onClose }: { initialId?: string
   const list = useMemo(() => ROSTERS.filter(r => (!year || String(r.year) === year) && (!placement || r.result === placement)
     && `${r.org} ${r.event} ${r.players.map(p => p.nick).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()))
     .sort((a, b) => eventTime(b) - eventTime(a) || a.event.localeCompare(b.event) || a.org.localeCompare(b.org)), [query, year, placement]);
-  return <Modal label={roster ? `${roster.org} ${roster.year} roster` : 'Roster browser'} onClose={onClose} sheet wide>
+  const body = <>
     {roster ? <>
       {!initialId && <button className="ghost-btn" onClick={() => setId(null)}>‹ All results</button>}
       <RosterDetails roster={roster} hard={hard} />
@@ -27,30 +27,46 @@ export function RosterBrowser({ initialId, hard, onClose }: { initialId?: string
         {!ROSTERS.some(r => r.org === roster.org && r.id !== roster.id) && <p className="muted small">No other lineup from this org is included.</p>}</div>
     </> : <>
       <header className="ra-intro">
+        <span className="ra-intro__icon" aria-hidden="true"><RosterIcon size={34} /></span>
+        <div className="ra-intro__body">
+        <p className="ra-intro__kicker">Reference</p>
         <h3>Roster archive</h3>
         <p>Every lineup in the game, with its event and sources. This is not a full career history.</p>
+        <ul className="ra-stats" aria-label="Archive size">
+          <li><b>{ROSTERS.length}</b><span>lineups</span></li>
+          <li><b>{new Set(ROSTERS.map(r => r.event)).size}</b><span>Majors</span></li>
+          <li><b>{new Set(ROSTERS.map(r => r.org)).size}</b><span>teams</span></li>
+        </ul>
+              </div>
       </header>
       <div className="roster-filters">
         <label>Team or player<input ref={search} type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search a team or nick" /></label>
         <label>Year<select value={year} onChange={e => setYear(e.target.value)}><option value="">All years</option>{[...new Set(ROSTERS.map(r => r.year))].sort((a,b) => b-a).map(y => <option key={y}>{y}</option>)}</select></label>
-        <label>Placement<select value={placement} onChange={e => setPlacement(e.target.value)}><option value="">All placements</option>{[...new Set(ROSTERS.map(r => r.result))].map(p => <option key={p}>{p}</option>)}</select></label>
+        <div className="ra-chips" role="group" aria-label="Placement">
+          <button type="button" aria-pressed={!placement} onClick={() => setPlacement('')}>All</button>
+          {[...new Set(ROSTERS.map(r => r.result))].map(x => <button key={x} type="button" aria-pressed={placement === x} onClick={() => setPlacement(placement === x ? '' : x)}>{x}</button>)}
+        </div>
       </div>
       <p role="status" className="ra-count">{list.length} roster{list.length === 1 ? '' : 's'}</p>
       {!list.length && <div className="ra-empty"><p>No rosters match these filters.</p><button className="ghost-btn" onClick={() => { setQuery(''); setYear(''); setPlacement(''); }}>Clear filters</button></div>}
       {byYear(list).map(([y, rows]) => <section key={y} className="ra-year" aria-label={String(y)}>
         <h4>{y}</h4>
         <ul className="ra-rows">{rows.map(r => <li key={r.id}>
-          <button type="button" className="ra-row" onClick={() => setId(r.id)} aria-label={`${r.org} ${r.year}, ${r.event}, ${r.result}`}>
-            <TeamBadge roster={r} size={40} />
-            <span className="ra-row__main"><b>{r.org}</b><small>{r.event}</small></span>
+          <button type="button" className={`ra-card ra-card--${resultClass(r.result)}`} style={{ ['--team' as string]: r.color }} onClick={() => setId(r.id)} aria-label={`${r.org} ${r.year}, ${r.event}, ${r.result}`}>
+            <span className="ra-card__top">
+              <TeamBadge roster={r} size={44} />
+              <span className="ra-card__main"><b>{r.org}</b><small>{r.event}</small></span>
+            </span>
             <span className={`ra-row__result ra-row__result--${resultClass(r.result)}`}>{r.result}</span>
-            <span className="ra-row__nicks">{r.players.map(p => p.nick).join(', ')}</span>
-            <ArrowRightIcon size={18} />
+            <span className="ra-card__faces" aria-hidden="true">{r.players.map(p => <Avatar key={p.id} player={p} roster={r} />)}</span>
+            <span className="ra-card__nicks">{r.players.map(p => p.nick).join(' · ')}</span>
           </button>
         </li>)}</ul>
       </section>)}
     </>}
-  </Modal>;
+  </>;
+  return page ? <main className="console archive-page">{body}</main>
+    : <Modal label={roster ? `${roster.org} ${roster.year} roster` : 'Roster browser'} onClose={onClose} sheet wide>{body}</Modal>;
 }
 
 function RosterDetails({ roster: r, hard }: { roster: Roster; hard: boolean }) {

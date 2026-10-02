@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { ROLE_LABEL, ROLE_ORDER, Role } from '../data/rosters';
+import { ROLE_LABEL, ROLE_ORDER, ROLE_SHORT, Role } from '../data/rosters';
+import { Preview } from '../game/draftui';
 import * as G from '../game/logic';
 import { Run, draftRounds, roundNumber, roundOf } from '../game/state';
 import { Avatar, RoleIcon, TeamBadge } from './art';
-import { BenchIcon, CoachIcon } from './icons';
+import { BenchIcon, CoachIcon, PlusIcon } from './icons';
 
 export interface Slot {
   key: string;
@@ -33,36 +34,52 @@ export function slotsOf(s: Run): Slot[] {
 }
 
 /**
- * Your team filling up as you draft (#69): a photo and name in each slot you've filled, an icon in each one still open.
+ * Your team filling up as you draft (#69): the seven slots in one row above the case. A filled slot shows the photo, the nick, the slot you chose and the pick's team and year; an open one shows its role icon and "+".
  * The slot is where you put the player, never the player's own role, so hard mode shows nothing it shouldn't.
- * On a phone the names drop out and the strip is seven icons; tapping a filled slot names the pick underneath.
+ * Pointing at a player in the case previews them in the slot they would take (#143). On a phone this row gives way to the lineup sheet (MobileLineup).
  */
-export function TeamStrip({ s }: { s: Run }) {
+export function TeamStrip({ s, preview }: { s: Run; /** The player or coach you are pointing at in the case, shown as a ghost in the slot they would take (#143). */ preview?: Preview | null }) {
   const [open, setOpen] = useState<string | null>(null);
   const slots = slotsOf(s);
   const filled = slots.filter((x) => x.who).length;
   const next = roundOf(s) === 'player' ? null : roundOf(s);
   const picked = slots.find((x) => x.key === open && x.who);
   const left = slots.filter((x) => !x.who).map((x) => x.label);
+  const roster = preview ? G.rosterById.get(preview.rosterId) : undefined;
+  const pl = roster && preview?.playerId ? roster.players.find((p) => p.id === preview.playerId) : undefined;
+  const ghost = roster && preview ? { key: preview.slot, nick: pl?.nick ?? preview.coach ?? '', from: `${roster.org} ${roster.year}`, face: pl ? <Avatar player={pl} roster={roster} /> : <TeamBadge roster={roster} size={34} /> } : null;
   return (
     <div className="strip">
       <ol className="strip__slots" aria-label={`Your team: ${filled} of ${draftRounds(s)} drafted`}>
-        {slots.map((x) => (
-          <li key={x.key} className={`strip__slot ${x.who ? 'is-full' : ''} ${x.key === next ? 'is-next' : ''}`}>
-            {x.who ? (
-              <button type="button" aria-pressed={open === x.key} aria-label={`${x.label}: ${x.who.nick}, ${x.who.from}`} data-sfx="none" onClick={() => setOpen(open === x.key ? null : x.key)}>
-                <span className="strip__face">{x.who.face}</span>
-                <span className="strip__nick">{x.who.nick}</span>
-                <span className="strip__role">{x.role && <RoleIcon role={x.role} size={11} />} {x.label}</span>
-              </button>
-            ) : (
-              <div title={`${x.label}: open`} role="img" aria-label={`${x.label}: open`}>
-                <span className="strip__face strip__face--empty">{x.role ? <RoleIcon role={x.role} size={18} /> : x.key === 'coach' ? <CoachIcon size={18} /> : <BenchIcon size={18} />}</span>
-                <span className="strip__role">{x.label}</span>
-              </div>
-            )}
-          </li>
-        ))}
+        {slots.map((x) => {
+          const pv = ghost && !x.who && ghost.key === x.key ? ghost : null;
+          return (
+            <li key={x.key} className={`strip__slot ${x.who ? 'is-full' : ''} ${pv ? 'is-preview' : ''} ${x.key === next ? 'is-next' : ''}`}>
+              {x.who ? (
+                <button type="button" aria-pressed={open === x.key} aria-label={`${x.label}: ${x.who.nick}, ${x.who.from}`} title={`${x.label}: ${x.who.nick}, ${x.who.from}`} data-sfx="none" onClick={() => setOpen(open === x.key ? null : x.key)}>
+                  <span className="strip__face">{x.who.face}</span>
+                  <span className="strip__text">
+                    <span className="strip__nick">{x.who.nick}</span>
+                    <span className="strip__sub"><span className="strip__role">{x.role && <RoleIcon role={x.role} size={11} />} {x.role ? ROLE_SHORT[x.role] : x.label}</span><span className="strip__from">{x.who.from}</span></span>
+                  </span>
+                </button>
+              ) : pv ? (
+                <div title={`${x.label}: ${pv.nick} would go here`} role="img" aria-label={`${x.label}: preview, ${pv.nick} would go here`}>
+                  <span className="strip__face">{pv.face}</span>
+                  <span className="strip__text">
+                    <span className="strip__nick">{pv.nick}</span>
+                    <span className="strip__sub"><span className="strip__role">Preview</span><span className="strip__from">{x.label}</span></span>
+                  </span>
+                </div>
+              ) : (
+                <div title={`${x.label}: open`} role="img" aria-label={`${x.label}: open`}>
+                  <span className="strip__face strip__face--empty">{x.role ? <RoleIcon role={x.role} size={18} /> : x.key === 'coach' ? <CoachIcon size={18} /> : <BenchIcon size={18} />}</span>
+                  <span className="strip__text"><span className="strip__sub"><span className="strip__role"><PlusIcon size={11} /> {x.label}</span></span></span>
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ol>
       {/* The round and what's left are already in the heading and the slots above; the caption only speaks up for a tapped pick (screen readers still get the status). */}
       <p className={`strip__caption ${picked?.who ? '' : 'sr'}`} aria-live="polite">

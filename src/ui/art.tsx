@@ -68,6 +68,9 @@ export function Avatar({ player, roster, className }: { player: Player; roster: 
   return <img className={`photo photo--none ${className ?? ''}`} src={PLACEHOLDER} alt={`${player.nick} (no photo)`} loading="lazy" data-roster={roster.id} />;
 }
 
+/** The radar picture's address, so other code can read it (the board checks which spots are on the map). */
+export const radarSrc = (map: string) => RADARS[map] ?? RADARS.Dust2;
+
 /** Map radar (images supplied by the player, built by scripts/build-radars.mjs). Coordinates on it are 0–100 of the square. */
 export function MapArt({ map }: { map: string }) {
   return <img className="map-art" src={RADARS[map] ?? RADARS.Dust2} alt={`${map} radar`} draggable={false} />;

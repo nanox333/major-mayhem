@@ -178,7 +178,7 @@
 .is-scene .draft-decision .draft-decision-empty.is-compact { display: flex; align-items: baseline; gap: 12px; min-height: 0; padding: 11px 16px; border: 1px solid var(--ds-line); border-radius: 3px; background: var(--ds-panel); font-size: .86rem; }
 .is-scene .draft-decision .draft-decision-empty.is-compact b { color: var(--text-2); font-weight: 600; }
 .is-scene .draft-decision .draft-decision-empty.is-compact span { color: var(--muted); }
-.is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { position: relative; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 26px; align-items: center; padding: 12px 18px; border: 1px solid var(--ds-line-2); border-radius: 3px; background: radial-gradient(ellipse 46% 160% at 0% 50%, color-mix(in srgb, var(--team, var(--accent)) 42%, transparent), transparent 72%), radial-gradient(ellipse 34% 140% at 100% 55%, rgba(249, 132, 37, .2), transparent 72%), linear-gradient(180deg, var(--ds-deep), var(--ds-deeper)); box-shadow: 0 22px 46px -28px #000, inset 0 1px 0 rgba(255, 255, 255, .08); animation: panel-in .24s ease-out both; }
+.is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { position: relative; bottom: auto; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px 26px; align-items: center; padding: 12px 18px; border: 1px solid var(--ds-line-2); border-radius: 3px; background: radial-gradient(ellipse 46% 160% at 0% 50%, color-mix(in srgb, var(--team, var(--accent)) 42%, transparent), transparent 72%), radial-gradient(ellipse 34% 140% at 100% 55%, rgba(249, 132, 37, .2), transparent 72%), linear-gradient(180deg, var(--ds-deep), var(--ds-deeper)); box-shadow: 0 22px 46px -28px #000, inset 0 1px 0 rgba(255, 255, 255, .08); animation: panel-in .24s ease-out both; }
 .is-scene .draft-decision .draftbar { border-color: color-mix(in srgb, var(--accent) 62%, var(--ds-line)); }
 @keyframes panel-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 /* A corner of orange tactical pattern, very faint, behind the content on the right. */
@@ -225,12 +225,42 @@
   .is-scene .draftbar .draftbar__slots { grid-column: 1; grid-row: 2; }
   .is-scene .draftbar .draftbar__chem { grid-column: 2; grid-row: 1 / span 2; }
   .is-scene .draftbar .cta { grid-column: 3; grid-row: 1 / span 2; align-self: center; }
+  /* One footprint for all three states (nothing chosen, pointing at someone, selected), so hovering or selecting never changes the panel's height and the sidebar and footer under it stay put. */
+  .is-scene .draft-decision :is(.draft-decision-empty.is-compact, .peekbar, .draftbar) { min-height: var(--ds-decision-h, 160px); }
+  .is-scene .draft-decision .draft-decision-empty.is-compact { align-items: center; }
 }
 @media (max-width: 1099px) { .draftbar__chem { padding: 10px 0 0; border-left: 0; border-top: 1px solid var(--ds-line-2); } .peekbar__hint { justify-self: start; } }
 @media (max-width: 520px) {
   .is-scene .console__titles { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'kicker' 'title' 'picks'; }
   .console__picks { margin: 6px 0 0; }
   .draftbar__portrait { width: 68px; height: 82px; } .is-scene .draftbar__who b { font-size: 1.5rem; } }
+
+/* ---------- your lineup: the seven slots in one row above the cards ---------- */
+/* Photo, nick, slot and team in a filled one; the role icon and "+" in an open one; a dashed orange edge for the slot the coach or bench round fills next and a ghost for the player you are pointing at. */
+.is-scene .strip { padding: 0; gap: 0; border: 0; background: none; }
+.is-scene .strip__slots { gap: 8px; }
+.is-scene .strip__slot > button, .is-scene .strip__slot > div { min-height: 54px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; padding: 7px 10px 7px 8px; border: 1px solid var(--ds-slot-line); border-radius: 3px; background: var(--ds-slot); color: inherit; text-align: left; transition: border-color .14s, background .14s; }
+.is-scene .strip__slot > div:hover { border-color: var(--ds-slot-line-hover); background: var(--ds-slot-hover); }
+.is-scene .strip__slot > button { border-color: var(--ds-line-2); background: var(--ds-raise); box-shadow: inset 2px 0 0 #565c57; }
+.is-scene .strip__slot > button:hover, .is-scene .strip__slot > button[aria-pressed="true"] { border-color: var(--ds-slot-line-hover); background: var(--ds-slot-hover); }
+.is-scene .strip__slot.is-next > div { border-style: dashed; border-color: color-mix(in srgb, var(--accent) 70%, transparent); }
+.is-scene .strip__slot.is-preview > div { border: 1px solid var(--accent); background: rgba(249, 132, 37, .1); box-shadow: 0 0 18px -6px rgba(249, 132, 37, .5); }
+.is-scene .strip__face { flex: none; width: 36px; height: 38px; border: 0; border-radius: 2px; background: var(--ds-raise); color: var(--muted); }
+.is-scene .strip__face > img { object-position: center 18%; }
+.is-scene .strip__face--empty { width: 34px; height: 34px; border: 1px dashed var(--ds-line-2); border-radius: 50%; background: none; }
+.is-scene .strip__text { flex: 1 1 auto; display: grid; gap: 1px; min-width: 0; }
+.is-scene .strip__slot .strip__nick { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 .95rem/1.2 var(--f-read); color: var(--strong); }
+.is-scene .strip__sub { display: flex; align-items: center; gap: 6px; min-width: 0; color: var(--muted); font: .72rem/1.3 var(--f-read); }
+.is-scene .strip__role { flex: none; display: inline-flex; align-items: center; gap: 3px; color: var(--text-2); font: 600 .68rem/1.3 var(--f-read); letter-spacing: .06em; text-transform: uppercase; }
+.is-scene .strip__slot:not(.is-preview) > div .strip__role { color: var(--muted); font-size: .78rem; letter-spacing: .02em; text-transform: none; }
+.is-scene .strip__slot.is-preview .strip__role { color: var(--accent-hi); }
+/* An open slot's label can be long ("Support / Anchor"); on a narrow window it wraps to two lines, and below 1000px its icon steps aside so the "+" and the label have the room. */
+.is-scene .strip__slot:not(.is-full):not(.is-preview) .strip__role { display: block; flex: 0 1 auto; min-width: 0; line-height: 1.2; overflow-wrap: anywhere; }
+.is-scene .strip__slot:not(.is-full):not(.is-preview) .strip__role > svg { margin-right: 3px; vertical-align: -1px; }
+.is-scene .strip__from { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.is-scene .strip__caption { padding-top: 6px; color: var(--muted); font-size: .8rem; }
+@media (max-width: 1099px) { .is-scene .strip__from { display: none; } }
+@media (max-width: 1000px) { .is-scene .strip__face--empty { display: none; } }
 
 /* ---------- your lineup: compact slots, secondary to the cards ---------- */
 .is-scene .lineup__head { margin: 0 0 8px; font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
@@ -260,6 +290,8 @@
 .is-scene .side-card h3 { margin: 0 0 4px; font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .is-scene .side-card p, .is-scene .side-card .muted { color: var(--muted); font-size: .8rem; line-height: 1.45; }
 .is-scene .side-card .chem__total { font-size: 1rem; }
+/* "If you draft" keeps its room whether or not you are pointing at someone, so filling it in does not grow the card and push the footer down. */
+@media (min-width: 861px) { .is-scene .chem__if { min-height: 120px; } }
 
 /* ---------- the opened-case bar and the tip ---------- */
 .is-scene .case { position: relative; }
@@ -299,6 +331,38 @@
   .draftbar__portrait { width: 72px; height: 86px; }
   .is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { padding-block: 10px; }
   .lane__window { height: 380px; }
+}
+
+/* The seven-slot row costs a line of height, so the strip and the cards give a little back as the window gets shorter and the Draft button stays on screen with the three rosters:
+   a little under about 960px tall (1440x900), more under 800px (1366x768). */
+@media (min-width: 861px) and (max-height: 960px) {
+  .is-scene { --ds-decision-h: 144px; }
+  /* With the slot chips showing, the "selected candidate" caption gives its line back so this state is no taller than the others. */
+  .is-scene .draftbar:has(.draftbar__slots) .draftbar__who small { display: none; }
+  .is-scene .console__body.phase-draft { padding-top: 10px; }
+  .is-scene .strip__slot > button, .is-scene .strip__slot > div { min-height: 48px; padding-block: 5px; }
+  .is-scene .strip__face { width: 32px; height: 34px; }
+  .is-scene .strip__face--empty { width: 30px; height: 30px; }
+  .is-scene .case-card__top { min-height: 100px; padding-block: 10px; }
+  .is-scene .prow { min-height: 58px; padding-block: 4px; grid-template-columns: 46px minmax(0, 1fr); }
+  .is-scene .prow__face { width: 46px; height: 46px; }
+}
+@media (min-width: 861px) and (max-height: 800px) {
+  .is-scene { --ds-decision-h: 116px; }
+  .is-scene .console__body.phase-draft { padding-top: 4px; }
+  .is-scene .strip__slot > button, .is-scene .strip__slot > div { min-height: 44px; }
+  .is-scene .case-card__top { min-height: 82px; padding-block: 6px; }
+  .is-scene .draft-decision { gap: 2px; }
+  .is-scene .console__head { padding-bottom: 4px; }
+  .is-scene .console__title { font-size: 2.2rem; }
+  .is-scene .prow { min-height: 52px; padding-block: 3px; grid-template-columns: 42px minmax(0, 1fr); }
+  .is-scene .prow__face { width: 42px; height: 42px; }
+  .is-scene .roster-details-link { min-height: 24px; margin-bottom: 4px; }
+  .is-scene .opened { min-height: 24px; padding-bottom: 4px; }
+  .is-scene .case { gap: 10px; }
+  .is-scene .draft-decision .draftbar, .is-scene .draft-decision .peekbar { padding-block: 8px; row-gap: 4px; }
+  .is-scene .draftbar__who b { font-size: 1.6rem; }
+  .is-scene .draftbar .cta { min-height: 56px; }
 }
 
 /* ---------- phones: a swipeable rail of rosters, one large reel at a time in view ---------- */

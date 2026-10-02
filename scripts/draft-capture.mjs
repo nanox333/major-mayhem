@@ -26,7 +26,9 @@ await p.reload();
 await p.waitForSelector('button.mbtn');
 await p.locator('button.home__daily').click();
 await p.mouse.move(W - 4, H / 2); // keep hover out of the way
-const t0 = Date.now(); // starting today's run opens the case straight away
+await p.locator('button.cta', { hasText: 'Open case' }).click(); // starting today's run waits on the sealed case
+await p.mouse.move(W - 4, H / 2);
+const t0 = Date.now();
 const at = async (ms, name) => { const wait = ms - (Date.now() - t0); if (wait > 0) await p.waitForTimeout(wait); await shot(name); };
 await at(1300, '01-reel-rolling');
 await at(2550, '02-reel-first-locked');

@@ -16,17 +16,18 @@ import { REEL_CURVE, REEL_MS, reelTickTimes } from '../ui/reel';
 import { play, playTicks } from '../ui/sound';
 import { HowSteps, Tip, useTipSeen } from '../ui/tips';
 import { ArrowRightIcon, CaseIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
-import { DailyDone, ModePicker } from './Modes';
+import { DailyDone } from './Modes';
 import { usePrefs } from '../ui/prefs';
 import { RosterBrowser } from '../ui/RosterBrowser';
 import { ArrivalFocus } from '../ui/ArrivalFocus';
 import { Flag } from '../ui/flags';
+import { CaseReady, HowStrip } from '../ui/CaseReady';
 
 /**
  * The draft (#180): the stage for the round, with a short announcement of where you are for a screen reader each time it changes, and keyboard focus
  * handed on to the next decision when a screen replaces the one you were on.
  */
-export function DraftScreen(props: { s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onPreview: (p: Preview | null) => void }) {
+export function DraftScreen(props: { s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats; onPreview: (p: Preview | null) => void; /** Opens the free-play setup page (era, teams, hard mode). */ toSetup: () => void }) {
   const s = props.s;
   const round = roundOf(s);
   const what = s.step === 'spin' ? 'open the case' : round === 'coach' ? 'pick a coach' : round === 'bench' ? 'pick a bench player' : 'pick a player';
@@ -38,10 +39,11 @@ export function DraftScreen(props: { s: Run; dispatch: React.Dispatch<Action>; r
   );
 }
 
-function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
+function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview, toSetup }: {
   s: Run; dispatch: React.Dispatch<Action>; reelFor: number | null; setReelFor: (n: number | null) => void; stats: Stats;
   /** Tells the lineup and the chemistry panel which player or coach you are pointing at (#143). */
   onPreview: (p: Preview | null) => void;
+  toSetup: () => void;
 }) {
   const prefs = usePrefs();
   const caseRoot = useRef<HTMLDivElement>(null);
@@ -53,35 +55,27 @@ function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
     if (s.step === 'teams' && (reelFor === null || prefs.fastReveals || reduceMotion())) caseRoot.current?.querySelector<HTMLElement>('button.prow, .case-item--coach')?.focus({ preventScroll: true });
   }, [s.offerKey, s.rerollKey, reelFor, s.step, prefs.fastReveals]);
   if (s.step === 'spin') {
-    const open = G.openSlots(s.picks);
     const date = dailyDate(s);
     const played = date ? stats.daily[date] : undefined;
     const todayN = dailyNumber(today());
     const doneToday = stats.daily[today()];
     return (
-      <div ref={caseRoot} className="spin-stage anim-in" key={`spin-${s.picks.length}`}>
-        {s.picks.length === 0 && s.offerKey === 0 && <Tip id="intro" title="How Major Mayhem works"><p className="tip__lead">Draft a five-man dream team from Counter-Strike Major history, then win the Major.</p><HowSteps compact /></Tip>}
-        <div className="case-art" aria-hidden="true"><span /></div>
-        <p className="spin-stage__hint">
-          {roundOf(s) === 'coach' ? 'Round 6: the coach. This case holds three coaches from Major history. A better coach lifts the team and makes your timeouts count for more, and knowing your players helps.'
-            : roundOf(s) === 'bench' ? 'Round 7: the bench. Pick anyone from the case, any role. Before each match you can sub them in for a starter who\'s off form.'
-              : s.picks.length === 0 ? 'Each case holds three real rosters from a Major. Pick a team, then one player from it.' : `Still to fill: ${open.map((r) => ROLE_LABEL[r]).join(', ')}.`}
-        </p>
+      <div ref={caseRoot} className="spin-stage case-ready anim-in" key={`spin-${s.picks.length}`}>
+        {s.picks.length === 0 && s.offerKey === 0 && <HowStrip />}
+        <CaseReady s={s} onOpen={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }} />
         {s.picks.length === 0 && s.mode === 'daily' && (
           <p className="muted small">
             Daily #{dailyNumber(date!)}: everyone gets the same cases today.
             {played && ` You already finished this one (${played.placement}); replays don't change your record.`}
           </p>
         )}
-        <div className="action-bar"><button className="cta cta--orange" data-sfx="open" onClick={() => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); }}>Open case</button></div>
         <ArrivalFocus selector=".spin-stage .cta" />
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'daily' && (
-          <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'free' })}>Switch to free play</button>
+          <button type="button" className="ready-switch" onClick={() => { dispatch({ type: 'reset', mode: 'free' }); toSetup(); }}><span>Switch to free play</span><ArrowRightIcon size={20} /></button>
         )}
         {s.picks.length === 0 && s.rerolls === 2 && s.mode === 'free' && !doneToday && (
-          <button className="ghost-btn" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}>Play Daily #{todayN} instead</button>
+          <button type="button" className="ready-switch" onClick={() => dispatch({ type: 'reset', mode: 'daily' })}><span>Play Daily #{todayN} instead</span><ArrowRightIcon size={20} /></button>
         )}
-        {s.offerKey === 0 && s.mode === 'free' && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
         {s.picks.length === 0 && s.mode === 'free' && doneToday && <DailyDone d={doneToday} n={todayN} />}
       </div>
     );
@@ -89,7 +83,9 @@ function DraftStage({ s, dispatch, reelFor, setReelFor, stats, onPreview }: {
   if (s.step === 'teams') {
     const coach = roundOf(s) === 'coach';
     if (reelFor === s.offerKey && !reduceMotion() && !prefs.fastReveals) return <CaseReveal offer={s.offer} hard={!!s.opts?.hard} coach={coach} picks={s.picks.length} total={draftRounds(s)} onDone={(ran) => { setArrived(ran ? `${s.offerKey}:${s.rerollKey}` : null); setReelFor(null); }} />;
-    return <div ref={caseRoot}>{coach ? <CoachChoices s={s} dispatch={dispatch} onPreview={onPreview} /> : <CaseCards s={s} dispatch={dispatch} onPreview={onPreview} arrived={arrived === `${s.offerKey}:${s.rerollKey}`} />}</div>;
+    // Spin again plays the reels again for the new three: the case is the same one, so the reel key is the offer's own.
+    const rolled = () => setReelFor(s.offerKey);
+    return <div ref={caseRoot}>{coach ? <CoachChoices s={s} dispatch={dispatch} onPreview={onPreview} onRolled={rolled} /> : <CaseCards s={s} dispatch={dispatch} onPreview={onPreview} onRolled={rolled} arrived={arrived === `${s.offerKey}:${s.rerollKey}`} />}</div>;
   }
   return s.team ? <PlayerChoices roster={G.rosterById.get(s.team)!} s={s} bench={roundOf(s) === 'bench'} dispatch={dispatch} /> : null;
 }
@@ -104,13 +100,15 @@ const HOLD_MS = 380, FADE_MS = 200, GROW_MS = 340;
 /** One lock sound per reel, each its own and each a little stronger than the last. They depend on the reel's position, never on who landed, so nothing is given away. */
 const LOCK_SFX = ['milspec', 'restricted', 'classified'] as const;
 /** Vertical motion blur strengths (the y deviation of an SVG blur), picked per row from the reel's speed and the row's distance from the line. */
-const MOTION_BLUR = [1.1, 2.2, 3.4, 4.8];
+/** How far round the drum each row is turned (radians per row). */
+const DRUM_RAD = 0.7;
+const MOTION_BLUR = [1.6, 3.4, 5.6, 8.5, 12.5];
 
 /** "PGL Major Stockholm 2021" -> "PGL Major Stockholm": the year is shown on its own. */
 const eventName = (r: Roster) => r.event.replace(/\s*\b(19|20)\d{2}\s*$/, '');
 const blurLevel = (speed: number, rows: number) => {
-  const base = speed > 7 ? 4 : speed > 2.6 ? 3 : speed > 0.9 ? 2 : speed > 0.22 ? 1 : 0;
-  return Math.max(0, Math.min(4, base + (rows > 1.6 ? 1 : 0) - (rows < 0.6 ? 2 : rows < 1.15 ? 1 : 0)));
+  const base = speed > 9 ? 5 : speed > 5 ? 4 : speed > 2.6 ? 3 : speed > 0.9 ? 2 : speed > 0.22 ? 1 : 0;
+  return Math.max(0, Math.min(5, base + (rows > 1.6 ? 1 : 0) - (rows < 0.6 ? 2 : rows < 1.15 ? 1 : 0)));
 };
 
 /** The winning roster's card as it will look, drawn inside its reel, so that the reel visibly becomes the card (the real, clickable card replaces it right after). */
@@ -122,7 +120,7 @@ function CardPreview({ roster: r, hard }: { roster: Roster; hard: boolean }) {
           <Montage roster={r} />
           <TeamBadge roster={r} size={64} />
           <div className="case-card__id">
-            <h3 className="case-card__name">{r.org} <span>{r.year}</span></h3>
+            <h3 className="case-card__name" title={`${r.year} ${r.org}`}><span>{r.year}</span><b>{r.org}</b></h3>
             <div className="case-card__meta"><Placement roster={r} /></div>
             <p className="case-card__major" title={r.event}>{eventName(r)}</p>
           </div>
@@ -150,12 +148,14 @@ function CardPreview({ roster: r, hard }: { roster: Roster; hard: boolean }) {
  * The case opening (#225): three vertical reels, one per roster in the offer, side by side where the three cards will be. They start together and lock one
  * after another, each stopping on the roster `offer[i]`, with a little overshoot and a settle. Rows sharpen, grow and brighten as they near the line and
  * blur vertically while the reel is fast. It is presentation only. The offer is already drawn and saved, the passing rosters come from the whole pool and
- * touch no game state, and finishing (or Show case) only hands over to the cards, so skipping, reloading or a late timer can never change what the case holds.
+ * touch no game state, and finishing (or Skip animation) only hands over to the cards, so skipping, reloading or a late timer can never change what the case holds.
  * `onDone(true)` is a reveal that ran to its end, so the cards can take over from the previews without animating in again.
  */
 function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: string[]; hard: boolean; /** The coach round shows coach cards, not rosters, so its reels simply give way to them. */ coach: boolean; picks: number; total: number; onDone: (ran: boolean) => void }) {
   const phone = useMedia('(max-width: 860px)');
   const step = phone ? 76 : 92;
+  // Phones and low-power devices get a lighter reel: no motion-blur filters, fewer styled rows, every other frame.
+  const lite = useMemo(() => phone || (navigator.hardwareConcurrency ?? 8) <= 4 || ((navigator as { deviceMemory?: number }).deviceMemory ?? 8) <= 4, [phone]);
   const lanes = useMemo(() => offer.map((id) => {
     const pool = G.shuffle(ROSTERS.filter((r) => r.id !== id));
     const arr = Array.from({ length: LANE_LAND + LANE_EXTRA }, (_, i) => pool[i % pool.length]);
@@ -166,6 +166,15 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
   const strips = useRef<(HTMLDivElement | null)[]>([]);
   const previews = useRef<(HTMLDivElement | null)[]>([]);
   const [locked, setLocked] = useState<boolean[]>([false, false, false]);
+  const animsRef = useRef<Animation[]>([]);
+  const [skipping, setSkipping] = useState(false);
+  // Skip animation: the reels race to their stops, a flash sweeps across them, and then the cards appear, in under half a second.
+  const skip = () => {
+    if (skipping) return;
+    setSkipping(true);
+    animsRef.current.forEach((a) => { try { a.updatePlaybackRate(9); } catch { /* not supported: the flash still plays */ } });
+    setTimeout(() => onDone(false), 460);
+  };
   const [phase, setPhase] = useState<'turn' | 'hold' | 'fade' | 'grow'>('turn');
   const [heights, setHeights] = useState<number[]>([]);
   // Measure each card preview as soon as it is on screen, so its reel can grow to exactly the card's height.
@@ -176,6 +185,7 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
     const h = wins.current[0]?.clientHeight ?? 430;
     const target = LANE_LAND * step + step / 2 - h / 2;
     const anims: Animation[] = [];
+    animsRef.current = anims;
     const timers: ReturnType<typeof setTimeout>[] = [];
     const later = (fn: () => void, ms: number) => { timers.push(setTimeout(fn, ms)); };
     strips.current.forEach((el, i) => {
@@ -202,29 +212,46 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
     }
     // Per frame: how far each row is from the line decides its size, brightness and blur, so rows sharpen and swell as they approach and shrink and dim as they leave.
     const speed = [0, 0, 0], prev = [0, 0, 0], styled: Set<HTMLElement>[] = [new Set(), new Set(), new Set()];
-    let before = performance.now(), raf = 0;
+    const cache = new WeakMap<HTMLElement, string>();
+    const span = lite ? 3 : 5;
+    let before = performance.now(), raf = 0, tick = 0;
+    const put = (row: HTMLElement, t: string, o: string, f: string) => {
+      const key = `${t}|${o}|${f}`;
+      if (cache.get(row) === key) return;
+      cache.set(row, key);
+      row.style.transform = t; row.style.opacity = o; row.style.filter = f;
+    };
     const frame = (now: number) => {
+      raf = requestAnimationFrame(frame);
+      // Small or older devices style every other frame: the reels still move on the compositor at full rate.
+      if (lite && (tick++ & 1)) return;
       const dt = Math.max(1, now - before); before = now;
+      // Read every reel's position first, then write: mixing them makes the browser recalculate styles once per reel.
+      const ys = strips.current.map((el, i) => (!el ? 0 : anims[i]?.playState === 'finished' ? prev[i] : -new DOMMatrixReadOnly(getComputedStyle(el).transform).m42));
       strips.current.forEach((el, i) => {
         if (!el) return;
-        const y = -new DOMMatrixReadOnly(getComputedStyle(el).transform).m42;
+        const y = ys[i];
         speed[i] = speed[i] * 0.6 + (Math.abs(y - prev[i]) / dt) * 0.4; prev[i] = y;
         const centre = y + h / 2;
-        const from = Math.max(0, Math.floor((centre - 4 * step) / step)), to = Math.min(el.children.length - 1, Math.ceil((centre + 4 * step) / step));
+        const from = Math.max(0, Math.floor((centre - span * step) / step)), to = Math.min(el.children.length - 1, Math.ceil((centre + span * step) / step));
         const now2 = new Set<HTMLElement>();
         for (let k = from; k <= to; k++) {
           const row = el.children[k] as HTMLElement;
-          const d = Math.abs((k + 0.5) * step - centre) / step;
-          const lvl = blurLevel(speed[i], d);
-          row.style.transform = `scale(${(1.035 - Math.min(d, 3.2) * 0.022).toFixed(3)})`;
-          row.style.opacity = String(Math.max(0.4, 1 - d * 0.2).toFixed(2));
-          row.style.filter = lvl ? `url(#mv-${lvl})` : 'none';
+          const off = ((k + 0.5) * step - centre) / step;
+          const d = Math.abs(off);
+          const lvl = lite ? 0 : blurLevel(speed[i], d);
+          // A drum seen from the front: each row sits on a cylinder, so it tilts back, sinks and is squeezed together as it turns away from the line.
+          const th = Math.max(-1.4, Math.min(1.4, off * DRUM_RAD));
+          const radius = step / DRUM_RAD;
+          const lift = radius * Math.sin(th) - off * step;
+          const depth = -radius * (1 - Math.cos(th));
+          const shade = Math.max(0.12, Math.pow(Math.cos(th), 2.2));
+          put(row, `translateY(${lift.toFixed(1)}px) translateZ(${depth.toFixed(1)}px) rotateX(${(-th).toFixed(3)}rad) scale(${(1.03 + (d < 0.5 ? 0.02 : 0)).toFixed(3)})`, shade.toFixed(2), lvl ? `url(#mv-${lvl})` : 'none');
           now2.add(row);
         }
-        styled[i].forEach((row) => { if (!now2.has(row)) { row.style.transform = ''; row.style.opacity = ''; row.style.filter = ''; } });
+        styled[i].forEach((row) => { if (!now2.has(row)) { cache.delete(row); row.style.transform = ''; row.style.opacity = ''; row.style.filter = ''; } });
         styled[i] = now2;
       });
-      raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
     // One stream of ticks, following the longest reel, so three reels don't make three overlapping machines; then a lock sound as each one stops.
@@ -234,14 +261,13 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
   }, [lanes, step]);
   const morph = phase === 'fade' || phase === 'grow';
   return (
-    <div className={`case reveal is-${phase}`} style={{ ['--step' as string]: `${step}px` }}>
+    <div className={`case reveal is-${phase} ${skipping ? 'is-skipping' : ''} ${lite ? 'is-lite' : ''}`} style={{ ['--step' as string]: `${step}px` }}>
       <svg className="reveal__defs" width="0" height="0" aria-hidden="true" focusable="false">
-        <defs>{MOTION_BLUR.map((v, i) => <filter key={i} id={`mv-${i + 1}`} x="-4%" y="-40%" width="108%" height="180%" colorInterpolationFilters="sRGB"><feGaussianBlur stdDeviation={`0 ${v}`} /></filter>)}</defs>
+        <defs>{MOTION_BLUR.map((v, i) => <filter key={i} id={`mv-${i + 1}`} x="-4%" y="-90%" width="108%" height="280%" colorInterpolationFilters="sRGB"><feGaussianBlur stdDeviation={`0 ${v}`} /></filter>)}</defs>
       </svg>
       <span className="sr" role="status">Revealing three rosters.</span>
-      <div className="opened reveal__bar">
-        <p><b>Opening your case</b> <span>{picks} / {total} picks made</span></p>
-        <button type="button" className="ghost-btn reveal__skip" onClick={() => onDone(false)}>Show case</button>
+      <div className="reveal__bar">
+        <button type="button" className="st-btn st-btn--quiet reveal__skip" disabled={skipping} onClick={skip}>Skip animation</button>
       </div>
       <div className="teams-col reveal__lanes" aria-hidden="true">
         {lanes.map((items, i) => (
@@ -265,7 +291,7 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
         ))}
       </div>
       <div className="draft-decision">
-        <div className="draft-decision-empty is-compact"><b>Revealing three rosters</b><span>Show case skips ahead to the same three. Opening a case never spends a spin.</span></div>
+        <div className="draft-decision-empty is-compact"><b>Revealing three rosters</b><span>Skip animation jumps ahead to the same three. Opening a case never spends a spin.</span></div>
       </div>
     </div>
   );
@@ -275,8 +301,9 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
  * Spin again (#174). A reroll is one pending operation: while it is under way any further press, by mouse, touch or keyboard, does nothing, so a quick
  * double click spends one of the two rerolls and not both. It is dropped if the page leaves the screen or the run or case has changed in the meantime
  * (`stamp` says which run and case it was made for), so a delayed reroll can never land on a different run.
+ * `onRolled` runs only for a reroll that went through, so the reels play again for the new three; reduced motion goes straight to them.
  */
-function useReroll(dispatch: React.Dispatch<Action>, stamp: string) {
+function useReroll(dispatch: React.Dispatch<Action>, stamp: string, onRolled?: () => void) {
   const [out, setOut] = useState(false);
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
   const live = useRef(stamp);
@@ -289,23 +316,13 @@ function useReroll(dispatch: React.Dispatch<Action>, stamp: string) {
     setOut(true);
     pending.current = setTimeout(() => {
       pending.current = null;
-      if (live.current === madeFor) dispatch({ type: 'reroll' });
+      if (live.current === madeFor) { dispatch({ type: 'reroll' }); onRolled?.(); }
       setOut(false);
     }, 160);
   };
   return { out, reroll };
 }
 const stampOf = (s: Run) => `${s.attempt}:${s.offerKey}:${s.rerollKey}`;
-
-/** The opened-case bar over the cards (#103): what this case holds and what to do with it. */
-function OpenedCase({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="opened">
-      <span className="opened__icon"><CaseIcon size={26} /></span>
-      <p><b>Opened case</b> <span>{children}</span></p>
-    </div>
-  );
-}
 
 /** "Spin again" with the real number of spins left (#103). */
 function SpinAgain({ s, reroll, busy }: { s: Run; reroll: () => void; busy?: boolean }) {
@@ -335,12 +352,13 @@ function Montage({ roster }: { roster: Roster }) {
 
 /** A team's result as a placement badge: an icon and the words ("1st place"), so the colour of the card is never the only signal (#104). */
 function Placement({ roster }: { roster: Roster }) {
-  return <span className="place">{roster.result === 'Champions' ? <TrophyIcon size={14} /> : <MedalIcon size={14} />}{placementLabel(roster.result)}</span>;
+  const word = ({ Champions: 'Champion', 'Runner-up': 'Finalist' } as Record<string, string>)[roster.result] ?? roster.result;
+  return <span className="place" title={placementLabel(roster.result)}>{roster.result === 'Champions' ? <TrophyIcon size={14} /> : <MedalIcon size={14} />}{word}</span>;
 }
 
 /** The coach round: three coaches, each shown with the Major they coached at. */
-function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void }) {
-  const { out, reroll } = useReroll(dispatch, stampOf(s));
+function CoachChoices({ s, dispatch, onPreview, onRolled }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void; onRolled: () => void }) {
+  const { out, reroll } = useReroll(dispatch, stampOf(s), onRolled);
   useEffect(() => () => onPreview(null), []);
   const pointAt = (id: string | null) => {
     if (!id) return onPreview(null);
@@ -353,7 +371,6 @@ function CoachChoices({ s, dispatch, onPreview }: { s: Run; dispatch: React.Disp
   return (
     <div className="case">
       <ArrivalFocus selector=".case-item--coach" />
-      <OpenedCase>Three coaches from Major history. Pick one to lead your team.</OpenedCase>
       <div className={`teams-col ${out ? 'is-out' : ''}`}>
         {s.offer.map((id, i) => {
           const r = G.rosterById.get(id)!;
@@ -385,9 +402,9 @@ type Chosen = { r: Roster; p: Player };
  * The case (#102 to #105): three team cards with all fifteen players in view. Pick a player, see the slot and what it means, then draft.
  * It drafts through the same two steps as before (open the team, then draft the player), so a seed plays out exactly as it did.
  */
-function CaseCards({ s, dispatch, onPreview, arrived }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void; /** The cards replace the reels' previews of them, so they do not animate in. */ arrived?: boolean }) {
+function CaseCards({ s, dispatch, onPreview, onRolled, arrived }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void; /** Spin again went through: play the reels for the new three. */ onRolled: () => void; /** The cards replace the reels' previews of them, so they do not animate in. */ arrived?: boolean }) {
   const [details, setDetails] = useState<string | null>(null);
-  const { out, reroll } = useReroll(dispatch, stampOf(s));
+  const { out, reroll } = useReroll(dispatch, stampOf(s), onRolled);
   const bench = roundOf(s) === 'bench';
   const hard = !!s.opts?.hard;
   const taken = G.draftedIds(s.picks);
@@ -466,7 +483,6 @@ function CaseCards({ s, dispatch, onPreview, arrived }: { s: Run; dispatch: Reac
   return (
     <div className="case">
       <ArrivalFocus selector=".case-card button.prow" />
-      <OpenedCase>{bench ? 'Three iconic rosters. Pick anyone for your bench.' : 'Three iconic rosters. Pick one player.'}</OpenedCase>
       {!bench && (hard
         ? <Tip id="fit" title="Hard mode" anchor="left" short="No role labels: put each player where you think they fit.">There are no role labels: put each player where you think they fit best. A slot that doesn't suit them costs you, but nothing tells you which is which.</Tip>
         : <Tip id="fit" title="Roles and fit" anchor="left" short="Main-role picks give the best fit.">Each player has a main role: draft them there for the best fit. A role they also cover costs a little, and the card says so ("2nd role"). The + and − marks are chemistry: a shared country, a famous duo, a second AWPer.</Tip>)}
@@ -492,7 +508,7 @@ function CaseCards({ s, dispatch, onPreview, arrived }: { s: Run; dispatch: Reac
               <Montage roster={r} />
               <TeamBadge roster={r} size={64} />
               <div className="case-card__id">
-                <h3 className="case-card__name">{r.org} <span>{r.year}</span></h3>
+                <h3 className="case-card__name" title={`${r.year} ${r.org}`}><span>{r.year}</span><b>{r.org}</b></h3>
                 <div className="case-card__meta"><Placement roster={r} /></div>
                 <p className="case-card__major" title={r.event}>{eventName(r)}</p>
               </div>
@@ -653,7 +669,7 @@ function DraftBar({ s, sel, slot, setSlot, bench, hard, onDraft }: { s: Run; sel
               <button key={sl} type="button" aria-pressed={slot === sl} data-sfx="select" className={`slot-chip slot-chip--draft ${slot === sl ? 'is-on' : ''} ${!hard && note.kind === 'main' ? 'slot-chip--main' : ''}`} onClick={() => setSlot(sl)}
                 aria-label={`${ROLE_LABEL[sl]}${hard ? '' : `, ${note.text}`}`}>
                 <span><RoleIcon role={sl} size={12} /> {ROLE_SHORT[sl]}</span>
-                {!hard && <small className={`fit fit--${note.kind}`}>{note.text}</small>}
+                {!hard && <small className={`fit fit--${note.kind}`} title={note.text}>{note.kind === 'main' ? 'main role' : note.kind === 'secondary' ? 'secondary' : 'off-role'}</small>}
               </button>
             );
           })}

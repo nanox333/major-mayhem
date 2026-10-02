@@ -1,0 +1,87 @@
+/* Guess the pro in the Home page's language: a square dark panel with one cut corner, slanted orange ticks, condensed uppercase type, flat square cells, an angular Guess button. */
+.gp { padding: clamp(18px, 2.6vw, 34px); border: 0; border-radius: 0; background: var(--cut22), #121312; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); }
+.gp__bg::before { opacity: .4; }
+.gp__head { gap: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.gp__sil { width: 76px; height: 76px; border: 0; border-radius: 0; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -3px 0 var(--accent); color: #2a2c2a; }
+.gp__kicker { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font: 700 .75rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }
+.gp__kicker::before { content: ""; width: 8px; height: 8px; background: var(--accent); transform: skewX(-20deg); }
+.gp__title { font-size: clamp(2.4rem, 4.6vw, 4rem); letter-spacing: .03em; }
+.gp__sub { margin-top: 8px; color: var(--muted); font-size: .95rem; }
+.gp__help { width: 46px; height: 46px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .06); color: var(--text-2); transform: skewX(-12deg); }
+.gp__help > svg { transform: skewX(12deg); }
+.gp__help:hover { background: var(--accent); color: #170c03; border: 0; }
+
+/* the grid */
+.guess__grid { gap: 5px; }
+.guess__row { gap: 5px; }
+.guess__row--head > span { padding: 0 4px 6px; font: 600 .68rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.guess__row > span { min-height: 58px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); font-weight: 600; }
+.guess__row--head > span { background: none; box-shadow: none; }
+.guess__row--empty > span { background: rgba(255, 255, 255, .02); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); border: 0; }
+.guess__n { font: 800 1.2rem var(--f-head); color: rgba(255, 255, 255, .28); }
+.guess__who { font: 800 1.3rem var(--f-head) !important; letter-spacing: .03em; color: var(--strong); }
+.guess__who.is-hit { border: 0 !important; color: var(--strong); box-shadow: inset 0 0 0 1px var(--go), inset 3px 0 0 var(--go); }
+/* The three states: a solid bar for a hit, a dashed edge for close, plain for a miss. Always a mark as well as a colour. */
+.guess__row > .clue--hit { border: 0; background: color-mix(in srgb, var(--go) 26%, #121312); box-shadow: inset 0 -3px 0 var(--go); }
+.guess__row > .clue--near { border: 0; background: color-mix(in srgb, var(--accent) 16%, #121312); box-shadow: inset 0 -3px 0 var(--accent); }
+.guess__row > .clue--miss { color: var(--text-2); }
+.guess__row.is-right, .guess__row.is-win { border-radius: 0; box-shadow: none; }
+.tb i { border-radius: 0; transform: skewX(-12deg); }
+
+/* search and Guess */
+.guess__box { padding: 4px 4px 4px 16px; border: 0; border-radius: 0; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.guess__box:focus-within { border: 0; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), inset 0 -3px 0 var(--accent); }
+.guess__go { min-width: 150px; min-height: 48px; padding: 0 28px; border: 0; border-radius: 0; background: var(--accent); color: #170c03; font: 800 1.25rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); }
+.guess__go:not(:disabled):hover { background: var(--accent-hi); }
+.guess__suggest { border: 0; border-radius: 0; background: #181918; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), 0 20px 40px -16px #000; }
+.guess__suggest button { border-radius: 0; }
+.guess__empty { border: 0; border-radius: 0; background: rgba(255, 255, 255, .04); box-shadow: inset 3px 0 0 var(--accent); }
+.guess__pips i { transform: skewX(-20deg); border-radius: 0; }
+
+/* the end: the answer card, flat with an edge */
+.guess__answer { padding: 20px; border: 0; border-radius: 0; background: var(--cut16), #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 3px 0 0 var(--accent); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); }
+.guess__answer.is-won { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 3px 0 0 var(--go); }
+.guess__photo { width: 104px; height: 104px; border: 0; border-radius: 0; box-shadow: inset 0 -3px 0 var(--accent); }
+.guess__verdict { display: flex; align-items: center; gap: 8px; font: 700 .75rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }
+.guess__verdict::before { content: ""; width: 8px; height: 8px; background: var(--accent); transform: skewX(-20deg); }
+.guess__about strong { font-size: 2.3rem; letter-spacing: .02em; }
+
+/* Search and Guess are two controls side by side, not one box. */
+.guess__entry { display: flex; align-items: stretch; gap: 12px; }
+.guess__entry .guess__box { flex: 1 1 auto; display: grid; grid-template-columns: auto minmax(0, 1fr); min-height: 58px; padding: 0 18px; }
+.guess__entry .guess__box input { min-height: 56px; font-size: 1.15rem; }
+.guess__entry .guess__go { flex: none; min-width: 170px; min-height: 58px; }
+
+/* The board sits in its own darker inset, so it reads as the playing surface. */
+.guess__grid { padding: 18px 16px 16px; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); }
+.guess__row--head > span { padding-bottom: 10px; }
+.guess__row > span { min-height: 62px; font-size: 1rem; font-weight: 700; }
+.guess__row > .clue { letter-spacing: .01em; }
+.guess__row:not(.guess__row--head):not(.guess__row--empty) > .guess__who { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 3px 0 0 rgba(255, 255, 255, .25); }
+@media (max-width: 520px) { .guess__entry { flex-direction: column; } .guess__entry .guess__go { width: 100%; } .guess__grid { padding: 12px 8px; } }
+.guess__row.guess__row--head > span { min-height: 0; padding: 0 4px 10px; font: 600 .66rem/1.2 var(--f-read); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); overflow-wrap: normal; white-space: nowrap; }
+
+/* Help: guide */
+.modal__card:has(.gh) { width: min(760px, 100%); max-height: 90vh; padding: 0; border-radius: 0; background: var(--cut22), #14110f; border: 0; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), 0 30px 80px rgba(0, 0, 0, .6); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); overflow: auto; }
+.modal__card:has(.gh) .modal__close { top: 14px; right: 30px; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; transform: none; font-size: 1.9rem; line-height: 1; color: var(--text-2); z-index: 2; }
+.modal__card:has(.gh) .modal__close:hover { background: none; color: var(--accent-hi); }
+.gh { padding: 0 30px 28px; }
+.gh__head { margin: 0 -30px 22px; padding: 26px 30px 20px; background: linear-gradient(180deg, rgba(249, 132, 37, .1), transparent); border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.gh__kick { display: inline-flex; align-items: center; gap: 8px; font: 700 .68rem/1 var(--f-read); letter-spacing: .18em; text-transform: uppercase; color: var(--accent-hi); }
+.gh__kick::before { content: ""; width: 7px; height: 13px; background: var(--accent); transform: skewX(-18deg); }
+.gh__head h3 { margin: 10px 0 8px; font: 800 2rem/1 var(--f-head); letter-spacing: .03em; text-transform: uppercase; color: var(--strong); }
+.gh__head p { margin: 0; max-width: 56ch; color: var(--text-2); font-size: .92rem; line-height: 1.45; }
+.gh .gh__title { margin: 26px 0 12px; font: 700 .7rem/1 var(--f-read); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 10px; }
+.gh .gh__title::before { content: ""; width: 7px; height: 13px; background: var(--accent); transform: skewX(-18deg); }
+.gh .gh__title::after { content: ""; flex: 1; height: 1px; background: rgba(255, 255, 255, .08); }
+.gh .gh__legend { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.gh__cols { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.gh__col { position: relative; display: grid; align-content: start; gap: 6px; padding: 12px 14px 14px; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.gh__col::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--accent); opacity: .85; }
+.gh__col dt { margin: 0; font: 800 1.05rem/1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; color: var(--strong); }
+.gh__col dd { margin: 0; display: grid; gap: 6px; font-size: .86rem; line-height: 1.35; color: var(--text-2); }
+.gh__col em { display: flex; gap: 8px; align-items: baseline; font-style: normal; font-size: .76rem; color: var(--muted); }
+.gh__col em i { font-style: normal; font-weight: 800; color: var(--accent-hi); }
+.gh__note { margin: 16px 0 0; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .08); font-size: .76rem; line-height: 1.45; color: var(--muted); }
+@media (max-width: 640px) { .gh { padding: 0 16px 22px; } .gh__head { margin: 0 -16px 18px; padding: 52px 16px 16px; } .gh__head h3 { font-size: 1.6rem; } .gh .gh__legend, .gh__cols { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .gh__cols { grid-template-columns: 1fr; } }
