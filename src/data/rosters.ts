@@ -140,7 +140,7 @@ export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.
  * with `hasRule('name')` (never compare the version number in the code), put any changed roles in `rolesV1`-style fields,
  * and pin the previous version's fingerprints in `rules.test.ts`, which fails until you do.
  */
-export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }] as const;
+export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }, { v: 4, from: '2026-10-04' }] as const;
 export const LATEST_RULES: number = RULES[RULES.length - 1].v;
 export const rulesOn = (date: string): number => [...RULES].reverse().find((r) => r.from <= date)?.v ?? 1;
 /** Each behaviour that differs between rules versions, and the first version it applies in. Code reads these with `hasRule`, not with version numbers. */
@@ -155,6 +155,8 @@ export const RULE_SINCE = {
   correctedCoaches: 2,
   /** Opponents come from rosters that share nobody with your team for as long as any are left, not only while eight or more remain (#167). */
   cleanOpponentPool: 3,
+  /** A timeout lifts the next three rounds about twice as much as it did, so calling one visibly matters. */
+  strongerTimeout: 4,
 } as const;
 export type RuleSwitch = keyof typeof RULE_SINCE;
 /** Whether rules version `v` includes the behaviour `f`. */

@@ -29,7 +29,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
   const kwM = killW(mine, dayM), kwO = killW(oppL, dayO), dwM = deathW(mine, dayM), dwO = deathW(oppL, dayO);
   let a = 0, b = 0, halfLead = 0, econ = 0, ecoLeft = 0, forced = false, ourRun = 0, theirRun = 0, toLeft = 0;
   const fam = (comfort(mine, map) - comfort(oppL, map)) * COMFORT;
-  const toLift = TIMEOUT * (1 + (coachRating - 75) / 40);
+  const toLift = (hasRule('strongerTimeout') ? TIMEOUT_V4 : TIMEOUT) * (1 + (coachRating - 75) / 40);
   while (a < winTarget(a, b) && b < winTarget(a, b)) {
     const i = rounds.length;
     const side = sideAt(i, start);
@@ -115,7 +115,7 @@ export function seriesRatings(maps: MapGame[], side: 'mine' | 'opp' | 'both' = '
   return Object.fromEntries(Object.entries(acc).map(([id, e]) => [id, { k: e.k, d: e.d, rating: Math.round((e.rr / e.r) * 100) / 100 }]));
 }
 
-const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1, ROLL = 0.4, ROLL_CAP = 1.2, TIMEOUT = 1.2;
+const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1, ROLL = 0.4, ROLL_CAP = 1.2, TIMEOUT = 1.2, TIMEOUT_V4 = 2.4;
 
 /** Side choice before map `i`: the non-picker chooses on a picked map, a knife round decides the decider and Bo1s. */
 function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL: Lineup[]): Knife {

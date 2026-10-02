@@ -4,6 +4,13 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Changed
+- **Results page in the broadcast style:** a cut-corner outcome panel, green and red W/L blocks, a gold MVP card, a restyled ledger, share-image card and collapsible sections, and an orange Copy result button. Clicking the share image copies it to the clipboard, the match report opened from the ledger is a full broadcast-style panel, and roster, team review and pick strength are restyled. The Results step in the progress tabs is now a finish-line flag with a chequered edge.
+- The debug menu is hidden in every build unless `?debug` is in the address or Ctrl+Shift+D was pressed.
+
+### Changed
+- **Timeouts matter more (rules v4):** a timeout now lifts the next three rounds about twice as much, those rounds are tagged "Timeout boost" in the round log, and an "After the timeout" card shows how they went. Runs on earlier rules (including dailies up to 3 October) play exactly as before.
+
 ### Fixed
 - Skipped case openings retain a static rarity edge; hard-mode cases omit it (#74).
 - **Nothing resizes under you:** every screen now uses the same content column (the map veto, knife round and live match were wider, and the results narrower), and the scrollbar keeps its space while a dialog is open, so opening settings or a roster no longer nudges the page. In the draft, the lineup rows keep one height, the chemistry preview no longer moves the hint, the decision panel holds its height from empty to chosen, and picking a substitute no longer moves the Accept button.
@@ -12,6 +19,8 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - Dialogs render above sticky controls and suppress draft shortcuts; roster/lineup sheets preserve the selection and restore focus.
 
 ### Added
+- **A flat, angular broadcast look across the app:** square dark panels with one cut corner, slanted orange ticks and buttons with a striped arrow block, in a redesigned header (flat logo, Home / Guess the pro / Roster archive, a Stats icon, How to play moved into the "..." menu), Home (a "Build your five" poster, a result band with MVP and daily-streak cells), Stats, Roster archive and Guess the pro as their own pages, a free-play setup page, and restyled Settings, How to play and Guess guide dialogs. A streak of eight days or more makes the Home streak cell burn. A debug menu (Ctrl+Shift+D) clears data and loads dummy stats. See `docs/design/editorial-system.md`.
+- An arena-backed Home hero with a compact daily action/clock cluster and a five-starter diagram; light and high-contrast themes retain an art-free treatment (#214).
 - Home mode cards use original traced equipment-case and anonymous pro artwork beside the copy, with visible stateful actions (#215).
 - Guess autocomplete previews the next unsubmitted player without consuming a guess (#123).
 - A mobile lineup sheet with selected-pick chemistry beside confirmation, and a searchable roster reference with contextual event/source links (#191, #192).
@@ -33,6 +42,8 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Symbols next to colours** on won and lost maps and matches, above- and below-average ratings, killfeed lines, draft bonuses and penalties, and the round strip in match reports (lost rounds are striped) ([#22], [#38]).
 
 ### Changed
+- **A new draft starts on a sealed case** (#225): starting a daily or free-play draft shows three sealed bays, in the place the reels and then the roster cards use, with the round, what is still to fill and an Open case button; nothing is drawn until you press it. Spin again now plays the reels again for the new three, spending one spin as before. Home's free-play button reads Start draft.
+- **Your lineup is one row above the case at every desktop width** (#225): seven slots with photo, nick, role and team (open slots show their role and a "+"), and a ghost in the slot of the player you point at. It replaces the left column from 1280 px, so the three rosters take the full width, and on shorter windows (1366x768, 1440x900) the strip and cards tighten so the Draft button and Spin again stay on screen.
 - A compact header, illustrated archive strip, icon-led Home stats and three-part credits footer; enlarged text and narrow stats tiles wrap cleanly (#217, #218).
 - **Finishing the redesign:** the lobby, match-ready, map veto, knife round and map scoreboard follow the same flat, orange-led look (no more green buttons or panels; green and red only mark outcomes). The run's progress is plain text steps with no overlapping badges, every disclosure shares one chevron instead of the browser's triangle, the live controls stay on screen, the reroll sits in the draft's decision panel, and "How it works" is four numbered steps. Playback and share buttons use drawn icons instead of emoji glyphs.
 - Home, draft, match and results share a charcoal/chalk visual system with readable body text, quieter surfaces and clear action priority (#200–#204). The home groups the daily action and countdown; phone drafting uses a roster selector; live radar markers have an accessible player key; results lead with the outcome and sharing.

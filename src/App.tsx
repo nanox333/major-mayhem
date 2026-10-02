@@ -11,15 +11,17 @@ import { Modal } from './ui/Modal';
 import { useRunTracking } from './ui/useTracking';
 import { TopBar, View } from './ui/TopBar';
 import { RunProgress } from './ui/RunProgress';
-import { LineupPanel } from './ui/Lineup';
 import { DraftSidebar } from './ui/DraftSidebar';
+import { DebugMenu } from './ui/DebugMenu';
 import { SettingsDialog } from './ui/Settings';
 import { usePrefs } from './ui/prefs';
+import { reduceMotion } from './ui/util';
 import { useShortcuts } from './ui/shortcuts';
 import { useSoundOn } from './ui/sound';
 import { DatabaseIcon, RosterIcon, GamepadIcon } from './ui/icons';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
+import { DraftScene } from './ui/DraftScene';
 import { MobileLineup } from './ui/MobileLineup';
 import { RosterBrowser } from './ui/RosterBrowser';
 import { DraftScreen } from './screens/Draft';
@@ -29,7 +31,8 @@ import { ReadyScreen } from './screens/Lobby';
 import { LiveScreen, PreviewScreen } from './screens/Match';
 import { FinalScreen } from './screens/Final';
 import { HelpModal, HelpTab } from './screens/Help';
-import { StatsModal } from './screens/Stats';
+import { StatsPage } from './screens/Stats';
+import { SetupScreen } from './screens/Setup';
 import { ChatVoteBar, ChatVoteProvider, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
 
@@ -48,7 +51,6 @@ function Game() {
   }, []);
   const [help, setHelp] = useState<HelpTab | null>(null);
   const [helpTopic, setHelpTopic] = useState<string | null>(null);
-  const [showStats, setShowStats] = useState(false);
   const [twitch, setTwitch] = useState(false);
   const [settings, setSettings] = useState<false | 'shortcuts' | true>(false);
   const [stats, setStats] = useState(loadStats);
@@ -103,13 +105,17 @@ function Game() {
   if (s.phase === 'final') { title = s.duel ? 'Showmatch over' : 'Tournament over'; kicker = 'Results'; }
   // The home is the first page, and anywhere a run isn't under way; a saved run resumes where it was (#115). Guess the pro doesn't touch the run.
   const atStart = s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
-  const [chosen, setView] = useState<View>('draft');
+  // Every visit opens on the home; a saved run is one "Continue" away, never resumed on load.
+  const [chosen, setView] = useState<View>('home');
   // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
-  const backView: View = atStart && s.mode !== 'duel' ? 'home' : 'draft';
+  // A draft you have just started waits on its sealed case until you open it; `began` is that wait, and it ends as soon as a case is open.
+  const [began, setBegan] = useState(false);
+  useEffect(() => { if (began && !atStart) setBegan(false); }, [began, atStart]);
+  const beginDraft = () => { setBegan(true); setView('draft'); };
+  const backView: View = atStart && !began && s.mode !== 'duel' ? 'home' : 'draft';
   const view: View = chosen === 'draft' ? backView : chosen;
   // Single-key shortcuts (#77), off-able in the settings and quiet while a dialog is open or you are typing.
   const prefs = usePrefs();
-  const [browse, setBrowse] = useState(false);
   const [, toggleSound] = useSoundOn();
   const inCase = view === 'draft' && s.phase === 'draft' && s.step === 'teams';
   const goToCard = (n: number) => {
@@ -126,14 +132,14 @@ function Game() {
     '?': () => setSettings('shortcuts'),
     ...(inCase ? { '1': () => goToCard(0), '2': () => goToCard(1), '3': () => goToCard(2) } : {}),
     Enter: () => { const b = document.querySelector<HTMLButtonElement>('.draftbar .cta'); if (b && !b.disabled) b.click(); },
-  }, !!(help || showStats || twitch || settings || invite || browse));
+  }, !!(help || twitch || settings || invite));
   const goNext = () => {
     // Once today's pro is found, one button for what to do next (#129). A run that is already under way is continued, never replaced from here (#182):
     // an earlier day's daily, today's, or a free run. Only with nothing under way does it start today's draft, or free play when the daily is done.
     const h = homeState(s, stats, today());
     if (h.oldRun || h.daily === 'progress' || h.freeInProgress) return setView('draft');
-    if (h.daily === 'new') { dispatch({ type: 'reset', mode: 'daily' }); setReelFor(1); dispatch({ type: 'spin' }); return setView('draft'); }
-    dispatch({ type: 'reset', mode: 'free' }); setReelFor(1); dispatch({ type: 'spin' }); setView('draft');
+    if (h.daily === 'new') { dispatch({ type: 'reset', mode: 'daily' }); setBegan(true); return setView('draft'); }
+    dispatch({ type: 'reset', mode: 'free' }); setBegan(true); setView('draft');
   };
   const hs = homeState(s, stats, today());
   const guessNext = {
@@ -142,37 +148,50 @@ function Game() {
   };
 
   // The radar is scenery while you draft, so it leaves the draft screen; the lobby and the match keep it (#102).
-  const showBoard = s.phase !== 'final' && s.phase !== 'draft' && s.phase !== 'live' && view === 'draft';
+  const showBoard = s.phase !== 'final' && s.phase !== 'draft' && s.phase !== 'live' && s.phase !== 'ready' && s.phase !== 'preview' && view === 'draft';
   // The very first screen: on phones the empty team strip would only push the intro and the case down.
   const start = view === 'draft' && s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
   // Once the first case is open the draft has a lineup panel and a sidebar of its own (#102).
   const drafting = view === 'draft' && s.phase === 'draft' && !start;
+  // The arena sits behind the draft only. A saved run can be mid-draft while you are on Home or Guess, which have their own scenes (#225).
+  const scene = view === 'draft' && s.phase === 'draft';
+  // While the three reels turn, the heading says so; it goes back to the round's own title when they have landed (#225). Fast reveals and reduced motion skip the reels.
+  const opening = scene && s.step === 'teams' && reelFor === s.offerKey && !prefs.fastReveals && !reduceMotion();
+  const heading = opening ? 'Opening your case' : title;
 
   return (
     <>
-    <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setShowStats(true)} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
-      onBrowse={() => setBrowse(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />
+    <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setView('stats')} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
+      onBrowse={() => setView('archive')} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />
     <UnsavedBar run={s} />
-    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''}`}>
-      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} setReelFor={setReelFor} showDraft={() => setView('draft')} showGuess={() => setView('guess')} onStats={() => setShowStats(true)} onBrowse={() => setBrowse(true)} />}
+    {scene && <DraftScene />}
+    <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
+      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} showDraft={beginDraft} showSetup={() => setView('setup')} showGuess={() => setView('guess')} onStats={() => setView('stats')} onBrowse={() => setView('archive')} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
-      {view !== 'home' && view !== 'guess' && <main className="console">
+      {view === 'stats' && <StatsPage stats={stats} />}
+      {view === 'setup' && <SetupScreen s={s} dispatch={dispatch} onStart={beginDraft} onBack={() => setView('home')} />}
+      {view === 'archive' && <RosterBrowser page hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setView('home')} />}
+      {view !== 'home' && view !== 'guess' && view !== 'archive' && view !== 'stats' && view !== 'setup' && <main className="console">
         <div className={`console__head ${s.phase === 'live' || s.phase === 'final' ? 'console__head--progress' : ''}`}>
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
           )}
           {s.phase === 'live' || s.phase === 'final'
             ? <h2 className="sr">{title}</h2>
-            : <div className="console__titles"><p className="console__eyebrow kicker">{kicker}</p><h2 className="console__title">{title}</h2></div>}
+            : <div className="console__titles"><p className="console__eyebrow kicker">{kicker}</p>
+              <h2 className="console__title" key={heading}>{scene ? <>{heading.split(' ')[0]} <em>{heading.split(' ').slice(1).join(' ')}</em></> : title}</h2>
+              {scene && !start && (
+                <p className="console__picks"><b>{roundNumber(s) - 1} / {draftRounds(s)}</b> picks made
+                  <span className="console__pips" aria-hidden="true">{Array.from({ length: draftRounds(s) }, (_, i) => <i key={i} className={i < roundNumber(s) - 1 ? 'is-done' : i === roundNumber(s) - 1 ? 'is-now' : ''} />)}</span></p>
+              )}</div>}
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
-        {view === 'draft' && s.phase === 'draft' && <><div className={drafting ? 'desktop-strip' : ''}><TeamStrip s={s} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
+        {view === 'draft' && s.phase === 'draft' && <><div className={`${drafting ? 'desktop-strip' : ''} ${start ? 'strip-wait' : 'strip-in'}`} aria-hidden={start ? true : undefined}><TeamStrip s={s} preview={preview} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${s.phase}`}>
-          {drafting && <LineupPanel s={s} preview={preview} />}
           <section className="console__main">
             <ChatVoteBar />
-            {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onPreview={setPreview} />}
+            {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onPreview={setPreview} toSetup={() => setView('setup')} />}
             {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
             {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} board={<BoardHost s={s} mine={playing} />} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
@@ -192,10 +211,9 @@ function Game() {
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); setView('draft'); }} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
-      {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); dispatch({ type: 'reset' }); setView('home'); }} />}
+      {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
-      {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} />}
-      {browse && <RosterBrowser hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setBrowse(false)} />}
+      <DebugMenu jump={(run) => { setReelFor(null); setPreview(null); setBegan(true); dispatch({ type: 'adopt', run }); setView('draft'); }} />
     </div>
     </>
   );

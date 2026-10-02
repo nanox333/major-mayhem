@@ -1,0 +1,400 @@
+/* The case before it is opened (#225): three sealed bays in the exact footprint the reels and then the roster cards use, and a panel in the decision strip's place.
+   Opening the case changes what is inside the bays and nothing about where they are, so the page does not move. It reuses the reels' own pieces (the lane, its orange
+   light, the stop band and the dark fades) at rest, and the decision strip's surface. Scoped to .case-ready, so it only exists inside the active draft view. */
+
+.case-ready { --step: 92px; min-height: 0; padding: 0; display: grid; place-content: stretch; justify-items: stretch; gap: 16px; text-align: left; }
+.case-ready > * { min-width: 0; }
+
+/* ---------- the three sealed bays ---------- */
+.ready__bar { position: relative; }
+.lane--sealed .lane__window { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 60%, var(--ds-line)), inset 18px 0 28px -18px rgba(249, 132, 37, .5), inset -18px 0 28px -18px rgba(249, 132, 37, .5), inset 0 0 46px rgba(0, 0, 0, .85), 0 0 40px -10px var(--ds-glow); }
+/* The orange tactical frame (corner brackets, a fading dot grid and a dial) sits faintly over the whole bay, and the light a sealed case gives off comes from its middle. */
+.lane--sealed .lane__window::before { content: ''; position: absolute; inset: 0; z-index: 0; background: url('../assets/draft/orange-tech-pattern.webp') 50% 50% / contain no-repeat; opacity: .5; pointer-events: none; }
+.lane--sealed .lane__window::after { content: ''; position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse 90% 26% at 50% 50%, rgba(249, 132, 37, .26), transparent 78%); pointer-events: none; }
+/* The reels' dark fades blend passing rows into the edges; a sealed bay has none, and they would hide the frame. */
+.lane--sealed .lane__fade { display: none; }
+.lane--sealed .lane__marker { transition: box-shadow .2s ease-out; }
+/* What sits in the band: a cube in a ring, and what is inside it. Nothing here names a team. */
+.sealed { position: absolute; z-index: 3; left: 0; right: 0; top: 50%; height: var(--step); transform: translateY(-50%); display: flex; align-items: center; justify-content: center; gap: 16px; padding: 0 22px; pointer-events: none; }
+.sealed__badge { flex: none; width: 52px; height: 52px; display: grid; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 72%, transparent); border-radius: 50%; background: radial-gradient(circle at 50% 38%, rgba(249, 132, 37, .28), rgba(0, 0, 0, .55) 72%); color: var(--accent-hi); box-shadow: 0 0 20px -4px rgba(249, 132, 37, .6), inset 0 0 14px rgba(249, 132, 37, .18); }
+.sealed__text { display: grid; min-width: 0; text-align: left; }
+.sealed__text strong { font-family: var(--f-head); font-weight: 800; font-size: 1.5rem; line-height: 1.05; letter-spacing: .08em; text-transform: uppercase; color: var(--strong); text-shadow: var(--ds-text-shadow); }
+.sealed__text small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 3px; color: var(--muted); font-size: .8rem; }
+/* The bays answer the button: reaching for it wakes their light, once, and releases it when you leave. */
+.case-ready .lane::before { opacity: .55; transition: opacity .25s ease-out; }
+.case-ready:has(.ready-strip__action .cta:hover, .ready-strip__action .cta:focus-visible) .lane::before { opacity: 1; }
+.case-ready:has(.ready-strip__action .cta:hover, .ready-strip__action .cta:focus-visible) .lane--sealed .lane__marker { box-shadow: 0 0 30px rgba(249, 132, 37, .6), inset 0 0 26px rgba(249, 132, 37, .24); }
+
+/* ---------- the panel: round, what is left to fill, the button ---------- */
+.ready-strip { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px 26px; align-items: center; padding: 14px 18px; border: 1px solid color-mix(in srgb, var(--accent) 62%, var(--ds-line)); border-radius: 3px;
+  background: radial-gradient(ellipse 46% 160% at 0% 50%, rgba(249, 132, 37, .16), transparent 72%), radial-gradient(ellipse 34% 140% at 100% 55%, rgba(249, 132, 37, .22), transparent 72%), linear-gradient(180deg, var(--ds-deep), var(--ds-deeper));
+  box-shadow: 0 22px 46px -28px #000, inset 0 1px 0 rgba(255, 255, 255, .08); }
+.ready-strip__eyebrow { margin: 0 0 4px; color: var(--muted); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; }
+.ready-strip__id h3 { margin: 0; font: 800 1.9rem/1 var(--f-head); letter-spacing: .02em; color: var(--ds-name); }
+.ready-strip__help { margin: 8px 0 0; max-width: 52ch; color: var(--muted); font: .84rem/1.45 var(--f-read); }
+.ready-strip__label { margin: 0 0 8px; color: var(--text-2); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; }
+.ready-strip__fill ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.ready-strip__fill li { display: inline-flex; align-items: center; gap: 7px; min-height: 32px; padding: 0 11px; border: 1px solid var(--ds-line-2); border-radius: 2px; background: rgba(255, 255, 255, .03); color: var(--text-2); font: 600 .8rem var(--f-read); }
+.ready-strip__fill li svg { flex: none; color: var(--muted); }
+/* The slot this round fills (the coach, the bench) is the one in orange. Player rounds can fill any open slot, so none is singled out. */
+.ready-strip__fill li.is-now { border-color: var(--accent); background: rgba(249, 132, 37, .12); color: var(--strong); }
+.ready-strip__fill li.is-now svg { color: var(--accent-hi); }
+.ready-strip__action { justify-items: stretch; gap: 8px; }
+.ready-strip__action small { color: var(--muted); font: .74rem/1.3 var(--f-read); text-align: center; }
+.ready-strip .cta { display: inline-flex; align-items: center; justify-content: space-between; gap: 14px; min-height: 64px; width: 100%; min-width: 0; padding: 0 20px; border-radius: 2px; background: linear-gradient(180deg, var(--accent-hi), var(--accent) 58%, #ec7316); box-shadow: 0 12px 30px -10px rgba(249, 132, 37, .6), inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 -3px 0 rgba(0, 0, 0, .2); font: 800 1.4rem/1.05 var(--f-head); letter-spacing: .05em; text-transform: uppercase; transition: transform .14s ease-out, filter .14s; }
+.ready-strip .cta:hover { transform: translateY(-1px); filter: brightness(1.07); }
+
+@media (min-width: 1100px) {
+  /* The same footprint and columns as the decision panel it makes way for. */
+  .ready-strip { grid-template-columns: minmax(290px, 1.1fr) minmax(220px, 1.1fr) minmax(210px, .8fr); min-height: var(--ds-decision-h, 160px); }
+  .ready-strip__fill { padding-left: 24px; border-left: 1px solid rgba(255, 255, 255, .12); }
+}
+/* Tablet: the round and what is left on the left, the button beside them. */
+@media (max-width: 1099px) and (min-width: 861px) {
+  .ready-strip { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); }
+  .ready-strip__id, .ready-strip__fill { grid-column: 1; }
+  .ready-strip__action { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+}
+/* Phones: no card. The round, what is left and a button that stays in reach at the bottom of the screen (the action bar's own sticky rule). */
+@media (max-width: 860px) {
+  /* The same spacing as the reels' lanes on a phone, so a case opens without anything moving. */
+  .case-ready { --step: 76px; gap: 16px; }
+  .ready__lanes { gap: 26px; margin-top: 8px; }
+  /* The reels' bar holds the Show case button in its row on a phone; keep its height so the lanes start in the same place. */
+  .case-ready .ready__bar { min-height: 51px; }
+  .ready-strip { display: contents; }
+  .ready-strip__id h3 { font-size: 1.5rem; }
+  .sealed { gap: 12px; padding: 0 16px; }
+  .sealed__badge { width: 44px; height: 44px; }
+  .sealed__text strong { font-size: 1.25rem; }
+  .ready-strip__action small { display: none; }
+  .ready-strip .cta { min-height: 56px; }
+}
+@media (min-width: 861px) and (max-height: 820px) {
+  .ready-strip { padding-block: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .case-ready .lane::before, .lane--sealed .lane__marker, .ready-strip .cta { transition: none; }
+}
+@media (forced-colors: active) {
+  .lane--sealed .lane__window::before, .lane--sealed .lane__window::after { display: none; }
+}
+
+/* ---------- first visit: how it works, as a strip under the panel ---------- */
+.how-strip { padding: 12px 16px 14px; border: 1px solid var(--ds-line-2); border-left: 3px solid var(--accent); border-radius: 3px; background: linear-gradient(180deg, var(--ds-deep), var(--ds-deeper)); }
+.how-strip__head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.how-strip__head h3 { margin: 0; color: var(--muted); font: var(--ds-label); letter-spacing: .14em; text-transform: uppercase; }
+.how-strip__btns { display: inline-flex; align-items: center; gap: 14px; }
+.how-strip__btns .link-btn { color: var(--muted); font-size: .76rem; }
+.how-strip__btns .ghost-btn { min-height: 32px; padding: 0 12px; border-color: var(--ds-line-2); font-size: .78rem; }
+.how-strip .steps { margin: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 28px; }
+.how-strip .steps li { position: static; display: grid; grid-template-columns: 26px minmax(0, 1fr); column-gap: 12px; row-gap: 2px; align-items: start; padding: 0; }
+.how-strip .steps li::before { position: static; grid-row: 1 / span 2; width: auto; height: auto; display: block; border: 0; border-radius: 0; color: var(--accent); font: 800 2rem/.9 var(--f-head); }
+.how-strip .steps b { font: 700 .9rem/1.2 var(--f-read); letter-spacing: 0; text-transform: none; color: var(--strong); }
+.how-strip .steps span { font: .78rem/1.45 var(--f-read); color: var(--muted); }
+@media (max-width: 1099px) { .how-strip .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .how-strip .steps { grid-template-columns: minmax(0, 1fr); } }
+
+/* "Play Daily instead" / "Switch to free play": a dark angular button with an orange edge and a striped arrow block, like Replay on Home. */
+.ready-switch { position: relative; isolation: isolate; overflow: hidden; justify-self: start; display: inline-flex; align-items: center; min-height: 52px; padding: 0 74px 0 22px; border: 0; border-radius: 0; background: rgba(249, 132, 37, .85); color: var(--strong); cursor: pointer; clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); }
+.ready-switch span { font: 800 1.15rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.ready-switch::before { content: ""; position: absolute; z-index: -1; inset: 1px; background: linear-gradient(100deg, #1c1d1c, #121312); clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px)); transition: background .15s; }
+.ready-switch::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 56px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
+.ready-switch svg { position: absolute; right: 17px; top: 50%; width: 22px; height: 22px; margin-top: -11px; color: #fff; transition: transform .18s ease-out; }
+.ready-switch:hover::before { background: linear-gradient(100deg, #292825, #181816); }
+.ready-switch:hover::after { animation: mode-stripes .7s linear infinite; }
+.ready-switch:hover svg { transform: translateX(4px); }
+.ready-switch:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+@keyframes mode-stripes { to { background-position: 17px 0, 0 0; } }
+@media (prefers-reduced-motion: reduce) { .ready-switch::after, .ready-switch svg { animation: none !important; transition: none; } }
+
+/* The same sweep as the other buttons: a slanted band of light crosses it on hover. */
+.ready-switch span::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; pointer-events: none; }
+.ready-switch:hover span::before { left: 110%; }
+@media (prefers-reduced-motion: reduce) { .ready-switch span::before { transition: none; } }
+
+/* Open case: the same angular orange button as Start free play. */
+.ready-strip .cta { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: flex-start; width: 100%; min-height: 64px; padding: 0 78px 0 24px; border: 0; border-radius: 0; background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); box-shadow: none; color: #170c03; font: 800 1.5rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; animation: none; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)); transition: filter .15s; }
+.ready-strip .cta::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 62px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
+.ready-strip .cta::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; }
+.ready-strip .cta svg { position: absolute; right: 20px; top: 50%; width: 24px; height: 24px; margin-top: -12px; color: #fff; transition: transform .18s ease-out; }
+.ready-strip .cta:hover { transform: none; filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)) brightness(1.08); }
+.ready-strip .cta:hover::before { left: 110%; }
+.ready-strip .cta:hover::after { animation: mode-stripes .7s linear infinite; }
+.ready-strip .cta:hover svg { transform: translateX(4px); }
+.ready-strip .cta:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+@media (max-width: 860px) { .ready-strip .cta { min-height: 58px; font-size: 1.35rem; } }
+@media (prefers-reduced-motion: reduce) { .ready-strip .cta::before, .ready-strip .cta::after, .ready-strip .cta svg { transition: none; animation: none !important; } }
+@media (forced-colors: active) { .ready-strip .cta { clip-path: none; border: 1px solid ButtonText; } }
+
+/* ---------- the decision panel in the panel language: flat dark, a cut corner, the team's colour as an edge and a bar, an angular Draft button ---------- */
+.page.is-scene .draft-decision .draftbar, .page.is-scene .draft-decision .peekbar { border: 0; border-radius: 0; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 4px 0 0 var(--team, var(--accent)); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); }
+.page.is-scene .draft-decision .draftbar::after, .page.is-scene .draft-decision .peekbar::after { opacity: .1; }
+.page.is-scene .draftbar__portrait { border-radius: 0; box-shadow: inset 0 -4px 0 var(--team, var(--accent)), inset -1px 0 0 rgba(255, 255, 255, .12); }
+.page.is-scene .draftbar__who b { text-transform: uppercase; letter-spacing: .03em; }
+.page.is-scene .draftbar__why { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: var(--muted); font: 600 .68rem/1 var(--f-read); letter-spacing: .14em; }
+.page.is-scene .draftbar__why::before { content: ""; width: 7px; height: 7px; background: var(--accent); transform: skewX(-20deg); }
+.page.is-scene .draftbar__chem { border-left-color: rgba(255, 255, 255, .1); }
+.page.is-scene .peekbar__hint { color: var(--accent-hi); font-weight: 700; }
+
+/* slots: flat, a bar along the bottom when chosen */
+.page.is-scene .draftbar .slot-chip { min-height: 40px; padding: 4px 12px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); color: var(--text-2); }
+.page.is-scene .draftbar .slot-chip:hover:not(:disabled) { background: rgba(255, 255, 255, .09); }
+.page.is-scene .draftbar .slot-chip.is-on { background: color-mix(in srgb, var(--accent) 14%, #0b0c0b); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .5), inset 0 -3px 0 var(--accent); color: var(--strong); }
+.page.is-scene .draftbar .slot-chip.is-taken { opacity: .5; }
+
+/* nothing chosen yet: a quiet flat panel with a tick and a condensed heading */
+.page.is-scene .draft-decision .draft-decision-empty.is-compact { align-items: center; padding: 16px 20px; border: 0; border-radius: 0; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 4px 0 0 var(--accent); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); }
+.page.is-scene .draft-decision .draft-decision-empty.is-compact b { display: flex; align-items: center; gap: 10px; color: var(--strong); font: 800 1.35rem/1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; }
+.page.is-scene .draft-decision .draft-decision-empty.is-compact b::before { content: ""; width: 8px; height: 8px; background: var(--accent); transform: skewX(-20deg); }
+.page.is-scene .draft-decision .draft-decision-empty.is-compact span { color: var(--muted); font-size: .9rem; }
+
+/* Draft: the angular orange button, the label and the slot stacked */
+.page.is-scene .draftbar .cta { position: relative; isolation: isolate; overflow: hidden; justify-content: flex-start; min-height: 68px; padding: 0 76px 0 22px; border: 0; border-radius: 0; background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); box-shadow: none; color: #170c03; animation: none; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .2)); transition: filter .15s; }
+.page.is-scene .draftbar .cta::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 60px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
+.page.is-scene .draftbar .cta::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; }
+.page.is-scene .draftbar .cta > svg { position: absolute; right: 18px; top: 50%; width: 24px; height: 24px; margin-top: -12px; color: #fff; transition: transform .18s ease-out; }
+.page.is-scene .draftbar .cta:not([disabled]):hover { transform: none; filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .2)) brightness(1.08); }
+.page.is-scene .draftbar .cta:not([disabled]):hover::before { left: 110%; }
+.page.is-scene .draftbar .cta:not([disabled]):hover::after { animation: mode-stripes .7s linear infinite; }
+.page.is-scene .draftbar .cta:not([disabled]):hover > svg { transform: translateX(4px); }
+.page.is-scene .draftbar .cta[disabled] { filter: none; opacity: .5; }
+.page.is-scene .draftbar .cta:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .page.is-scene .draftbar .cta::before, .page.is-scene .draftbar .cta::after, .page.is-scene .draftbar .cta > svg { transition: none; animation: none !important; } }
+@media (forced-colors: active) { .page.is-scene .draftbar .cta { clip-path: none; border: 1px solid ButtonText; } }
+@media (min-width: 1100px) { .page.is-scene .draftbar .draftbar__slots { margin-left: 122px; } }
+
+/* ---------- the decision panel, one fixed height whatever you point at: the portrait runs the full height at the left, the reasons and the slot choice sit in the middle, the Draft button at the right ---------- */
+@media (min-width: 900px) {
+  .page.is-scene .draft-decision .draft-decision-empty.is-compact { min-height: var(--ds-decision-h, 144px); box-sizing: border-box; }
+  .page.is-scene .draft-decision .draftbar, .page.is-scene .draft-decision .peekbar { height: var(--ds-decision-h, 144px); min-height: 0; padding: 0 24px 0 0; gap: 0 32px; align-items: stretch; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); }
+  .page.is-scene .draft-decision .draftbar { grid-template-columns: minmax(230px, 1fr) minmax(300px, 1.3fr) minmax(200px, 290px); grid-template-rows: minmax(0, 1fr) auto; }
+  .page.is-scene .draft-decision .peekbar { grid-template-columns: minmax(230px, 1fr) minmax(300px, 1.3fr) auto; }
+  .page.is-scene .draft-decision .draftbar__identity { grid-column: 1; grid-row: 1 / span 2; align-items: stretch; gap: 0; }
+  .page.is-scene .draft-decision .draftbar__portrait { width: calc(var(--ds-decision-h, 144px) * .92); height: auto; align-self: stretch; }
+  .page.is-scene .draft-decision .draftbar__who { align-self: center; padding-left: 20px; gap: 3px; }
+  .page.is-scene .draft-decision .draftbar__who b { font-size: 2rem; }
+  .page.is-scene .draft-decision .draftbar__who small { margin-top: 2px; font-size: .7rem; letter-spacing: .03em; }
+  .page.is-scene .draft-decision .draftbar__chem { grid-column: 2; grid-row: 1; align-self: center; min-height: 0; overflow: hidden; padding: 0 0 0 28px; border-left: 1px solid rgba(255, 255, 255, .1); }
+  .page.is-scene .draft-decision .draftbar:has(.draftbar__slots) .draftbar__chem { align-self: end; }
+  .page.is-scene .draft-decision .draftbar__why { margin-bottom: 6px; }
+  .page.is-scene .draft-decision .why { gap: 4px; }
+  .page.is-scene .draft-decision .why li { font-size: .88rem; line-height: 1.25; }
+  .page.is-scene .draft-decision .draftbar__total { margin-top: 4px; }
+  .page.is-scene .draft-decision .draftbar__slots { grid-column: 2; grid-row: 2; display: flex; gap: 6px; margin: 0; padding: 8px 0 12px 28px; border-left: 1px solid rgba(255, 255, 255, .1); }
+  .page.is-scene .draft-decision .draftbar:not(:has(.draftbar__slots)) .draftbar__chem { grid-row: 1 / span 2; }
+  .page.is-scene .draft-decision .draftbar .slot-chip { flex: 1 1 0; min-width: 0; min-height: 34px; padding: 4px 10px; display: flex; align-items: center; justify-content: flex-start; gap: 8px; text-align: left; }
+  .page.is-scene .draft-decision .draftbar .slot-chip > span { display: inline-flex; align-items: center; gap: 6px; font: 800 .76rem/1 var(--f-read); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+  .page.is-scene .draft-decision .draftbar .slot-chip .fit { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: .66rem; line-height: 1; color: var(--muted); white-space: nowrap; letter-spacing: 0; }
+  .page.is-scene .draft-decision .draftbar .cta { grid-column: 3; grid-row: 1 / span 2; align-self: center; min-height: 0; height: min(84px, calc(var(--ds-decision-h, 144px) - 28px)); }
+}
+
+/* ---------- the reels, turned up: speed streaks, a breathing glow, a charging progress line, a flash and shake when each one locks ---------- */
+/* the glow behind a turning reel breathes quickly, then settles when it locks */
+.lane:not(.is-locked)::before { animation: reel-breathe .5s ease-in-out infinite alternate; }
+@keyframes reel-breathe { from { opacity: .55; transform: scale(.97); } to { opacity: 1; transform: scale(1.04); } }
+.lane:not(.is-locked) .lane__label { color: var(--accent-hi); animation: reel-label .6s steps(2, end) infinite; }
+@keyframes reel-label { 50% { opacity: .45; } }
+/* the lock: a ring of light bursts out, the window kicks and the winning row flashes white */
+.lane.is-locked::after { content: ""; position: absolute; z-index: 4; left: 50%; top: 50%; width: 40%; aspect-ratio: 1; margin: -20% 0 0 -20%; border-radius: 50%; pointer-events: none; border: 2px solid rgba(255, 200, 140, .95); box-shadow: 0 0 30px rgba(255, 130, 40, .8), inset 0 0 30px rgba(255, 130, 40, .6); animation: lock-ring .55s ease-out both; }
+@keyframes lock-ring { from { transform: scale(.2); opacity: 1; } to { transform: scale(3.4); opacity: 0; } }
+.lane.is-locked .lane__window { animation: lane-window-flash .34s ease-out, lock-kick .32s cubic-bezier(.3, 1.6, .4, 1); }
+@keyframes lock-kick { 0% { transform: translateY(0); } 25% { transform: translateY(5px) scale(1.012); } 55% { transform: translateY(-3px); } 100% { transform: none; } }
+.lane__item.is-winner { animation: lane-win .24s ease-out, lock-white .5s ease-out; }
+@keyframes lock-white { 0% { background: rgba(255, 235, 210, .55); } 100% { background: rgba(249, 132, 37, .18); } }
+.lane.is-locked .lane__label { color: var(--strong); }
+
+/* depth: the reel is a drum seen through a lens, and the rows turn on it */
+.lane__window { perspective: 640px; perspective-origin: 50% 50%; }
+.lane__strip { transform-style: preserve-3d; }
+.lane__item { backface-visibility: hidden; }
+.lane:not(.is-locked) .lane__window { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 82%, var(--ds-line)), inset 0 60px 50px -30px rgba(0, 0, 0, .95), inset 0 -60px 50px -30px rgba(0, 0, 0, .95), inset 18px 0 28px -16px rgba(249, 132, 37, .72), inset -18px 0 28px -16px rgba(249, 132, 37, .72), 0 0 52px -8px var(--ds-glow); }
+
+/* The lineup strip takes no room while the case is still sealed; when the draft starts it opens out and its slots drop in one after another. */
+.strip-wait { display: none; }
+.desktop-strip.strip-in, .strip-in { animation: strip-open .85s cubic-bezier(.25, .8, .25, 1); }
+@keyframes strip-open { 0% { max-height: 0; opacity: 0; overflow: hidden; } 35% { opacity: 1; } 100% { max-height: 240px; opacity: 1; overflow: hidden; } }
+.strip-in { position: relative; }
+.strip-in::after { content: ""; position: absolute; z-index: 3; left: 0; top: 0; width: 100%; height: 2px; pointer-events: none; background: linear-gradient(90deg, transparent, var(--accent) 35%, #ffd2a1 50%, var(--accent) 65%, transparent); box-shadow: 0 0 14px rgba(249, 132, 37, .9); transform: translateX(-100%); animation: strip-scan .9s cubic-bezier(.4, 0, .2, 1) .1s both; }
+@keyframes strip-scan { 0% { transform: translateX(-100%); opacity: 1; } 85% { opacity: 1; } 100% { transform: translateX(100%); opacity: 0; } }
+/* the rules around the strip are quiet while it is away, and come back with it */
+.console__head { transition: border-color .6s ease; }
+.console:has(.strip-wait) .console__head { border-bottom-color: transparent; }
+.console:has(.strip-wait) .ready__bar { border-bottom-color: transparent; }
+.strip-in .strip__slot { animation: strip-slot-in .55s cubic-bezier(.2, .8, .2, 1) both; }
+.strip-in .strip__slot:nth-child(2) { animation-delay: .07s; }
+.strip-in .strip__slot:nth-child(3) { animation-delay: .14s; }
+.strip-in .strip__slot:nth-child(4) { animation-delay: .21s; }
+.strip-in .strip__slot:nth-child(5) { animation-delay: .28s; }
+.strip-in .strip__slot:nth-child(6) { animation-delay: .35s; }
+.strip-in .strip__slot:nth-child(7) { animation-delay: .42s; }
+@keyframes strip-slot-in { 0% { opacity: 0; transform: translateY(-16px) scale(.96); filter: brightness(2.2); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; filter: none; } }
+@media (prefers-reduced-motion: reduce) { .strip-in, .strip-in::after, .strip-in .strip__slot { animation: none; } }
+
+/* Roster card title: the year stays at the left in its own tag and the name stays on one line (it shortens with an ellipsis rather than wrapping). */
+.page .case-card__name { display: flex; align-items: baseline; gap: 10px; min-width: 0; white-space: nowrap; overflow-wrap: normal; }
+.page .case-card__name > span { flex: none; padding: 0 7px 1px; background: rgba(255, 255, 255, .12); color: var(--strong); font-size: .62em; line-height: 1.35; letter-spacing: .06em; transform: skewX(-12deg); font-variant-numeric: tabular-nums; }
+.page .case-card__name > b { min-width: 0; overflow: hidden; text-overflow: ellipsis; font: inherit; letter-spacing: inherit; color: inherit; }
+.page .case-card__top > .case-card__id { flex: 1 1 auto; min-width: 0; }
+.is-scene .case-card__name { font-size: 1.4rem; gap: 8px; }
+.is-scene .case-card__name > span { font-size: .6em; padding: 0 6px 1px; }
+.is-scene .case-card__name { position: relative; z-index: 2; margin-right: -84px; }
+
+/* ---------- the draft in the flat, angular style ---------- */
+/* placement: a graded tag (gold champion, red finalist, pink semifinalist, purple quarterfinalist) */
+.page .place { position: relative; gap: 6px; padding: 2px 10px 2px 12px; border: 0; border-radius: 0; background: color-mix(in srgb, var(--rar, var(--accent)) 24%, #0b0c0b); box-shadow: inset 3px 0 0 var(--rar, var(--accent)); color: color-mix(in srgb, var(--rar, var(--accent)) 55%, #fff); font: 800 .78rem/1.3 var(--f-read); letter-spacing: .1em; text-transform: uppercase; clip-path: polygon(0 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+.page .place svg { color: var(--rar, var(--accent)); }
+.is-scene .case-card .place { color: color-mix(in srgb, var(--rar, var(--accent)) 55%, #fff); font-size: .78rem; font-weight: 800; }
+
+/* roster cards: square, one cut corner, the team colour as the edge and a bar along the foot */
+.page.is-scene .case-card { border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--team) 40%, rgba(255, 255, 255, .08)); }
+.page.is-scene .case-card { clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%); }
+.page.is-scene .case-card::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--team); pointer-events: none; z-index: 3; }
+.page.is-scene .case-card.is-sel { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--team) 70%, rgba(255, 255, 255, .1)); }
+.page.is-scene .case-card__top { box-shadow: none; border-top: 0; }
+.page.is-scene .case-card .prow__face { border-radius: 0; }
+
+/* player rows: flat, a left edge and an orange bar when chosen */
+.page.is-scene .prow.is-sel, .page.is-scene button.prow.is-sel:hover { border-radius: 0; transform: none; background: linear-gradient(90deg, rgba(249, 132, 37, .24), rgba(249, 132, 37, .06)); box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px rgba(249, 132, 37, .45); }
+.page.is-scene .prow.is-sel .prow__face { box-shadow: 0 0 0 2px var(--accent); }
+.page.is-scene button.prow:hover:not(.is-sel) { transform: none; box-shadow: inset 3px 0 0 rgba(255, 255, 255, .35); }
+
+/* the lineup strip: flat cells with a bar along the foot instead of rounded boxes */
+.page.is-scene .strip__slot > button, .page.is-scene .strip__slot > div { border: 0; border-radius: 0; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 0 -3px 0 transparent; }
+.page.is-scene .strip__slot.is-full > div { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 0 -3px 0 var(--accent); }
+.page.is-scene .strip__slot.is-next > div { border: 0; box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .55), inset 0 -3px 0 rgba(249, 132, 37, .45); }
+.page.is-scene .strip__slot.is-preview > div { border: 0; box-shadow: inset 0 0 0 1px var(--accent), inset 0 -3px 0 var(--accent); background: rgba(249, 132, 37, .12); }
+.page.is-scene .strip__slot > button { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 3px 0 0 #565c57; }
+.page.is-scene .strip__face { border-radius: 0; }
+
+/* labels get the slanted tick */
+.page.is-scene .opened b::before, .page.is-scene .console__eyebrow::before { content: ""; display: inline-block; width: 6px; height: 11px; margin-right: 8px; background: var(--accent); transform: skewX(-18deg); vertical-align: -1px; }
+.page.is-scene .opened { border-bottom-color: rgba(255, 255, 255, .08); }
+.page.is-scene .console__pips i { border-radius: 0; transform: skewX(-20deg); }
+.page.is-scene .progress .pstep.is-on .pstep__label { border-bottom-width: 3px; }
+.page.is-scene .reroll-row .ghost-btn, .page.is-scene .reroll-row button { border-radius: 0; }
+
+/* ---------- the roles across the top: angular cells, a slanted icon tile, a condensed uppercase label ---------- */
+.page.is-scene .strip__slot > button, .page.is-scene .strip__slot > div { position: relative; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); background: rgba(255, 255, 255, .035); padding-left: 10px; }
+.page.is-scene .strip__face { position: relative; flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 0; overflow: hidden; }
+.page.is-scene .strip__face--empty { background: rgba(249, 132, 37, .12); color: var(--accent-hi); clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); width: 38px; }
+.page.is-scene .strip__slot.is-next .strip__face--empty { background: var(--accent); color: #170c03; }
+.page.is-scene .strip__slot:not(.is-full):not(.is-preview) .strip__role { display: inline-flex; align-items: center; gap: 6px; font: 800 .92rem/1 var(--f-head); letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); }
+.page.is-scene .strip__slot.is-next:not(.is-full):not(.is-preview) .strip__role { color: var(--strong); }
+.page.is-scene .strip__slot:not(.is-full):not(.is-preview) .strip__role > svg { color: var(--accent-hi); margin: 0; }
+.page.is-scene .strip__slot.is-full .strip__nick { font: 800 1rem/1.1 var(--f-head); letter-spacing: .04em; text-transform: uppercase; }
+.page.is-scene .strip__slot.is-full > div .strip__role, .page.is-scene .strip__slot.is-preview .strip__role { font: 700 .7rem/1 var(--f-read); letter-spacing: .12em; text-transform: uppercase; }
+
+/* ---------- under the cards: the hint and the chemistry as two flat panels ---------- */
+.page.is-scene .draft-side { gap: 12px; }
+.page.is-scene .side-card { position: relative; padding: 14px 18px 16px; background: rgba(255, 255, 255, .035); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 0 -3px 0 rgba(249, 132, 37, .8); }
+.page.is-scene .side-card.hint-card { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 3px 0 0 var(--accent); }
+.page.is-scene .side-card h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; font: 700 .7rem/1 var(--f-read); letter-spacing: .18em; color: var(--muted); }
+.page.is-scene .side-card h3::before { content: ""; width: 6px; height: 12px; background: var(--accent); transform: skewX(-18deg); }
+.page.is-scene .side-card.hint-card p { margin: 0; font-size: .92rem; line-height: 1.5; color: var(--text-2); }
+.page.is-scene .info-btn { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-left: 2px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .1); color: var(--strong); font: 800 .72rem/1 var(--f-read); transform: skewX(-12deg); }
+.page.is-scene .info-btn:hover { background: var(--accent); color: #170c03; }
+.page.is-scene .chem__total { display: flex; align-items: center; gap: 12px; margin: 0 0 8px; }
+.page.is-scene .chem__total b { font: 800 1.5rem/1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; color: var(--strong); }
+.page.is-scene .pips { display: inline-flex; gap: 4px; }
+.page.is-scene .pips i { width: 22px; height: 8px; border-radius: 0; border: 0; background: rgba(255, 255, 255, .14); transform: skewX(-20deg); }
+.page.is-scene .pips i.on { background: var(--accent); box-shadow: 0 0 10px rgba(249, 132, 37, .5); }
+.page.is-scene .synergies { display: grid; gap: 3px; margin: 8px 0 0; padding: 0; list-style: none; }
+.page.is-scene .syn { display: flex; align-items: center; gap: 12px; padding: 6px 10px 6px 12px; background: rgba(255, 255, 255, .04); box-shadow: inset 3px 0 0 var(--go); font-size: .86rem; color: var(--text); }
+.page.is-scene .syn.is-bad { box-shadow: inset 3px 0 0 var(--loss); }
+.page.is-scene .syn b { flex: none; min-width: 22px; text-align: center; font: 800 .8rem/1 var(--f-read); letter-spacing: .06em; color: var(--go-text); }
+.page.is-scene .syn.is-bad b { color: var(--loss-text); }
+.page.is-scene .chem__if { margin-top: 12px; padding: 12px 14px; background: rgba(0, 0, 0, .22); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .06), inset 3px 0 0 rgba(255, 255, 255, .22); }
+.page.is-scene .chem__if h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font: 800 .95rem/1.1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; color: var(--strong); }
+.page.is-scene .chem__if .chem__total b { font-size: 1.15rem; }
+.page.is-scene .chem__history { margin: 0 0 6px; }
+.page.is-scene .chem__history summary { font: 700 .68rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; color: var(--accent-hi); }
+
+/* ---------- the step tabs (Draft, Lobby, Major, Results): slanted segments instead of text on a rule ---------- */
+.page .progress { gap: 3px; }
+.page .progress .pstep + .pstep::before { display: none; }
+.page .progress .pstep__label, .page.is-scene .progress .pstep__label { position: relative; min-height: 32px; padding: 0 20px; gap: 7px; border: 0; background: rgba(255, 255, 255, .06); clip-path: polygon(9px 0, 100% 0, calc(100% - 9px) 100%, 0 100%); font: 800 .76rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); transition: background .15s, color .15s; }
+.page .progress .pstep.is-done .pstep__label { color: var(--accent-hi); background: rgba(249, 132, 37, .12); }
+.page .progress .pstep.is-on .pstep__label, .page.is-scene .progress .pstep.is-on .pstep__label { background: var(--accent); color: #170c03; border: 0; }
+.page .progress .pstep__tick { font-size: .8em; }
+.page .progress .pstep { font: inherit; }
+
+/* ---------- breathing room on the draft page (only where the window is tall enough that nothing is pushed off the screen) ---------- */
+@media (min-height: 820px) and (min-width: 900px) {
+  .page.is-scene .console__head { padding-bottom: 16px; }
+  .page.is-scene .desktop-strip { margin-bottom: 16px; }
+  .page.is-scene .opened { margin-bottom: 14px; padding-bottom: 10px; }
+  .page.is-scene .draft-decision { margin-top: 24px; gap: 10px; }
+  .page.is-scene .draft-side { margin-top: 30px; }
+}
+
+/* ---------- the cut corner, with its outline: the clipped box loses its outline along the diagonal, so a thin line is drawn there ---------- */
+.page.is-scene .case-card::before { content: ""; position: absolute; z-index: 4; top: 0; right: 0; width: 18px; height: 18px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, color-mix(in srgb, var(--team) 58%, #6a6a6a) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.page.is-scene .strip__slot > button::before, .page.is-scene .strip__slot > div::before { content: ""; position: absolute; z-index: 2; bottom: 0; right: 0; width: 10px; height: 10px; pointer-events: none; background: linear-gradient(to top left, transparent 50%, rgba(255, 255, 255, .22) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.page.is-scene .strip__slot.is-preview > div::before, .page.is-scene .strip__slot.is-next > div::before { background: linear-gradient(to top left, transparent 50%, rgba(249, 132, 37, .7) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.page.is-scene .draft-decision .draftbar::before, .page.is-scene .draft-decision .peekbar::before, .page.is-scene .draft-decision .draft-decision-empty.is-compact::before { content: ""; position: absolute; z-index: 4; top: 0; right: 0; width: 16px; height: 16px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, rgba(255, 255, 255, .2) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.page.is-scene .draft-decision .draft-decision-empty.is-compact { position: relative; }
+
+/* No "Opened case" line above the cards (the header already says which pick this is): the sealed bays, the reels and the cards all start at the same place, and Show case floats at the right above the reels. */
+.page.is-scene .teams-col { margin-top: 28px; }
+.page.is-scene .reveal__bar { position: relative; height: 0; min-height: 0; margin: 0; padding: 0; border: 0; }
+@media (min-width: 861px) { .page.is-scene .reveal__skip.st-btn--quiet { position: absolute; top: 14px; right: 0; margin: 0; } }
+.page.is-scene .case-card { position: relative; }
+.page.is-scene .case.reveal { gap: 0; row-gap: 0; }
+
+/* Show case: the button sits clear of the reels, and skipping plays a quick rush, flash and sweep. */
+@media (min-width: 861px) { .page.is-scene .reveal__skip.st-btn--quiet { top: -4px; z-index: 6; min-height: 30px; } }
+.reveal__lanes { position: relative; }
+.reveal.is-skipping .reveal__skip { opacity: .5; pointer-events: none; }
+.reveal.is-skipping .lane__window { animation: skip-flash .46s ease-out both; }
+.reveal.is-skipping .lane__strip { filter: blur(1.5px) brightness(1.25); }
+.reveal.is-skipping .reveal__lanes::after { content: ""; position: absolute; z-index: 7; inset: -10px; pointer-events: none; mix-blend-mode: screen; background: linear-gradient(100deg, transparent 30%, rgba(255, 190, 120, .9) 48%, rgba(255, 245, 230, .95) 50%, rgba(255, 190, 120, .9) 52%, transparent 70%); transform: translateX(-110%); animation: skip-sweep .46s cubic-bezier(.55, 0, .25, 1) both; }
+@keyframes skip-flash { 0% { filter: brightness(1); transform: scale(1); } 55% { filter: brightness(1.7) saturate(1.2); transform: scale(1.012); } 100% { filter: brightness(2.2); transform: scale(1.02); opacity: .0; } }
+@keyframes skip-sweep { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+@media (prefers-reduced-motion: reduce) { .reveal.is-skipping .lane__window, .reveal.is-skipping .reveal__lanes::after { animation: none; } }
+
+/* ---------- the reels as drums: closer lens, a glassy sheen, and the outer reels angled in like a triptych until they lock ---------- */
+.lane__window { perspective: 430px; }
+.reveal .lane__window::after { content: ""; position: absolute; z-index: 3; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, .8) 0, rgba(0, 0, 0, .35) 16%, rgba(0, 0, 0, 0) 34%, rgba(255, 170, 90, .07) 50%, rgba(0, 0, 0, 0) 66%, rgba(0, 0, 0, .35) 84%, rgba(0, 0, 0, .8) 100%); }
+.reveal.is-fade .lane__window::after, .reveal.is-grow .lane__window::after { opacity: 0; }
+.reveal__lanes { perspective: 1500px; }
+.reveal__lanes > .lane { transition: transform .55s cubic-bezier(.2, .8, .2, 1); }
+@media (min-width: 861px) {
+.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:nth-child(1):not(.is-locked) { transform: rotateY(8deg) scale(.94); transform-origin: 50% 50%; }
+.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:nth-child(3):not(.is-locked) { transform: rotateY(-8deg) scale(.94); transform-origin: 50% 50%; }
+.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:nth-child(2):not(.is-locked) { transform: scale(1.01); }
+}
+@media (prefers-reduced-motion: reduce) { .reveal__lanes > .lane { transition: none; transform: none !important; } }
+
+/* drum caps: bright rims at the top and bottom edge sell the curve; a slow glint crosses the glass; the rows fade one by one so the depth stays until the card takes over */
+.reveal .lane__window::before { content: ""; position: absolute; z-index: 4; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(255, 190, 120, .9), rgba(255, 190, 120, 0) 3px, rgba(255, 190, 120, 0) calc(100% - 3px), rgba(255, 190, 120, .9)); }
+.reveal:not(.is-lite) .lane:not(.is-locked) .lane__window::before { animation: drum-glint 1.4s linear infinite; }
+@keyframes drum-glint { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+.reveal.is-fade .lane__window::before, .reveal.is-grow .lane__window::before { opacity: 0; }
+.reveal.is-fade .lane__strip, .reveal.is-grow .lane__strip { opacity: 1; transition: none; }
+.reveal.is-fade .lane__item, .reveal.is-grow .lane__item { opacity: 0 !important; transition: opacity .2s ease-out; }
+
+/* each row is a slat of the drum: a lit top edge, a face that darkens downward, so its tilt reads clearly */
+.lane__item { background: linear-gradient(180deg, rgba(255, 255, 255, .09), rgba(255, 255, 255, .02) 55%, rgba(0, 0, 0, .28)); border-top: 1px solid rgba(255, 190, 120, .3); border-bottom: 1px solid rgba(0, 0, 0, .7); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
+.lane__item.is-winner { background: linear-gradient(180deg, rgba(255, 190, 120, .3), rgba(249, 132, 37, .16)); }
+
+/* a little smaller while it spins (the drum reads smaller in perspective); it grows to the card's height at the hand-off as before */
+@media (min-width: 861px) { .reveal .lane__window { height: min(370px, 46vh); } }
+.reveal.is-lite .lane__window { perspective: 520px; }
+.reveal.is-lite .lane::before { animation: none; opacity: .8; }
+@media (max-width: 860px) { .page.is-scene .reveal__skip.st-btn--quiet { position: absolute; top: 2px; right: 0; margin: 0; min-height: 28px; padding: 0 14px; z-index: 6; } }
+@media (max-width: 520px) { .page .progress { width: 100%; gap: 2px; } .page .progress .pstep { flex: 1 1 0; min-width: 0; } .page .progress .pstep__label, .page.is-scene .progress .pstep__label { width: 100%; justify-content: center; padding: 0 6px; letter-spacing: .06em; font-size: .68rem; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); } }
+
+/* the far left and right of the outer reels (their glow and the edge of the angled drum) are allowed to show a little past the panel instead of being cut at its edge */
+@media (min-width: 900px) { .page.is-scene .console { overflow: visible; } .page.is-scene { overflow-x: clip; } }
+.reveal .lane__window { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 82%, var(--ds-line)), inset 0 60px 50px -30px rgba(0, 0, 0, .9), inset 0 -60px 50px -30px rgba(0, 0, 0, .9), 0 0 52px -8px var(--ds-glow); }
+
+/* from the sealed bays into the roll, the outer reels swing round into their angle (and the middle one steps forward) instead of starting there */
+@keyframes lane-tilt { from { transform: none; } }
+.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:not(.is-locked) { animation: lane-tilt .95s cubic-bezier(.2, .85, .2, 1) backwards; }
+@media (max-width: 860px) { .reveal .reveal__lanes > .lane { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .reveal .reveal__lanes > .lane { animation: none; } }
+
+/* the glow around the outer reels has room: it fades out well before the panel's edge, and the panel lets it show past the edge rather than slicing it */
+.reveal .lane::before { inset: 10% -9% -6%; }
+.reveal .lane__window { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 82%, var(--ds-line)), inset 0 60px 50px -30px rgba(0, 0, 0, .9), inset 0 -60px 50px -30px rgba(0, 0, 0, .9), 0 0 44px -8px var(--ds-glow); }

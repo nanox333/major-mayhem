@@ -5,8 +5,8 @@ import React from 'react';
 // The accent is the T colour and the cool blue the CT colour, the same two the match uses.
 
 /** A row of crowd silhouettes: a head and a pair of shoulders each, at slightly different heights so it reads as people. */
-function Crowd({ y, size, fill, gap }: { y: number; size: number; fill: string; gap: number }) {
-  const n = Math.ceil(1240 / gap);
+export function Crowd({ y, size, fill, gap, width = 1240 }: { y: number; size: number; fill: string; gap: number; width?: number }) {
+  const n = Math.ceil(width / gap);
   return (
     <g fill={fill}>
       {Array.from({ length: n }, (_, i) => {

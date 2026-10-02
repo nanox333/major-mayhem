@@ -5,8 +5,8 @@ import { Action, Run, benchLineup } from '../game/state';
 import { challengerLineup } from '../game/duel';
 import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
-import { Synergy, strength } from '../game/synergy';
-import { mapComfort } from '../game/draftui';
+import { Synergy, nationCore, strength } from '../game/synergy';
+import { chemistryWord, mapComfort } from '../game/draftui';
 import { ArrivalFocus } from '../ui/ArrivalFocus';
 
 export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: Record<string, { k: number; d: number; rating: number }>; mvpId?: string }) {
@@ -33,17 +33,71 @@ export function RosterList({ mine, stats, mvpId }: { mine: G.Lineup[]; stats?: R
   );
 }
 
-/** The synergies behind a lineup's chemistry, strongest first, with their size as + / − marks. */
-export function SynergyList({ list }: { list: Synergy[] }) {
+/** The synergies behind a lineup's chemistry, strongest first, with their size as + / − marks. `detail` adds a line saying who they come from. */
+export function SynergyList({ list, detail }: { list: Synergy[]; detail?: (x: Synergy) => string }) {
   if (!list.length) return <p className="muted small">No synergies: five strangers from five different eras and countries.</p>;
   return (
     <ul className="synergies">
-      {list.map((x) => (
-        <li key={x.label} className={`syn syn--${x.kind} ${x.value < 0 ? 'is-bad' : ''}`}>
-          <b>{strength(x.value)}</b><span>{x.label}</span>
-        </li>
-      ))}
+      {list.map((x) => {
+        const more = detail?.(x);
+        return (
+          <li key={x.label} className={`syn syn--${x.kind} ${x.value < 0 ? 'is-bad' : ''}`}>
+            <b>{strength(x.value)}</b><span>{x.label}{more && <small>{more}</small>}</span>
+          </li>
+        );
+      })}
     </ul>
+  );
+}
+
+const CIS = ['RU', 'UA', 'KZ', 'BY'];
+/** Who a link comes from, worked out from the five (display only: the game's numbers are unchanged). */
+function linkDetail(x: Synergy, mine: G.Lineup[]): string {
+  const nicks = (ls: G.Lineup[]) => ls.map((l) => l.player.nick).join(', ');
+  switch (x.kind) {
+    case 'nation': {
+      const key = nationCore(mine.map((l) => l.player)).key;
+      return `${nicks(mine.filter((l) => l.player.country === key || (key === 'CIS' && CIS.includes(l.player.country))))} share a nationality.`;
+    }
+    case 'lineup': {
+      const pairs: string[] = [];
+      for (let i = 0; i < mine.length; i++) for (let j = i + 1; j < mine.length; j++) {
+        const a = mine[i], b = mine[j];
+        const why = a.roster.id === b.roster.id ? 'same roster' : a.roster.org === b.roster.org ? 'same organization' : Math.abs(a.roster.year - b.roster.year) <= 1 ? 'neighbouring years' : '';
+        if (why) pairs.push(`${a.player.nick} + ${b.player.nick} (${why})`);
+      }
+      return pairs.length > 3 ? `${pairs.slice(0, 3).join('; ')}; and ${pairs.length - 3} more.` : `${pairs.join('; ')}.`;
+    }
+    case 'duo': return 'A famous pair, both on your team.';
+    case 'era': return `Every roster is from the same era (${mine.map((l) => l.roster.year).sort().filter((v, i, a) => a.indexOf(v) === i).join(', ')}).`;
+    case 'coach': return 'Your coach has led them at a Major before.';
+    case 'awp': return 'Only one player can use the AWP at a time, so the second main AWPer costs you.';
+    default: return '';
+  }
+}
+
+/** Chemistry at a glance: one word and its pips, then the facts the links are built from. */
+function ChemistrySummary({ mine, links }: { mine: G.Lineup[]; links: Synergy[] }) {
+  const { word, pips } = chemistryWord(links);
+  const good = links.filter((x) => x.value > 0).length, bad = links.filter((x) => x.value < 0).length;
+  const mains = mine.filter((l) => l.player.roles[0] === l.slot).length;
+  const nations = new Set(mine.map((l) => l.player.country)).size;
+  const orgs = new Set(mine.map((l) => l.roster.org)).size;
+  const years = mine.map((l) => l.roster.year);
+  return (
+    <>
+      <p className="chem-sum">
+        <b>{word}</b>
+        <span className="pips" aria-hidden="true">{[1, 2, 3].map((i) => <i key={i} className={i <= pips ? 'on' : ''} />)}</span>
+        <small>{good} link{good === 1 ? '' : 's'}{bad ? `, ${bad} penalty` : ''}</small>
+      </p>
+      <ul className="chem-facts" aria-label="Your team in numbers">
+        <li><small>Main roles</small><b>{mains}<i>/5</i></b></li>
+        <li><small>Nationalities</small><b>{nations}</b></li>
+        <li><small>Organizations</small><b>{orgs}</b></li>
+        <li><small>Years</small><b>{Math.min(...years)}{Math.max(...years) !== Math.min(...years) && <>–{String(Math.max(...years)).slice(2)}</>}</b></li>
+      </ul>
+    </>
   );
 }
 
@@ -87,22 +141,76 @@ export function Staff({ s, stats }: { s: Run; stats?: Record<string, { k: number
   );
 }
 
+/** The five starters as a lineup of portrait cards: the face large, the role as a tag on it, the name and team beneath. */
+function LineupCards({ mine }: { mine: G.Lineup[] }) {
+  return (
+    <ol className="lineup" aria-label="Your starting five">
+      {mine.map((l, i) => {
+        const main = l.player.roles[0] === l.slot;
+        return (
+          <li key={l.player.id} className="lc anim-in" style={{ ['--team' as string]: l.roster.color, animationDelay: `${i * 70}ms` }}>
+            <span className="lc__photo"><Avatar player={l.player} roster={l.roster} /></span>
+            <span className="lc__tags">
+              <span className="lc__role" title={main ? 'Main role' : 'Playing an off-role (small penalty)'}><RoleIcon role={l.slot} size={14} /> {ROLE_LABEL[l.slot]}</span>
+              {!main && <i className="lc__off">Off-role</i>}
+            </span>
+            <span className="lc__body">
+              <strong>{l.player.nick}</strong>
+              <small><TeamBadge roster={l.roster} size={16} /> {l.roster.org} {l.roster.year}</small>
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+/** The coach and the bench player: two wider, quieter cards under the five. */
+function StaffCards({ s }: { s: Run }) {
+  const bench = benchLineup(s);
+  const from = s.coachFrom ? G.rosterById.get(s.coachFrom) : undefined;
+  if (!s.coach && !bench) return null;
+  return (
+    <ul className="staff" aria-label="Coach and bench">
+      {s.coach && (
+        <li className="staff__card" style={{ ['--team' as string]: from?.color ?? 'var(--accent)' }}>
+          <span className="staff__face staff__face--coach">{from ? <TeamBadge roster={from} size={34} /> : 'C'}</span>
+          <span className="staff__who"><strong>{s.coach}</strong><small>{from ? `Coach of ${from.org} ${from.year}` : 'Coach'}</small></span>
+          <span className="staff__tag">Coach</span>
+        </li>
+      )}
+      {bench && (
+        <li className="staff__card" style={{ ['--team' as string]: bench.roster.color }}>
+          <span className="staff__face"><Avatar player={bench.player} roster={bench.roster} /></span>
+          <span className="staff__who"><strong>{bench.player.nick}</strong><small><TeamBadge roster={bench.roster} size={14} /> {bench.roster.org} {bench.roster.year}</small></span>
+          <span className="staff__tag"><RoleIcon role={bench.player.roles[0]} size={13} /> Bench</span>
+        </li>
+      )}
+    </ul>
+  );
+}
+
 export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; dispatch: React.Dispatch<Action> }) {
   const offRoles = mine.filter((x) => x.player.roles[0] !== x.slot).length;
   const power = G.teamPower(mine, s.coach);
   return (
-    <div className="stack">
-      <RosterList mine={mine} />
-      <Staff s={s} />
-      <div className="notes">
-        <span>{offRoles === 0 ? 'Everyone on their main role' : `${offRoles} player${offRoles > 1 ? 's' : ''} off their main role`}</span>
+    <div className="stack lobby-page">
+      <LineupCards mine={mine} />
+      <StaffCards s={s} />
+      <div className="lobby-mid">
+        <section className="lpanel" aria-labelledby="chem-h">
+          <h4 id="chem-h">Team chemistry <small>{offRoles === 0 ? 'Everyone is on their main role.' : `${offRoles} player${offRoles > 1 ? 's are' : ' is'} off their main role, which costs a little.`}</small></h4>
+          <ChemistrySummary mine={mine} links={power.synergies} />
+          <SynergyList list={power.synergies} detail={(x) => linkDetail(x, mine)} />
+        </section>
+        <MapComfort mine={mine} />
       </div>
-      <SynergyList list={power.synergies} />
-      <MapComfort mine={mine} />
       {s.duel && <Challenger s={s} />}
-      {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
       <ArrivalFocus selector=".action-bar .cta" />
-      <div className="action-bar"><button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button></div>
+      <div className="lobby-go">
+        {!s.duel && <p className="muted small">Swiss stage: three wins to reach the playoffs, three losses and you're out. Matches that can send you through or out are best of three, like the quarterfinal, semifinal and grand final.{s.bench ? ' Before each match, check everyone\'s form: you can sub your bench player in.' : ''}</p>}
+        <div className="action-bar"><button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'play' })}>{s.duel ? 'Play the showmatch' : 'Find match'}</button></div>
+      </div>
     </div>
   );
 }

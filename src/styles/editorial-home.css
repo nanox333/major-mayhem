@@ -1,25 +1,35 @@
 /* One daily invitation, followed by quieter routes into the game. */
 .editorial-home { display: flex; flex-direction: column; align-items: stretch; gap: 16px; width: 100%; }
-.home-invitation { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; padding: 12px 0 24px; border-bottom: 1px solid var(--line); }
+.home-invitation { --home-arena-image: url('../assets/home/arena.webp'); position: relative; isolation: isolate; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 32px; align-items: center; padding: 26px 0 30px; border-bottom: 1px solid var(--line); }
+/* The arena stays behind actual copy/controls and fades into the page. */
+.home-invitation::before { content: ""; position: absolute; z-index: -1; pointer-events: none; inset: calc(-1 * var(--space-5)) calc(-1 * var(--gutter)) 0;
+  background-image: linear-gradient(0deg,var(--bg),transparent 32%), linear-gradient(90deg,var(--bg),rgba(20,22,21,.9) 58%,rgba(20,22,21,.28) 67%,rgba(20,22,21,.12)), var(--home-arena-image);
+  background-size: cover; background-position: center; }
 .home-invitation__copy { min-width: 0; }
+.home-invitation h1 > span, .home-invitation h1 > em { display: block; }
+:root[data-theme="light"] .home-invitation::before, :root[data-contrast="high"] .home-invitation::before { display: none; }
 .home-kicker { margin: 0 0 14px; color: var(--accent); font-family: var(--f-head); font-weight: 800; text-transform: uppercase; letter-spacing: .07em; font-size: 1rem; }
 .home-kicker span { margin-left: .4em; }
-.home-invitation h1 { margin: 0; color: var(--strong); font-family: var(--f-head); font-size: clamp(3rem, 6.9vw, 7rem); font-weight: 900; line-height: .98; letter-spacing: -.025em; }
+.home-invitation h1 { margin: 0; color: var(--strong); font-family: var(--f-head); font-size: clamp(3rem, 6.9vw, 7rem); font-weight: 800; line-height: .98; letter-spacing: -.025em; }
 .home-invitation h1 em { color: var(--accent); font-style: normal; }
-.home-invitation__intro { margin: 20px 0 12px; font-size: clamp(1rem, 1.5vw, 1.25rem); max-width: 38ch; line-height: 1.5; }
+.home-invitation__intro { margin: 20px 0 12px; font-size: clamp(1rem, 1.5vw, 1.25rem); max-width: none; line-height: 1.5; }
 .home-daily-status { color: var(--muted); font-size: .95rem; line-height: 1.55; max-width: 53ch; }
 .home-daily-status p { margin: 0 0 12px; }
-.home-daily-status .daily-done { margin-bottom: 12px; }
-.home-daily-status .daily-done > small { display: none; }
-.home-daily-status .daily-done strong { font-family: var(--f-head); font-size: 1.5rem; color: var(--strong); }
+.home-result .daily-done { margin-bottom: 12px; }
+.home-result .daily-done > small { display: none; }
+.home-result .daily-done strong { font-family: var(--f-head); font-size: 1.5rem; color: var(--strong); }
 .home-daily-status .dots { margin-bottom: 16px; }
 .home-daily-action { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 18px; }
 .home-daily-action .cta { flex: 0 1 auto; min-width: 220px; border-radius: 3px; }
-.home-daily-clock { display: grid; gap: 4px; font-size: .9rem; color: var(--text); }
+.home-last-result { margin: 8px 0 0; }
+.home-daily-clock { display: grid; grid-template-columns: 20px minmax(0,1fr); gap: 4px 10px; border-left: 1px solid var(--control); padding-left: 18px; font-size: .9rem; color: var(--text); }
+.home-daily-clock > svg { grid-column: 1; grid-row: 1 / 3; align-self: center; }
+.home-daily-clock > span, .home-daily-clock > small { grid-column: 2; }
 .home-daily-clock .clock { display: inline; font-size: inherit; color: var(--accent); }
 .home-daily-clock small { color: var(--muted); }
-.home-lineup-art { width: 100%; max-width: 510px; justify-self: end; }
+.home-lineup-art { width: 100%; max-width: 470px; justify-self: end; align-self: end; margin-bottom: 8px; }
 .home-lineup-art__number, .home-lineup-art__finish { fill: var(--text); font-family: var(--f-head); font-weight: 800; font-size: 16px; }
+.home-lineup-art__number { paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
 .home-lineup-art__finish { font-size: 14px; letter-spacing: 1px; }
 .editorial-home .home-secondary-modes { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
 /* Cutouts occupy a separate right-hand column; all text and actions remain HTML. */
@@ -30,7 +40,7 @@
 .home-case-mark { --accent: #ff7a26; --panel-2: #111; position: absolute; left: 39%; top: 46%; transform: translate(-50%,-50%) rotate(7deg); }
 .home-case-mark .logomark { display: block; }
 .home-mode-art--guess { grid-row: 1 / 6; align-self: end; margin-bottom: -24px; }
-.home-pro-question { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); color: #ff7a26; font-family: var(--f-head); font-size: clamp(3rem,5vw,5.5rem); font-weight: 900; line-height: 1; }
+.home-pro-question { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); color: #ff7a26; font-family: var(--f-head); font-size: clamp(3rem,5vw,5.5rem); font-weight: 800; line-height: 1; }
 .home-mode-label { margin: 0 0 8px; grid-column: 1; color: var(--accent); text-transform: uppercase; font-family: var(--f-head); font-weight: 800; letter-spacing: .09em; font-size: .85rem; }
 .editorial-home .mcard__title { grid-column: 1; text-transform: none; letter-spacing: -.02em; font-size: 2rem; line-height: 1.05; margin: 0 0 14px; overflow-wrap: anywhere; }
 .editorial-home .mcard__text { grid-column: 1; font-size: 1rem; line-height: 1.5; margin: 0; }
@@ -53,12 +63,13 @@
 .home-archive b { font-family: var(--f-head); font-size: 1.25rem; }
 .home-archive small { font-size: .95rem; color: var(--muted); }
 .editorial-home .stats-panel, .editorial-home .how { width: 100%; border-radius: 3px; background: transparent; }
-.editorial-home .stats-panel__tiles { grid-template-columns: repeat(4,minmax(0,1fr)); }
+.editorial-home .stats-panel__tiles { grid-template-columns: repeat(4,minmax(0,1fr));  background-image: var(--cut14); }
 .editorial-home .how { border: 0; border-top: 1px solid var(--line); padding: 22px 0 0; }
 .editorial-home .how__steps { gap: 20px; }
 .editorial-home .how__step { border-radius: 0; background: transparent; }
 @media (max-width: 767px) {
   .editorial-home { gap: 16px; }
+  .home-invitation::before { background-image: linear-gradient(0deg,var(--bg),transparent 32%), linear-gradient(rgba(20,22,21,.88),rgba(20,22,21,.88)), var(--home-arena-image); background-position: 65% center; }
   .home-invitation { grid-template-columns: minmax(0,1fr); gap: 20px; padding: 6px 0 18px; }
   .home-kicker { margin-bottom: 10px; font-size: .85rem; }
   .home-invitation h1 { font-size: clamp(2.65rem, 12.2vw, 4.5rem); }
@@ -66,8 +77,8 @@
   .home-daily-status { font-size: .9rem; }
   .home-daily-action { gap: 10px; margin-top: 12px; }
   .home-daily-action .cta { width: 100%; min-width: 0; }
-  .home-daily-clock { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: .85rem; }
-  .home-lineup-art { width: min(100%,380px); justify-self: center; }
+  .home-daily-clock { display: grid; gap: 4px 10px; border-left: 0; padding-left: 0; font-size: .85rem; }
+  .home-invitation > .home-lineup-art { display: none; }
   .editorial-home .home-secondary-modes { grid-template-columns: minmax(0,1fr); gap: 12px; }
   .editorial-home .home-mode-card { grid-template-columns: minmax(0,1fr) 100px; column-gap: 14px; min-height: 0; padding: 18px; }
   .editorial-home .mcard__title { font-size: 1.7rem; margin-bottom: 10px; }
@@ -83,6 +94,7 @@
   .editorial-home .stats-panel__tiles { grid-template-columns: repeat(auto-fit,minmax(min(100%,8rem),1fr)); }
 }
 @media (forced-colors: active) {
+  .home-invitation::before { display: none; }
   .home-lineup-art rect, .home-lineup-art path { stroke: CanvasText; }
   .home-lineup-art circle { fill: CanvasText; }
 }
@@ -120,3 +132,274 @@
   .editorial-home .home-mode-card { grid-template-columns: minmax(0,1fr); }
   .editorial-home .home-mode-start { border-color: ButtonText; }
 }
+
+/* A finished daily on Home: a result card, not a centred box. The label, the placement big, the MVP and draft score beneath, and Copy result at the right. */
+.home-result .daily-done { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'label share' 'place share' 'meta share'; justify-items: start; align-items: center; gap: 2px 20px; width: min(100%, 470px); min-width: 0; margin-bottom: 10px; padding: 14px 16px 14px 18px; border: 1px solid var(--line-2); border-left: 3px solid var(--accent); border-radius: 3px; background: radial-gradient(ellipse 60% 140% at 100% 50%, rgba(249, 132, 37, .14), transparent 70%), var(--panel); text-align: left; }
+.home-result .daily-done > small { display: block; grid-area: label; color: var(--muted); font: 600 .72rem/1.2 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.home-result .daily-done > strong { grid-area: place; font-size: 2rem; line-height: 1.05; letter-spacing: .02em; color: var(--strong); }
+.home-result .daily-done > span { grid-area: meta; color: var(--text-2); font-size: .86rem; }
+.home-result .daily-done .share-bar { grid-area: share; margin: 0; justify-self: end; }
+.home-result .daily-done .share-bar button { min-height: 40px; padding-inline: 14px; border-color: var(--line-2); }
+.home-daily-status .home-practice-note { margin: 0 0 4px; font-size: .8rem; }
+.home-daily-action .cta--quiet { background: transparent; color: var(--strong); border: 1px solid color-mix(in srgb, var(--accent) 70%, var(--line-2)); }
+.home-daily-action .cta--quiet:hover { background: rgba(249, 132, 37, .12); }
+@media (max-width: 520px) { .home-result .daily-done { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'label' 'place' 'meta' 'share'; } .home-result .daily-done .share-bar { justify-self: start; margin-top: 8px; } }
+
+/* The lineup poster beside the Home headline: five staggered slots, one per role, the middle one lifted and lit. */
+.lart { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.lart__card { position: relative; overflow: hidden; display: grid; align-content: end; justify-items: center; height: calc(190px + var(--lift, 0px)); padding: 0 0 10px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 3px; background: radial-gradient(ellipse 90% 60% at 50% 0%, rgba(249, 132, 37, .28), transparent 70%), linear-gradient(180deg, rgba(20, 21, 20, .86), rgba(8, 9, 9, .94)); box-shadow: 0 18px 34px -18px #000, inset 0 1px 0 rgba(255, 255, 255, .1); backdrop-filter: blur(2px); }
+.lart__card:nth-child(2), .lart__card:nth-child(4) { --lift: 14px; }
+.lart__card.is-lead { --lift: 34px; border-color: var(--accent); box-shadow: 0 18px 34px -16px #000, 0 0 30px -6px rgba(249, 132, 37, .6), inset 0 1px 0 rgba(255, 255, 255, .2); }
+.lart__no { position: absolute; top: 8px; left: 9px; color: var(--muted); font: 800 .95rem/1 var(--f-head); }
+.lart__card.is-lead .lart__no { color: var(--accent-hi); }
+.lart__who { position: absolute; left: 12%; right: 12%; top: 22%; width: 76%; height: auto; fill: rgba(255, 255, 255, .1); }
+.lart__role { position: relative; display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
+.lart__role b { font: 700 .72rem/1 var(--f-read); letter-spacing: .1em; }
+.lart__card.is-lead .lart__role { color: var(--accent-hi); }
+.lart__line { margin: 12px 0 0; text-align: center; color: var(--muted); font: 600 .72rem/1.3 var(--f-read); letter-spacing: .12em; text-transform: uppercase; }
+.lart__line span, .lart__line em { color: var(--text-2); font-style: normal; }
+.lart__line em { color: var(--accent); }
+@media (forced-colors: active) { .lart__card { border-color: CanvasText; } .lart__who { fill: CanvasText; } }
+
+/* The arena and the lineup poster are one scene: the picture fades out at the right edge instead of ending in a line, a dark pool sits behind the cards so the stage lights do not fight them, and a warm spotlight falls on the lead card. */
+.home-invitation::before { -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent 99%); mask-image: linear-gradient(90deg, #000 78%, transparent 99%); background-position: 70% center; }
+.home-invitation::after { content: ""; position: absolute; z-index: -1; pointer-events: none; right: 0; bottom: 0; width: min(560px, 48%); height: 92%; background: radial-gradient(ellipse 60% 52% at 52% 66%, rgba(7, 8, 7, .62), transparent 74%), radial-gradient(ellipse 34% 36% at 52% 44%, rgba(249, 132, 37, .26), transparent 72%); }
+:root[data-theme="light"] .home-invitation::after, :root[data-contrast="high"] .home-invitation::after { display: none; }
+@media (max-width: 860px) { .home-invitation::after { display: none; } }
+
+/* The footer on Home: small and out of the way, brighter only when you reach for it. */
+.home3 ~ .foot, .page.is-home .foot { margin-top: 40px; padding-top: 12px; border-top-color: rgba(255, 255, 255, .06); gap: 16px; opacity: .45; transition: opacity .2s; }
+.page.is-home .foot p { font-size: .7rem; line-height: 1.45; }
+.page.is-home .foot strong { font-size: .7rem; font-weight: 600; }
+.page.is-home .foot .foot__group { gap: 10px; grid-template-columns: 18px minmax(0, 1fr); }
+.page.is-home .foot .foot__group > svg { width: 18px; height: 18px; }
+.page.is-home .foot .link-btn { min-height: 0; font-size: inherit; }
+.page.is-home .foot:hover, .page.is-home .foot:focus-within { opacity: .85; }
+
+/* Home buttons: one family. The two mode cards put their button in the same column, on the same line at the bottom; the buttons are soft, rounded and orange-tinted with the arrow at the end. */
+@media (min-width: 861px) {
+  .editorial-home .home-mode-card:not(.home-mode-card--expanded) { grid-template-rows: auto auto auto 1fr; }
+  .editorial-home .home-mode-card:not(.home-mode-card--expanded) .mcard__foot { grid-column: 1; grid-row: 4; align-self: end; margin-top: 18px; }
+}
+.editorial-home .home-mode-start, .editorial-home .home-mode-card .mbtn { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 48px; padding: 0 18px; border: 0; border-radius: 10px; background: rgba(249, 132, 37, .13); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .38); color: var(--strong); font-weight: 600; transition: background .15s, box-shadow .15s, transform .15s; }
+.editorial-home .home-mode-start:hover, .editorial-home .home-mode-card .mbtn:hover { background: rgba(249, 132, 37, .24); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .7); }
+.editorial-home .home-mode-start svg { flex: none; color: var(--accent-hi); transition: transform .15s; }
+.editorial-home .home-mode-start:hover svg { transform: translateX(3px); }
+.editorial-home .home-daily-action .cta, .editorial-home .home-mode-card .cta { border-radius: 10px; }
+.editorial-home .home-mode-card .mcard__state { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .editorial-home .home-mode-start, .editorial-home .home-mode-start svg { transition: none; } }
+
+/* The mode buttons are primary actions: solid orange, dark text, a little glow. */
+.editorial-home .home-mode-start, .editorial-home .home-mode-card .mbtn { min-height: 54px; padding: 0 20px; background: linear-gradient(180deg, var(--accent-hi), var(--accent) 60%, #ec7316); box-shadow: 0 10px 24px -10px rgba(249, 132, 37, .65), inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -2px 0 rgba(0, 0, 0, .18); color: var(--on-accent, #1a0e04); font-size: 1rem; font-weight: 700; }
+.editorial-home .home-mode-start:hover, .editorial-home .home-mode-card .mbtn:hover { background: linear-gradient(180deg, #ffb066, var(--accent-hi) 60%, var(--accent)); box-shadow: 0 14px 28px -10px rgba(249, 132, 37, .8), inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 -2px 0 rgba(0, 0, 0, .18); transform: translateY(-1px); }
+.editorial-home .home-mode-start svg { color: inherit; }
+
+/* Flat and clean: solid orange, dark text, the arrow in a small dark disc. No gradient, bevel or glow. */
+.editorial-home .home-mode-start, .editorial-home .home-mode-card .mbtn { min-height: 52px; padding: 0 12px 0 20px; border-radius: 8px; background: var(--accent); box-shadow: none; color: #1a0e04; font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+.editorial-home .home-mode-start:hover, .editorial-home .home-mode-card .mbtn:hover { background: var(--accent-hi); box-shadow: none; transform: none; }
+.editorial-home .home-mode-start svg { box-sizing: content-box; width: 18px; height: 18px; padding: 6px; border-radius: 50%; background: rgba(26, 14, 4, .16); color: #1a0e04; transition: background .15s; }
+.editorial-home .home-mode-start:hover svg { background: rgba(26, 14, 4, .26); transform: none; }
+.editorial-home .home-mode-start:focus-visible, .editorial-home .home-mode-card .mbtn:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+
+/* The mode buttons, in the arena's language: cut corners, a condensed uppercase label, and a striped arrow block that comes alive on hover. */
+.editorial-home .home-mode-start, .editorial-home .home-mode-card .mbtn { position: relative; isolation: isolate; overflow: hidden; min-height: 56px; padding: 0 70px 0 22px; border: 0; border-radius: 0; justify-content: flex-start; background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); box-shadow: none; color: #170c03; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)); }
+.editorial-home .home-mode-start > span, .editorial-home .home-mode-card .mbtn > span { font: 800 1.3rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; }
+/* The arrow block: darker, with diagonal stripes that slide. */
+.editorial-home .home-mode-start::after, .editorial-home .home-mode-card .mbtn::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 58px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
+.editorial-home .home-mode-start svg, .editorial-home .home-mode-card .mbtn svg { position: absolute; right: 18px; top: 50%; width: 22px; height: 22px; margin-top: -11px; padding: 0; border-radius: 0; background: none; color: #fff; transition: transform .18s ease-out; }
+/* A band of light crosses the button when you point at it. */
+.editorial-home .home-mode-start::before, .editorial-home .home-mode-card .mbtn::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; }
+.editorial-home .home-mode-start:hover, .editorial-home .home-mode-card .mbtn:hover { background: linear-gradient(100deg, #ffa955 0%, #ff9a3d 55%, var(--accent) 100%); }
+.editorial-home .home-mode-start:hover::before, .editorial-home .home-mode-card .mbtn:hover::before { left: 110%; }
+.editorial-home .home-mode-start:hover::after, .editorial-home .home-mode-card .mbtn:hover::after { animation: mode-stripes .7s linear infinite; }
+.editorial-home .home-mode-start:hover svg, .editorial-home .home-mode-card .mbtn:hover svg { transform: translateX(4px); background: none; }
+.editorial-home .home-mode-start:active { transform: translateY(1px); }
+@keyframes mode-stripes { to { background-position: 17px 0, 0 0; } }
+.editorial-home .home-mode-start:focus-visible, .editorial-home .home-mode-card .mbtn:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .editorial-home .home-mode-start::before, .editorial-home .home-mode-start::after, .editorial-home .home-mode-start svg { transition: none; animation: none !important; } }
+@media (forced-colors: active) { .editorial-home .home-mode-start { clip-path: none; border: 1px solid ButtonText; } }
+.editorial-home .home-mode-start, .editorial-home .home-mode-card .mbtn { width: max(100%, 236px); white-space: nowrap; }
+.editorial-home .home-mode-start > span, .editorial-home .home-mode-card .mbtn > span { font-size: 1.18rem; letter-spacing: .06em; white-space: nowrap; }
+@media (max-width: 860px) { .editorial-home .home-mode-start, .editorial-home .home-mode-card .mbtn { width: 100%; } }
+
+/* The daily button: the same cut-corner button. Start / View is solid orange; Replay is a dark one with an orange edge. */
+.editorial-home .home-daily-action .home__daily { position: relative; isolation: isolate; overflow: hidden; flex: 0 1 auto; min-width: 250px; min-height: 58px; padding: 0 74px 0 24px; border: 0; border-radius: 0; justify-content: flex-start; background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); box-shadow: none; color: #170c03; animation: none; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)); }
+.editorial-home .home__daily .cta__main { display: contents; font: 800 1.3rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.editorial-home .home__daily::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 60px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
+.editorial-home .home__daily svg { position: absolute; right: 19px; top: 50%; width: 22px; height: 22px; margin-top: -11px; color: #fff; transition: transform .18s ease-out; }
+.editorial-home .home__daily::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; }
+.editorial-home .home__daily:hover { filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)) brightness(1.08); }
+.editorial-home .home__daily:hover::before { left: 110%; }
+.editorial-home .home__daily:hover::after { animation: mode-stripes .7s linear infinite; }
+.editorial-home .home__daily:hover svg { transform: translateX(4px); }
+.editorial-home .home__daily:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+/* Replay: dark, with the orange only on the edge and the arrow block. */
+.editorial-home .home-daily-action .home__daily.cta--quiet { background: linear-gradient(100deg, #1c1d1c, #121312); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .75); color: var(--strong); filter: none; }
+.editorial-home .home__daily.cta--quiet::before { background: linear-gradient(100deg, transparent, rgba(249, 132, 37, .35), transparent); }
+.editorial-home .home__daily.cta--quiet:hover { background: linear-gradient(100deg, #262522, #171715); filter: none; }
+@media (max-width: 860px) { .editorial-home .home-daily-action .home__daily { width: 100%; } }
+@media (prefers-reduced-motion: reduce) { .editorial-home .home__daily::before, .editorial-home .home__daily::after, .editorial-home .home__daily svg { transition: none; animation: none !important; } }
+@media (forced-colors: active) { .editorial-home .home__daily { clip-path: none; border: 1px solid ButtonText; } }
+
+/* The case sits in the vertical middle of its card, level with the text and the button. */
+@media (min-width: 861px) {
+  .editorial-home .home-mode-card--free:not(.home-mode-card--expanded) .home-mode-art--free { grid-row: 1 / -1; align-self: center; padding-top: 0; }
+}
+
+/* Replay's orange edge: the button body is orange and a dark panel with the same cut corners sits 1px inside it, so the edge runs unbroken round the corners. */
+.editorial-home .home-daily-action .home__daily.cta--quiet, .editorial-home .home-daily-action .home__daily.cta--quiet:hover { background: rgba(249, 132, 37, .8); box-shadow: none; }
+.editorial-home .home__daily.cta--quiet::before, .editorial-home .home__daily.cta--quiet:hover::before { left: 1px; top: 1px; right: 1px; bottom: 1px; width: auto; transform: none; transition: background .15s; background: linear-gradient(100deg, #1c1d1c, #121312); clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); }
+.editorial-home .home__daily.cta--quiet:hover::before { background: linear-gradient(100deg, #292825, #181816); }
+
+/* Replay's light sweep, carried by the dark panel itself: a band of light slides across it on hover. */
+.editorial-home .home__daily.cta--quiet::before { background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .38), transparent) -45% 0 / 32% 100% no-repeat, linear-gradient(100deg, #1c1d1c, #121312); transition: background-position .5s ease-out; }
+.editorial-home .home__daily.cta--quiet:hover::before { background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .38), transparent) 150% 0 / 32% 100% no-repeat, linear-gradient(100deg, #292825, #181816); }
+@media (prefers-reduced-motion: reduce) { .editorial-home .home__daily.cta--quiet::before { transition: none; } }
+
+/* Replay is the same button as Start and the two mode buttons: solid orange, same sweep, same stripes. */
+.editorial-home .home-daily-action .home__daily.cta--quiet { background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); box-shadow: none; color: #170c03; filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)); }
+.editorial-home .home-daily-action .home__daily.cta--quiet:hover { background: linear-gradient(100deg, #ffa955 0%, #ff9a3d 55%, var(--accent) 100%); filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .22)) brightness(1.08); }
+.editorial-home .home__daily.cta--quiet::before { top: 0; bottom: 0; right: auto; left: -40%; width: 30%; clip-path: none; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; }
+.editorial-home .home__daily.cta--quiet:hover::before { left: 110%; top: 0; bottom: 0; right: auto; width: 30%; clip-path: none; transform: skewX(-18deg); background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); }
+
+/* Replay (already played): reversed. A dark face inside an unbroken orange edge, with the same light sweep and moving stripes as the orange buttons. */
+.editorial-home .home-daily-action .home__daily.cta--quiet, .editorial-home .home-daily-action .home__daily.cta--quiet:hover { background: rgba(249, 132, 37, .85); color: var(--strong); filter: drop-shadow(0 8px 14px rgba(249, 132, 37, .14)); }
+.editorial-home .home__daily.cta--quiet::before, .editorial-home .home__daily.cta--quiet:hover::before { top: 1px; bottom: 1px; left: 1px; right: 1px; width: auto; transform: none; clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); transition: background-position .55s ease-out, background-color .15s; }
+.editorial-home .home__daily.cta--quiet::before { background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .5) 50%, transparent 80%) -60% 0 / 55% 100% no-repeat, linear-gradient(100deg, #1c1d1c, #121312); }
+.editorial-home .home__daily.cta--quiet:hover::before { background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .5) 50%, transparent 80%) 170% 0 / 55% 100% no-repeat, linear-gradient(100deg, #292825, #181816); }
+
+/* Replay keeps its dark face, but the sweep is the orange buttons' own: the same slanted band, carried by the label so it sits above the dark face and below the text and arrow block. */
+.editorial-home .home__daily.cta--quiet::before, .editorial-home .home__daily.cta--quiet:hover::before { background: linear-gradient(100deg, #1c1d1c, #121312); transition: none; }
+.editorial-home .home__daily.cta--quiet:hover::before { background: linear-gradient(100deg, #292825, #181816); }
+.editorial-home .home__daily.cta--quiet .cta__main::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-18deg); transition: left .5s ease-out; }
+.editorial-home .home__daily.cta--quiet:hover .cta__main::before { left: 110%; }
+@media (prefers-reduced-motion: reduce) { .editorial-home .home__daily.cta--quiet .cta__main::before { transition: none; } }
+
+/* Today's result on Home, as a card: a trophy medallion, the placement big, MVP and Draft as labelled cells, Copy result at the right. Cut corners like the buttons. */
+.home-result .daily-done { position: relative; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'icon label share' 'icon place share' 'meta meta meta'; align-items: center; justify-items: start; gap: 0 16px; width: min(100%, 500px); margin-bottom: 10px; padding: 16px 16px 14px 16px; border: 0; border-left: 0; border-radius: 0; background: radial-gradient(ellipse 70% 120% at 0% 0%, rgba(249, 132, 37, .2), transparent 65%), linear-gradient(180deg, #202120, #151615); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .09), inset 3px 0 0 var(--accent); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
+.home-result .daily-done__icon { grid-area: icon; display: grid; place-items: center; width: 56px; height: 56px; margin-left: 4px; border-radius: 50%; background: radial-gradient(circle at 50% 35%, rgba(249, 132, 37, .4), rgba(249, 132, 37, .1) 70%); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .6), 0 0 22px -4px rgba(249, 132, 37, .5); color: var(--accent-hi); }
+.home-result .daily-done > small { grid-area: label; align-self: end; }
+.home-result .daily-done > strong { grid-area: place; align-self: start; font-size: 2.1rem; }
+.home-result .daily-done .share-bar { grid-area: share; align-self: center; margin: 0; }
+.home-result .daily-done .share-bar button { min-height: 40px; padding-inline: 14px; border: 0; border-radius: 8px; background: rgba(255, 255, 255, .09); color: var(--strong); font-weight: 600; }
+.home-result .daily-done .share-bar button:hover { background: rgba(255, 255, 255, .16); }
+.home-result .daily-done__meta { grid-area: meta; display: flex; gap: 10px; width: 100%; margin-top: 14px; }
+.home-result .daily-done__meta > span { flex: 1 1 0; min-width: 0; display: grid; gap: 2px; margin: 0; padding: 8px 12px; border-radius: 8px; background: rgba(255, 255, 255, .05); }
+.home-result .daily-done__meta > span::before { display: none; }
+.home-result .daily-done__meta small { margin: 0; color: var(--muted); font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; }
+.home-result .daily-done__meta b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 1.25rem/1.1 var(--f-head); letter-spacing: .02em; color: var(--strong); }
+@media (max-width: 520px) { .home-result .daily-done { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'icon label' 'icon place' 'meta meta' 'share share'; } .home-result .daily-done .share-bar { justify-self: start; margin-top: 10px; } }
+.home-result .daily-done > .daily-done__icon { grid-area: icon; font-size: 0; }
+.home-result .daily-done > .daily-done__meta { grid-area: meta; font-size: inherit; }
+
+/* The streak cell: a flame, the days, a seven-segment fire meter and a nudge to come back. */
+.home-result .daily-done__meta > .daily-done__streak { flex: 1.9 1 0; position: relative; overflow: hidden; border-radius: 8px; background: radial-gradient(ellipse 80% 120% at 0% 100%, rgba(249, 132, 37, .22), transparent 70%), rgba(255, 255, 255, .05); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .28); }
+.daily-done__streak b { display: flex; align-items: center; gap: 6px; }
+.daily-done__streak b svg { color: var(--accent-hi); filter: drop-shadow(0 0 6px rgba(249, 132, 37, .8)); animation: flame-flicker 1.8s ease-in-out infinite; }
+.daily-done__streak .fire { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin: 6px 0 2px; }
+.daily-done__streak .fire u { height: 6px; border-radius: 2px; background: rgba(255, 255, 255, .12); text-decoration: none; }
+.daily-done__streak .fire u.on { background: linear-gradient(90deg, #ffb066, var(--accent)); box-shadow: 0 0 8px rgba(249, 132, 37, .6); }
+.daily-done__streak .fire u.on:last-of-type, .daily-done__streak .fire u.on:nth-last-child(1) { animation: none; }
+.daily-done__streak em { color: var(--text-2); font: normal .72rem/1.3 var(--f-read); }
+@keyframes flame-flicker { 0%, 100% { transform: scale(1) rotate(0); } 40% { transform: scale(1.1) rotate(-3deg); } 70% { transform: scale(.96) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .daily-done__streak b svg { animation: none; } }
+@media (max-width: 520px) { .home-result .daily-done__meta { flex-wrap: wrap; } .home-result .daily-done__meta > .daily-done__streak { flex-basis: 100%; } }
+
+/* More room: a roomier card, taller cells, a thicker meter. */
+.home-result .daily-done { width: min(100%, 540px); padding: 20px 20px 20px 22px; margin-bottom: 16px; gap: 0 18px; }
+.home-result .daily-done__icon { width: 60px; height: 60px; }
+.home-result .daily-done > strong { font-size: 2.2rem; margin-top: 2px; }
+.home-result .daily-done__meta { gap: 14px; margin-top: 20px; }
+.home-result .daily-done__meta > span { gap: 4px; padding: 14px 16px; }
+.home-result .daily-done__meta > .daily-done__streak { flex: 1.5 1 0; gap: 6px; }
+.daily-done__streak .fire { gap: 5px; margin: 8px 0 6px; }
+.daily-done__streak .fire u { height: 8px; border-radius: 3px; }
+.daily-done__streak em { margin-top: 2px; color: var(--muted); }
+.home-practice-note { margin-top: 2px; }
+
+/* MVP: centred in its cell, the name large with a star. */
+.home-result .daily-done__meta > .daily-done__mvp { align-content: center; justify-items: start; gap: 8px; }
+.daily-done__mvp b { display: flex; align-items: center; gap: 8px; font-size: 1.6rem !important; line-height: 1; }
+.daily-done__mvp b svg { flex: none; color: var(--accent-hi); }
+
+/* Home stats: a flat scoreboard. One band, four cells split by hairlines, a small caps label over a big condensed number; the band has a single cut corner like the buttons. */
+.editorial-home .stats-panel { padding: 0; border: 0; background: none; }
+.editorial-home .stats-panel__head { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.editorial-home .stats-panel__head::after { content: ""; order: 1; flex: 1; height: 1px; background: var(--line-2); }
+.editorial-home .stats-panel h2 { order: 0; font: 800 1.25rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; }
+.editorial-home .stats-panel__all { order: 2; display: inline-flex; align-items: center; gap: 6px; min-height: 0; padding: 0; background: none; color: var(--text-2); font-size: .82rem; font-weight: 600; text-decoration: none; }
+.editorial-home .stats-panel__all:hover { color: var(--accent-hi); }
+.editorial-home .stats-panel__tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: #151615; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+.editorial-home .stats-panel__tiles li { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 18px 22px 20px; border: 0; border-left: 1px solid rgba(255, 255, 255, .08); border-radius: 0; background: none; box-shadow: none; }
+.editorial-home .stats-panel__tiles li:first-child { border-left: 0; }
+.editorial-home .stats-panel__icon { display: none; }
+.editorial-home .stats-panel__tiles small { order: -1; display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font: 600 .68rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.editorial-home .stats-panel__tiles small::before { content: ""; width: 6px; height: 6px; background: var(--accent); transform: skewX(-20deg); }
+.editorial-home .stats-panel__tiles b { order: 0; font: 800 2.6rem/1 var(--f-head); letter-spacing: .01em; color: var(--strong); }
+.editorial-home .stats-panel__tiles .is-gold b { color: #f1d48a; }
+.editorial-home .stats-panel__tiles .is-fire b { color: var(--accent-hi); }
+.editorial-home .stats-panel__empty { margin: 0; padding: 18px 22px; background: #151615; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); color: var(--text-2); }
+@media (max-width: 860px) { .editorial-home .stats-panel__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .editorial-home .stats-panel__tiles li:nth-child(3) { border-left: 0; } .editorial-home .stats-panel__tiles li:nth-child(n+3) { border-top: 1px solid rgba(255, 255, 255, .08); } }
+
+/* MVP: label and name together at the top of the cell, like the streak cell beside it. */
+.home-result .daily-done__meta > .daily-done__mvp { align-content: start; gap: 4px; }
+.daily-done__mvp b { margin-top: 2px; font-size: 1.45rem !important; }
+.daily-done__streak b { gap: 6px; font-size: 1.45rem !important; line-height: 1; }
+.daily-done__streak b svg { flex: none; margin-left: -2px; }
+
+/* Today's result: its own band under the hero, laid out in one row (trophy, placement, MVP, streak, copy). */
+.home-result { margin-top: 18px; }
+.home-result .daily-done { width: 100%; grid-template-columns: auto minmax(200px, 0.9fr) minmax(0, 2.4fr) auto; grid-template-areas: 'icon label meta share' 'icon place meta share'; align-items: center; gap: 0 22px; margin: 0; padding: 20px 24px 20px 26px; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);  background-image: var(--cut16); }
+.home-result .daily-done__meta { margin-top: 0; align-self: stretch; }
+.home-result .daily-done > .daily-done__meta > span { padding: 12px 16px; }
+@media (max-width: 1100px) { .home-result .daily-done { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'icon label share' 'icon place share' 'meta meta meta'; } .home-result .daily-done__meta { margin-top: 18px; } }
+@media (max-width: 520px) { .home-result .daily-done { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'icon label' 'icon place' 'meta meta' 'share share'; } }
+
+/* Build your five: a bigger poster and a proper caption. */
+.home-lineup-art { max-width: 560px; }
+.lart { gap: 12px; }
+.lart__card { height: calc(236px + var(--lift, 0px)); }
+.lart__card:nth-child(2), .lart__card:nth-child(4) { --lift: 18px; }
+.lart__card.is-lead { --lift: 42px; }
+.lart__who { top: 20%; }
+.lart__no { top: 10px; left: 11px; font-size: 1.1rem; }
+.lart__role b { font-size: clamp(.68rem, 1vw, .82rem); }
+.lart__line { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 18px; color: var(--strong); font: 800 1.7rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; }
+.lart__line::before, .lart__line::after { content: ""; flex: none; width: 34px; height: 3px; background: var(--accent); transform: skewX(-30deg); }
+.lart__line em { color: var(--accent); font-style: normal; }
+@media (max-width: 1100px) { .lart__line { font-size: 1.3rem; } .lart__line::before, .lart__line::after { width: 20px; } }
+.home-lineup-art .lart__line { margin-top: 18px; font: 800 1.7rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; color: var(--strong); }
+@media (max-width: 1100px) { .home-lineup-art .lart__line { font-size: 1.35rem; } }
+
+/* The poster sits in the middle of the hero's right half, caption with it. */
+.home-invitation > .home-lineup-art { justify-self: center; align-self: center; margin-bottom: 0; }
+
+/* The poster stands at the bottom of the hero, pulled in from the right edge. */
+.home-invitation > .home-lineup-art { justify-self: end; align-self: end; margin: 0 clamp(24px, 7vw, 110px) 6px 0; }
+
+/* The result band, refined: a cut-corner copy button, and flat scoreboard cells for MVP and streak. */
+.home-result .daily-done .share-bar { align-self: center; }
+.home-result .daily-done .share-bar .ghost-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 46px; padding: 0 22px; border: 0; border-radius: 0; background: var(--accent); color: #170c03; font: 800 1.05rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); transition: background .15s; }
+.home-result .daily-done .share-bar .ghost-btn:hover { background: var(--accent-hi); }
+.home-result .daily-done .share-bar .ghost-btn svg { flex: none; }
+.home-result .daily-done__meta { gap: 0; }
+.home-result .daily-done__meta > span, .home-result .daily-done__meta > .daily-done__streak { padding: 14px 20px; border-radius: 0; background: rgba(255, 255, 255, .035); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.home-result .daily-done__meta > span + span { margin-left: -1px; }
+.home-result .daily-done__meta > .daily-done__streak { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 0 3px 0 var(--accent); background: rgba(255, 255, 255, .035); }
+.home-result .daily-done__meta small { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--muted); font: 600 .68rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.home-result .daily-done__meta small::before { content: ""; width: 6px; height: 6px; background: var(--accent); transform: skewX(-20deg); }
+.home-result .daily-done__meta b { font: 800 1.9rem/1 var(--f-head) !important; letter-spacing: .01em; color: var(--strong); }
+.home-result .daily-done__meta b svg { color: var(--accent-hi); filter: none; }
+.home-result .daily-done__streak b { color: var(--accent-hi); }
+.home-result .daily-done__streak .fire { gap: 4px; margin: 10px 0 8px; }
+.home-result .daily-done__streak .fire u { height: 8px; border-radius: 0; transform: skewX(-20deg); box-shadow: none; }
+.home-result .daily-done__streak .fire u.on { background: var(--accent); box-shadow: none; }
+.home-result .daily-done__streak em { color: var(--muted); font-size: .76rem; }
+
+/* MVP cell: the player's photo beside their name, so it fills the cell like the streak cell does. */
+.home-result .daily-done__meta > .daily-done__mvp { display: flex; align-items: center; gap: 16px; }
+.home-result .daily-done__face { flex: none; width: 76px; height: 76px; overflow: hidden; background: #0c0d0c; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -3px 0 var(--accent); }
+.home-result .daily-done__face img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+.home-result .daily-done__who { display: grid; gap: 6px; min-width: 0; }
+.home-result .daily-done__who em { color: var(--muted); font: normal .76rem/1.3 var(--f-read); }
+.home-result .daily-done__who b { margin: 0; }

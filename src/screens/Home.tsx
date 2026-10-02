@@ -1,26 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ROSTERS, Roster } from '../data/rosters';
+import { ROLE_ORDER, ROSTERS, Role, Roster } from '../data/rosters';
 import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
-import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, howExpanded, replaceRisk, runWhere } from '../game/home';
+import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, replaceRisk, runWhere } from '../game/home';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
 import caseArt from '../assets/home/case.svg';
 import proArt from '../assets/home/pro-silhouette.svg';
 import { LogoMark } from '../ui/TopBar';
-import { Avatar } from '../ui/art';
-import { ArrowRightIcon, CaseIcon, FlagIcon, FlameIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
-import { dismissTip, useTipSeen } from '../ui/tips';
+import { Avatar, RoleIcon } from '../ui/art';
+import { ArrowRightIcon, CaseIcon, ClockIcon, FlagIcon, FlameIcon, ShareIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
 import { useCountdown } from '../ui/useCountdown';
-import { DailyDone, ModePicker } from './Modes';
+import { DailyDone } from './Modes';
 
 interface HomeProps {
   s: Run;
   stats: Stats;
   dispatch: React.Dispatch<Action>;
-  /** Plays the case reel for the case that is about to open. */
-  setReelFor: (n: number | null) => void;
   /** Goes to the run (the draft, lobby, match or results, wherever it is). */
   showDraft: () => void;
+  /** Opens the free-play setup page. */
+  showSetup: () => void;
   showGuess: () => void;
   onStats: () => void;
   onBrowse?: () => void;
@@ -30,14 +29,13 @@ interface HomeProps {
  * The home screen (#113): the first page, and somewhere you can come back to without touching a run in progress (#115).
  * One daily invitation, quieter secondary modes, your actual record and expandable instructions.
  */
-export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGuess, onStats, onBrowse }: HomeProps) {
+export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess, onStats, onBrowse }: HomeProps) {
   const cd = useCountdown();
   const todayN = dailyNumber(cd.day);
   const home = homeState(s, stats, cd.day);
   const doneToday = stats.daily[cd.day];
   // Which start is waiting for an answer to "this would throw away your run" (#182).
   const [ask, setAsk] = useState<'daily' | 'free' | null>(null);
-  const [freeOpen, setFreeOpen] = useState(false);
 
   // At local midnight the page moves on to the new daily by itself, and says so.
   const [ready, setReady] = useState<number | null>(null);
@@ -50,19 +48,18 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
   const playDaily = () => {
     if (risk && ask !== 'daily') { setAsk('daily'); return; }
     setAsk(null);
-    dispatch({ type: 'reset', mode: 'daily' }); setReelFor(1); dispatch({ type: 'spin' }); showDraft();
+    // A new draft starts on the sealed case; the reels run when you open it.
+    dispatch({ type: 'reset', mode: 'daily' }); showDraft();
   };
   const startFree = () => {
     if (risk && ask !== 'free') { setAsk('free'); return; }
     setAsk(null);
     dispatch({ type: 'reset', mode: 'free' });
-    setFreeOpen(true);
+    showSetup();
   };
-  const openCase = () => { setReelFor(s.offerKey + 1); dispatch({ type: 'spin' }); showDraft(); };
 
   const btn = dailyButton(home, s);
   const panel = dailyPanel(home, todayN, s, doneToday?.placement);
-  const freeShown = freeOpen && s.mode === 'free' && !home.freeInProgress;
 
   const g = useMemo(() => loadGuesses()[cd.day], [cd.day]);
   const gStreak = useMemo(() => guessStreak(loadGuesses(), cd.day), [cd.day]);
@@ -78,11 +75,11 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
       <section className="home-invitation" aria-labelledby="home-invitation-title">
         <div className="home-invitation__copy">
           <p className="home-kicker">Daily challenge <span>#{todayN}</span></p>
-          <h1 id="home-invitation-title">Five players.<br /><em>One Major.</em></h1>
+          <h1 id="home-invitation-title"><span>Five players.</span><em>One Major.</em></h1>
           <p className="home-invitation__intro">Draft from Major history. See how far your team goes.</p>
           <div className="home-daily-status">
             {home.daily === 'done' && doneToday
-              ? <DailyDone d={doneToday} n={todayN} countdown={false} />
+              ? null
               : <p>{home.daily === 'abandoned' ? "Today's run was abandoned. You can play for practice; it won't change your record." : home.daily === 'progress' ? `Your run is waiting · ${runWhere(s)}.` : 'Seven picks: five starters, a coach and a bench player. Same cases for everyone.'}</p>}
             {home.daily === 'done' && <p className="home-practice-note">{resultAvailable ? 'Your result is saved in this browser.' : "Replay for practice. It won't change your record."}</p>}
             {panel.progress && <ol className="dots" aria-label={`Round ${panel.progress.at} of ${panel.progress.of}`}>
@@ -94,33 +91,40 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
               <span className="cta__main">{action}<ArrowRightIcon size={20} /></span>
             </button>
             <div className="home-daily-clock">
+              <ClockIcon size={20} />
               <span aria-hidden="true">Next daily in <b className="clock clock--inline">{cd.clock}</b></span>
               <span className="sr">{cd.spoken}</span>
               <small>At your local midnight</small>
             </div>
           </div>
+          {/* The site opens on this page, so a run that has just finished (and isn't today's daily, which has its own button above) stays one press from its results. */}
+          {s.phase === 'final' && s.offerKey > 0 && !resultAvailable && (
+            <p className="home-last-result"><button type="button" className="link-btn" onClick={showDraft}>View your last result</button></p>
+          )}
           {ask === 'daily' && risk && (
             <div className="mcard__ask" role="alert">
               <p>{risk}</p>
               <div className="mcard__ask-btns">
-                <button type="button" className="ghost-btn ghost-btn--big" onClick={playDaily}>{confirmWord}</button>
-                <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(null)}>Keep it</button>
+                <button type="button" className="st-btn is-ask" onClick={playDaily}>{confirmWord}</button>
+                <button type="button" className="st-btn" onClick={() => setAsk(null)}>Keep it</button>
               </div>
             </div>
           )}
           {home.oldRun && (
             <div className="mcard__old" role="note">
               <p>Daily #{home.oldRun.n} ({home.oldRun.date}) is unfinished. Today is Daily #{todayN}.</p>
-              <button type="button" className="mbtn" onClick={showDraft}>Continue Daily #{home.oldRun.n}<ArrowRightIcon size={18} /></button>
+              <button type="button" className="mbtn" onClick={showDraft}><span>Continue Daily #{home.oldRun.n}</span><ArrowRightIcon size={22} /></button>
             </div>
           )}
-          {ready !== null && <p className="daily-ready" role="status">Daily #{ready} is ready.</p>}
+          {ready !== null && <div className="daily-ready" role="status"><span className="daily-ready__tag">New daily</span><b className="daily-ready__n">#{ready}</b><span className="daily-ready__text">A fresh draft just dropped. Same teams for everyone.</span></div>}
         </div>
         <LineupArt />
       </section>
 
+      {home.daily === 'done' && doneToday && <section className="home-result" aria-label="Today's result"><DailyDone d={doneToday} n={todayN} countdown={false} streak={streak} /></section>}
+
       <div className="modes3 home-secondary-modes">
-        <article className={`mcard home-mode-card home-mode-card--free ${freeShown || home.freeInProgress || ask === 'free' ? 'home-mode-card--expanded' : ''}`} aria-labelledby="mcard-free-h">
+        <article className={`mcard home-mode-card home-mode-card--free ${home.freeInProgress || ask === 'free' ? 'home-mode-card--expanded' : ''}`} aria-labelledby="mcard-free-h">
           <span className="home-mode-art home-mode-art--free" aria-hidden="true"><img src={caseArt} alt="" width="480" height="240" /><span className="home-case-mark"><LogoMark size={30} /></span></span>
           <p className="home-mode-label">Free play</p><h2 className="mcard__title" id="mcard-free-h">Draft anytime.<br />Any era.</h2>
           <p className="mcard__text">Draft as often as you like, in any era.</p>
@@ -129,16 +133,13 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
               <div className="mcard__ask" role="alert">
                 <p>{risk}</p>
                 <div className="mcard__ask-btns">
-                  <button type="button" className="ghost-btn ghost-btn--big" onClick={startFree}>{confirmWord}</button>
-                  <button type="button" className="ghost-btn ghost-btn--big" onClick={() => setAsk(null)}>Keep it</button>
+                  <button type="button" className="st-btn is-ask" onClick={startFree}>{confirmWord}</button>
+                  <button type="button" className="st-btn" onClick={() => setAsk(null)}>Keep it</button>
                 </div>
               </div>
             )}
-            {freeShown && <ModePicker opts={s.opts ?? {}} dispatch={dispatch} />}
-            {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}>Continue free play · {runWhere(s)}<ArrowRightIcon size={18} /></button>}
-            {freeShown
-              ? <button type="button" className="cta cta--orange" data-sfx="open" onClick={openCase}><span className="cta__main">Open case<ArrowRightIcon size={18} /></span></button>
-              : ask !== 'free' && <button type="button" className={`mbtn ${home.freeInProgress ? '' : 'home-mode-start'}`} onClick={startFree}><span>{home.freeInProgress ? 'New free play' : 'Start free play'}</span><ArrowRightIcon size={22} /></button>}
+            {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}><span>Continue free play · {runWhere(s)}</span><ArrowRightIcon size={22} /></button>}
+            {ask !== 'free' && <button type="button" className={`mbtn ${home.freeInProgress ? '' : 'home-mode-start'}`} onClick={startFree}><span>{home.freeInProgress ? 'New free play' : 'Start free play'}</span><ArrowRightIcon size={22} /></button>}
           </div>
         </article>
 
@@ -149,10 +150,10 @@ export function HomeScreen({ s, stats, dispatch, setReelFor, showDraft, showGues
           <p className="home-mode-label">Guess the Pro</p><h2 className="mcard__title" id="mcard-guess-h">Eight guesses.<br />One pro.</h2>
           <p className="mcard__text">Name the pro in eight guesses.</p>
           <div className="mcard__foot">
-            <p className="mcard__state">
-              {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : 'A new pro every day.'}
-              {gStreak > 0 && ` · ${gStreak}-day streak`}
-            </p>
+            {(g?.done || g?.guesses.length || gStreak > 0) && <p className="mcard__state">
+              {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : ''}
+              {gStreak > 0 && `${g?.done || g?.guesses.length ? ' · ' : ''}${gStreak}-day streak`}
+            </p>}
             <button type="button" className="mbtn home-mode-start" onClick={showGuess}><span>{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
           </div>
         </article>
@@ -177,26 +178,24 @@ function ArchiveArt() {
   </svg>;
 }
 
-/** An original, deliberately schematic five-starter path, not a simulated bracket. */
+const LART_NAME: Record<Role, string> = { IGL: 'IGL', AWP: 'AWPer', ENTRY: 'Entry', LURK: 'Lurker', SUP: 'Support' };
+
+/** Five open slots in a staggered row, one per role, lit from the arena's side: the team you are about to build. Schematic and original, no real player. */
 function LineupArt({ compact = false }: { compact?: boolean }) {
-  return <svg className={`home-lineup-art ${compact ? 'home-lineup-art--compact' : ''}`} viewBox={compact ? '0 0 500 260' : '0 0 500 310'} aria-hidden="true" focusable="false">
-    {[0, 1, 2, 3, 4].map((i) => <g key={i} transform={`translate(${15 + i * 97},0)`}>
-      <text x="41" y="25" textAnchor="middle" className="home-lineup-art__number">{i + 1}</text>
-      <rect x="3" y="40" width="76" height="135" fill="var(--inset)" stroke="var(--line)" />
-      <circle cx="41" cy="82" r="16" fill="var(--muted)" opacity=".3" />
-      <path d="M15 135v-14c0-30 52-30 52 0v14" fill="var(--muted)" opacity=".3" />
-      <path d="M35 153h12M41 147v12" stroke="var(--text)" strokeWidth="2" />
-    </g>)}
-    <g fill="none" stroke="var(--muted)" strokeWidth="1.5">
-      <path d="M56 175v30h97v20M153 175v50M250 175v65M347 175v50M444 175v30h-97v20" />
-      <path d="M111 225h84v27h-84zM305 225h84v27h-84zM195 239h110" />
-    </g>
-    {!compact && <>
-      <path d="M250 239v36" stroke="var(--accent)" strokeWidth="2" />
-      <rect x="180" y="275" width="140" height="32" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
-      <text x="250" y="297" textAnchor="middle" className="home-lineup-art__finish">THE MAJOR</text>
-    </>}
-  </svg>;
+  return (
+    <div className={`home-lineup-art ${compact ? 'home-lineup-art--compact' : ''}`} aria-hidden="true">
+      <ol className="lart">
+        {ROLE_ORDER.map((role, i) => (
+          <li key={role} className={`lart__card ${i === 2 ? 'is-lead' : ''}`} style={{ ['--i' as string]: i }}>
+            <span className="lart__no">{i + 1}</span>
+            <svg className="lart__who" viewBox="0 0 80 100" focusable="false"><circle cx="40" cy="34" r="17" /><path d="M8 100V82c0-20 64-20 64 0v18z" /></svg>
+            <span className="lart__role"><RoleIcon role={role} size={18} /><b>{LART_NAME[role]}</b></span>
+          </li>
+        ))}
+      </ol>
+      <p className="lart__line">Build your five. <em>Win the Major.</em></p>
+    </div>
+  );
 }
 
 /**
@@ -206,22 +205,22 @@ function StatsPanel({ stats, streak, onStats }: { stats: Stats; streak: number; 
   const best = bestFinish(stats);
   const ach = achievementCount(stats);
   const empty = statsSections(stats).empty;
-  const tiles: { icon: React.ReactNode; label: string; value: string }[] = [
-    { icon: <TrophyIcon size={30} />, label: 'Best finish', value: best === 'Out in the Swiss stage' ? 'Swiss exit' : best ?? '–' },
-    { icon: <FlameIcon size={30} />, label: 'Daily streak', value: streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '–' },
-    { icon: <StatsIcon size={30} />, label: 'Runs', value: String(stats.runs) },
-    { icon: <StarIcon size={30} />, label: 'Achievements', value: `${ach.earned} / ${ach.total}` },
+  const tiles: { icon: React.ReactNode; label: string; value: string; tone?: string }[] = [
+    { icon: <TrophyIcon size={26} />, label: 'Best finish', value: best === 'Out in the Swiss stage' ? 'Swiss exit' : best ?? '–', tone: stats.titles > 0 ? 'gold' : undefined },
+    { icon: <FlameIcon size={26} />, label: 'Daily streak', value: streak > 0 ? `${streak} day${streak === 1 ? '' : 's'}` : '–', tone: streak > 0 ? 'fire' : undefined },
+    { icon: <StatsIcon size={26} />, label: 'Runs', value: String(stats.runs) },
+    { icon: <StarIcon size={26} />, label: 'Achievements', value: `${ach.earned} / ${ach.total}` },
   ];
   return (
     <section className="stats-panel" aria-labelledby="stats-panel-h">
       <div className="stats-panel__head">
         <h2 id="stats-panel-h">Your stats</h2>
-        <button type="button" className="link-btn" onClick={onStats}>View all</button>
+        <button type="button" className="link-btn stats-panel__all" onClick={onStats}>View all stats <ArrowRightIcon size={16} /></button>
       </div>
       {empty
         ? <p className="stats-panel__empty">No runs yet. Finish a run to set your best finish, and play the daily to start a streak. Your record stays in this browser.</p>
         : <ul className="stats-panel__tiles">
-          {tiles.map((x) => <li key={x.label}><span className="stats-panel__icon" aria-hidden="true">{x.icon}</span><b>{x.value}</b><small>{x.label}</small></li>)}
+          {tiles.map((x) => <li key={x.label} className={x.tone ? `is-${x.tone}` : ''}><span className="stats-panel__icon" aria-hidden="true">{x.icon}</span><b>{x.value}</b><small>{x.label}</small></li>)}
         </ul>}
     </section>
   );
@@ -235,9 +234,7 @@ const SAMPLE: Roster = [...ROSTERS].filter((r) => r.result === 'Champions').sort
  * (the same "seen" state as the first-time tips), and always one press away.
  */
 function HowItWorks() {
-  const seen = useTipSeen('intro');
-  const [open, setOpen] = useState(false);
-  const shown = howExpanded(seen, open);
+  const shown = true;
   const steps = [
     { title: 'Open a case', text: 'Three iconic rosters from Major history.', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
     { title: 'Draft your team', text: 'Pick a player at a time: five, a coach and a bench player.', art: (
@@ -261,10 +258,6 @@ function HowItWorks() {
     <section className={`how ${shown ? 'is-open' : ''}`} aria-labelledby="how-h">
       <div className="how__head">
         <h2 id="how-h">How it works</h2>
-        {!shown && <p className="how__line">Open a case, draft your team, play the Major, share the result.</p>}
-        {shown
-          ? <button type="button" className="link-btn" aria-expanded="true" onClick={() => { setOpen(false); dismissTip('intro'); }}>{seen ? 'Hide the steps' : 'Got it'}</button>
-          : <button type="button" className="link-btn" aria-expanded="false" onClick={() => setOpen(true)}>Show the steps</button>}
       </div>
       {shown && (
         <>

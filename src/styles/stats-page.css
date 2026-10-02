@@ -1,0 +1,123 @@
+/* The stats page, flat and sharp like the buttons and the Home scoreboard: square panels, hairlines, a slanted orange tick before each label, condensed numbers, one cut corner per panel. Gold only for titles. */
+.sp { position: relative; isolation: isolate; display: block; padding-top: 8px; --sp-panel: #151615; --sp-line: rgba(255, 255, 255, .08);  background-image: var(--cut22); }
+.sp::before { content: ""; position: absolute; z-index: -1; pointer-events: none; inset: -24px calc(-1 * var(--gutter)) auto; height: 320px; background: linear-gradient(0deg, var(--bg), transparent 70%), linear-gradient(90deg, var(--bg), rgba(20, 22, 21, .55) 55%, rgba(20, 22, 21, .25)), url('../assets/home/arena.webp') 70% 30% / cover no-repeat; -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent 99%); mask-image: linear-gradient(90deg, #000 78%, transparent 99%); }
+:root[data-theme="light"] .sp::before, :root[data-contrast="high"] .sp::before { display: none; }
+.sp-hero h3 { margin: 0; font: 800 clamp(2.6rem, 6vw, 4.6rem)/1 var(--f-head); letter-spacing: -.01em; color: var(--strong); text-transform: none; }
+.sp-hero p { margin: 10px 0 0; color: var(--muted); }
+.sp-hero .sp-kicker { display: flex; align-items: center; gap: 8px; margin: 8px 0 8px; color: var(--accent); font: 700 .75rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }
+.sp-hero .sp-kicker::before, .sp-card h4::before, .sp-ach__head h4::before { content: ""; flex: none; width: 8px; height: 8px; background: var(--accent); transform: skewX(-20deg); }
+.sp-empty { margin: 28px 0; padding: 20px; background: var(--sp-panel); box-shadow: inset 0 0 0 1px var(--sp-line); color: var(--text-2); }
+
+/* the headline numbers: one band, four cells */
+.sp-kpis { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 28px 0 18px; padding: 0; background: var(--cut16), var(--sp-panel); box-shadow: inset 0 0 0 1px var(--sp-line); clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%); }
+.sp-kpis li { display: flex; flex-direction: column; gap: 8px; padding: 20px 22px 22px; border-left: 1px solid var(--sp-line); }
+.sp-kpis li:first-child { border-left: 0; }
+.sp-kpis svg { display: none; }
+.sp-kpis span { order: -1; display: flex; align-items: center; gap: 8px; color: var(--muted); font: 600 .68rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.sp-kpis span::before { content: ""; width: 6px; height: 6px; background: var(--accent); transform: skewX(-20deg); }
+.sp-kpis b { font: 800 3.2rem/1 var(--f-head); color: var(--strong); font-variant-numeric: tabular-nums; }
+.sp-kpis .is-gold b { color: #f1d48a; }
+
+.sp-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.sp-card { padding: 22px 24px 24px; background: var(--cut14), var(--sp-panel); box-shadow: inset 0 0 0 1px var(--sp-line); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+.sp-card--wide { grid-column: 1 / -1; }
+.sp-card h4 { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; font: 800 1.2rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; color: var(--strong); }
+.sp-card h4 span { margin-left: auto; color: var(--muted); font: 500 .75rem var(--f-read); letter-spacing: .04em; text-transform: none; }
+.sp-card h5 { margin: 24px 0 10px; padding-top: 16px; border-top: 1px solid var(--sp-line); color: var(--muted); font: 600 .68rem var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+
+/* the streak */
+.sp-streak { display: flex; align-items: center; flex-wrap: wrap; gap: 18px 36px; }
+.sp-streak__now { display: flex; align-items: baseline; gap: 10px; }
+.sp-streak__now svg { align-self: center; color: var(--accent-hi); }
+.sp-streak__now b { font: 800 4.4rem/1 var(--f-head); color: var(--accent-hi); }
+.sp-streak__now span { color: var(--muted); font: 600 .8rem var(--f-read); letter-spacing: .12em; text-transform: uppercase; }
+.sp-streak__meter { flex: 1 1 240px; display: grid; gap: 10px; }
+.sp-streak .fire { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.sp-streak .fire u { height: 10px; background: rgba(255, 255, 255, .1); text-decoration: none; transform: skewX(-20deg); }
+.sp-streak .fire u.on { background: var(--accent); }
+.sp-streak__meter small { color: var(--text-2); }
+
+/* the last 14 dailies: flat columns; gold for a title */
+.sp .dchart { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.sp .dchart__col { display: grid; justify-items: center; gap: 5px; }
+.sp .dchart__bar { display: flex; align-items: flex-end; width: 100%; height: 96px; background: rgba(255, 255, 255, .04); }
+.sp .dchart__bar i { display: block; width: 100%; background: var(--accent); }
+.sp .dchart__col.is-champ .dchart__bar i { background: #d9b865; }
+.sp .dchart small { color: var(--text-2); font-size: .66rem; font-weight: 700; letter-spacing: .04em; }
+.sp .dchart em { color: var(--muted); font: normal .64rem var(--f-read); }
+
+/* finishes */
+.sp-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.sp-bars li { display: grid; grid-template-columns: 150px minmax(0, 1fr) 30px; align-items: center; gap: 14px; }
+.sp-bars span { color: var(--text-2); font-size: .85rem; }
+.sp-bars i { height: 10px; background: rgba(255, 255, 255, .06); overflow: hidden; }
+.sp-bars u { display: block; height: 100%; min-width: 4px; background: var(--accent); text-decoration: none; transition: width .5s ease-out; }
+.sp-bars .is-gold u { background: #d9b865; }
+.sp-bars b { text-align: right; font: 800 1.2rem var(--f-head); color: var(--strong); font-variant-numeric: tabular-nums; }
+
+/* most drafted: rank, face, name, count, divided by hairlines */
+.sp-most { list-style: none; margin: 0; padding: 0; }
+.sp-most li { display: grid; grid-template-columns: 26px 46px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid var(--sp-line); }
+.sp-most li:first-child { border-top: 0; padding-top: 0; }
+.sp-most__rank { color: var(--muted); font: 800 1.1rem var(--f-head); }
+.sp-most li:first-child .sp-most__rank { color: var(--accent-hi); }
+.sp-most img { width: 46px; height: 46px; object-fit: cover; object-position: center 12%; background: var(--inset); }
+.sp-most b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 1.35rem var(--f-head); letter-spacing: .02em; color: var(--strong); }
+.sp-most__n { color: var(--accent-hi); font: 800 1.2rem var(--f-head); }
+
+/* rows */
+.sp-rows { list-style: none; margin: 0; padding: 0; }
+.sp-rows li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--sp-line); }
+.sp-rows li:first-child { border-top: 0; padding-top: 0; }
+.sp-rows span { display: grid; color: var(--text-2); }
+.sp-rows span small { color: var(--muted); font-size: .72rem; }
+.sp-rows b { font: 700 .95rem var(--f-read); color: var(--strong); text-align: right; }
+.sp-rows b small { color: var(--muted); font-weight: 500; font-size: .78rem; }
+.sp-rows .is-abandoned b { color: var(--muted); font-weight: 500; }
+
+/* achievements: flat tiles; an earned one has an orange bar down its left edge and a lit star */
+.sp-ach { margin: 34px 0 10px; }
+.sp-ach__head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 14px; margin-bottom: 16px; }
+.sp-ach__head h4 { display: flex; align-items: center; gap: 10px; margin: 0; font: 800 1.2rem var(--f-head); letter-spacing: .08em; text-transform: uppercase; color: var(--strong); }
+.sp-ach__head span { color: var(--muted); font-size: .85rem; }
+.sp-ach__head i { flex: 1 1 100%; height: 6px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.sp-ach__head u { display: block; height: 100%; background: var(--accent); text-decoration: none; }
+.sp-ach__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.sp-ach__grid li { position: relative; display: grid; gap: 4px; padding: 14px 14px 14px 46px; background: var(--sp-panel); box-shadow: inset 0 0 0 1px var(--sp-line); opacity: .5; }
+.sp-ach__star { position: absolute; left: 14px; top: 15px; color: var(--muted); }
+.sp-ach__grid b { font: 700 .92rem var(--f-read); color: var(--strong); }
+.sp-ach__grid small { color: var(--muted); font-size: .76rem; line-height: 1.4; }
+.sp-ach__grid li.is-earned { opacity: 1; box-shadow: inset 3px 0 0 var(--accent), inset 0 0 0 1px var(--sp-line); }
+.sp-ach__grid li.is-earned .sp-ach__star { color: var(--accent-hi); }
+
+@media (max-width: 860px) { .sp-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sp-kpis li:nth-child(3) { border-left: 0; } .sp-kpis li:nth-child(n+3) { border-top: 1px solid var(--sp-line); } .sp-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 520px) { .sp-bars li { grid-template-columns: 110px minmax(0, 1fr) 26px; } .sp-streak__now b { font-size: 3.4rem; } .sp .dchart { gap: 3px; } }
+
+/* ---- the Guess page's treatment: one dark panel with a cut corner; a square icon tile and a hairline in the header; darker inset boards; colour as a bar along the bottom ---- */
+.sp { padding: clamp(18px, 2.6vw, 34px); border: 0; border-radius: 0; background: #121312; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); --sp-board: #0b0c0b; }
+.sp::before { inset: 0 0 auto 0; height: 300px; opacity: .45; -webkit-mask-image: none; mask-image: none; background: linear-gradient(0deg, #121312, transparent 80%), linear-gradient(90deg, #121312, rgba(18, 19, 18, .4) 60%, rgba(18, 19, 18, .2)), url('../assets/home/arena.webp') 70% 30% / cover no-repeat; }
+.sp-hero { display: flex; align-items: center; gap: 20px; padding-bottom: 22px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.sp-hero__icon { flex: none; display: grid; place-items: center; width: 76px; height: 76px; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -3px 0 var(--accent); color: var(--accent-hi); }
+.sp-hero h3 { font-size: clamp(2.4rem, 4.6vw, 4rem); letter-spacing: .03em; text-transform: uppercase; }
+.sp-hero p { margin-top: 8px; }
+.sp-hero .sp-kicker { margin: 0 0 8px; }
+
+/* headline numbers: cells on a board, each with a bar along its bottom */
+.sp-kpis { margin: 22px 0 16px; background: var(--sp-board); clip-path: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); }
+.sp-kpis li { position: relative; padding: 20px 22px 24px; }
+.sp-kpis li::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--accent); }
+.sp-kpis .is-gold::after { background: #d9b865; }
+.sp-kpis b { font-size: 3.4rem; }
+
+/* every card is a board: darker, inset, no cut corner */
+.sp-card { background: var(--sp-board); clip-path: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); }
+.sp-card h4 { padding-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.sp-card h5 { border-top: 0; padding-top: 0; margin-top: 22px; }
+.sp .dchart__bar { background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .05); }
+.sp-most li, .sp-rows li { border-top-color: rgba(255, 255, 255, .07); }
+.sp-most img { box-shadow: inset 0 -3px 0 var(--accent); }
+
+/* achievements: a tile with a bar along the bottom when earned, like a solved clue */
+.sp-ach__grid li { background: var(--sp-board); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); opacity: .5; }
+.sp-ach__grid li.is-earned { opacity: 1; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 0 -3px 0 var(--accent); }
+.sp-ach__head { padding-top: 6px; }

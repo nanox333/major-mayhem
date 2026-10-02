@@ -1,8 +1,8 @@
 name: CI
 
-# Every push and PR runs the full checks. On main, the exact build that passed them is deployed to GitHub Pages,
-# so a failing unit test, balance check or playthrough blocks the deploy. Run it by hand from the Actions tab
-# (on main) to redeploy.
+# Routine checks stay short: unit tests, typecheck/build and a desktop/phone browser smoke test.
+# Main deploys the exact build that passed them. Full playthroughs and balance simulations
+# run weekly or manually in extended-checks.yml. Run CI manually on main to redeploy.
 # Branches are tested through their pull request only (push runs on main), and a newer push cancels the older run.
 on:
   push:
@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,26 +27,18 @@ jobs:
       - run: npm ci
       - name: Unit tests
         run: npm test
-      - name: Balance check (9,000 simulated runs)
-        run: npm run check
       - name: Typecheck and build
         run: npm run build
-      - name: Cache Chromium
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - name: Install Chromium
-        run: npx playwright install --with-deps chromium
-      - name: End-to-end playthrough
-        run: npm run e2e
-      - name: Responsive UI flows
-        run: npm run e2e:ui
+      - name: Browser smoke test (desktop and phone)
+        # GitHub's Ubuntu image includes Chrome; smoke checks need no browser download or apt install.
+        run: |
+          chrome_path="$(command -v google-chrome)"
+          CHROMIUM_PATH="$chrome_path" npm run e2e:smoke
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: e2e-screenshots
+          name: smoke-screenshots
           path: shots/
           if-no-files-found: ignore
       - name: Package the site

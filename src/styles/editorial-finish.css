@@ -247,6 +247,7 @@ details[open] > summary::after { transform: rotate(-135deg) translate(-2px, -2px
 .foot__group + .foot__group { border-left: 1px solid var(--line); padding-left: 24px; }
 .foot__group > svg { color: var(--text-2); }
 .foot .link-btn, .editorial-home .link-btn { min-height: 44px; }
+.how__head .link-btn { min-width: 44px; }
 /* The completed case retains a static rarity edge, even when its reel was skipped.
    Hard-mode cards never receive this class; placement words carry the meaning. */
 .case-card--revealed .case-card__top { border-bottom: 2px solid var(--rar); box-shadow: 0 4px 8px -6px var(--rar); }

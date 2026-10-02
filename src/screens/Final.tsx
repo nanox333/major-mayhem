@@ -5,7 +5,8 @@ import { Action, Run, benchLineup, dailyDate, dailyNumber, squadOf } from '../ga
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
-import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
+import { Avatar, MapArt, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
+import { keyMoments } from '../game/highlights';
 import { fmt, useMedia } from '../ui/util';
 import { play } from '../ui/sound';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
@@ -32,6 +33,16 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
     return () => clearTimeout(t);
   }, []);
   const [preview, setPreview] = useState<string | null>(null);
+  const [blob, setBlob] = useState<Blob | null>(null);
+  const [copied, setCopied] = useState<'idle' | 'ok' | 'blocked'>('idle');
+  // Clicking the preview puts the image itself on the clipboard, ready to paste into a chat.
+  const copyImage = async () => {
+    let ok = false;
+    try { if (blob) { await navigator.clipboard.write([new ClipboardItem({ [blob.type || 'image/png']: blob })]); ok = true; } } catch { /* blocked: Save image still works */ }
+    track('share', { method: 'copy-image', ok, mode: s.mode });
+    setCopied(ok ? 'ok' : 'blocked');
+    setTimeout(() => setCopied('idle'), 2200);
+  };
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
   const [report, setReport] = useState<number | null>(null);
   const newAch = s.recorded ? stats.lastNew?.length ?? 0 : 0;
@@ -52,7 +63,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           <ol className="result-path" aria-label="Your played matches">
             {s.t.matches.map((m, i) => <li key={i}><b className={m.won ? 'is-win' : 'is-loss'} aria-label={m.won ? 'Won' : 'Lost'}>{m.won ? 'W' : 'L'}</b><span>{m.stage === 'QUAL' ? s.t.qual.need ? 'Swiss' : 'Qualifier' : G.STAGE_NAME[m.stage]}</span></li>)}
           </ol>
-          <ShareBar onImageReady={blob => setPreview(URL.createObjectURL(blob))} text={() => shareText(s, pageUrl(), practice)} image={{ draw: () => drawResultCard(s, siteHost(), practice), name: cardFileName(s) }} props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }} />
+          <ShareBar onImageReady={b => { setBlob(b); setPreview(URL.createObjectURL(b)); }} text={() => shareText(s, pageUrl(), practice)} image={{ draw: () => drawResultCard(s, siteHost(), practice), name: cardFileName(s) }} props={{ mode: s.mode, placement: pl.key, ...(date ? { daily: dailyNumber(date) } : {}) }} />
           {practice && <p className="practice" role="note">Practice run: Daily #{dailyNumber(date!)} already has a result, so this one doesn't change your record, your streak or your achievements.</p>}
         </div>
         <div className="mvp-card">
@@ -75,9 +86,15 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
       <div className="result-recap">
         <PathView s={s} onOpen={setReport} />
         <aside className="result-export" aria-label="Exported result image">
-          <h4>Share image</h4><p>The image saved or shared above.</p>
-          {preview ? <img src={preview} alt="Preview of your exported result card, including placement, played match path, lineup and MVP." /> : <p role="status">Preparing image…</p>}
-        </aside>
+          <h4>Share image</h4><p>Click the card to copy it</p>
+          {preview ? (
+            <button type="button" className={`result-export__card ${copied !== 'idle' ? `is-${copied}` : ''}`} onClick={copyImage} aria-label="Copy the result image to the clipboard">
+              <img src={preview} alt="Preview of your exported result card, including placement, played match path, lineup and MVP." />
+              <span className="result-export__hint" aria-hidden="true">{copied === 'ok' ? '✓ Copied to clipboard' : copied === 'blocked' ? 'Copy blocked: use Save image' : 'Click to copy'}</span>
+            </button>
+          ) : <p role="status">Preparing image…</p>}
+          <span className="sr" role="status">{copied === 'ok' ? 'Image copied to the clipboard' : copied === 'blocked' ? 'Copy blocked by the browser' : ''}</span>
+          </aside>
       </div>
       {report !== null && s.t.matches[report] && <MatchReport m={s.t.matches[report]} onClose={() => setReport(null)} />}
       <div className="result-analysis">
@@ -223,44 +240,69 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
     if (g.events.some((e) => e.kind === 'clutch' && e.round === r + 1)) out.push('clutch');
     return out;
   };
-  const table = (rows: G.MapGame['stats']['mine'], label: string) => (
-    <table className="report__table">
-      <thead><tr><th>{label}</th><th>K</th><th>D</th><th>Rating</th></tr></thead>
-      <tbody>{[...rows].sort((a, b) => b.rating - a.rating).map((p) => <tr key={p.id}><td>{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td>{fmt(p.rating)}<RatingMark r={p.rating} /></td></tr>)}</tbody>
-    </table>
-  );
+  const table = (rows: G.MapGame['stats']['mine'], label: string, mine: boolean) => {
+    const sorted = [...rows].sort((a, b) => b.rating - a.rating);
+    return (
+      <table className={`report__table ${mine ? 'is-mine' : 'is-opp'}`}>
+        <thead><tr><th>{label}</th><th>K</th><th>D</th><th>Rating</th></tr></thead>
+        <tbody>{sorted.map((p, k) => <tr key={p.id} className={k === 0 ? 'is-top' : ''}><td>{k === 0 && <i className="report__star" aria-hidden="true">★</i>}{p.nick}</td><td>{p.k}</td><td>{p.d}</td><td>{fmt(p.rating)}<RatingMark r={p.rating} /></td></tr>)}</tbody>
+      </table>
+    );
+  };
+  const moments = g ? keyMoments(g, opp.tag).filter((x) => x.kind !== 'mvp') : [];
+  const half = g ? g.rounds.slice(0, 12).filter(Boolean).length : 0;
   return (
-    <Modal label="Match report" onClose={onClose}>
-      <h3>{G.STAGE_NAME[m.stage]} vs {opp.org} {opp.year}: {m.won ? 'won' : 'lost'} {m.score[0]}–{m.score[1]}</h3>
-      {m.maps.length > 1 && (
-        <div className="seg report__maps" role="tablist" aria-label="Maps">
-          {m.maps.map((x, k) => <button key={k} role="tab" aria-selected={k === i} className={k === i ? 'is-on' : ''} onClick={() => setI(k)}>{x.map} {x.score[0]}–{x.score[1]}</button>)}
-        </div>
-      )}
-      {g && (
-        <>
-          <p className="muted small">{g.map}: {g.won ? 'won' : 'lost'} {g.score[0]}–{g.score[1]}, starting on {g.start}{g.rounds.length > 24 ? ', after overtime' : ''}.</p>
-          <ol className="report__rounds" aria-label="Rounds">
-            {g.rounds.map((won, r) => {
-              const tags = marks(r);
-              return (
-                <li key={r} className={`${won ? 'w' : 'l'}${r === 12 || (r >= 24 && (r - 24) % 3 === 0) ? ' swap' : ''}`} title={`Round ${r + 1}: ${won ? 'won' : 'lost'}${tags.length ? ` · ${tags.join(', ')}` : ''}`}>
-                  <span className="sr">Round {r + 1} {won ? 'won' : 'lost'}{tags.length ? `, ${tags.join(', ')}` : ''}</span>
-                  {tags.includes('timeout') ? 'T' : tags.includes('force buy') ? 'F' : tags.includes('clutch') ? '★' : ''}
-                </li>
-              );
-            })}
-          </ol>
-          <p className="muted small">Solid green won, striped red lost; a gap marks halftime and each overtime swap. T timeout, F force buy, ★ clutch.</p>
-          {table(g.stats.mine, 'Your team')}
-          {table(g.stats.opp, opp.tag)}
-          {g.events.filter((e) => e.kind === 'call' || e.kind === 'clutch' || e.kind === 'half' || e.kind === 'ot').length > 0 && (
-            <ul className="report__events small">
-              {g.events.filter((e) => e.kind === 'call' || e.kind === 'clutch' || e.kind === 'half' || e.kind === 'ot').map((e, k) => <li key={k}><span className="muted">R{e.round}</span> {e.text}</li>)}
-            </ul>
-          )}
-        </>
-      )}
+    <Modal label="Match report" onClose={onClose} wide>
+      <div className={`report ${m.won ? 'is-won' : 'is-lost'}`}>
+        <header className="report__head">
+          <span className="report__badge" aria-hidden="true">{m.won ? 'Won' : 'Lost'}</span>
+          <div className="report__title">
+            <small>{G.STAGE_NAME[m.stage]}</small>
+            <h3><TeamBadge roster={opp} size={30} /> vs {opp.org} {opp.year}</h3>
+            <span className="sr">{m.won ? 'Won' : 'Lost'} {m.score[0]}–{m.score[1]}</span>
+          </div>
+          <b className="report__score" aria-hidden="true">{m.score[0]}<i>–</i>{m.score[1]}</b>
+        </header>
+        {m.maps.length > 1 && (
+          <div className="report__maps" role="tablist" aria-label="Maps">
+            {m.maps.map((x, k) => <button key={k} role="tab" aria-selected={k === i} className={`${k === i ? 'is-on' : ''} ${x.won ? 'w' : 'l'}`} onClick={() => setI(k)}><small>Map {k + 1}</small><b>{x.map}</b><span>{x.score[0]}–{x.score[1]}</span></button>)}
+          </div>
+        )}
+        {g && (
+          <>
+            <div className="report__map">
+              <span className="report__mapart"><MapArt map={g.map} /></span>
+              <div>
+                <small>{g.won ? 'Map won' : 'Map lost'}</small>
+                <b>{g.map} <em>{g.score[0]}–{g.score[1]}</em></b>
+                <span>Started on <i className={`side-chip side-chip--${g.start === 'T' ? 't' : 'ct'}`}>{g.start}</i> · halftime {half}–{12 - half}{g.rounds.length > 24 ? ' · overtime' : ''}</span>
+              </div>
+            </div>
+            <ol className="report__rounds" aria-label="Rounds">
+              {g.rounds.map((won, r) => {
+                const tags = marks(r);
+                return (
+                  <li key={r} className={`${won ? 'w' : 'l'}${r === 12 || (r >= 24 && (r - 24) % 3 === 0) ? ' swap' : ''}`} title={`Round ${r + 1}: ${won ? 'won' : 'lost'}${tags.length ? ` · ${tags.join(', ')}` : ''}`}>
+                    <span className="sr">Round {r + 1} {won ? 'won' : 'lost'}{tags.length ? `, ${tags.join(', ')}` : ''}</span>
+                    <small aria-hidden="true">{r + 1}</small>
+                    <b aria-hidden="true">{tags.includes('timeout') ? 'T' : tags.includes('force buy') ? 'F' : tags.includes('clutch') ? '★' : r === 0 || r === 12 ? '◆' : ''}</b>
+                  </li>
+                );
+              })}
+            </ol>
+            <p className="report__legend"><span className="w">Won</span><span className="l">Lost</span><span>◆ pistol</span><span>T timeout</span><span>F force buy</span><span>★ clutch</span><span>gap: sides swap</span></p>
+            <div className="report__tables">
+              {table(g.stats.mine, 'Your team', true)}
+              {table(g.stats.opp, opp.tag, false)}
+            </div>
+            {moments.length > 0 && (
+              <ul className="report__events">
+                {moments.map((x, k) => <li key={k} className={x.good === true ? 'is-good' : x.good === false ? 'is-bad' : ''}><b>{x.round ? `R${x.round}` : 'Map'}</b><span><strong>{x.title}</strong> {x.text}</span></li>)}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
     </Modal>
   );
 }
