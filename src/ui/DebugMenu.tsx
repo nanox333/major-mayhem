@@ -97,7 +97,7 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
             <>
               <h4>Jump to (random team)</h4>
               <div className="dbg__grid">
-                {([['draft', 'Draft page'], ['lobby', 'Lobby page'], ['match', 'Match page']] as [DebugStop, string][]).map(([stop, label]) => (
+                {([['draft', 'Draft page'], ['lobby', 'Lobby page'], ['match', 'Match page'], ['results', 'Results page']] as [DebugStop, string][]).map(([stop, label]) => (
                   <button key={stop} type="button" onClick={() => { jump(randomRun(stop)); setOpen(false); }}>{label}</button>
                 ))}
               </div>

@@ -3,7 +3,7 @@ import * as G from '../game/logic';
 import { Run, fresh, reducer, roundOf, slotsFor } from '../game/state';
 
 /** Debug only: a run with a random, valid team, built by playing the real reducer, so it is exactly what a player could have drafted. */
-export type DebugStop = 'draft' | 'lobby' | 'match';
+export type DebugStop = 'draft' | 'lobby' | 'match' | 'results';
 
 const pick = <T,>(xs: T[]): T => xs[Math.floor(Math.random() * xs.length)];
 
@@ -41,5 +41,15 @@ export function randomRun(stop: DebugStop): Run {
   }
   if (stop === 'draft') return s;
   if (stop === 'lobby') return s;
-  return reducer(reducer(s, { type: 'play' }), { type: 'start' });
+  s = reducer(s, { type: 'play' });
+  if (stop === 'match') return reducer(s, { type: 'start' });
+  // Results: play every match through the real reducer (the map veto and sides chosen for you) until the run is over.
+  while (s.phase !== 'final') {
+    s = reducer(s, { type: 'start' });
+    const oppL = G.naturalLineup(G.rosterById.get(s.current!.opponentId)!);
+    while (G.vetoTurn(s.current!.veto)) s = reducer(s, { type: 'veto', map: G.vetoChoice(s.current!.veto, 'us', G.lineupFromPicks(s.picks), oppL) });
+    while (!s.current!.done) s = reducer(s, { type: 'side', side: G.autoSide(s.current!.next!) });
+    s = reducer(s, { type: 'next' });
+  }
+  return s;
 }
