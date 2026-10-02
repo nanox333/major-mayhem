@@ -5,7 +5,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Changed
-- **Results page in the broadcast style:** a cut-corner outcome panel, green and red W/L blocks, a gold MVP card, a restyled ledger, share-image card and collapsible sections, and an orange Copy result button. The Results step in the progress tabs is now a finish-line flag with a chequered edge.
+- **Results page in the broadcast style:** a cut-corner outcome panel, green and red W/L blocks, a gold MVP card, a restyled ledger, share-image card and collapsible sections, and an orange Copy result button. Clicking the share image copies it to the clipboard, the match report opened from the ledger is a full broadcast-style panel, and roster, team review and pick strength are restyled. The Results step in the progress tabs is now a finish-line flag with a chequered edge.
 - The debug menu is hidden in every build unless `?debug` is in the address or Ctrl+Shift+D was pressed.
 
 ### Changed
