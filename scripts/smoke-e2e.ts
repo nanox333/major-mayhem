@@ -34,6 +34,8 @@ try {
       await p.screenshot({ path: `${out}/home-${width}.png`, fullPage: true });
 
       await daily.click();
+      // Every round opens from a sealed case; with reduced motion the cards are there as soon as it is opened.
+      await p.getByRole('button', { name: 'Open case', exact: true }).click();
       await p.locator('.case-card:visible button.prow').first().click();
       await p.locator('.draftbar .cta').click();
       const run = await saved(p);
