@@ -75,7 +75,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
       <div className="result-recap">
         <PathView s={s} onOpen={setReport} />
         <aside className="result-export" aria-label="Exported result image">
-          <h4>Share image</h4><p>The image saved or shared above.</p>
+          <h4>Share image</h4><p>The card Save image exports</p>
           {preview ? <img src={preview} alt="Preview of your exported result card, including placement, played match path, lineup and MVP." /> : <p role="status">Preparing image…</p>}
         </aside>
       </div>

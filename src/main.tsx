@@ -16,6 +16,7 @@ import './styles/guess-page.css';
 import './styles/setup-page.css';
 import './styles/lobby-page.css';
 import './styles/match-page.css';
+import './styles/results-page.css';
 import './styles/shell.css';
 import { initAnalytics } from './analytics';
 import { initSound } from './ui/sound';

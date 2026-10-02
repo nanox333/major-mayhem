@@ -4,11 +4,11 @@ import { ACHIEVEMENTS } from '../game/achievements';
 import { Run, today } from '../game/state';
 import { DebugStop, randomRun } from './debugRuns';
 
-/** Debug tools: on in dev builds, and in any build with ?debug in the address or after Ctrl+Shift+D (remembered in this browser). Nothing here is part of the game. */
+/** Debug tools: hidden unless ?debug is in the address or Ctrl+Shift+D was pressed (remembered in this browser), in every build. Nothing here is part of the game. */
 const FLAG = 'mm-debug';
 const mine = (k: string) => k.startsWith('major-mayhem') || k.startsWith('mm-');
 const read = () => { try { return Object.keys(localStorage).filter(mine).sort().map((k) => ({ k, n: (localStorage.getItem(k) ?? '').length })); } catch { return []; } };
-const enabled = () => { try { return import.meta.env.DEV || localStorage.getItem(FLAG) === '1' || /[?&]debug\b/.test(location.search); } catch { return false; } };
+const enabled = () => { try { return localStorage.getItem(FLAG) === '1' || /[?&]debug\b/.test(location.search); } catch { return false; } };
 
 
 const STATS_KEY = 'major-mayhem-stats-v1';

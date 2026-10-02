@@ -1,0 +1,131 @@
+/* =====================================================================================================================
+   Results page, in the broadcast language: cut-corner panels, slanted ticks, Saira Condensed, angular buttons.
+   ===================================================================================================================== */
+.final { --gold: var(--rar-gold, #e4ae39); gap: 22px; }
+
+/* hero: the outcome panel and the MVP card */
+.final .result-hero { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 14px; padding: 8px 0 0; border: 0; align-items: stretch; }
+.final .result-hero__outcome { position: relative; display: grid; align-content: start; gap: 18px; padding: 26px 28px 28px; background: var(--cut22), linear-gradient(135deg, rgba(249, 132, 37, .08), rgba(255, 255, 255, .02) 55%), #111214; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 0 -4px 0 var(--accent); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); }
+.final .result-hero__outcome::after { content: ""; position: absolute; top: 0; right: 0; width: 22px; height: 22px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, rgba(255, 255, 255, .25) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.final .final__banner small { display: flex; align-items: center; gap: 9px; font: 800 .74rem/1 var(--f-read); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.final .final__banner small::before { content: ""; width: 6px; height: 13px; background: var(--accent); transform: skewX(-18deg); }
+.final .final__banner h3 { margin: 12px 0 0; font: 800 clamp(2.6rem, 5.2vw, 4.6rem)/.98 var(--f-head); letter-spacing: .015em; text-transform: uppercase; color: var(--strong); }
+.final .final__banner h3 em { color: var(--accent); }
+.final .final__banner.is-champ h3 em { color: var(--gold); text-shadow: 0 0 28px rgba(228, 174, 57, .35); }
+.final .result-hero__outcome:has(.is-champ) { box-shadow: inset 0 0 0 1px rgba(228, 174, 57, .4), inset 0 -4px 0 var(--gold); background: var(--cut22), linear-gradient(135deg, rgba(228, 174, 57, .14), rgba(255, 255, 255, .02) 60%), #111214; }
+.final .result-hero__outcome:has(.is-champ)::after { background: linear-gradient(to bottom left, transparent 50%, var(--gold) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+
+/* the played path: slanted W/L blocks, green and red */
+.final .result-path { gap: 6px; margin: 0; }
+.final .result-path li { min-width: 52px; gap: 6px; }
+.final .result-path b { width: 100%; min-width: 52px; height: 36px; background: rgba(60, 220, 120, .2); color: var(--go-text); box-shadow: inset 0 -3px 0 var(--go); border: 0; font: 800 1.25rem/1 var(--f-head); clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.final .result-path .is-loss { background: rgba(235, 75, 75, .2); color: var(--loss-text); box-shadow: inset 0 -3px 0 var(--loss); }
+.final .result-path span { font: 700 .66rem/1 var(--f-read); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* share buttons */
+.final .share-bar { gap: 8px; }
+.final .share-bar .ghost-btn, .final .challenge .ghost-btn, .final .final__actions .ghost-btn { position: relative; isolation: isolate; overflow: hidden; min-height: 46px; padding: 0 24px; border: 0; border-radius: 0; background: none; color: var(--strong); font: 800 .82rem/1 var(--f-read); letter-spacing: .1em; text-transform: uppercase; }
+.final .share-bar .ghost-btn::before, .final .challenge .ghost-btn::before, .final .final__actions .ghost-btn::before { content: ""; position: absolute; z-index: -1; inset: 0; background: rgba(255, 255, 255, .1); clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%); transition: background .15s; }
+.final .share-bar .ghost-btn:hover::before, .final .challenge .ghost-btn:hover::before, .final .final__actions .ghost-btn:hover::before { background: rgba(255, 255, 255, .2); }
+.final .result-hero .share-bar .ghost-btn:first-child { color: #170c03; }
+.final .result-hero .share-bar .ghost-btn:first-child::before { background: var(--accent); }
+.final .result-hero .share-bar .ghost-btn:first-child:hover::before { background: linear-gradient(180deg, #ffb066, var(--accent) 70%); box-shadow: 0 0 20px rgba(249, 132, 37, .5); }
+.final .result-hero .share-bar .ghost-btn { max-width: none; flex: 0 1 auto; }
+.final .final__actions .ghost-btn--big { min-height: 52px; padding: 0 34px; }
+
+/* MVP card */
+.final .mvp-card { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 46%); align-items: stretch; gap: 0; padding: 0; border: 0; background: var(--cut22), linear-gradient(135deg, rgba(228, 174, 57, .14), rgba(228, 174, 57, .02) 70%), #101113; box-shadow: inset 0 0 0 1px rgba(228, 174, 57, .45), inset 0 -4px 0 var(--gold); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); overflow: hidden; }
+.final .mvp-card::after { content: ""; position: absolute; top: 0; right: 0; width: 22px; height: 22px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, var(--gold) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.final .mvp-card > div { display: grid; align-content: center; gap: 4px; padding: 22px 8px 22px 26px; min-width: 0; order: 1; }
+.final .mvp-card__photo { order: 2; width: auto; max-width: none; height: 100%; aspect-ratio: auto; align-self: stretch; clip-path: polygon(22px 0, 100% 0, 100% 100%, 0 100%); background: rgba(255, 255, 255, .05); }
+.final .mvp-card__photo img, .final .mvp-card__photo svg { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+.final .mvp-card > div > small { display: flex; align-items: center; gap: 8px; font: 800 .72rem/1 var(--f-read); letter-spacing: .18em; text-transform: uppercase; color: var(--gold); }
+.final .mvp-card > div > small::before { content: ""; width: 6px; height: 12px; background: var(--gold); transform: skewX(-18deg); }
+.final .mvp-card strong { margin: 4px 0 0; font: 800 clamp(2rem, 3.2vw, 3.1rem)/1 var(--f-head); letter-spacing: .02em; text-transform: uppercase; color: var(--strong); overflow-wrap: anywhere; }
+.final .mvp-card > div > span { font-size: .84rem; color: var(--text-2); }
+.final .mvp-card__rating { display: grid; gap: 2px; margin-top: 14px; }
+.final .mvp-card__rating b { font: 800 3.4rem/1 var(--f-head); color: var(--gold); }
+.final .mvp-card__rating small { font: 700 .7rem/1 var(--f-read); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* achievement and daily strips */
+.final .new-ach { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; padding: 12px 18px; border: 0; background: rgba(249, 132, 37, .1); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .3), inset 4px 0 0 var(--accent); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+.final .new-ach small { font: 800 .72rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; color: var(--accent-hi); }
+.final .new-ach span { font: 800 1.2rem/1 var(--f-head); letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
+.final .daily-meta { margin: 0; font: 700 .78rem/1.4 var(--f-read); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+
+/* the match ledger */
+.final .result-recap { grid-template-columns: minmax(0, 1fr) 250px; gap: 14px; }
+.final .path > h4, .final .result-export h4 { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font: 800 1.5rem/1 var(--f-head); letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
+.final .path > h4::before, .final .result-export h4::before { content: ""; width: 7px; height: 16px; background: var(--accent); transform: skewX(-18deg); }
+.final .ledger-columns { padding: 0 14px 6px 17px; font: 700 .68rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); border-bottom: 0; }
+.final .path section h4 { display: flex; justify-content: space-between; margin: 14px 0 6px; font: 800 1rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+.final .history { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.final .history li { --rc: var(--loss); }
+.final .history li.w { --rc: var(--go); }
+.final .history__row { min-height: 54px; padding: 0 16px 0 14px; border: 0; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07), inset 4px 0 0 var(--rc); transition: background .15s, transform .15s; }
+.final .history__row:hover { background: rgba(255, 255, 255, .09); transform: translateX(3px); }
+.final .history__row > span:first-child { font: 800 .72rem/1 var(--f-read); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.final .history__opp { font: 800 1.15rem/1.1 var(--f-head); letter-spacing: .04em; text-transform: uppercase; color: var(--strong); }
+.final .history__maps { font-size: .84rem; color: var(--text-2); }
+.final .history__row > b { font: 800 .9rem/1 var(--f-read); letter-spacing: .04em; color: var(--strong); }
+
+/* the share image */
+.final .result-export { position: relative; padding: 16px; border: 0; background: var(--cut14), rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%); }
+.final .result-export h4 { font-size: 1.2rem; }
+.final .result-export > p { margin: 0 0 12px; font-size: .8rem; color: var(--text-2); }
+.final .result-export img { display: block; width: 100%; box-shadow: 0 0 0 1px rgba(255, 255, 255, .12), 0 8px 24px rgba(0, 0, 0, .5); }
+
+/* the three collapsible sections */
+.final .result-analysis { display: grid; gap: 6px; border: 0; }
+.final .analysis-section { border: 0; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 4px 0 0 var(--accent); transition: background .15s; }
+.final .analysis-section[open] { background: rgba(255, 255, 255, .06); }
+.final .analysis-section > summary { min-height: 68px; padding: 12px 18px 12px 22px; cursor: pointer; }
+.final .analysis-section > summary:hover { background: rgba(255, 255, 255, .04); }
+.final .analysis-section > summary b { font: 800 1.35rem/1.1 var(--f-head); letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
+.final .analysis-section > summary span { margin: 3px 0 0; font-size: .84rem; color: var(--text-2); }
+.final .analysis-section > div { padding: 4px 22px 20px; }
+
+/* bottom actions */
+.final .result-next { align-items: flex-end; gap: 14px 24px; padding: 20px 0 0; border-top: 0; }
+.final .challenge input { min-height: 46px; padding: 0 14px; border: 0; border-radius: 0; background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); color: var(--strong); font: 600 .9rem/1 var(--f-read); }
+.final .challenge input:focus-visible { outline: 0; box-shadow: inset 0 0 0 2px var(--accent); }
+.final .result-next__record { padding-top: 6px; font: 700 .74rem/1.4 var(--f-read); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .final .result-hero__outcome, .final .mvp-card { animation: map-lock .55s cubic-bezier(.2, .9, .3, 1.1) both; }
+  .final .mvp-card { animation-delay: .12s; }
+  .final .result-path li { animation: rl-in .4s ease-out both; }
+  .final .result-path li:nth-child(2) { animation-delay: .1s; } .final .result-path li:nth-child(3) { animation-delay: .2s; } .final .result-path li:nth-child(4) { animation-delay: .3s; }
+}
+@media (max-width: 860px) {
+  .final .result-hero, .final .result-recap { grid-template-columns: minmax(0, 1fr); }
+  .final .result-hero__outcome { padding: 20px 18px 22px; }
+  .final .mvp-card { grid-template-columns: minmax(0, 1fr) 40%; min-height: 190px; }
+  .final .mvp-card > div { padding: 18px 6px 18px 18px; }
+}
+
+/* heading alignment (an older rule spread the tick and the text apart) */
+.final .path > h4, .final .result-export h4 { justify-content: flex-start; }
+
+/* share image: a framed preview with a caption, like a card on a broadcast desk */
+.final .result-export { display: grid; gap: 0; align-content: start; padding: 18px 18px 20px; background: var(--cut14), linear-gradient(180deg, rgba(249, 132, 37, .06), rgba(255, 255, 255, .02) 40%), #111214; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 0 -4px 0 var(--accent); }
+.final .result-export::after { content: ""; position: absolute; top: 0; right: 0; width: 14px; height: 14px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, rgba(255, 255, 255, .25) 50% calc(50% + 1.5px), transparent calc(50% + 1.5px)); }
+.final .result-export > p:first-of-type { margin: 0 0 14px; font: 700 .7rem/1.4 var(--f-read); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.final .result-export img { position: relative; padding: 0; background: #0b0b0c; border: 0; box-shadow: 0 0 0 1px rgba(255, 255, 255, .18), 0 0 0 5px rgba(255, 255, 255, .04), 0 14px 30px rgba(0, 0, 0, .55); transition: transform .25s ease, box-shadow .25s ease; }
+.final .result-export:hover img { transform: translateY(-3px) rotate(-.6deg); box-shadow: 0 0 0 1px rgba(249, 132, 37, .6), 0 0 0 5px rgba(249, 132, 37, .08), 0 18px 36px rgba(0, 0, 0, .6); }
+.final .result-export [role="status"] { display: grid; place-items: center; min-height: 220px; margin: 0; background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .03) 0 12px, transparent 12px 24px), rgba(255, 255, 255, .03); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); font: 700 .74rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .final .result-export:hover img { transform: none; } }
+.final .result-recap { grid-template-columns: minmax(0, 1fr) 300px; }
+.final .ledger-columns { padding-right: 16px; }
+@media (max-width: 860px) { .final .result-recap { grid-template-columns: minmax(0, 1fr); } .final .result-export img { max-width: 340px; margin: 0 auto; } }
+
+/* Copy result: the same angular orange button as the other primary actions, with the icon in a striped block and a light sweep */
+.final .result-hero .share-bar .ghost-btn:first-child { padding: 0 26px 0 0; gap: 16px; min-height: 52px; font-size: .86rem; }
+.final .result-hero .share-bar .ghost-btn:first-child svg { align-self: stretch; flex: none; box-sizing: border-box; width: 52px; height: auto; padding: 17px 14px; color: #170c03; background: repeating-linear-gradient(115deg, rgba(0, 0, 0, .16) 0 6px, rgba(0, 0, 0, .06) 6px 12px); }
+.final .result-hero .share-bar .ghost-btn:first-child::before { clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%); }
+.final .result-hero .share-bar .ghost-btn:first-child::after { content: ""; position: absolute; z-index: 0; top: 0; bottom: 0; left: -40%; width: 28%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent); transform: skewX(-20deg); transition: left .5s ease; pointer-events: none; }
+.final .result-hero .share-bar .ghost-btn:first-child:hover::after { left: 115%; }
+.final .result-hero .share-bar .ghost-btn:first-child:active { filter: brightness(.92); }
+.final .result-hero .share-bar .ghost-btn:not(:first-child) { min-height: 52px; }
+.final .result-hero .share-bar .ghost-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .final .result-hero .share-bar .ghost-btn:first-child::after { display: none; } }

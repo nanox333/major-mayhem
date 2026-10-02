@@ -5,6 +5,10 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Changed
+- **Results page in the broadcast style:** a cut-corner outcome panel, green and red W/L blocks, a gold MVP card, a restyled ledger, share-image card and collapsible sections, and an orange Copy result button. The Results step in the progress tabs is now a finish-line flag with a chequered edge.
+- The debug menu is hidden in every build unless `?debug` is in the address or Ctrl+Shift+D was pressed.
+
+### Changed
 - **Timeouts matter more (rules v4):** a timeout now lifts the next three rounds about twice as much, those rounds are tagged "Timeout boost" in the round log, and an "After the timeout" card shows how they went. Runs on earlier rules (including dailies up to 3 October) play exactly as before.
 
 ### Fixed
