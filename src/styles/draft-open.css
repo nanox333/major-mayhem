@@ -359,10 +359,15 @@
 .reveal.is-fade .lane__window::after, .reveal.is-grow .lane__window::after { opacity: 0; }
 .reveal__lanes { perspective: 1500px; }
 .reveal__lanes > .lane { transition: transform .55s cubic-bezier(.2, .8, .2, 1); }
+/* The angle is only a transform, so it does not depend on lite mode (which drops the blur filters): a browser that reports few cores, as privacy modes do, still gets it.
+   It eases in from flat when the roll starts. */
 @media (min-width: 861px) {
-.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:nth-child(1):not(.is-locked) { transform: rotateY(8deg) scale(.94); transform-origin: 50% 50%; }
-.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:nth-child(3):not(.is-locked) { transform: rotateY(-8deg) scale(.94); transform-origin: 50% 50%; }
-.reveal:not(.is-lite).is-turn .reveal__lanes > .lane:nth-child(2):not(.is-locked) { transform: scale(1.01); }
+.reveal.is-turn .reveal__lanes > .lane:nth-child(1):not(.is-locked) { transform: rotateY(8deg) scale(.94); transform-origin: 50% 50%; }
+.reveal.is-turn .reveal__lanes > .lane:nth-child(3):not(.is-locked) { transform: rotateY(-8deg) scale(.94); transform-origin: 50% 50%; }
+.reveal.is-turn .reveal__lanes > .lane:nth-child(2):not(.is-locked) { transform: scale(1.01); }
+@starting-style {
+  .reveal.is-turn .reveal__lanes > .lane:nth-child(1):not(.is-locked), .reveal.is-turn .reveal__lanes > .lane:nth-child(2):not(.is-locked), .reveal.is-turn .reveal__lanes > .lane:nth-child(3):not(.is-locked) { transform: none; }
+}
 }
 @media (prefers-reduced-motion: reduce) { .reveal__lanes > .lane { transition: none; transform: none !important; } }
 
