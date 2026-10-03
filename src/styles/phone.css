@@ -1,0 +1,131 @@
+/* Phone pass (#250 to #262). Loaded last, so each rule here is the phone's answer to an earlier, wider one. Two floors for everything under 640px:
+   a touch target is at least 44px in its short side (padding or an invisible hit area, never a bigger-looking button), and body text is at least 12px
+   (small uppercase labels may be 11px or more). scripts/ui-e2e.ts checks both at 360 and 375px (#263). */
+
+@media (max-width: 640px) {
+  /* ---- text floor (#255): :root:root outranks the longer selectors the page styles use ---- */
+  :root:root .pstep__label, :root:root .hud__meta, :root:root .match-state, :root:root .knife__kicker, :root:root .veto small, :root:root .veto__edge, :root:root .lc__off, :root:root .staff__tag, :root:root .lpanel h4, :root:root .chem-facts small, :root:root .foot p, :root:root .foot strong, :root:root .track__node > span, :root:root .versus__id small, :root:root .vs__role, :root:root em.form, :root:root .subs__opt small, :root:root .subs__role, :root:root .subs__fit, :root:root .knife__who, :root:root .side-chip, :root:root .knife__map figcaption span, :root:root .side-btn__best, :root:root .match-five h3, :root:root .match-five small, :root:root .radar-disclosure, :root:root .radar-lineups summary, :root:root .radar-lineups small, :root:root .match-live .radar-lineups b.t, :root:root .match-live .radar-lineups b.ct, :root:root .feed-heading h3, :root:root .feed-heading .ghost-btn, :root:root .rl-idle small, :root:root .moments__head small, :root:root .mvp__tag, :root:root .mvp__rating small, :root:root .moment__round small, :root:root .sb th, :root:root .sb__tag, :root:root i.rmark, :root:root .final__banner small, :root:root .final li > span, :root:root .final li > b, :root:root .mvp-card small, :root:root .history__row > span, :root:root .result-export p, :root:root .lobby__slot, :root:root .lobby__stat small, :root:root .mvp-tag, :root:root .offrole, :root:root .review__head span, :root:root .review__tip b, :root:root .result-next__record, :root:root .report small, :root:root .report th, :root:root .report__rounds li small, :root:root .report strong, :root:root .report__legend, :root:root .tip__tag, :root:root .tip-foot b, :root:root .tip__skip, :root:root .home-daily-clock small, :root:root .editorial-home li small, :root:root .ra-stats li span, :root:root .ra-count, :root:root .ra-row__result, :root:root .ra-card small, :root:root .roster-filters label, :root:root .st__kick, :root:root .hp__kick, :root:root .settings__sec h4, :root:root .switch__word, :root:root .st .seg button, :root:root .hp .help__tabs button, :root:root .st kbd, :root:root .hp h3, :root:root .ra-chips button, :root:root .console__eyebrow, :root:root .lane__label, :root:root .ready-strip__eyebrow, :root:root .ready-strip__label, :root:root .roster-details-link, :root:root .case-card .hint, :root:root .prow .hint, :root:root .draftbar__who small, :root:root .draftbar__why, :root:root .foot .link-btn { font-size: max(.75rem, 12px) !important; }
+  :root:root .pstep__tick { font-size: .75rem !important; }
+
+  /* ---- tap targets (#255) ---- */
+  :root:root .roster-details-link, :root:root .reroll-row .ghost-btn, :root:root .tip__x { min-height: 44px; }
+  :root:root .tip__x { min-width: 44px; }
+  :root:root .foot .link-btn { display: inline-block; min-height: 44px; padding-block: 12px; }
+  .modal__card .modal__close, .modal__card:has(.st) .modal__close, .modal__card:has(.gh) .modal__close, .modal__card:has(.hp) .modal__close, .modal__card--wide:has(.report) .modal__close { top: 6px; right: 8px; width: 44px; height: 44px; display: grid; place-items: center; }
+  .st .seg button, .hp .help__tabs button { min-height: 44px; }
+  :root:root .st .switch, :root:root .st-btn { min-height: 44px; }
+
+  /* ---- How to play tabs share the width instead of scrolling sideways (#252) ---- */
+  .hp .help__tabs { display: flex; width: 100%; }
+  .hp .help__tabs button { flex: 1 1 0; min-width: 0; padding: 0 8px; letter-spacing: .06em; line-height: 1.15; white-space: normal; }
+
+  /* ---- the one button that matters stays in reach, on a solid bar that clears the home indicator (#258) ---- */
+  .phase-ready .action-bar, .match-found .action-bar {
+    position: sticky; bottom: 0; z-index: 7; margin-inline: calc(var(--gutter) * -1); padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -12px 24px -12px rgba(0, 0, 0, .55);
+  }
+  .phase-ready .action-bar .cta--go, .match-found .action-bar .cta--go { width: 100%; }
+  /* the Lobby wraps its button in a box only as tall as itself, which would stop it sticking */
+  .lobby-go { display: contents; }
+
+  /* ---- knife and side-choice banner (#261): the badge is a full-width strip with the icon and the word side by side, the ghost word is gone ---- */
+  :root:root .knife__banner { flex-direction: column; gap: 0; min-height: 0; padding: 0; }
+  :root:root .knife__badge { display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%; padding: 10px 18px; }
+  :root:root .knife__badge svg { width: 36px; height: 36px; flex: none; }
+  :root:root .knife__badge b { font-size: 1.6rem; text-indent: 0; letter-spacing: .14em; }
+  :root:root .knife__badge i { font-size: 2.2rem; }
+  :root:root .knife__says { padding: 14px 16px 16px; }
+  :root:root .knife__ghost { display: none; }
+  :root:root .match-live .knife--page .knife__title { font-size: 1.9rem; }
+
+  /* ---- live match (#250, #257, #260): the radar comes first, your five is a row of faces, and the controls are two short rows ---- */
+  .match-live .match-workspace { flex-direction: column; }
+  .match-live .match-centre { order: 1; }
+  .match-live .match-feed { order: 2; }
+  .match-live .match-five { order: 3; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 12px 0 0; }
+  .match-live .match-five > h3 { grid-column: 1 / -1; margin: 0 0 4px; }
+  :root:root .match-live .match-five > div { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 4px; min-height: 0; padding: 0; text-align: center; background: none; }
+  :root:root .match-live .match-five > div > :is(img, svg, .avatar) { width: 100%; max-width: 56px; height: auto; aspect-ratio: 1; }
+  :root:root .match-live .match-five b { font-size: .95rem; letter-spacing: .02em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .match-live .match-five small, .match-live .match-five .form { display: none; }
+  :root:root .match-live .match-dock { padding-block: 8px max(8px, env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -12px 24px -12px rgba(0, 0, 0, .6); }
+  .match-live .match-centre .controls { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; }
+  :root:root .match-live .match-centre .controls .calls, :root:root .match-live .match-centre .controls .playback { display: contents; border: 0; padding: 0; }
+  .match-live .controls .calls > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  :root:root .match-live .controls .playback__pause { order: 1; flex: 1 1 0; width: auto; min-width: 0; }
+  :root:root .match-live .controls .playback__next { order: 2; flex: 0 0 auto; width: auto; padding-inline: 14px; }
+  :root:root .match-live .controls .playback__next.is-away { display: none; }
+  :root:root .match-live .controls .calls__timeout { order: 3; flex: 1.2 1 0; width: auto; min-width: 0; }
+  .match-live .controls::before { content: ""; order: 4; flex: 0 0 100%; height: 0; }
+  .match-live .controls .speed { order: 5; flex: 1 1 0; width: auto; min-width: 0; flex-wrap: nowrap; }
+  .match-live .controls .speed button { flex: 1 1 0; min-width: 44px; padding-inline: 4px; }
+  :root:root .match-live .controls .playback__skip { order: 6; flex: 0 0 auto; width: auto; padding-inline: 14px; }
+  .match-live .controls .ghost-btn { min-height: 44px; }
+
+  /* the buy question after a lost pistol: shorter, and its Skip map sits under the choices instead of over the heading */
+  .match-live .buy { gap: 10px; }
+  .match-live .buy__head strong { font-size: 1.3rem; }
+  .match-live .buy__head p { margin-top: 4px; }
+  .match-live .buy__opts { gap: 8px; }
+  .match-live .buy__opt { gap: 8px; padding: 10px 12px 12px; }
+  .match-live .buy__name { font-size: 1.3rem; }
+  :root:root .match-live .buy__why { font-size: max(.75rem, 12px) !important; line-height: 1.35; }
+  :root:root .match-live .buy__name small, :root:root .match-live .buy__plan b, :root:root .match-live .buy__plan span, :root:root .aftermath h4, :root:root .aftermath small, :root:root .rl__n small, :root:root .rl__res, :root:root .rl-idle small { font-size: max(.72rem, 11px) !important; }
+  .match-live .match-dock .buy .buy__skip { grid-column: 1; grid-row: auto; position: static; justify-self: stretch; }
+
+  /* the bar after a map or a match: full width, solid, and it sits below the last scoreboard row instead of over it (#260) */
+  .match-live--decision > .action-bar, .match-live .action-bar:not(.knife__go) {
+    position: sticky; bottom: 0; z-index: 7; margin-inline: calc(var(--gutter) * -1); padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+    background: var(--bg); border-top: 1px solid var(--line); box-shadow: 0 -12px 24px -12px rgba(0, 0, 0, .55);
+  }
+  :root:root .match-live .action-bar:not(.knife__go), :root:root .phase-ready .action-bar, :root:root .match-found .action-bar { display: block; }
+  :root:root .match-live .action-bar .cta--orange { width: 100%; }
+
+  /* ---- the Results ledger (#262): the opponent on one line, the maps under it, the result at the right; the stage is the group header (Swiss) or a small tag (playoffs) ---- */
+  :root:root .final .history__row { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "opp opp res" "stage maps res"; gap: 2px 8px; align-items: center; min-height: 56px; padding: 8px 12px 8px 14px; }
+  :root:root .final .history__row > span:first-child { grid-area: stage; font-size: max(.7rem, 11px); letter-spacing: .08em; text-transform: uppercase; }
+  :root:root .final .history__opp { grid-area: opp; font: 700 .95rem/1.2 var(--f-body); color: var(--strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :root:root .final .history__maps { grid-area: maps; min-width: 0; font-size: max(.75rem, 12px); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :root:root .final .history__row > b { grid-area: res; grid-column: auto; grid-row: auto; max-width: none; white-space: nowrap; justify-content: flex-end; }
+  :root:root .final .history__row > b > small { display: none; }
+  :root:root .final section[aria-labelledby="path-swiss"] .history__row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "opp res" "maps res"; }
+  :root:root .final section[aria-labelledby="path-swiss"] .history__row > span:first-child { display: none; }
+
+  /* ---- the match report (#253): the series score sits under the opponent's name instead of vanishing ---- */
+  :root:root .report__head { display: grid; grid-template-columns: 92px minmax(0, 1fr); grid-template-areas: "badge title" "badge score"; align-items: center; gap: 0 12px; min-height: 0; padding: 10px 56px 10px 0; }
+  :root:root .report__badge { grid-area: badge; align-self: stretch; }
+  :root:root .report__title { grid-area: title; align-self: end; }
+  :root:root .report__score { display: block; grid-area: score; align-self: start; margin: 4px 0 0; font-size: 2.3rem; }
+
+  /* ---- Play, Guess and Archive are a row of tabs under the brand instead of hiding in the menu (#256) ---- */
+  :root:root .topbar__in { flex-wrap: wrap; row-gap: 0; }
+  :root:root .shell-nav { display: flex; order: 3; flex: 0 0 calc(100% + 20px); gap: 0; margin-inline: -10px; border-top: 1px solid var(--line-2); }
+  :root:root .shell-nav > * { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 0 4px; text-align: center; font-size: .8rem; letter-spacing: .06em; }
+  :root:root .menu__item--mode, :root:root .menu__item--game { display: none; }
+  :root:root .shell-nav .gamelink { display: flex; align-items: center; justify-content: center; gap: 0; height: auto; border: 0; }
+  :root:root .topbar__in .brand { flex: 1 1 0; min-width: 0; }
+  :root:root .topbar__end { flex: none; }
+
+  /* ---- Guess the pro (#254): the six clue cells wrap to two lines of three, and a new guess scrolls clear of the sticky entry bar; the tip's buttons are real targets ---- */
+  :root:root .guess__row:not(.guess__row--empty) { grid-template-columns: repeat(3, minmax(0, 1fr)); scroll-margin-block: 70px 230px; }
+  :root:root .guess__row:not(.guess__row--empty) > span:not(.guess__who) { min-height: 40px; padding: 4px 6px; justify-content: center; font-size: .85rem; white-space: normal; overflow-wrap: anywhere; line-height: 1.15; text-align: center; }
+  :root:root .clue__mark, :root:root .guess__row .clue small { font-size: max(.75rem, 12px) !important; }
+  :root:root .tip__ok { min-height: 44px; padding-inline: 28px; }
+  :root:root .tip__skip { min-height: 44px; padding: 0 14px; display: inline-flex; align-items: center; }
+
+  /* ---- Roster archive (#259): the filters stay in view as one compact bar (search and year on a line, the chips in a row that scrolls sideways), 20 rosters at a time, and a way back up ---- */
+  :root:root .archive-page .roster-filters { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-top: 12px; padding: 8px; background: var(--bg); box-shadow: 0 1px 0 var(--line-2), 0 10px 20px -10px rgba(0, 0, 0, .6); }
+  :root:root .archive-page .roster-filters label { font-size: 0; line-height: 0; display: block; }
+  :root:root .archive-page .roster-filters label, :root:root .archive-page .roster-filters label:first-child { grid-column: auto; flex: none; }
+  :root:root .archive-page .roster-filters label:nth-child(2) { width: 124px; }
+  :root:root .archive-page .roster-filters input, :root:root .archive-page .roster-filters select { width: 100%; min-height: 44px; font-size: 1rem; letter-spacing: 0; }
+  :root:root .archive-page .roster-filters .ra-chips { grid-column: 1 / -1; flex-wrap: nowrap; gap: 6px; overflow-x: auto; margin-inline: -8px; padding-inline: 8px; scrollbar-width: none; overscroll-behavior-x: contain; }
+  :root:root .archive-page .ra-chips::-webkit-scrollbar { display: none; }
+  :root:root .archive-page .ra-chips button { flex: none; min-height: 44px; padding-inline: 16px; }
+  /* each card is one column: the badge and name, the placement, the five faces, the nicks */
+  :root:root .ra-card { grid-template-columns: minmax(0, 1fr); grid-auto-flow: row; }
+  :root:root .ra-card .ra-row__result { grid-area: auto; }  /* the list-row rule that names this grid area would add phantom columns to a card */
+  .ra-more { width: 100%; min-height: 48px; margin: 16px 0 8px; }
+  .ra-more span { color: var(--muted); font-weight: 500; }
+  .ra-top { position: fixed; right: 12px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 9; min-width: 56px; min-height: 48px; padding: 0 16px; border: 1px solid var(--line-2); border-radius: 0; background: var(--accent); color: #170c03; font: 800 .8rem var(--f-read); letter-spacing: .1em; text-transform: uppercase; box-shadow: 0 8px 24px rgba(0, 0, 0, .5); cursor: pointer; }
+}

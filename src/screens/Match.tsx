@@ -310,7 +310,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
   useEffect(() => () => { announceMap(null); announceSide('T'); }, []);
 
   const a = game ? game.rounds.slice(0, n).filter(Boolean).length : 0;
-  const b = n - a;
+  const b = (game ? Math.min(n, total) : n) - a; // a saved position past the map's last round must not count extra rounds for the opponent
   const mapsWon = m.maps.slice(0, mapIdx + (mapDone ? 1 : 0)).filter((g) => g.won).length;
   const mapsLost = Math.min(mapIdx + (mapDone ? 1 : 0), m.maps.length) - mapsWon;
   const next = seriesDone ? G.nextStage(G.applyResult(t, m)) : null;
@@ -327,6 +327,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
     observer.observe(el); size();
     return () => observer.disconnect();
   }, [!!game, mapDone, buyQuestion]);
+  // On a short phone screen the dock sits in the page, under the radar, so a buy question could appear below the fold: bring it into view.
+  useEffect(() => { if (buyQuestion) dock.current?.scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' }); }, [buyQuestion]);
   const playbackState = vetoing ? 'Map veto' : !game ? 'Ready' : mapDone ? 'Map complete' : buyQuestion ? 'Buy decision' : covered ? 'Playback covered' : paused ? 'Paused' : 'Playing';
 
   return (
@@ -607,7 +609,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
         <span className="veto__badge" aria-hidden="true"><i>{t?.action === 'ban' ? '✕' : '✓'}</i><b>{waiting ? opp.tag : t ? verb : 'Done'}</b></span>
         <div className="veto__says">
           <small className="knife__kicker">Map veto · Best of {m.bestOf}</small>
-          <strong className="knife__title">{waiting ? <>{opp.tag} is <em>{t.action === 'ban' ? 'banning' : 'picking'}</em><span className="dots" aria-hidden="true"><i /><i /><i /></span></> : t ? <>Your turn: <em>{t.action === 'ban' ? 'ban' : 'pick'}</em> a map</> : <>{m.bestOf === 3 ? 'Maps' : 'Map'} <em>locked</em></>}</strong>
+          <strong className="knife__title">{waiting ? <>{opp.tag} is <em>{t.action === 'ban' ? 'banning' : 'picking'}</em><span className="veto__dots" aria-hidden="true"><i /><i /><i /></span></> : t ? <>Your turn: <em>{t.action === 'ban' ? 'ban' : 'pick'}</em> a map</> : <>{m.bestOf === 3 ? 'Maps' : 'Map'} <em>locked</em></>}</strong>
           <p className="knife__advice">{waiting ? `Waiting for ${opp.tag} to ${t.action} a map.` : t ? consequence : 'Both teams have chosen. The knife round is next.'}</p>
         </div>
       </header>

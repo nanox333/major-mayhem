@@ -52,6 +52,42 @@ async function load(p: Page, run: Run, prefs: Record<string, unknown> = {}, stat
   const resume = p.getByRole('button', { name: /^(Continue|View your)/ });
   if (run.offerKey > 0 && await resume.count()) await resume.first().click();
 }
+/**
+ * What a phone user would trip over on the screen that is open (#263): sideways scrolling, controls under 40px, text under 11px, and a fixed or sticky bar
+ * that sits on top of the last thing on the page once scrolled to the bottom. Hidden-for-screen-readers text and zero-size labels are skipped.
+ */
+async function phoneProblems(p: Page): Promise<string[]> {
+  return p.evaluate(() => {
+    const out: string[] = [];
+    const shown = (e: Element) => { const r = e.getBoundingClientRect(); const c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && c.opacity !== '0'; };
+    const name = (e: Element) => `${e.tagName.toLowerCase()}${typeof e.className === 'string' && e.className.trim() ? '.' + e.className.trim().split(/\s+/).slice(0, 2).join('.') : ''} "${(e.textContent || e.getAttribute('aria-label') || '').trim().replace(/\s+/g, ' ').slice(0, 24)}"`;
+    if (document.documentElement.scrollWidth > innerWidth + 1) out.push(`sideways scroll: ${document.documentElement.scrollWidth}px of ${innerWidth}px`);
+    document.querySelectorAll('a[href], button, [role="tab"], input:not([type="hidden"]), select, summary').forEach((e) => {
+      if (!shown(e) || e.closest('.sr, [class*="dbg"]')) return;
+      const r = e.getBoundingClientRect();
+      if (Math.min(r.width, r.height) < 40) out.push(`target ${Math.round(r.width)}x${Math.round(r.height)}: ${name(e)}`);
+    });
+    const words = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = words.nextNode(); n; n = words.nextNode()) {
+      const el = n.parentElement;
+      if (!n.nodeValue?.trim() || !el || !shown(el) || el.closest('.sr, script, style, [class*="dbg"]')) continue;
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      if (size > 0 && size < 11) out.push(`text ${size.toFixed(1)}px: ${name(el)}`);
+    }
+    scrollTo(0, document.documentElement.scrollHeight);
+    const last = document.querySelector('footer.foot') ?? document.body.lastElementChild;
+    const lastBox = last?.getBoundingClientRect();
+    document.querySelectorAll('body *').forEach((e) => {
+      const c = getComputedStyle(e);
+      if ((c.position !== 'fixed' && c.position !== 'sticky') || !shown(e) || e.closest('.modal, [class*="dbg"], .topbar')) return;
+      const r = e.getBoundingClientRect();
+      if (r.bottom < innerHeight - 4 || r.height > innerHeight / 2 || !lastBox) return;
+      if (r.top < lastBox.bottom && r.bottom > lastBox.top && !last?.contains(e)) out.push(`bar covers the end of the page: ${name(e)}`);
+    });
+    scrollTo(0, 0);
+    return [...new Set(out)];
+  });
+}
 const saved = (p: Page) => p.evaluate(key => localStorage.getItem(key), KEY);
 /** The left and right edge of the content column. Every screen shares one, so moving through a run never resizes what you are looking at. */
 async function contentEdges(p: Page) {
@@ -239,6 +275,29 @@ try {
   }
   await homeContext.close();
   console.log('Daily Home state checks passed');
+  // A phone pass over every screen at the two common widths (#263).
+  for (const width of [360, 375]) {
+    const context = await browser.newContext({ viewport: { width, height: 812 }, reducedMotion: 'reduce' });
+    const p = await context.newPage();
+    const screens: [string, () => Promise<void>][] = [
+      ['home', () => load(p, start)],
+      ['draft', () => load(p, opened)],
+      ['live', () => load(p, live)],
+      ['results', () => load(p, { ...final, recorded: true })],
+      ['guess', async () => { await load(p, start); await p.locator('.shell-nav .gamelink').click(); }],
+      ['archive', async () => { await load(p, start); await p.locator('.shell-nav').getByRole('button', { name: 'Roster archive', exact: true }).click(); }],
+      ['settings', async () => { await load(p, start); await p.getByRole('button', { name: 'More', exact: true }).click(); await p.getByRole('button', { name: 'Settings', exact: true }).click(); }],
+      ['help', async () => { await load(p, start); await p.getByRole('button', { name: 'More', exact: true }).click(); await p.getByRole('button', { name: 'How to play and data sources', exact: true }).click(); }],
+    ];
+    for (const [name, open] of screens) {
+      await open();
+      await p.waitForTimeout(400);
+      const problems = await phoneProblems(p);
+      assert.deepEqual(problems, [], `${name} at ${width}px:\n  ${problems.join('\n  ')}`);
+    }
+    await context.close();
+    console.log(`Phone checks passed at ${width}px`);
+  }
   const p = await browser.newPage({ reducedMotion: 'no-preference' });
   await load(p, start);
   await p.getByRole('button', { name: "Start today's run", exact: true }).click();

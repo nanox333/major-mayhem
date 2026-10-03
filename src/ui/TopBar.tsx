@@ -103,7 +103,8 @@ function MoreMenu({ inGuess, backLabel, onGame, showTwitch, onHelp, onTwitch, on
     return () => { document.removeEventListener('pointerdown', away); document.removeEventListener('keydown', key); };
   }, [open]);
 
-  const pick = (fn: () => void) => () => { setOpen(false); fn(); };
+  // The menu closes and focus goes back to its button first, so a dialog opened from it hands focus back to something that is still on the page.
+  const pick = (fn: () => void) => () => { setOpen(false); trigger.current?.focus(); fn(); };
   const game = 'Guess the pro';
   return (
     <div className="menu" ref={box} onBlur={(e) => { if (open && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}>
