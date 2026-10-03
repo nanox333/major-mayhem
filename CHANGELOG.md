@@ -5,6 +5,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Fixed
+- **The draft art pass is finished** (#225): evidence for every state in `docs/design/draft-evidence` (hard, coach, bench, secondary role, light, high contrast, effects off, 200% zoom, phone, missing art), the size and asset record, and a radar fix: markers keep a full 52px apart at any radar width, so each can be tapped. The weekly UI and full e2e suites run again (they had fallen behind the restyle) and `scripts/draft-evidence.ts` regenerates the captures. A Skip map button that covered the buy question on phones (a bug in the phone pass) is fixed, and the live match's footer is no longer hidden by the control dock. Sharper portraits are tracked in #267.
 - The sideways tilt of the outer reels during the case roll now also plays in lite mode, so browsers that report few cores no longer lose it, and it eases in from flat when the roll starts (#264).
 
 ### Changed
