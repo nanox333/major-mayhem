@@ -57,6 +57,7 @@ async function load(p: Page, run: Run, prefs: Record<string, unknown> = {}, stat
  * that sits on top of the last thing on the page once scrolled to the bottom. Hidden-for-screen-readers text and zero-size labels are skipped.
  */
 async function phoneProblems(p: Page): Promise<string[]> {
+  await p.evaluate('window.__name = window.__name || ((f) => f)'); // tsx wraps the named helpers below in __name(), which the page does not have
   return p.evaluate(() => {
     const out: string[] = [];
     const shown = (e: Element) => { const r = e.getBoundingClientRect(); const c = getComputedStyle(e); return r.width > 0 && r.height > 0 && c.visibility !== 'hidden' && c.display !== 'none' && c.opacity !== '0'; };
@@ -76,7 +77,9 @@ async function phoneProblems(p: Page): Promise<string[]> {
     }
     scrollTo(0, document.documentElement.scrollHeight);
     const last = document.querySelector('footer.foot') ?? document.body.lastElementChild;
-    const lastBox = last?.getBoundingClientRect();
+    const ends = document.createRange();
+    if (last) ends.selectNodeContents(last);
+    const lastBox = last ? ends.getBoundingClientRect() : undefined; // the content of the last block, not its padding
     document.querySelectorAll('body *').forEach((e) => {
       const c = getComputedStyle(e);
       if ((c.position !== 'fixed' && c.position !== 'sticky') || !shown(e) || e.closest('.modal, [class*="dbg"], .topbar')) return;
@@ -183,7 +186,7 @@ try {
     assert.equal(new Set(markerLabels.map(label => label.split(':')[0])).size, 10, 'radar marker codes are not unique');
     for (const label of markerLabels) assert(label.includes('illustrative') && /, (CT|T),/.test(label), 'radar marker lacks side or positioning context');
     await markers.first().click();
-    assert((await p.locator('.radar-detail').innerText()).includes(markerLabels[0].split(', ')[1]), 'marker selection does not expose its identity');
+    assert((await p.locator('.radar-detail').innerText()).toLowerCase().includes(markerLabels[0].split(', ')[1].toLowerCase()), 'marker selection does not expose its identity'); // the detail line is set in capitals
     await p.getByRole('button', { name: 'Pause', exact: true }).click();
     await p.getByRole('button', { name: 'Next round ›', exact: true }).click();
     if (await p.locator('.buy__opt--eco').isVisible()) await p.locator('.buy__opt--eco').click();

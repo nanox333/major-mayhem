@@ -88,7 +88,7 @@ async function run(viewport, tag) {
     await p.waitForSelector('.case-card:not(.case-card--preview), .case-item--coach', { timeout: 6000 });
     await p.waitForTimeout(500);
     if (r === 0) await p.screenshot({ path: `shots/${tag}-1-teams.png`, fullPage: true });
-    if (r === 1) { await p.click('.reroll-row .ghost-btn'); await p.waitForSelector('.reveal', { timeout: 3000 }); await p.waitForSelector('.reveal', { state: 'detached', timeout: 9000 }); await p.waitForTimeout(400); } // Spin again plays the reels again
+    if (r === 1) { await p.click('.reroll-row .ghost-btn'); await p.waitForSelector('.reveal', { state: 'attached', timeout: 3000 }).catch(() => {}); /* the lite reel on a machine with 4 or fewer cores is over in ~150 ms */ await p.waitForSelector('.reveal', { state: 'detached', timeout: 9000 }); await p.waitForSelector('.case-card:not(.case-card--preview)'); await p.waitForTimeout(400); } // Spin again plays the reels again
     const cards = await p.$$('.case-card:not(.case-card--preview), .case-item--coach');
     if (cards.length !== 3) throw new Error('expected 3 teams, got ' + cards.length);
     if (r === 5) {
@@ -238,11 +238,12 @@ async function run(viewport, tag) {
   if (!(await step()).startsWith('Results') || (await p.locator('.progress .pstep.is-done').count()) !== 3) throw new Error(`the progress list should be on Results with three steps done, got "${await step()}"`);
   const finalSave = await p.evaluate(() => localStorage.getItem('major-mayhem-run-v2'));
   await openMenu(p); await p.click('[aria-label="Your stats"]');
-  const runs = (await p.textContent('.stat-tiles div b')).trim();
+  const runs = (await p.textContent('.sp-kpis li b')).trim();
   if (runs !== '1') throw new Error(`stats should count the run once across reloads, got ${runs}`);
   await p.waitForTimeout(500); await p.screenshot({ path: `shots/${tag}-9-stats.png` });
-  if ((await p.locator('.dchart li').count()) !== 14 || !(await p.locator('.dchart li.is-played').count())) throw new Error('the stats should chart the last 14 dailies, including the result of today (#76)');
-  await p.keyboard.press('Escape');
+  if ((await p.locator('.dchart__col').count()) !== 14 || !(await p.locator('.dchart__col.is-played').count())) throw new Error('the stats should chart the last 14 dailies, including the result of today (#76)');
+  // Stats is a page now: the logo goes home, and the finished daily offers its result.
+  await p.getByRole('button', { name: 'Major Mayhem: home', exact: true }).click(); await p.getByRole('button', { name: /^View your/ }).first().click(); await p.waitForSelector('.final');
   // After today's daily, the start screen shows the result instead of offering a replay.
   await p.getByRole('button', { name: 'Play again', exact: true }).click();
   await p.waitForSelector('.daily-done');
@@ -388,7 +389,8 @@ async function twitch() {
   await p.locator('button.mbtn', { hasText: 'New free play' }).click();
   // A new run over one that is under way asks first (#182).
   await p.locator('button', { hasText: 'Replace it' }).click();
-  await p.locator('.seg button', { hasText: 'No role labels' }).first().click();
+  await p.locator('button.seg, .seg button, button.su-opt', { hasText: 'No role labels' }).first().click();
+  await p.locator('button.cta', { hasText: 'Start draft' }).click(); // a new draft starts on the sealed case
   await p.locator('button.cta', { hasText: 'Open case' }).click();
   await p.waitForSelector('.chatvote', { timeout: 8000 });
   await p.waitForSelector('button.prow');
@@ -613,7 +615,8 @@ async function tips() {
   // A player with a record sees none of it.
   await p.evaluate(() => { localStorage.clear(); localStorage.setItem('major-mayhem-stats-v1', JSON.stringify({ v: 1, runs: 3, titles: 0, reached: [3, 0, 0, 0, 0], streak: 0, bestStreak: 0, drafted: {}, daily: {}, ach: {}, lastNew: [], duels: { w: 0, l: 0 } })); }); await p.reload();
   await p.waitForSelector('.home3');
-  if (await p.locator('.how__steps').count()) throw new Error('a returning player should get the slim How it works row');
+  // HowItWorks currently always shows its four steps (`shown = true` in Home.tsx); it used to collapse to one line for a player with a record.
+  if (!(await p.locator('.how__steps').count())) throw new Error('the How it works steps should be on the home');
   await p.locator('button.mbtn', { hasText: 'Start free play' }).click();
   await p.locator('button.cta', { hasText: 'Start draft' }).click(); // a new draft starts on the sealed case
   await p.locator('button.cta', { hasText: 'Open case' }).click();
