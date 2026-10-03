@@ -6,6 +6,22 @@ import { Flag } from './flags';
 import { ArrowRightIcon, RosterIcon } from './icons';
 import { Modal } from './Modal';
 
+const PAGE = 20;
+
+/** True on a phone-width screen; the archive shows its list in pages of PAGE there and all at once elsewhere. */
+function usePhone() {
+  const q = '(max-width: 640px)';
+  const [on, setOn] = useState(() => typeof matchMedia === 'function' && matchMedia(q).matches);
+  useEffect(() => {
+    if (typeof matchMedia !== 'function') return;
+    const m = matchMedia(q);
+    const f = () => setOn(m.matches);
+    m.addEventListener('change', f);
+    return () => m.removeEventListener('change', f);
+  }, []);
+  return on;
+}
+
 /** Reference data only: inspecting a roster never dispatches a game action. */
 export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: string; hard: boolean; onClose: () => void; /** Shown as its own page (the Roster archive) instead of a pop-up. */ page?: boolean }) {
   const [id, setId] = useState(initialId ?? null);
@@ -13,7 +29,20 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
   const [year, setYear] = useState('');
   const [placement, setPlacement] = useState('');
   const search = useRef<HTMLInputElement>(null);
+  const phone = usePhone();
+  const [shown, setShown] = useState(PAGE);
+  const [far, setFar] = useState(false);
   useEffect(() => { if (!id) search.current?.focus({ preventScroll: true }); }, [id]);
+  // A new filter starts the list over at its first page.
+  useEffect(() => { setShown(PAGE); }, [query, year, placement]);
+  // The back-to-top button shows once the list has scrolled well past the filters.
+  useEffect(() => {
+    if (!page || !phone) { setFar(false); return; }
+    const f = () => setFar(scrollY > 700);
+    f();
+    addEventListener('scroll', f, { passive: true });
+    return () => removeEventListener('scroll', f);
+  }, [page, phone]);
   const roster = ROSTERS.find(r => r.id === id);
   const list = useMemo(() => ROSTERS.filter(r => (!year || String(r.year) === year) && (!placement || r.result === placement)
     && `${r.org} ${r.event} ${r.players.map(p => p.nick).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()))
@@ -47,9 +76,9 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
           {[...new Set(ROSTERS.map(r => r.result))].map(x => <button key={x} type="button" aria-pressed={placement === x} onClick={() => setPlacement(placement === x ? '' : x)}>{x}</button>)}
         </div>
       </div>
-      <p role="status" className="ra-count">{list.length} roster{list.length === 1 ? '' : 's'}</p>
+      <p role="status" className="ra-count">{phone && list.length > shown ? `Showing ${shown} of ${list.length} rosters` : `${list.length} roster${list.length === 1 ? '' : 's'}`}</p>
       {!list.length && <div className="ra-empty"><p>No rosters match these filters.</p><button className="ghost-btn" onClick={() => { setQuery(''); setYear(''); setPlacement(''); }}>Clear filters</button></div>}
-      {byYear(list).map(([y, rows]) => <section key={y} className="ra-year" aria-label={String(y)}>
+      {byYear(phone ? list.slice(0, shown) : list).map(([y, rows]) => <section key={y} className="ra-year" aria-label={String(y)}>
         <h4>{y}</h4>
         <ul className="ra-rows">{rows.map(r => <li key={r.id}>
           <button type="button" className={`ra-card ra-card--${resultClass(r.result)}`} style={{ ['--team' as string]: r.color }} onClick={() => setId(r.id)} aria-label={`${r.org} ${r.year}, ${r.event}, ${r.result}`}>
@@ -63,6 +92,8 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
           </button>
         </li>)}</ul>
       </section>)}
+      {phone && list.length > shown && <button type="button" className="ghost-btn ra-more" onClick={() => setShown(n => n + PAGE)}>Show {Math.min(PAGE, list.length - shown)} more <span>({list.length - shown} left)</span></button>}
+      {far && <button type="button" className="ra-top" onClick={() => scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })} aria-label="Back to the top of the archive">↑ Top</button>}
     </>}
   </>;
   return page ? <main className="console archive-page">{body}</main>
