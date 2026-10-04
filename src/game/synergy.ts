@@ -9,18 +9,18 @@ export interface Synergy { kind: SynergyKind; label: string; value: number }
 /** Countries that count together for a core. The CIS scene shares a language and a talent pipeline. */
 const REGION: Record<string, string> = { RU: 'CIS', UA: 'CIS', KZ: 'CIS', BY: 'CIS' };
 export const NATION: Record<string, string> = {
-  AU: 'Australian', BA: 'Bosnian', BE: 'Belgian', BG: 'Bulgarian', BR: 'Brazilian', CA: 'Canadian', CH: 'Swiss', CZ: 'Czech', DE: 'German', DK: 'Danish',
-  EE: 'Estonian', FI: 'Finnish', FR: 'French', GB: 'British', GT: 'Guatemalan', HU: 'Hungarian', IL: 'Israeli', JO: 'Jordanian', KZ: 'Kazakh',
+  AR: 'Argentine', AU: 'Australian', BA: 'Bosnian', BE: 'Belgian', BG: 'Bulgarian', BR: 'Brazilian', CA: 'Canadian', CH: 'Swiss', CL: 'Chilean', CZ: 'Czech', DE: 'German', DK: 'Danish',
+  EE: 'Estonian', ES: 'Spanish', FI: 'Finnish', FR: 'French', GB: 'British', GT: 'Guatemalan', HU: 'Hungarian', IL: 'Israeli', JO: 'Jordanian', KZ: 'Kazakh',
   LT: 'Lithuanian', LV: 'Latvian', ME: 'Montenegrin', MK: 'Macedonian', MN: 'Mongolian', NL: 'Dutch', NO: 'Norwegian', PL: 'Polish',
   PT: 'Portuguese', RO: 'Romanian', RS: 'Serbian', RU: 'Russian', SE: 'Swedish', SK: 'Slovak', TR: 'Turkish', UA: 'Ukrainian',
-  US: 'American', XK: 'Kosovar', CIS: 'CIS',
+  US: 'American', UY: 'Uruguayan', XK: 'Kosovar', CIS: 'CIS',
 };
 export const COUNTRY: Record<string, string> = {
-  AU: 'Australia', BA: 'Bosnia and Herzegovina', BE: 'Belgium', BG: 'Bulgaria', BR: 'Brazil', CA: 'Canada', CH: 'Switzerland', CZ: 'Czechia', DE: 'Germany',
-  DK: 'Denmark', EE: 'Estonia', FI: 'Finland', FR: 'France', GB: 'United Kingdom', GT: 'Guatemala', HU: 'Hungary', IL: 'Israel', JO: 'Jordan',
+  AR: 'Argentina', AU: 'Australia', BA: 'Bosnia and Herzegovina', BE: 'Belgium', BG: 'Bulgaria', BR: 'Brazil', CA: 'Canada', CH: 'Switzerland', CL: 'Chile', CZ: 'Czechia', DE: 'Germany',
+  DK: 'Denmark', EE: 'Estonia', ES: 'Spain', FI: 'Finland', FR: 'France', GB: 'United Kingdom', GT: 'Guatemala', HU: 'Hungary', IL: 'Israel', JO: 'Jordan',
   KZ: 'Kazakhstan', LT: 'Lithuania', LV: 'Latvia', ME: 'Montenegro', MK: 'North Macedonia', MN: 'Mongolia', NL: 'Netherlands', NO: 'Norway',
   PL: 'Poland', PT: 'Portugal', RO: 'Romania', RS: 'Serbia', RU: 'Russia', SE: 'Sweden', SK: 'Slovakia', TR: 'Türkiye',
-  UA: 'Ukraine', US: 'United States', XK: 'Kosovo',
+  UA: 'Ukraine', US: 'United States', UY: 'Uruguay', XK: 'Kosovo',
 };
 /** Nation core bonus by the size of the biggest group sharing a country (or the CIS). */
 const CORE = [0, 0, 0, 0.6, 1.0, 1.4];
