@@ -3,7 +3,8 @@ import { ROLE_ORDER, ROSTERS, Player } from '../data/rosters';
 import * as G from './logic';
 import { CHEM_CAP, chemistryOf, draftHints, nationCore, synergies } from './synergy';
 
-const byNick = new Map(ROSTERS.flatMap((r) => r.players.map((p) => [p.nick, { p, r }] as const)));
+// The latest roster each nick is on, so a test lineup is the era the nick is best known for however many older rosters the data holds.
+const byNick = new Map([...ROSTERS].sort((a, b) => a.year - b.year).flatMap((r) => r.players.map((p) => [p.nick, { p, r }] as const)));
 /** A lineup from nicks, in role order (slot fit doesn't matter for synergies). */
 const team = (...nicks: string[]): G.Lineup[] => nicks.map((n, i) => ({ slot: ROLE_ORDER[i], player: byNick.get(n)!.p, roster: byNick.get(n)!.r }));
 const kinds = (l: G.Lineup[], coach?: string) => synergies(l, coach).map((s) => s.kind);
