@@ -71,7 +71,10 @@
   .match-live .buy__name { font-size: 1.3rem; }
   :root:root .match-live .buy__why { font-size: max(.75rem, 12px) !important; line-height: 1.35; }
   :root:root .match-live .buy__name small, :root:root .match-live .buy__plan b, :root:root .match-live .buy__plan span, :root:root .aftermath h4, :root:root .aftermath small, :root:root .rl__n small, :root:root .rl__res, :root:root .rl-idle small { font-size: max(.72rem, 11px) !important; }
-  .match-live .match-dock .buy .buy__skip { grid-column: 1; grid-row: auto; position: static; justify-self: stretch; }
+  .match-live .match-dock .buy .buy__skip { grid-column: 1; grid-row: auto; position: relative; justify-self: stretch; }  /* relative, not static: its background is a ::before that must stay inside the button */
+
+  /* the dock is fixed to the bottom of the screen, so the end of the page (the footer) keeps room above it */
+  :root:root body:has(.match-live:not(.match-live--decision) .match-dock) .foot { padding-bottom: calc(112px + env(safe-area-inset-bottom)); }
 
   /* the bar after a map or a match: full width, solid, and it sits below the last scoreboard row instead of over it (#260) */
   .match-live--decision > .action-bar, .match-live .action-bar:not(.knife__go) {

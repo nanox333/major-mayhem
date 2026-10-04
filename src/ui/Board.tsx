@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_ORDER, ROLE_SHORT, Roster, Player } from '../data/rosters';
 import * as G from '../game/logic';
 import { Run } from '../game/state';
@@ -119,7 +119,17 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing, side, com
   // Static illustrative spots are separated for touch access, never presented as positional telemetry. A marker stays at its own spot unless another is on top of it; then it
   // steps aside to the nearest free spot that is still on the map.
   const onMap = useOnMap(map);
-  const MIN = 12;
+  // A marker is 52px wide (match-page.css), so the gap between two spots is that many pixels as a share of the radar's width: about 12% on a desktop radar, 17% on a phone's.
+  const mapBox = useRef<HTMLDivElement>(null);
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const el = mapBox.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const watch = new ResizeObserver(() => setWidth(el.getBoundingClientRect().width));
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, [compact]);
+  const MIN = width ? Math.max(12, Math.ceil(5200 / width)) : 12;
   const clamp = (v: number) => Math.max(7, Math.min(93, v));
   const placed: { x: number; y: number }[] = [];
   const spots = markers.map(({ pos }) => {
@@ -140,7 +150,7 @@ function TacticalBoard({ picks, mine, opp, concealed, pulses, playing, side, com
   });
   const active = markers.find(x => x.code === selected);
   if (compact) return <aside className="board board--broadcast" aria-label={`${map} illustrative radar`}>
-    <div className="board__map"><MapArt map={map} />{markers.map((x, i) => <button key={x.code}
+    <div className="board__map" ref={mapBox}><MapArt map={map} />{markers.map((x, i) => <button key={x.code}
       className={`radar-marker radar-marker--${sideCls(x.side)} ${selected === x.code ? 'is-selected' : ''} ${pulses?.[x.l.player.id] ? `radar-marker--${pulses[x.l.player.id]}` : ''}`}
       style={{ left: `${spots[i].x}%`, top: `${spots[i].y}%` }} aria-pressed={selected === x.code}
       aria-label={`${x.code}: ${x.team}, ${x.l.player.nick}, ${ROLE_LABEL[x.l.slot]}, ${x.side}, illustrative ${x.pos.hint}`}
