@@ -428,3 +428,18 @@ button.duo__day:hover::before, button.duo__day:focus-visible::before { opacity: 
   .home-duo-end figcaption { font-size: 1.05rem; }
   .home-duo-q b { font-size: 2rem; }
 }
+
+/* ---------- the header's right side: the streak and the help button, one row, one height ---------- */
+.duo__tools { flex: none; display: flex; align-items: center; gap: 12px; }
+.duo .duo__streak { align-self: auto; display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 16px 0 12px; background: linear-gradient(100deg, rgba(249, 132, 37, .3), rgba(249, 132, 37, .12)); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .6), inset 0 -3px 0 var(--accent); color: var(--accent-hi); transform: skewX(-12deg); }
+.duo .duo__streak > * { transform: skewX(12deg); }
+.duo .duo__streak svg { flex: none; filter: drop-shadow(0 0 6px rgba(249, 132, 37, .7)); }
+.duo .duo__streak b { font: 800 1.7rem/1 var(--f-head); letter-spacing: .02em; color: var(--strong); }
+.duo .gp__help { margin: 0; }
+@media (max-width: 560px) {
+  .duo__tools { gap: 8px; }
+  .duo .duo__streak { height: 40px; padding: 0 12px 0 9px; gap: 6px; }
+  .duo .duo__streak svg { width: 18px; height: 18px; }
+  .duo .duo__streak b { font-size: 1.4rem; }
+  .duo .gp__help { width: 40px; height: 40px; }
+}

@@ -280,8 +280,10 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
           <h2 id="duo-title" className="gp__title">Duo <span>Link</span></h2>
           <p className="gp__sub">Name a pro who played with both.</p>
         </div>
-        {streak > 0 && <span className="duo__streak" role="img" aria-label={`${streak}-day streak`}><FlameIcon size={18} />{streak}</span>}
-        <button type="button" className="gp__help" onClick={() => setHelp(true)} aria-label="How Duo Link works" data-sfx="none"><HelpIcon size={22} /></button>
+        <div className="duo__tools">
+          {streak > 0 && <span className="duo__streak" role="img" aria-label={`${streak}-day streak`} title={`${streak}-day streak`}><FlameIcon size={22} /><b>{streak}</b></span>}
+          <button type="button" className="gp__help" onClick={() => setHelp(true)} aria-label="How Duo Link works" data-sfx="none"><HelpIcon size={22} /></button>
+        </div>
       </header>
 
       <Tip id="duo" title="How Duo Link works">
