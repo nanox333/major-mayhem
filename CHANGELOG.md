@@ -4,6 +4,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- **Pages have addresses (#222):** Guess the pro, the Roster archive, Stats, Free play setup and the draft are `#/guess`, `#/archive`, `#/stats`, `#/setup` and `#/play`, and the Home is `#/`. Switching page on purpose adds a history entry, so Back and Forward move between pages, a reload on Guess, the archive, Stats or setup stays there, and a link to one of them can be shared or bookmarked. The draft adds one entry when you start it and none per pick, Back from it returns to the Home with the run kept, and a reload on it opens the Home with the run one Continue away, as before. An unknown address opens the Home, and challenge links (`#duel=…`) work as they did. A draft duel under way can now be continued from the Home like a free run, so Back from it no longer strands it.
+
 ### Changed
 - **Draft duels are an equal-conditions comparison (rules v5, #172, #171):** the link now carries every case the challenger saw, spins included, so your friend is dealt exactly those cases whatever they pick, and can spin only where the challenger spun and no more often than they did. If none of three cases fits a slot you have left, any open slot takes any player (off-role costs rating) instead of leaving a dead end. The showmatch gives neither team match-day form, substitutions or tactical calls (the bench players sit it out), both teams ban, pick and take sides by one rule, and a seeded coin flip says who vetoes first. The invite, the lobby and the send button say what the link promises. Links made before this change stay valid, play under the rules they were made with, and say plainly that they are a challenge to beat a saved team, not an equal match. Every other mode plays as before.
 

@@ -138,7 +138,7 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
                 </div>
               </div>
             )}
-            {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}><span>Continue free play · {runWhere(s)}</span><ArrowRightIcon size={22} /></button>}
+            {home.freeInProgress && <button type="button" className="mbtn mbtn--main" onClick={showDraft}><span>{s.mode === 'duel' ? 'Continue draft duel' : 'Continue free play'} · {runWhere(s)}</span><ArrowRightIcon size={22} /></button>}
             {ask !== 'free' && <button type="button" className={`mbtn ${home.freeInProgress ? '' : 'home-mode-start'}`} onClick={startFree}><span>{home.freeInProgress ? 'New free play' : 'Start free play'}</span><ArrowRightIcon size={22} /></button>}
           </div>
         </article>

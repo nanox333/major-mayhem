@@ -30,7 +30,8 @@ export function homeState(run: Run, stats: Stats, day: string): HomeState {
   const today = stats.daily[day];
   return {
     daily: todays ? 'progress' : today ? (today.abandoned ? 'abandoned' : 'done') : 'new',
-    freeInProgress: started && run.mode === 'free',
+    // A draft duel under way is resumed from the same place as a free run: nothing else on the Home reaches it, and Back from the draft lands here (#222).
+    freeInProgress: started && (run.mode === 'free' || run.mode === 'duel'),
     oldRun: runDate && !todays ? { date: runDate, n: dailyNumber(runDate) } : null,
     first: statsSections(stats).empty && !started,
   };
@@ -43,7 +44,7 @@ export function homeState(run: Run, stats: Stats, day: string): HomeState {
 export function replaceRisk(home: HomeState, run: Run): string | null {
   if (home.oldRun) return `Daily #${home.oldRun.n} (${home.oldRun.date}) is unfinished. Starting another run abandons it, and it can't be played for a result again.`;
   if (home.daily === 'progress') return "Today's daily is under way. Starting another run abandons it, and it can't be played for a result again.";
-  if (home.freeInProgress) return `Your free run (${runWhere(run)}) would be replaced by a new one.`;
+  if (home.freeInProgress) return `Your ${run.mode === 'duel' ? `draft duel against ${run.duel?.name ?? 'a friend'}` : 'free run'} (${runWhere(run)}) would be replaced by a new one.`;
   return null;
 }
 

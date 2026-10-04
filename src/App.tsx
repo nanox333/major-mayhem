@@ -35,6 +35,7 @@ import { StatsPage } from './screens/Stats';
 import { SetupScreen } from './screens/Setup';
 import { ChatVoteBar, ChatVoteProvider, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
+import { useView } from './ui/route';
 
 export default function App() {
   return <ChatVoteProvider><Game /></ChatVoteProvider>;
@@ -106,7 +107,7 @@ function Game() {
   // The home is the first page, and anywhere a run isn't under way; a saved run resumes where it was (#115). Guess the pro doesn't touch the run.
   const atStart = s.phase === 'draft' && s.offerKey === 0 && s.picks.length === 0;
   // Every visit opens on the home; a saved run is one "Continue" away, never resumed on load.
-  const [chosen, setView] = useState<View>('home');
+  const [chosen, setView] = useView();
   // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
   // A draft you have just started waits on its sealed case until you open it; `began` is that wait, and it ends as soon as a case is open.
   const [began, setBegan] = useState(false);
@@ -143,7 +144,7 @@ function Game() {
   };
   const hs = homeState(s, stats, today());
   const guessNext = {
-    label: hs.oldRun ? `Continue Daily #${hs.oldRun.n}` : hs.daily === 'progress' ? "Continue today's draft" : hs.freeInProgress ? 'Continue your free run' : hs.daily === 'new' ? "Play today's draft" : 'Free play',
+    label: hs.oldRun ? `Continue Daily #${hs.oldRun.n}` : hs.daily === 'progress' ? "Continue today's draft" : hs.freeInProgress ? (s.mode === 'duel' ? 'Continue your draft duel' : 'Continue your free run') : hs.daily === 'new' ? "Play today's draft" : 'Free play',
     go: goNext,
   };
 

@@ -61,6 +61,88 @@ try {
       await context.close();
     }
   }
+
+  // Page addresses (#222): Back and Forward move between pages, a reload keeps the page, a draft survives leaving it, and the challenge link still works.
+  {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+    const errors: string[] = [];
+    const open = async (url: string) => {
+      const page = await context.newPage();
+      page.on('pageerror', error => errors.push(error.message));
+      await page.route('http://game.local/**', route => route.fulfill({ contentType: 'text/html', body: html }));
+      await page.goto(url);
+      return page;
+    };
+    const p = await open('http://game.local/');
+    try {
+      const hash = () => p.evaluate(() => location.hash);
+      const home = p.getByRole('button', { name: "Start today's run", exact: true });
+      const isHome = async () => { await home.waitFor(); assert.ok(['', '#/'].includes(await hash()), `Home address was ${await hash()}`); };
+      await isHome();
+      const current = async () => p.locator('[aria-current="page"]').first().innerText();
+      // Each page: open it from the header, go Back to the Home, Forward to the page again, and reload on it.
+      const pages: [string, () => Promise<void>, ReturnType<typeof p.locator>, string][] = [
+        ['Guess the pro', () => p.locator('.shell-nav .gamelink').click(), p.getByRole('combobox'), '#/guess'],
+        ['Roster archive', () => p.locator('.shell-nav').getByRole('button', { name: 'Roster archive', exact: true }).click(), p.locator('.ra-intro'), '#/archive'],
+        ['Your stats', () => p.getByRole('button', { name: 'Your stats', exact: true }).click(), p.locator('.sp-hero'), '#/stats'],
+      ];
+      for (const [name, go, marker, want] of pages) {
+        await go();
+        await marker.waitFor();
+        assert.equal(await hash(), want, `${name}: address`);
+        await p.goBack(); await isHome();
+        await p.goForward(); await marker.waitFor();
+        assert.equal(await hash(), want, `${name}: address after Forward`);
+        await p.reload(); await marker.waitFor();
+        assert.equal(await hash(), want, `${name}: address after reload`);
+        await p.goBack(); await isHome();
+      }
+      assert.match(await current(), /Home/i, 'The Home tab is the current page');
+      await p.locator('.shell-nav .gamelink').click();
+      assert.match(await current(), /Guess/i, 'The Guess tab follows the page');
+      await p.goBack(); await isHome();
+
+      // A draft: starting it is one step in the history, picks add none, and Back keeps the run.
+      await home.click();
+      await p.getByRole('button', { name: 'Open case', exact: true }).click();
+      await p.locator('.case-card:visible button.prow').first().click();
+      const before = await p.evaluate(() => history.length);
+      await p.locator('.draftbar .cta').click();
+      assert.equal(await p.evaluate(() => history.length), before, 'A pick added a history entry');
+      assert.equal(await hash(), '#/play');
+      const run = await saved(p);
+      assert.equal(JSON.parse(run!).picks.length, 1);
+      await p.goBack();
+      await p.getByRole('button', { name: /Continue/ }).first().waitFor();
+      assert.equal(await saved(p), run, 'Back discarded the run');
+      await p.goForward();
+      await p.getByRole('button', { name: 'Open case', exact: true }).waitFor();
+      // A reload on the draft opens the Home, with the run one Continue away.
+      await p.reload(); await p.getByRole('button', { name: /Continue/ }).first().waitFor();
+      assert.equal(await saved(p), run);
+      assert.ok(['', '#/'].includes(await hash()));
+      await p.close();
+
+      // An address the game does not know is the Home.
+      const lost = await open('http://game.local/#/nope');
+      await lost.locator('.home-mode-card--guess').waitFor(); // only the Home has it
+      assert.equal(await lost.evaluate(() => location.hash), '#/');
+      await lost.close();
+      // Opening a page directly.
+      const direct = await open('http://game.local/#/guess');
+      await direct.getByRole('combobox').waitFor();
+      await direct.close();
+      // A challenge link opens the invite and is cleared from the address, beside the router.
+      const duel = await open('http://game.local/#duel=garbage');
+      await duel.getByText("That challenge link doesn't work").waitFor();
+      assert.equal(await duel.evaluate(() => location.hash), '');
+      await duel.close();
+      assert.deepEqual(errors, [], 'Browser errors');
+      console.log('Page addresses passed');
+    } finally {
+      await context.close();
+    }
+  }
 } finally {
   await browser.close();
 }
