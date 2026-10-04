@@ -7,6 +7,7 @@ import { Avatar, RoleIcon, TeamBadge } from './art';
 import { Flag } from './flags';
 import { ArrowRightIcon, RosterIcon } from './icons';
 import { Modal } from './Modal';
+import { useDebugRatings } from './debugFlags';
 
 const PAGE = 20;
 
@@ -32,6 +33,7 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
   const [placement, setPlacement] = useState('');
   const search = useRef<HTMLInputElement>(null);
   const phone = usePhone();
+  const ratings = useDebugRatings();
   const [shown, setShown] = useState(PAGE);
   const [far, setFar] = useState(false);
   useEffect(() => { if (!id) search.current?.focus({ preventScroll: true }); }, [id]);
@@ -88,7 +90,7 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
                 <span className="ra-card__main"><b>{r.org}</b><small>{r.coach ? `Coach ${r.coach}` : r.event}</small></span>
                 <span className={`ra-row__result ra-row__result--${resultClass(r.result)}`}>{r.result}</span>
               </span>
-              <span className="ra-card__roster">{r.players.map(p => <span key={p.id} className="ra-face"><Avatar player={p} roster={r} /><i>{p.nick}</i></span>)}</span>
+              <span className="ra-card__roster">{r.players.map(p => <span key={p.id} className="ra-face"><Avatar player={p} roster={r} /><i>{p.nick}</i>{ratings && <u title="Game rating (debug)">{p.rating}</u>}</span>)}</span>
               {r.unverified && <span className="ra-card__flag">Unverified lineup</span>}
             </button>
           </li>)}</ul>
@@ -121,6 +123,7 @@ function RosterDetails({ roster: r, hard, onOpen }: { roster: Roster; hard: bool
   const field = ROSTERS.filter(x => x.event === r.event).sort((a, b) => rank(a) - rank(b) || a.org.localeCompare(b.org));
   const history = ROSTERS.filter(x => x.org === r.org).sort((a, b) => a.year - b.year || eventTime(a) - eventTime(b));
   const links = ROSTERS.filter(x => x.org === r.org && x.id !== r.id).length;
+  const ratings = useDebugRatings();
   return <section className="rs" style={{ ['--team' as string]: r.color }}>
     <header className="rs-head">
       <TeamBadge roster={r} size={84} />
@@ -141,7 +144,7 @@ function RosterDetails({ roster: r, hard, onOpen }: { roster: Roster; hard: bool
 
     <h4 className="rs-sub">Lineup</h4>
     <ul className="rs-lineup">{r.players.map(p => <li key={p.id} className="rs-player">
-      <span className="rs-player__photo"><Avatar player={p} roster={r} /></span>
+      <span className="rs-player__photo"><Avatar player={p} roster={r} />{ratings && <u className="rs-player__rating" title="Game rating (debug)">{p.rating}</u>}</span>
       <span className="rs-player__text">
         <b>{p.nick}</b>
         {p.name && <span className="rs-player__real">{p.name}</span>}

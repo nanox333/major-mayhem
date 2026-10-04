@@ -7,6 +7,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ### Fixed
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 
+### Added
+- **Debug: player ratings in the archive.** The debug menu has a switch that shows every player's hidden game rating on the roster archive cards and in the corner of each portrait on a roster sheet. It only does anything while the debug tools are on.
+
 ### Changed
 - **Roster sheets and the archive, redesigned:** opening a lineup (from the draft's "View roster & sources" or from the archive) is now a sheet: a team-coloured header, at-a-glance tiles (placement, era, nationalities as flags, coach), five player cards with a large portrait, nick, **real name**, flag and role chips, the lineup's chemistry (word and links), every lineup at the same Major in finishing order (each opens in place) and the team's own history across the archive, then sources and the report link. The archive lists lineups grouped by Major within each year, best placing first, with each face captioned by nick and the coach under the team name.
 

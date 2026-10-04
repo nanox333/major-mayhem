@@ -79,3 +79,12 @@
   .rs-sub { flex-wrap: wrap; }
   .ra-rows { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Debug only: the hidden game rating, in a corner of the face. */
+.ra-face u { text-decoration: none; padding: 1px 6px; background: rgba(249, 132, 37, .18); color: var(--accent-hi); font: 800 max(.7rem, 11px)/1.3 var(--f-read); font-variant-numeric: tabular-nums; }
+.rs-player__photo { position: relative; }
+.rs-player__rating { position: absolute; top: 8px; right: 8px; padding: 3px 9px; background: rgba(0, 0, 0, .78); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent-hi); font: 800 1.1rem/1 var(--f-head); letter-spacing: .04em; text-decoration: none; font-variant-numeric: tabular-nums; }
+
+/* The sheet's header sits on the panel: the archive's backdrop picture would show above it and the header's fade would end in a visible box. */
+.archive-page:has(.rs)::before { display: none; }
+.rs-head { background: linear-gradient(100deg, color-mix(in srgb, var(--team) 42%, transparent), transparent 80%); }
