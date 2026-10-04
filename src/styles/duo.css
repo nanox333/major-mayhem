@@ -338,3 +338,40 @@
   .home-duo-end figcaption { font-size: 1rem; }
   .home-duo-end > span { width: 60px; }
 }
+
+/* ---------- the fortnight strip, and the streak ---------- */
+.duo__streak { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 8px 12px; background: rgba(249, 132, 37, .14); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .5); color: var(--accent-hi); font: 800 1.4rem/1 var(--f-head); transform: skewX(-12deg); }
+.duo__streak > * { transform: skewX(12deg); }
+.duo__history { display: grid; gap: 12px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.duo__h-t { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0; }
+.duo__h-t span { font: 700 .75rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; color: var(--text-2); }
+.duo__h-t small { color: var(--muted); font-size: var(--fs-caption); }
+.duo__h-row { display: grid; grid-template-columns: repeat(var(--n, 14), minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; list-style: none; }
+.duo__day { position: relative; isolation: isolate; overflow: hidden; display: grid; place-items: center; align-content: center; gap: 2px; width: 100%; min-height: 62px; padding: 6px 0; border: 0; border-radius: 0; background: rgba(255, 255, 255, .04); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); color: var(--text-2); cursor: default; transition: background .15s, box-shadow .15s, transform .15s; }
+button.duo__day { cursor: pointer; }
+.duo__day small { font: 700 .66rem/1 var(--f-read); letter-spacing: .06em; color: var(--muted); }
+.duo__day b { font: 800 1.35rem/1 var(--f-head); }
+.duo__day i { position: absolute; right: 2px; top: 2px; font-style: normal; font-size: .62rem; line-height: 1; }
+.duo__day.is-won { background: color-mix(in srgb, var(--go) 24%, #121312); box-shadow: inset 0 -3px 0 var(--go); color: var(--strong); }
+.duo__day.is-lost { background: color-mix(in srgb, var(--loss) 20%, #121312); box-shadow: inset 0 -3px 0 var(--loss); color: var(--loss-text); }
+.duo__day.is-open { box-shadow: inset 0 -3px 0 var(--accent); }
+.duo__day.is-new b { color: rgba(255, 255, 255, .25); }
+.duo__day.is-today { box-shadow: inset 0 0 0 2px var(--accent); }
+.duo__day.is-today.is-won { box-shadow: inset 0 0 0 2px var(--accent), inset 0 -3px 0 var(--go); }
+button.duo__day:hover { background: rgba(255, 255, 255, .1); transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3), inset 0 -3px 0 var(--accent); }
+button.duo__day:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 2px; }
+button.duo__day::before { content: "↺"; position: absolute; inset: 0; display: grid; place-items: center; background: rgba(23, 12, 3, .78); color: var(--accent-hi); font: 800 1.5rem/1 var(--f-head); opacity: 0; transition: opacity .15s; z-index: 1; }
+button.duo__day:hover::before, button.duo__day:focus-visible::before { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .duo__h-row li { animation: duo-rise .4s cubic-bezier(.2, .8, .2, 1) calc(var(--i, 0) * 30ms) both; }
+  .duo__streak svg { animation: flame-flicker 1.6s ease-in-out infinite; }
+}
+@media (max-width: 640px) { .duo__h-row { grid-template-columns: repeat(min(var(--n, 7), 7), minmax(0, 1fr)); } .duo__streak { padding: 6px 9px; font-size: 1.15rem; } }
+
+/* ---------- high contrast and forced colours: outlines that do not rely on a faint white wash ---------- */
+:root[data-contrast="high"] .duo__card, :root[data-contrast="high"] .duo__day, :root[data-contrast="high"] .duo__pill, :root[data-contrast="high"] .duo__chain, :root[data-contrast="high"] .duo__reveal, :root[data-contrast="high"] .duo__sub, :root[data-contrast="high"] .duo__misses li { box-shadow: inset 0 0 0 2px #fff; }
+:root[data-contrast="high"] .duo__card.is-struck { box-shadow: inset 0 0 0 2px #fff, inset 0 -4px 0 var(--loss); }
+:root[data-contrast="high"] .duo__day.is-won { box-shadow: inset 0 0 0 2px #fff, inset 0 -4px 0 var(--go); }
+:root[data-contrast="high"] .duo__link, :root[data-contrast="high"] .duo__pills::before { opacity: 1; filter: brightness(1.8); }
+:root[data-contrast="high"] .duo__hint { box-shadow: inset 0 0 0 2px var(--accent-hi); }
+@media (forced-colors: active) { .duo__card, .duo__day, .duo__pill, .duo__hint, .duo__mid, .duo__photo { border: 1px solid CanvasText; } .duo__day.is-won, .duo__card.is-struck { border-width: 2px; } }

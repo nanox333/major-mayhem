@@ -1,6 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { dailyNumber } from '../game/state';
-import { DuoDay, DuoMode, DuoPuzzle, MAX_TRIES, MODE_LABEL, addPick, candidates, cardsFor, duoFor, duoPros, duoShare, duoStreak, emptyDay, hintLineups, linksFor, loadDuo, normalizeDuoDay, saveDuo, sharedLineups } from '../game/duo';
+import { DuoDay, DuoMode, DuoPuzzle, MAX_TRIES, MODE_LABEL, addPick, candidates, cardsFor, duoFor, duoPros, duoShare, duoStreak, emptyDay, hintLineups, linksFor, loadDuo, recentDates, normalizeDuoDay, saveDuo, sharedLineups } from '../game/duo';
 import { Pro, searchState } from '../game/guess';
 import { Roster } from '../data/rosters';
 import { usePrefs } from '../ui/prefs';
@@ -249,7 +249,8 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
   const puzzle = useMemo(() => duoFor(date), [date]);
   const [store, setStore] = useState(loadDuo);
   const day = useMemo(() => normalizeDuoDay(store[date], all, puzzle), [store, date, all, puzzle]);
-  const [practice, setPractice] = useState<{ puzzle: DuoPuzzle; seed: string; day: DuoDay } | null>(null);
+  /** An unscored round: a random pair, or an earlier day's pair replayed (`replay` is that day's number). */
+  const [practice, setPractice] = useState<{ puzzle: DuoPuzzle; seed: string; day: DuoDay; date: string; replay: number | null } | null>(null);
   const [help, setHelp] = useState(false);
   const streak = duoStreak(store, date);
   const n = dailyNumber(date);
@@ -260,7 +261,13 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
   const startPractice = () => {
     const list = candidates(date).filter((c) => c.a !== puzzle.a || c.b !== puzzle.b);
     const c = list[Math.floor(Math.random() * list.length)];
-    setPractice({ puzzle: c, seed: `practice-${Math.random().toString(36).slice(2)}`, day: emptyDay() });
+    setPractice({ puzzle: c, seed: `practice-${Math.random().toString(36).slice(2)}`, day: emptyDay(), date, replay: null });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  /** An earlier day's pair, with that day's data and its same four cards, played for practice: nothing is recorded. */
+  const startReplay = (d: string) => {
+    setPractice({ puzzle: duoFor(d), seed: `duo-opts-${d}`, day: emptyDay(), date: d, replay: dailyNumber(d) });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -269,10 +276,11 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
       <header className="gp__head">
         <DuoMark />
         <div className="gp__titles">
-          <p className="gp__kicker">{practice ? 'Practice · not scored' : `Daily #${n}`}</p>
+          <p className="gp__kicker">{practice ? (practice.replay ? `Replay · Daily #${practice.replay} · not scored` : 'Practice · not scored') : `Daily #${n}`}</p>
           <h2 id="duo-title" className="gp__title">Duo <span>Link</span></h2>
           <p className="gp__sub">Name a pro who played with both.</p>
         </div>
+        {streak > 0 && <span className="duo__streak" role="img" aria-label={`${streak}-day streak`}><FlameIcon size={18} />{streak}</span>}
         <button type="button" className="gp__help" onClick={() => setHelp(true)} aria-label="How Duo Link works" data-sfx="none"><HelpIcon size={22} /></button>
       </header>
 
@@ -287,7 +295,7 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
       </Tip>
 
       {practice
-        ? <Board key={practice.seed} date={date} puzzle={practice.puzzle} day={practice.day} setDay={(d) => setPractice({ ...practice, day: d })} seed={practice.seed} practice daily={n} />
+        ? <Board key={practice.seed} date={practice.date} puzzle={practice.puzzle} day={practice.day} setDay={(d) => setPractice({ ...practice, day: d })} seed={practice.seed} practice daily={n} />
         : <Board key={date} date={date} puzzle={puzzle} day={day} setDay={setDay} seed={`duo-opts-${date}`} practice={false} daily={n} />}
 
       {(practice ? practice.day.done : day.done) && (
@@ -305,7 +313,35 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
         </div>
       )}
 
+      <History today={date} store={store} onReplay={startReplay} />
+
       {help && <DuoHelp onClose={() => setHelp(false)} />}
+    </section>
+  );
+}
+
+/** The last fortnight at a glance: solved (with the tries it took), missed, or not played. A past day opens as an unscored replay. */
+function History({ today, store, onReplay }: { today: string; store: Record<string, DuoDay>; onReplay: (date: string) => void }) {
+  // Only days since Daily #1: the game has no earlier dailies.
+  const days = useMemo(() => recentDates(today, 14).filter((d) => dailyNumber(d) >= 1), [today]);
+  const cells = days.map((d) => {
+    const raw = store[d];
+    const day = raw?.picks.length ? normalizeDuoDay(raw, duoPros(d), duoFor(d)) : null;
+    const state = !day ? 'new' : day.won ? 'won' : day.done ? 'lost' : 'open';
+    const text = state === 'won' ? `linked in ${day!.picks.length}` : state === 'lost' ? 'not linked' : state === 'open' ? 'in progress' : 'not played';
+    return { d, n: dailyNumber(d), state, tries: day?.picks.length ?? 0, hard: day?.mode === 'hard', text };
+  });
+  return (
+    <section className="duo__history" aria-label="Your recent days" style={{ ['--n' as string]: cells.length }}>
+      <p className="duo__h-t"><span>Recent days</span><small>Tap a past day to replay it</small></p>
+      <ol className="duo__h-row">
+        {cells.map((c) => {
+          const cls = `duo__day is-${c.state} ${c.d === today ? 'is-today' : ''}`;
+          const inner = <><small>{Number(c.d.slice(8))}</small><b>{c.state === 'won' ? c.tries : c.state === 'lost' ? '✗' : c.state === 'open' ? '…' : '·'}</b>{c.hard && c.state === 'won' && <i aria-hidden="true">💀</i>}</>;
+          const label = `Daily #${c.n}, ${c.d}: ${c.text}${c.hard ? ', hard mode' : ''}`;
+          return <li key={c.d}>{c.d === today ? <span className={cls} role="img" aria-label={`Today. ${label}`}>{inner}</span> : <button type="button" className={cls} aria-label={`${label}. Replay for practice`} title={`#${c.n} · ${c.text}`} data-sfx="none" onClick={() => onReplay(c.d)}>{inner}</button>}</li>;
+        })}
+      </ol>
     </section>
   );
 }

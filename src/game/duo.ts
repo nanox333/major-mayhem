@@ -186,6 +186,9 @@ export function duoStreak(all: Record<string, DuoDay>, today: string): number {
   return n;
 }
 
+/** The `n` days up to and including `today`, oldest first (YYYY-MM-DD, local days as the game counts them). */
+export const recentDates = (today: string, n: number): string[] => Array.from({ length: n }, (_, i) => new Date(Date.parse(`${today}T00:00:00Z`) - (n - 1 - i) * 86400000).toISOString().slice(0, 10));
+
 /** Spoiler-free share text: the mode, the tries, and a square per try. */
 export function duoShare(date: string, day: DuoDay, url?: string): string {
   const hard = day.mode === 'hard';
