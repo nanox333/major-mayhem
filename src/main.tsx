@@ -19,6 +19,7 @@ import './styles/lobby-page.css';
 import './styles/match-page.css';
 import './styles/results-page.css';
 import './styles/shell.css';
+import './styles/help-chemistry.css';
 import './styles/phone.css';
 import { initAnalytics } from './analytics';
 import { initSound } from './ui/sound';

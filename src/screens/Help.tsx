@@ -57,7 +57,29 @@ function HowToPlay() {
         </details>
         <details>
           <summary>Chemistry</summary>
-          <p>Synergies add up: three or more players from one country (or the CIS), famous duos, a lineup from one era, teammates from the same roster or organization. Two main AWPers on one team costs you. Player cards show what a pick would add; the lobby lists your synergies.</p>
+          <div className="chemg">
+            <p>Chemistry is the bonus for a team that fits together. Each link below adds a little, the links add up, and the total shows as one word: <b>None yet</b>, <b>Some</b>, <b>Good</b> or <b>Strong</b>, or <b>Clashing</b> when penalties win. Hidden ratings never come into it.</p>
+            <p className="chemg__legend" aria-label="How big a link is"><span className="chemg__chip">+</span> small <span className="chemg__chip">++</span> solid <span className="chemg__chip">+++</span> big <span className="chemg__chip is-bad">−</span> a penalty</p>
+            <ul className="chemg__list">
+              <li><h5>Same country</h5><p>Three or more players from one country make a core, and a bigger core is worth more. The CIS (Russia, Ukraine, Kazakhstan, Belarus) counts as one.</p>
+                <p className="chemg__ex"><span>3 Danes <b className="chemg__chip">++</b></span><span>4 Danes <b className="chemg__chip">+++</b></span></p></li>
+              <li><h5>Shared history</h5><p>Players from the same roster work best together, then the same organisation in another year, then rosters a year apart.</p>
+                <p className="chemg__ex"><span>Two from Astralis 2018 <b className="chemg__chip">++</b></span><span>Astralis 2017 and 2018 <b className="chemg__chip">+</b></span><span>Different teams, 2018 and 2019 <b className="chemg__chip">+</b></span></p></li>
+              <li><h5>Famous duos</h5><p>Pairs who won, or nearly won, together.</p>
+                <p className="chemg__ex"><span>dupreeh + xyp9x, Astralis mainstays <b className="chemg__chip">++</b></span></p></li>
+              <li><h5>One era</h5><p>Every player from CS:GO rosters, or every player from CS2 rosters.</p>
+                <p className="chemg__ex"><span>All CS:GO era <b className="chemg__chip">+</b></span></p></li>
+              <li><h5>Your coach</h5><p>A coach who has coached players you drafted adds a link for each, up to a limit.</p>
+                <p className="chemg__ex"><span>Coached one of your players <b className="chemg__chip">+</b></span><span>Coached two <b className="chemg__chip">++</b></span></p></li>
+              <li className="is-bad"><h5>Two AWPers</h5><p>There is one AWP. A second main AWPer costs you, and each extra one costs more.</p>
+                <p className="chemg__ex"><span>2 AWPers, one AWP <b className="chemg__chip is-bad">−</b></span></p></li>
+            </ul>
+            <h5 className="chemg__sub">How it adds up</h5>
+            <p>Bonuses stack up to a cap, so once you are at <b>Strong</b> more links add nothing. Penalties have no cap. The word is only a summary: the list behind it is what counts.</p>
+            <p className="chemg__eg"><b>Example.</b> You hold two Danish players. A third Dane makes a Danish core (3) <span className="chemg__chip">++</span>, and if he played on the same roster as one of them it also adds Shared history <span className="chemg__chip">++</span>. Your chemistry goes from <b>None yet</b> to <b>Good</b>.</p>
+            <h5 className="chemg__sub">Where you see it</h5>
+            <p>While you draft, the line above the cases shows your word and your biggest links. Point at a player and "Why pick" lists what they would add or break before you commit. The lobby lists every link once the team is set.</p>
+          </div>
         </details>
         <details>
           <summary>Coach and bench</summary>

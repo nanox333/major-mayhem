@@ -8,6 +8,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 
 ### Changed
+- **How to play, Chemistry, explained properly:** each way to build chemistry (same country, shared history, famous duos, one era, your coach, and the two-AWPer penalty) is now a small card with what it is and worked examples with the same +, ++, +++ and − chips the game shows, followed by how the total adds up (with the cap), a worked example and where in the game to see it.
 - **A better empty Stats page:** with no record yet, the page draws its own numbers empty (Runs, Best finish, Daily streak), says "No runs yet" in one line and offers the button for what to do next.
 - **A Home that shows instead of tells:** the hero's intro sentences, the card blurbs, the archive subtitle and the how-it-works captions are gone. The seven picks are shown as seven slots under the title, the stats band shows its empty tiles instead of a sentence, and how it works is four numbered titles.
 ### Changed
