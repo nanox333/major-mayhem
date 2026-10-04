@@ -88,3 +88,13 @@
 /* The sheet's header sits on the panel: the archive's backdrop picture would show above it and the header's fade would end in a visible box. */
 .archive-page:has(.rs)::before { display: none; }
 .rs-head { background: linear-gradient(100deg, color-mix(in srgb, var(--team) 42%, transparent), transparent 80%); }
+
+/* Back to the list: a flat angular tab with an arrow that nudges left, like the other buttons. */
+.rs-back { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; min-height: 40px; margin: 0 0 14px; padding: 0 20px 0 14px; border: 0; background: none; color: var(--text-2); font: 800 .8rem/1 var(--f-head); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.rs-back::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .07); box-shadow: inset 3px 0 0 var(--accent); clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%); transition: background .15s; }
+.rs-back svg { transform: rotate(180deg); color: var(--accent-hi); transition: transform .15s; }
+.rs-back:hover { color: var(--strong); }
+.rs-back:hover::before { background: rgba(255, 255, 255, .13); }
+.rs-back:hover svg { transform: rotate(180deg) translateX(3px); }
+.rs-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .rs-back::before, .rs-back svg { transition: none; } }

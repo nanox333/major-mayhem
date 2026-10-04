@@ -53,7 +53,7 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
     .sort((a, b) => eventTime(b) - eventTime(a) || a.event.localeCompare(b.event) || rank(a) - rank(b) || a.org.localeCompare(b.org)), [query, year, placement]);
   const body = <>
     {roster ? <>
-      {!initialId && <button className="ghost-btn" onClick={() => setId(null)}>‹ All results</button>}
+      {!initialId && <button type="button" className="rs-back" onClick={() => setId(null)}><ArrowRightIcon size={16} /><span>All lineups</span></button>}
       <RosterDetails roster={roster} hard={hard} onOpen={setId} />
     </> : <>
       <header className="ra-intro">
