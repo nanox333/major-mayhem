@@ -196,7 +196,6 @@ function HowToPlay() {
               <dt>Daily</dt><dd>Everyone gets the same cases that day, and it resets at your local midnight. Copy your result or share a result card at the end to compare with friends.</dd>
               <dt>Free play</dt><dd>Play as often as you like. You can limit it to one era (CS:GO or CS2), to champions only or underdogs only, or switch on hard mode.</dd>
               <dt>Guess the pro</dt><dd>A second daily: find the day's pro in eight guesses.</dd>
-              <dt>Duo Link</dt><dd>A third puzzle: two pros never shared a Major lineup, so name one who played with both. Three tries, Normal (four cards) or Hard (type it).</dd>
             </dl>
           </div>
         </details>
