@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ROSTERS, ROLE_LABEL, Roster } from '../data/rosters';
-import { COUNTRY } from '../game/synergy';
-import { Avatar, TeamBadge } from './art';
+import { ROSTERS, ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
+import { COUNTRY, NATION, synergies, strength } from '../game/synergy';
+import { naturalLineup } from '../game/lineup';
+import { chemistryWord } from '../game/draftui';
+import { Avatar, RoleIcon, TeamBadge } from './art';
 import { Flag } from './flags';
 import { ArrowRightIcon, RosterIcon } from './icons';
 import { Modal } from './Modal';
@@ -46,14 +48,11 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
   const roster = ROSTERS.find(r => r.id === id);
   const list = useMemo(() => ROSTERS.filter(r => (!year || String(r.year) === year) && (!placement || r.result === placement)
     && `${r.org} ${r.event} ${r.players.map(p => p.nick).join(' ')}`.toLowerCase().includes(query.trim().toLowerCase()))
-    .sort((a, b) => eventTime(b) - eventTime(a) || a.event.localeCompare(b.event) || a.org.localeCompare(b.org)), [query, year, placement]);
+    .sort((a, b) => eventTime(b) - eventTime(a) || a.event.localeCompare(b.event) || rank(a) - rank(b) || a.org.localeCompare(b.org)), [query, year, placement]);
   const body = <>
     {roster ? <>
       {!initialId && <button className="ghost-btn" onClick={() => setId(null)}>‹ All results</button>}
-      <RosterDetails roster={roster} hard={hard} />
-      <h4>Other included lineups</h4>
-      <div className="roster-related">{ROSTERS.filter(r => r.org === roster.org && r.id !== roster.id).map(r => <button key={r.id} className="ghost-btn" onClick={() => setId(r.id)}>{r.event} · {r.year}</button>)}
-        {!ROSTERS.some(r => r.org === roster.org && r.id !== roster.id) && <p className="muted small">No other lineup from this org is included.</p>}</div>
+      <RosterDetails roster={roster} hard={hard} onOpen={setId} />
     </> : <>
       <header className="ra-intro">
         <span className="ra-intro__icon" aria-hidden="true"><RosterIcon size={34} /></span>
@@ -79,18 +78,21 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
       <p role="status" className="ra-count">{phone && list.length > shown ? `Showing ${shown} of ${list.length} rosters` : `${list.length} roster${list.length === 1 ? '' : 's'}`}</p>
       {!list.length && <div className="ra-empty"><p>No rosters match these filters.</p><button className="ghost-btn" onClick={() => { setQuery(''); setYear(''); setPlacement(''); }}>Clear filters</button></div>}
       {byYear(phone ? list.slice(0, shown) : list).map(([y, rows]) => <section key={y} className="ra-year" aria-label={String(y)}>
-        <h4>{y}</h4>
-        <ul className="ra-rows">{rows.map(r => <li key={r.id}>
-          <button type="button" className={`ra-card ra-card--${resultClass(r.result)}`} style={{ ['--team' as string]: r.color }} onClick={() => setId(r.id)} aria-label={`${r.org} ${r.year}, ${r.event}, ${r.result}`}>
-            <span className="ra-card__top">
-              <TeamBadge roster={r} size={44} />
-              <span className="ra-card__main"><b>{r.org}</b><small>{r.event}</small></span>
-            </span>
-            <span className={`ra-row__result ra-row__result--${resultClass(r.result)}`}>{r.result}</span>
-            <span className="ra-card__faces" aria-hidden="true">{r.players.map(p => <Avatar key={p.id} player={p} roster={r} />)}</span>
-            <span className="ra-card__nicks">{r.players.map(p => p.nick).join(' · ')}</span>
-          </button>
-        </li>)}</ul>
+        <h4>{y}<small>{rows.length} lineup{rows.length === 1 ? '' : 's'}</small></h4>
+        {byEvent(rows).map(([ev, group]) => <div key={ev} className="ra-event">
+          <h5><b>{ev}</b><span>{group[0].dates}</span></h5>
+          <ul className="ra-rows">{group.map(r => <li key={r.id}>
+            <button type="button" className={`ra-card ra-card--${resultClass(r.result)}`} style={{ ['--team' as string]: r.color }} onClick={() => setId(r.id)} aria-label={`${r.org} ${r.year}, ${r.event}, ${r.result}`}>
+              <span className="ra-card__top">
+                <TeamBadge roster={r} size={44} />
+                <span className="ra-card__main"><b>{r.org}</b><small>{r.coach ? `Coach ${r.coach}` : r.event}</small></span>
+                <span className={`ra-row__result ra-row__result--${resultClass(r.result)}`}>{r.result}</span>
+              </span>
+              <span className="ra-card__roster">{r.players.map(p => <span key={p.id} className="ra-face"><Avatar player={p} roster={r} /><i>{p.nick}</i></span>)}</span>
+              {r.unverified && <span className="ra-card__flag">Unverified lineup</span>}
+            </button>
+          </li>)}</ul>
+        </div>)}
       </section>)}
       {phone && list.length > shown && <button type="button" className="ghost-btn ra-more" onClick={() => setShown(n => n + PAGE)}>Show {Math.min(PAGE, list.length - shown)} more <span>({list.length - shown} left)</span></button>}
       {far && <button type="button" className="ra-top" onClick={() => scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })} aria-label="Back to the top of the archive">↑ Top</button>}
@@ -100,31 +102,90 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
     : <Modal label={roster ? `${roster.org} ${roster.year} roster` : 'Roster browser'} onClose={onClose} sheet wide>{body}</Modal>;
 }
 
-function RosterDetails({ roster: r, hard }: { roster: Roster; hard: boolean }) {
+/** How a placing ranks, best first. */
+const RANK: Record<string, number> = { Champions: 0, 'Runner-up': 1, Semifinalist: 2, Quarterfinalist: 3 };
+const rank = (r: Roster) => RANK[r.result] ?? 9;
+const era = (r: Roster) => (r.year >= 2024 ? 'CS2' : 'CS:GO');
+
+/** One lineup as a sheet: who played, where they are from, how the team did, and how it sits in the archive. Reference only; it never touches a run. */
+function RosterDetails({ roster: r, hard, onOpen }: { roster: Roster; hard: boolean; onOpen: (id: string) => void }) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [r.id]);
-  return <section className="roster-detail">
-    <header className="ra-head">
-      <TeamBadge roster={r} size={56} />
-      <div>
-        <p className="ra-head__event">{r.event}</p>
-        <h3 ref={heading} tabIndex={-1}>{r.org} {r.year}</h3>
-        <p className="ra-head__meta"><b className={`ra-row__result--${resultClass(r.result)}`}>{r.result}</b><span>{r.dates}</span></p>
+  const countries = useMemo(() => {
+    const n = new Map<string, number>();
+    for (const p of r.players) n.set(p.country, (n.get(p.country) ?? 0) + 1);
+    return [...n].sort((a, b) => b[1] - a[1]);
+  }, [r]);
+  // The links the lineup brings with it, as the draft counts them (never from ratings).
+  const chem = useMemo(() => { const rows = synergies(naturalLineup(r), r.coach); return { rows, ...chemistryWord(rows) }; }, [r]);
+  const field = ROSTERS.filter(x => x.event === r.event).sort((a, b) => rank(a) - rank(b) || a.org.localeCompare(b.org));
+  const history = ROSTERS.filter(x => x.org === r.org).sort((a, b) => a.year - b.year || eventTime(a) - eventTime(b));
+  const links = ROSTERS.filter(x => x.org === r.org && x.id !== r.id).length;
+  return <section className="rs" style={{ ['--team' as string]: r.color }}>
+    <header className="rs-head">
+      <TeamBadge roster={r} size={84} />
+      <div className="rs-head__text">
+        <p className="rs-head__event">{r.event}</p>
+        <h3 ref={heading} tabIndex={-1}>{r.org} <em>{r.year}</em></h3>
+        <p className="rs-head__meta"><b className={`ra-row__result ra-row__result--${resultClass(r.result)}`}>{r.result}</b><span>{r.dates}</span></p>
       </div>
     </header>
     {r.unverified && <p role="note" className="ra-note">This lineup still needs source verification.</p>}
-    <ul className="ra-people">{r.players.map(p => <li key={p.id}>
-      <Avatar player={p} roster={r} />
-      <span className="ra-people__text">
+
+    <ul className="rs-facts" aria-label="At a glance">
+      <li><small>Placement</small><b>{r.result}</b></li>
+      <li><small>Era</small><b>{era(r)}</b></li>
+      <li><small>Nationalities</small><b className="rs-flags">{countries.map(([c, n]) => <span key={c} title={`${n} ${NATION[c] ?? c}`}><Flag code={c} size={14} decorative />{n > 1 && <i>{n}</i>}</span>)}</b></li>
+      <li><small>Coach</small><b>{r.coach ?? 'Not recorded'}</b></li>
+    </ul>
+
+    <h4 className="rs-sub">Lineup</h4>
+    <ul className="rs-lineup">{r.players.map(p => <li key={p.id} className="rs-player">
+      <span className="rs-player__photo"><Avatar player={p} roster={r} /></span>
+      <span className="rs-player__text">
         <b>{p.nick}</b>
-        <small><Flag code={p.country} size={12} decorative />{COUNTRY[p.country] ?? p.country}{!hard && ` · ${p.roles.map(role => ROLE_LABEL[role]).join(' / ')}`}</small>
+        {p.name && <span className="rs-player__real">{p.name}</span>}
+        <small><Flag code={p.country} size={12} decorative />{COUNTRY[p.country] ?? p.country}</small>
+        {!hard && <span className="rs-roles">{p.roles.map((role, i) => <em key={role} className={i === 0 ? 'is-main' : ''}><RoleIcon role={role} size={12} />{ROLE_SHORT[role]}</em>)}</span>}
       </span>
-    </li>)}
-    <li className="ra-people__coach"><span className="ra-people__label">Coach</span><span className="ra-people__text"><b>{r.coach ?? 'Not recorded'}</b></span></li></ul>
+    </li>)}</ul>
+
+    {!hard && <>
+      <h4 className="rs-sub">Chemistry as a lineup</h4>
+      <div className="rs-chem">
+        <p className="rs-chem__word"><b>{chem.word}</b><span className="pips" aria-hidden="true">{[1, 2, 3].map(i => <i key={i} className={i <= chem.pips ? 'on' : ''} />)}</span></p>
+        {chem.rows.length ? <ul className="rs-chem__links">{chem.rows.map(x => <li key={x.label} className={x.value < 0 ? 'is-bad' : ''}><b>{strength(x.value)}</b>{x.label}</li>)}</ul> : <p className="muted small">No links between these five.</p>}
+      </div>
+    </>}
+
+    <h4 className="rs-sub">At this Major <small>{field.length} lineup{field.length === 1 ? '' : 's'} in the archive</small></h4>
+    <ol className="rs-field">{field.map(x => <li key={x.id}>
+      <button type="button" className={x.id === r.id ? 'is-now' : ''} aria-current={x.id === r.id ? 'true' : undefined} onClick={() => onOpen(x.id)} style={{ ['--team' as string]: x.color }}>
+        <TeamBadge roster={x} size={30} /><b>{x.org}</b><span className={`ra-row__result ra-row__result--${resultClass(x.result)}`}>{x.result}</span>
+      </button>
+    </li>)}</ol>
+
+    <h4 className="rs-sub">{r.org} in the archive <small>{history.length} lineup{history.length === 1 ? '' : 's'}</small></h4>
+    {links ? <ol className="rs-history">{history.map(x => <li key={x.id}>
+      <button type="button" className={x.id === r.id ? 'is-now' : ''} aria-current={x.id === r.id ? 'true' : undefined} onClick={() => onOpen(x.id)}>
+        <b>{x.year}</b><span>{x.event}</span><em className={`ra-row__result ra-row__result--${resultClass(x.result)}`}>{x.result}</em>
+      </button>
+    </li>)}</ol> : <p className="muted small">No other lineup from this team is included.</p>}
+
     <p className="ra-fine">{hard ? 'Role hints are hidden while your hard-mode run is unfinished.' : 'Roles are assigned for this game, not official historical statistics.'} Player strength and match ratings are simulation values and are not shown here.</p>
     <div className="src-links ra-links">{r.liquipediaUrl ? <a href={r.liquipediaUrl} target="_blank" rel="noreferrer">Liquipedia roster</a> : <span>Liquipedia source unavailable</span>}{r.sourceUrl ? <a href={r.sourceUrl} target="_blank" rel="noreferrer">Event standings source</a> : <span>Event source unavailable</span>}
       <a href={`https://github.com/nanox333/major-mayhem/issues/new?template=roster_data.yml&roster=${encodeURIComponent(`${r.org} ${r.year} (${r.event})`)}`} target="_blank" rel="noreferrer">Report incorrect data</a></div>
   </section>;
+}
+
+/** A year's lineups grouped by Major, in the order given. */
+function byEvent(list: Roster[]): [string, Roster[]][] {
+  const out: [string, Roster[]][] = [];
+  for (const r of list) {
+    const last = out[out.length - 1];
+    if (last && last[0] === r.event) last[1].push(r); else out.push([r.event, [r]]);
+  }
+  return out;
 }
 
 /** Rosters in the order given, grouped by year so a long list has landmarks. */
