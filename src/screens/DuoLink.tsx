@@ -5,7 +5,9 @@ import { Pro, searchState } from '../game/guess';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
 import { Flag } from '../ui/flags';
-import { FlameIcon, HelpIcon, SearchIcon } from '../ui/icons';
+import { ArrowRightIcon, FlameIcon, HelpIcon, SearchIcon } from '../ui/icons';
+import radars from '../data/radars.json';
+import { Tip } from '../ui/tips';
 import { Modal } from '../ui/Modal';
 import { play } from '../ui/sound';
 import { useCountdown } from '../ui/useCountdown';
@@ -79,20 +81,20 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
   const rightIds = puzzle.connectors;
   return (
     <>
-      <div className="duo__chain" role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
+      <div className={`duo__chain ${day.won ? 'is-won' : ''}`} role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
         <Who p={a} />
         <span className="duo__link" aria-hidden="true" />
-        <span className="duo__mid" aria-hidden="true">{day.done ? (day.won ? '✓' : '?') : '?'}</span>
+        <span className="duo__mid" aria-hidden="true"><b>{day.won ? '✓' : '?'}</b><small>{day.won ? 'Linked' : 'Link'}</small></span>
         <span className="duo__link" aria-hidden="true" />
         <Who p={b} />
       </div>
 
       {day.mode === null && !day.done && (
         <div className="duo__modes">
-          <p className="duo__modes-t">How do you want to play today? <small>Your choice is locked for the day.</small></p>
+          <p className="duo__modes-t"><span>Choose your way in</span><small>Locked for today once you pick</small></p>
           <div className="duo__modes-row">
-            <button type="button" className="duo__mode" data-sfx="none" onClick={() => choose('normal')}><b>Normal</b><span>Pick from four cards. Three tries.</span></button>
-            <button type="button" className="duo__mode duo__mode--hard" data-sfx="none" onClick={() => choose('hard')}><b>Hard 💀</b><span>Type the name yourself. Three tries.</span></button>
+            <button type="button" className="duo__mode" data-sfx="none" onClick={() => choose('normal')}><span><b>Normal</b><small>Pick from four cards</small></span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="duo__mode duo__mode--hard" data-sfx="none" onClick={() => choose('hard')}><span><b>Hard 💀</b><small>Type the name yourself</small></span><ArrowRightIcon size={22} /></button>
           </div>
         </div>
       )}
@@ -176,8 +178,8 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
                   <span className="duo__cphoto"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
                   <div>
                     <strong><Flag code={p.country} size={16} decorative />{p.nick}{chosen && <i aria-hidden="true"> ✓</i>}</strong>
-                    <span>With {a.nick}: {sharedLineups(links, id, a.id).map(lineupLabel).join(', ')}</span>
-                    <span>With {b.nick}: {sharedLineups(links, id, b.id).map(lineupLabel).join(', ')}</span>
+                    <span>With <b>{a.nick}</b>: {sharedLineups(links, id, a.id).map(lineupLabel).join(', ')}</span>
+                    <span>With <b>{b.nick}</b>: {sharedLineups(links, id, b.id).map(lineupLabel).join(', ')}</span>
                   </div>
                 </li>
               );
@@ -187,6 +189,18 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
         </div>
       )}
     </>
+  );
+}
+
+/** The faceless pair over the title: two silhouettes joined through a question mark, in the same box as Guess the pro's. */
+function DuoMark() {
+  return (
+    <svg className="gp__sil duo__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <circle cx="14" cy="22" r="7" fill="currentColor" /><path d="M3 50c0-9 5-13 11-13s11 4 11 13z" fill="currentColor" />
+      <circle cx="50" cy="22" r="7" fill="currentColor" /><path d="M39 50c0-9 5-13 11-13s11 4 11 13z" fill="currentColor" />
+      <rect x="23" y="16" width="18" height="26" rx="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
+      <text x="32" y="36" textAnchor="middle" fontSize="18" fontWeight="800" fill="var(--accent)">?</text>
+    </svg>
   );
 }
 
@@ -201,6 +215,8 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
   const [help, setHelp] = useState(false);
   const streak = duoStreak(store, date);
   const n = dailyNumber(date);
+  const maps = Object.keys(radars as Record<string, string>);
+  const radar = (radars as Record<string, string>)[maps[(n + 3) % maps.length]];
 
   const setDay = (d: DuoDay) => { const s = { ...store, [date]: d }; setStore(s); saveDuo(s); };
   const startPractice = () => {
@@ -210,8 +226,10 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
   };
 
   return (
-    <section className="gp duo" aria-labelledby="duo-title">
+    <section className="gp duo" style={{ ['--radar' as string]: `url(${radar})` }} aria-labelledby="duo-title">
+      <div className="gp__bg" aria-hidden="true" />
       <header className="gp__head">
+        <DuoMark />
         <div className="gp__titles">
           <p className="gp__kicker">{practice ? 'Practice · not scored' : `Daily #${n}`}</p>
           <h2 id="duo-title" className="gp__title">Duo <span>Link</span></h2>
@@ -219,6 +237,16 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
         </div>
         <button type="button" className="gp__help" onClick={() => setHelp(true)} aria-label="How Duo Link works" data-sfx="none"><HelpIcon size={22} /></button>
       </header>
+
+      <Tip id="duo" title="How Duo Link works">
+        <p className="tip-lead">Two pros never shared a Major lineup. Name someone who played with both.</p>
+        <ul className="tip-legend">
+          <li className="is-hit"><i>✓</i><b>Normal</b><span>Pick from four cards</span></li>
+          <li className="is-near"><i>💀</i><b>Hard</b><span>Type the name yourself</span></li>
+          <li className="is-miss"><i>✗</i><b>Three tries</b><span>A wrong answer is struck out</span></li>
+        </ul>
+        <p className="tip-foot">Played with = the same Major lineup in this game's data.</p>
+      </Tip>
 
       {practice
         ? <Board key={practice.seed} date={date} puzzle={practice.puzzle} day={practice.day} setDay={(d) => setPractice({ ...practice, day: d })} seed={practice.seed} practice daily={n} />

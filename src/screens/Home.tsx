@@ -158,9 +158,20 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
             <button type="button" className="mbtn home-mode-start" onClick={showGuess}><span>{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
           </div>
         </article>
+
+        <article className="mcard home-mode-card home-mode-card--duo" aria-labelledby="mcard-duo-h">
+          <span className="home-mode-art home-mode-art--duo" aria-hidden="true"><DuoArt /></span>
+          <p className="home-mode-label">Duo Link</p><h2 className="mcard__title" id="mcard-duo-h">Two pros.<br />One link.</h2>
+          <div className="mcard__foot">
+            {(duo?.done || duo?.picks.length || dStreak > 0) && <p className="mcard__state">
+              {duo?.done ? (duo.won ? `Linked in ${duo.picks.length} of ${MAX_TRIES}` : 'Not linked today') : duo?.picks.length ? `${duo.picks.length} of ${MAX_TRIES} tries used` : ''}
+              {dStreak > 0 && `${duo?.done || duo?.picks.length ? ' · ' : ''}${dStreak}-day streak`}
+            </p>}
+            <button type="button" className="mbtn home-mode-start" onClick={showDuo}><span>{duo?.done ? "See today's link" : duo?.picks.length ? 'Keep going' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
+          </div>
+        </article>
       </div>
 
-      <button type="button" className="home-archive home-duo" aria-label="Duo Link" onClick={showDuo}><DuoArt /><span><b>Duo Link</b><small>{duo?.done ? (duo.won ? `Solved in ${duo.picks.length} of ${MAX_TRIES}` : 'Not solved today') : duo?.picks.length ? `${duo.picks.length} of ${MAX_TRIES} tries used` : 'Who played with both?'}{dStreak > 0 && ` · ${dStreak}-day streak`}</small></span><ArrowRightIcon size={20} /></button>
       {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><ArchiveArt /><span><b>Roster archive</b></span><ArrowRightIcon size={20} /></button>}
       <StatsPanel stats={stats} streak={streak} onStats={onStats} />
       <HowItWorks />
@@ -168,16 +179,21 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
   );
 }
 
-/** Two pros joined through a "?": the Duo Link puzzle, drawn with neutral silhouettes. */
+/** Two pros joined through a "?": the Duo Link puzzle, drawn with neutral silhouettes (no real player). */
 function DuoArt() {
-  return <svg className="home-archive-art" width="72" height="48" viewBox="0 0 72 48" aria-hidden="true" focusable="false">
-    {[8, 52].map((x) => <g key={x} transform={`translate(${x},9)`}>
-      <rect width="20" height="30" rx="2" fill="var(--inset)" stroke="var(--control)" />
-      <circle cx="10" cy="11" r="4.5" fill="var(--muted)" opacity=".45" /><path d="M3 27v-2c0-8 14-8 14 0v2z" fill="var(--muted)" opacity=".45" />
-    </g>)}
-    <path d="M28 24h16" stroke="var(--control)" strokeDasharray="2 3" />
-    <rect x="29" y="14" width="14" height="20" rx="2" fill="var(--inset)" stroke="var(--accent)" />
-    <text x="36" y="29" textAnchor="middle" fontSize="13" fontWeight="800" fill="var(--accent)">?</text>
+  const card = (x: number) => <g transform={`translate(${x},22)`}>
+    <rect width="132" height="156" rx="3" fill="var(--inset)" stroke="var(--control)" />
+    <path d="M10 10h16" stroke="var(--accent)" strokeWidth="3" />
+    <circle cx="66" cy="62" r="26" fill="var(--muted)" opacity=".34" />
+    <path d="M22 156v-14c0-34 88-34 88 0v14z" fill="var(--muted)" opacity=".34" />
+    <rect y="153" width="132" height="3" fill="var(--accent)" opacity=".85" />
+  </g>;
+  return <svg className="home-duo-art" viewBox="0 0 560 200" role="presentation" focusable="false">
+    {card(18)}{card(410)}
+    <path d="M150 100H246M314 100H410" stroke="var(--control)" strokeWidth="2" strokeDasharray="3 7" strokeLinecap="round" />
+    <circle cx="150" cy="100" r="5" fill="var(--accent)" /><circle cx="410" cy="100" r="5" fill="var(--accent)" />
+    <rect x="246" y="50" width="68" height="100" rx="3" fill="var(--inset)" stroke="var(--accent)" strokeWidth="2.5" />
+    <text x="280" y="116" textAnchor="middle" fontSize="64" fontWeight="800" fill="var(--accent)" style={{ fontFamily: 'var(--f-head)' }}>?</text>
   </svg>;
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_TRIES, addPick, duoFor, duoPros, duoShare, duoStreak, emptyDay, linksFor, normalizeDuoDay, optionsFor, sanitizeDuo } from './duo';
+import { DuoDay, MAX_TRIES, addPick, duoFor, duoPros, duoShare, duoStreak, emptyDay, linksFor, normalizeDuoDay, optionsFor, sanitizeDuo } from './duo';
 
 const dates = (n: number, from = Date.UTC(2026, 9, 5)) => Array.from({ length: n }, (_, i) => new Date(from + i * 86400000).toISOString().slice(0, 10));
 
@@ -34,11 +34,11 @@ describe('Duo Link (#133)', () => {
   it('plays a day: wrong picks use tries, a right pick wins, three wrong lose, and a save cannot cheat', () => {
     const date = '2026-10-05', p = duoFor(date), all = duoPros(date);
     const wrong = [...all.keys()].filter((id) => id !== p.a && id !== p.b && !p.connectors.includes(id)).slice(0, 4);
-    let d = { ...emptyDay(), mode: 'hard' as const };
+    let d: DuoDay = { ...emptyDay(), mode: 'hard' };
     d = addPick(d, wrong[0], p); expect(d.done).toBe(false);
     d = addPick(d, p.connectors[0], p); expect(d).toMatchObject({ won: true, done: true });
     expect(addPick(d, wrong[1], p)).toBe(d);
-    let lost = { ...emptyDay(), mode: 'normal' as const };
+    let lost: DuoDay = { ...emptyDay(), mode: 'normal' };
     for (let i = 0; i < MAX_TRIES; i++) lost = addPick(lost, wrong[i], p);
     expect(lost).toMatchObject({ won: false, done: true });
     // a save that claims a win, with picks that are ends or nobody: the picks decide
