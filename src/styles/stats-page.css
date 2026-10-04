@@ -1,7 +1,7 @@
 /* The stats page, flat and sharp like the buttons and the Home scoreboard: square panels, hairlines, a slanted orange tick before each label, condensed numbers, one cut corner per panel. Gold only for titles. */
 .sp { position: relative; isolation: isolate; display: block; padding-top: 8px; --sp-panel: #151615; --sp-line: rgba(255, 255, 255, .08);  background-image: var(--cut22); }
 .sp::before { content: ""; position: absolute; z-index: -1; pointer-events: none; inset: -24px calc(-1 * var(--gutter)) auto; height: 320px; background: linear-gradient(0deg, var(--bg), transparent 70%), linear-gradient(90deg, var(--bg), rgba(20, 22, 21, .55) 55%, rgba(20, 22, 21, .25)), url('../assets/home/arena.webp') 70% 30% / cover no-repeat; -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent 99%); mask-image: linear-gradient(90deg, #000 78%, transparent 99%); }
-:root[data-theme="light"] .sp::before, :root[data-contrast="high"] .sp::before { display: none; }
+:root[data-contrast="high"] .sp::before { display: none; }
 .sp-hero h3 { margin: 0; font: 800 clamp(2.6rem, 6vw, 4.6rem)/1 var(--f-head); letter-spacing: -.01em; color: var(--strong); text-transform: none; }
 .sp-hero p { margin: 10px 0 0; color: var(--muted); }
 .sp-hero .sp-kicker { display: flex; align-items: center; gap: 8px; margin: 8px 0 8px; color: var(--accent); font: 700 .75rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }

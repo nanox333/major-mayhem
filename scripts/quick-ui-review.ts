@@ -60,9 +60,9 @@ try {
   const hardCont=p.getByRole('button',{name:/Continue free play/});if(await hardCont.count())await hardCont.click();assert.equal(await p.locator('.case-card--revealed').count(),0,'hard mode leaked rarity cue');
   await context.close();console.log('Home, 200% text and static cue verified',width);
  }
- if (!process.argv.includes('--home-only')) for(const palette of ['dark','light','dark-high','light-high']) {
+ if (!process.argv.includes('--home-only')) for(const palette of ['dark','dark-high']) {
   const context=await browser.newContext({viewport:{width:375,height:900},colorScheme:'dark',reducedMotion:'reduce'});const p=await context.newPage();await p.goto('http://127.0.0.1:4194');
-  await p.evaluate(({key,day,ids,palette,tips})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify({[day]:{guesses:ids,done:false,won:false}}));localStorage.setItem('mm-prefs',JSON.stringify({theme:palette.startsWith('light')?'light':'dark',contrast:palette.endsWith('high')}));localStorage.setItem('mm-tips',JSON.stringify(tips));},{key:GUESS_KEY,day,ids:choices.map(p=>p.id),palette,tips:TIP_IDS});await p.reload();
+  await p.evaluate(({key,day,ids,palette,tips})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify({[day]:{guesses:ids,done:false,won:false}}));localStorage.setItem('mm-prefs',JSON.stringify({contrast:palette.endsWith('high')}));localStorage.setItem('mm-tips',JSON.stringify(tips));},{key:GUESS_KEY,day,ids:choices.map(p=>p.id),palette,tips:TIP_IDS});await p.reload();
   await p.getByRole('button',{name:'More',exact:true}).click();await p.locator('#topbar-menu').getByRole('button',{name:'Guess the pro',exact:true}).click();
   const search=p.getByRole('combobox');await search.fill([...all.values()].find(x=>!choices.some(c=>c.id===x.id))!.nick);
   const before=await p.evaluate(k=>localStorage.getItem(k),GUESS_KEY);await p.locator('.guess__row--preview').waitFor();await search.press('ArrowDown');assert.equal(await p.evaluate(k=>localStorage.getItem(k),GUESS_KEY),before,'preview consumed guess');await search.press('Escape');assert.equal(await p.locator('.guess__row--preview').count(),0);

@@ -4,9 +4,9 @@ This implements issue #200 and supplies the shared foundation for #201–#204. T
 
 ## Tokens and type
 
-`src/styles.css` owns every palette. Dark has three surfaces: base charcoal `#141615`, section `#1c1f1d`, raised `#272b28`. Insets reuse base; light uses warm paper `#eeeee7`, white and `#e4e7df`. Semantic aliases `--surface-base`, `--surface-section`, `--surface-raised`, `--action`, `--selection`, `--focus`, `--side-t`, `--side-ct`, `--outcome-win` and `--outcome-loss` resolve through the existing theme tokens. Page CSS must not override theme palettes.
+`src/styles.css` owns every palette. Dark has three surfaces: base charcoal `#141615`, section `#1c1f1d`, raised `#272b28`. Insets reuse base. There is no light palette: the game is dark only. Semantic aliases `--surface-base`, `--surface-section`, `--surface-raised`, `--action`, `--selection`, `--focus`, `--side-t`, `--side-ct`, `--outcome-win` and `--outcome-loss` resolve through the existing theme tokens. Page CSS must not override theme palettes.
 
-Chalk `#f2f0e9` is the principal dark text. Orange `#f37a30` marks the primary action and selection; light orange is deliberately darker (`#a94a06`) to remain readable. CT blue and outcome colors always accompany words, letters or symbols. `--muted-2` is decoration only. `--control` supplies required control boundaries, while softer `--line` groups ordinary content. High contrast raises these boundaries and strengthens focus to 3px.
+Chalk `#f2f0e9` is the principal dark text. Orange `#f37a30` marks the primary action and selection. CT blue and outcome colors always accompany words, letters or symbols. `--muted-2` is decoration only. `--control` supplies required control boundaries, while softer `--line` groups ordinary content. High contrast raises these boundaries and strengthens focus to 3px.
 
 Body copy uses bundled Inter (`src/fonts`, SIL OFL, so it matches on every device) with the system stack as fallback, at normal weight; short display headings use the existing bundled Saira Condensed. Draft player names use strong regular text rather than condensed metadata. The stencil wordmark stays Major Mayhem. Scores use tabular numerals. Font size remains user-zoomable; no fixed-height text containers.
 
@@ -22,7 +22,7 @@ The shared shell aligns its mark, content and page gutters. Desktop mode navigat
 
 No new network-loaded fonts, generated portraits, logos or runtime dependencies are introduced. Saira and Inter fonts are bundled under SIL OFL (Saira licenses in `assets-src/fonts`, Inter's in `src/fonts`); nothing loads from a font CDN. Existing photos, logos and radar assets keep their existing credits and offline embedding. Page images are reference only.
 
-The contrast suite checks body/secondary/muted/accent/side/outcome text at 4.5:1 and control/focus boundaries at 3:1 across dark, light and both high-contrast palettes. Responsive browser checks must include 320, 375, 768, 1440 and 1920px, keyboard focus, 200% zoom and reduced motion. Record build gzip delta and identical-state before/after screenshots in the implementation PR; do not claim conceptual images as measured browser output.
+The contrast suite checks body/secondary/muted/accent/side/outcome text at 4.5:1 and control/focus boundaries at 3:1 across the dark and the high-contrast palettes. Responsive browser checks must include 320, 375, 768, 1440 and 1920px, keyboard focus, 200% zoom and reduced motion. Record build gzip delta and identical-state before/after screenshots in the implementation PR; do not claim conceptual images as measured browser output.
 
 ## Finishing rules
 

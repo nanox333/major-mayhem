@@ -15,7 +15,7 @@ The screenshots are real captures of the implemented game. They are not the gene
 | `07-coach` | the coach round, one coach previewed |
 | `08-bench` | the bench round: "Joins as your bench player", no starter-slot bonus implied |
 | `09-hard-round1`, `10-hard-round4` | hard mode: no role icons, fit text, chemistry or rarity colour; the panel asks for a slot |
-| `11-light`, `12-high-contrast` | the light theme and the high-contrast palette |
+| `12-high-contrast` | the high-contrast palette (the game has one palette, dark; the light theme this pass first captured was later removed) |
 | `13-effects-off` | reduced motion and fast reveals: the same cards, no reel |
 | `14-zoom-200` | a 720x450 window at double density (200% browser zoom) |
 | `15-laptop-1366x768` | the short laptop window |
@@ -24,7 +24,7 @@ The screenshots are real captures of the implemented game. They are not the gene
 
 ## Measurements
 
-Decision panel bottom edge (it must stay inside the window): round 1 selected 893 of 900, secondary role 893, bench 898, hard 898 and 893, light 898, high contrast 898, effects off 898, 1366x768 746 of 768. The 200% zoom state is a 450px-tall window, so the page scrolls there by design; none of the captures has horizontal overflow.
+Decision panel bottom edge (it must stay inside the window): round 1 selected 893 of 900, secondary role 893, bench 898, hard 898 and 893, high contrast 898, effects off 898, 1366x768 746 of 768. The 200% zoom state is a 450px-tall window, so the page scrolls there by design; none of the captures has horizontal overflow.
 
 Reel frame pacing in headless Chromium (software compositing, so a proxy, not a phone), over three runs of about 275 frames each: desktop 1440x900 averaged 59 to 60 fps with a p95 frame of 16.7 to 16.8 ms and at most one frame over 33 ms; at 375x812 with the CPU slowed 4x it averaged 58.7 to 59.1 fps, p95 16.7 to 16.8 ms, at most two frames over 33 ms, the slowest 67 to 83 ms.
 

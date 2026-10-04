@@ -64,30 +64,6 @@
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
 }
 
-/* The light palette (#75): the same names, so nothing else changes. Chosen by contrast, see contrast.test.ts, which checks every pair for each palette. */
-:root[data-theme="light"] {
-  --bg: #eeeee7;
-  --panel: #ffffff;
-  --panel-2: #e4e7df;
-  --inset: #eeeee7;
-  --line: #ccd1c6;
-  --line-2: #a8b1a5;
-  --control: #687568;
-  --text: #202720;
-  --strong: #000000;
-  --text-2: #394339;
-  --muted: #525e51;
-  --muted-2: #899385;
-  --accent: #a94a06;
-  --accent-hi: #8f3f04;
-  --on-accent: #ffffff;
-  --ct: #1f5fb4;
-  --go: #1d7a1d; --go-text: #176417; --on-go: #ffffff;
-  --loss: #c0392b; --loss-text: #a82a1e;
-  --twitch: #6a3cc4; --twitch-line: #6a3cc4;
-  --shadow: 0 10px 30px rgba(20, 30, 50, .14);
-  color-scheme: light;
-}
 /* High contrast (#75): borders you can see, text as bright as it goes, and a thicker focus ring; the marks that carry meaning (✓ ≈ ✗, arrows, words) are unchanged. */
 :root[data-contrast="high"] {
   --line: #7a879e;
@@ -97,17 +73,6 @@
   --text-2: #f4f7fb;
   --muted: #d3dae6;
   --muted-2: #a7b2c6;
-}
-:root[data-theme="light"][data-contrast="high"] {
-  --line: #6b7890;
-  --line-2: #4a566d;
-  --control: #3b465c;
-  --text: #000000;
-  --text-2: #0d1526;
-  --muted: #2d384e;
-  --muted-2: #5a6780;
-  --accent: #8f3f04;
-  --accent-hi: #762f00;
 }
 :root[data-contrast="high"] :focus-visible { outline-width: 3px; }
 :root[data-contrast="high"] :is(.console, .case-card, .mcard, .prow, .side-card, .lrow, .tip, .modal__card, .stats-panel, .how, .daily-panel, .mbtn, .ghost-btn, .cta--quiet, .slot-chip, .guess__row > span, .guess__box, .seg, .switch) { border-width: 2px; }
@@ -1409,8 +1374,6 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
 @media (max-width: 520px) { .hud-btn--gear { display: none; } .menu__item--settings { display: flex; } }
 @media (max-width: 520px) { .setrow { flex-wrap: wrap; } }
 
-/* In the light palette the radar is only a hint of texture behind the grid. */
-:root[data-theme="light"] .gp__bg::before { opacity: .14; filter: blur(7px) grayscale(1); }
 
 
 /* ---------- first-time tips in the new look (#130): one callout style ---------- */

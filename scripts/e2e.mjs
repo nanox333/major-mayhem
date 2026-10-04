@@ -514,34 +514,34 @@ async function settingsAndKeys() {
   const { p, errs } = await page({ width: 1440, height: 900 });
   await p.goto('http://game.local/'); await p.evaluate(() => localStorage.clear()); await p.reload();
   const attr = (n) => p.evaluate((k) => document.documentElement.dataset[k], n);
-  if ((await attr('theme')) !== 'dark' || (await attr('contrast')) !== 'normal') throw new Error('the default should be the dark theme with normal contrast');
+  if ((await attr('contrast')) !== 'normal') throw new Error('the default should be normal contrast');
+  if ((await attr('theme')) !== undefined) throw new Error('there is only the dark palette, so nothing should set a theme');
 
-  // With nothing saved the theme follows the device: a light system gets the light palette.
+  // A light system still gets the dark game: there is no light palette to follow it to.
   const lightCtx = await b.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'light' });
   const lp = await lightCtx.newPage();
   await lp.route('https://fonts.**', (r) => r.fulfill({ body: '' }));
   await lp.route('http://game.local/**', (r) => r.fulfill({ contentType: 'text/html', body: html }));
   await lp.goto('http://game.local/');
-  if ((await lp.evaluate(() => document.documentElement.dataset.theme)) !== 'light') throw new Error('a light system should get the light theme by default');
+  const bg = await lp.evaluate(() => getComputedStyle(document.body).backgroundColor.match(/\d+/g).slice(0, 3).map(Number));
+  if (Math.max(...bg) > 60) throw new Error('a light system should still get the dark game, got background rgb(' + bg + ')');
   await lightCtx.close();
 
   const gear = p.locator('.hud-btn--gear');
   await gear.click();
   await p.waitForSelector('[role="dialog"][aria-label="Settings"]');
-  await p.locator('.seg button', { hasText: 'Light' }).click();
-  if ((await attr('theme')) !== 'light') throw new Error('choosing Light should switch the palette at once');
+  if (await p.locator('.seg button', { hasText: /Light|Dark|System/ }).count()) throw new Error('the settings should not offer a theme');
   await p.locator('[role="switch"][aria-label="High contrast"]').click();
   if ((await attr('contrast')) !== 'high') throw new Error('High contrast should apply at once');
-  await p.screenshot({ path: 'shots/settings-light-hc.png' });
+  await p.screenshot({ path: 'shots/settings-hc.png' });
   await p.keyboard.press('Escape');
   if (!(await gear.evaluate((el) => el === document.activeElement))) throw new Error('closing the settings should give focus back to the gear');
   await p.reload();
-  if ((await attr('theme')) !== 'light' || (await attr('contrast')) !== 'high') throw new Error('the theme and contrast should survive a reload');
+  if ((await attr('contrast')) !== 'high') throw new Error('the contrast setting should survive a reload');
   await gear.click();
-  await p.locator('.seg button', { hasText: 'Dark' }).click();
   await p.locator('[role="switch"][aria-label="High contrast"]').click();
   await p.keyboard.press('Escape');
-  if ((await attr('theme')) !== 'dark' || (await attr('contrast')) !== 'normal') throw new Error('switching back should restore the dark palette');
+  if ((await attr('contrast')) !== 'normal') throw new Error('switching back should restore normal contrast');
 
   // M mutes and unmutes; ? opens the shortcuts.
   await p.locator('body').click({ position: { x: 5, y: 300 } });

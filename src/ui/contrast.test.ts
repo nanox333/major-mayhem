@@ -16,14 +16,10 @@ const block = (selector: string): Record<string, string> => {
 };
 const dark = block(':root');
 const highDark = block(':root[data-contrast="high"]');
-const light = block(':root[data-theme="light"]');
-const highLight = block(':root[data-theme="light"][data-contrast="high"]');
 // Each palette the game can draw, as the cascade builds it: the base, then the contrast mode over it.
 const PALETTES: Record<string, Record<string, string>> = {
   'dark': dark,
   'dark, high contrast': { ...dark, ...highDark },
-  'light': { ...dark, ...light },
-  'light, high contrast': { ...dark, ...light, ...highDark, ...highLight },
 };
 
 const channel = (v: number) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
@@ -73,7 +69,7 @@ describe('editorial shared primitives', () => {
     }
   });
   it('keeps high-contrast grouping rules visible on every surface (3:1)', () => {
-    for (const name of ['dark, high contrast', 'light, high contrast']) {
+    for (const name of ['dark, high contrast']) {
       for (const surface of SURFACES) {
         expect(ratio(PALETTES[name].line, PALETTES[name][surface]), `${name}: ${surface}`).toBeGreaterThanOrEqual(3);
       }

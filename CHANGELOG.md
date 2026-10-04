@@ -4,6 +4,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Removed
+- **The light theme.** The game is dark only: the Theme setting (System, Dark, Light) is gone, nothing follows a light system any more, and a theme saved by an earlier version is ignored. High contrast remains.
+
 ### Added
 - **Pages have addresses (#222):** Guess the pro, the Roster archive, Stats, Free play setup and the draft are `#/guess`, `#/archive`, `#/stats`, `#/setup` and `#/play`, and the Home is `#/`. Switching page on purpose adds a history entry, so Back and Forward move between pages, a reload on Guess, the archive, Stats or setup stays there, and a link to one of them can be shared or bookmarked. The draft adds one entry when you start it and none per pick, Back from it returns to the Home with the run kept, and a reload on it opens the Home with the run one Continue away, as before. An unknown address opens the Home, and challenge links (`#duel=…`) work as they did. A draft duel under way can now be continued from the Home like a free run, so Back from it no longer strands it.
 
