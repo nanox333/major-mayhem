@@ -106,3 +106,22 @@
    leave the name unreadable, so the background version is capped in lightness; borders and underlines keep the real colour. */
 .case-card, .rs { --team-deep: var(--team); }
 @supports (color: oklch(from red l c h)) { .case-card, .rs { --team-deep: oklch(from var(--team) min(l, .5) min(c, .17) h); } }
+
+/* ---------- the filter bar: three quiet rows (search and year, placing, sort) ---------- */
+.roster-filters { row-gap: 14px; }
+.ra-chips--row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.ra-chips__label { flex: none; width: 3.4rem; color: var(--muted); font: 700 .66rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }
+.ra-sort { padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .07); }
+.ra-sort button[aria-pressed="true"]::before { background: color-mix(in srgb, var(--accent) 86%, #fff); }
+
+/* ---------- group headers for the sorts that aren't by date ---------- */
+.ra-year h4.ra-group { align-items: center; gap: 14px; padding-bottom: 12px; font-size: 1.9rem; }
+.ra-year h4.ra-group::before { display: none; }
+.ra-group__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ra-group__stats { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: 4px; }
+.ra-group__stats em { padding: 4px 10px; background: rgba(255, 255, 255, .06); color: var(--text-2); font: 700 .68rem/1 var(--f-read); font-style: normal; letter-spacing: .12em; text-transform: uppercase; }
+.ra-group__stats em.is-gold { background: rgba(217, 184, 101, .16); color: #f1d48a; }
+.ra-year h4.ra-group::after { min-width: 24px; }
+@media (max-width: 640px) { .ra-chips__label { width: 100%; } .ra-year h4.ra-group { flex-wrap: wrap; gap: 8px 12px; font-size: 1.6rem; } .ra-year h4.ra-group::after { display: none; } .ra-group__stats { margin-left: 0; flex-basis: 100%; } }
+/* On a phone the two chip rows wrap onto a second line instead of scrolling sideways, so every option is in view. */
+@media (max-width: 640px) { :root:root .archive-page .roster-filters .ra-chips.ra-chips--row { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; } }

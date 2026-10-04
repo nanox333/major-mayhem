@@ -89,10 +89,14 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
       <div className="roster-filters">
         <label>Team or player<input ref={search} type="search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Team, nick or real name" /></label>
         <label>Year<select value={year} onChange={e => setYear(e.target.value)}><option value="">All years</option>{[...new Set(ROSTERS.map(r => r.year))].sort((a,b) => b-a).map(y => <option key={y}>{y}</option>)}</select></label>
-        <label>Sort by<select value={sort} onChange={e => setSort(e.target.value as Sort)}>{SORTS.map(([v, name]) => <option key={v} value={v}>{name}</option>)}</select></label>
-        <div className="ra-chips" role="group" aria-label="Placement">
+        <div className="ra-chips ra-chips--row" role="group" aria-label="Placement">
+          <span className="ra-chips__label">Show</span>
           <button type="button" aria-pressed={!placement} onClick={() => setPlacement('')}>All</button>
           {[...new Set(ROSTERS.map(r => r.result))].map(x => <button key={x} type="button" aria-pressed={placement === x} onClick={() => setPlacement(placement === x ? '' : x)}>{x}</button>)}
+        </div>
+        <div className="ra-chips ra-chips--row ra-sort" role="group" aria-label="Sort by">
+          <span className="ra-chips__label">Sort</span>
+          {SORTS.map(([v, name]) => <button key={v} type="button" aria-pressed={sort === v} onClick={() => setSort(v)}>{name}</button>)}
         </div>
       </div>
       <p role="status" className="ra-count">{phone && list.length > shown ? `Showing ${shown} of ${list.length} rosters` : `${list.length} roster${list.length === 1 ? '' : 's'}`}</p>
@@ -104,7 +108,7 @@ export function RosterBrowser({ initialId, hard, onClose, page }: { initialId?: 
           <ul className="ra-rows">{group.map(r => card(r, r.coach ? `Coach ${r.coach}` : r.event))}</ul>
         </div>)}
       </section>) : limitGroups(groups, phone ? shown : Infinity).map(g => <section key={g.key} className="ra-year" aria-label={g.title}>
-        <h4>{g.title}<small>{g.sub}</small></h4>
+        <h4 className="ra-group">{g.badge && <TeamBadge roster={g.badge} size={40} />}<span className="ra-group__name">{g.title}</span><span className="ra-group__stats">{g.stats.map(x => <em key={x} className={/title/.test(x) ? 'is-gold' : ''}>{x}</em>)}</span></h4>
         <ul className="ra-rows">{g.rows.map(r => card(r, `${r.year} · ${r.event}`))}</ul>
       </section>)}
       {phone && list.length > shown && <button type="button" className="ghost-btn ra-more" onClick={() => setShown(n => n + PAGE)}>Show {Math.min(PAGE, list.length - shown)} more <span>({list.length - shown} left)</span></button>}
@@ -128,7 +132,7 @@ const COMPARE: Record<Sort, (a: Roster, b: Roster) => number> = {
   team: (a, b) => a.org.localeCompare(b.org) || eventTime(a) - eventTime(b),
   titles: (a, b) => titlesOf(b.org) - titlesOf(a.org) || lineupsOf(b.org) - lineupsOf(a.org) || a.org.localeCompare(b.org) || eventTime(a) - eventTime(b),
 };
-interface Group { key: string; title: string; sub: string; rows: Roster[] }
+interface Group { key: string; title: string; stats: string[]; badge?: Roster; rows: Roster[] }
 /** The list in sections for the sorts that aren't by date: one per placing, or one per team with what it won. */
 function groupLineups(list: Roster[], sort: Sort): Group[] {
   const out: Group[] = [];
@@ -136,12 +140,15 @@ function groupLineups(list: Roster[], sort: Sort): Group[] {
   for (const r of list) {
     const key = sort === 'placement' ? r.result : r.org;
     const last = out[out.length - 1];
-    if (last && last.key === key) last.rows.push(r); else out.push({ key, title: key, sub: '', rows: [r] });
+    if (last && last.key === key) last.rows.push(r); else out.push({ key, title: key, stats: [], rows: [r] });
   }
   for (const g of out) {
-    const titles = sort === 'placement' ? 0 : g.rows.filter(r => r.result === 'Champions').length;
+    if (sort === 'placement') { g.stats = [plural(g.rows.length, 'lineup')]; continue; }
+    const titles = g.rows.filter(r => r.result === 'Champions').length;
     const years = g.rows.map(r => r.year);
-    g.sub = sort === 'placement' ? plural(g.rows.length, 'lineup') : `${plural(g.rows.length, 'lineup')} · ${titles ? plural(titles, 'title') + ' · ' : ''}${Math.min(...years)}${Math.max(...years) !== Math.min(...years) ? `–${Math.max(...years)}` : ''}`;
+    const span = Math.min(...years) === Math.max(...years) ? String(years[0]) : `${Math.min(...years)}–${Math.max(...years)}`;
+    g.badge = g.rows[g.rows.length - 1];
+    g.stats = [plural(g.rows.length, 'lineup'), ...(titles ? [plural(titles, 'title')] : []), span];
   }
   return out;
 }
