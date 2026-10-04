@@ -375,3 +375,56 @@ button.duo__day:hover::before, button.duo__day:focus-visible::before { opacity: 
 :root[data-contrast="high"] .duo__link, :root[data-contrast="high"] .duo__pills::before { opacity: 1; filter: brightness(1.8); }
 :root[data-contrast="high"] .duo__hint { box-shadow: inset 0 0 0 2px var(--accent-hi); }
 @media (forced-colors: active) { .duo__card, .duo__day, .duo__pill, .duo__hint, .duo__mid, .duo__photo { border: 1px solid CanvasText; } .duo__day.is-won, .duo__card.is-struck { border-width: 2px; } }
+
+/* ---------- spacing pass ---------- */
+/* the chain: players and wires gather in the middle of the panel, and the unknown sits level with the photos (not with the whole block) */
+.duo__chain { --ph: clamp(84px, 16vw, 124px); grid-template-columns: minmax(0, 230px) minmax(48px, 150px) 86px minmax(48px, 150px) minmax(0, 230px); justify-content: center; align-items: start; padding: 28px clamp(10px, 3vw, 34px) 26px; }
+.duo__chain .duo__link { align-self: start; margin-top: calc(var(--ph) / 2 - 6px); }
+.duo__chain .duo__mid { margin-top: calc((var(--ph) - 104px) / 2); }
+.duo__photo { width: var(--ph); }
+/* the number keys: a slim tab on the card's left edge instead of a badge on the photo */
+.duo__key { left: 0; top: 0; bottom: 0; width: 24px; height: auto; min-width: 0; padding: 0; background: rgba(0, 0, 0, .32); box-shadow: inset -1px 0 0 rgba(255, 255, 255, .1); }
+@media (hover: hover) { .duo__card { padding-left: 38px; } }
+/* the tip has three items, so it gets three columns */
+.duo .tip-legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+/* the recent days: small fixed cells, not stretched over the panel */
+.duo__h-row { grid-template-columns: repeat(auto-fill, minmax(54px, 70px)); justify-content: start; }
+.duo__day { min-height: 56px; }
+.duo__day b { font-size: 1.25rem; }
+/* between sections */
+.duo { gap: 24px; }
+.duo__state { margin-top: -4px; }
+.duo__hint { margin-top: 6px; }
+.duo__orgs { margin-top: 0; }
+.duo__reveal { gap: 18px; }
+.duo .guess__after { margin-top: 2px; }
+
+@media (max-width: 560px) {
+  .duo__chain { --ph: 72px; grid-template-columns: minmax(0, 1fr) 20px 54px 20px minmax(0, 1fr); padding: 18px 8px 16px; }
+  .duo__chain .duo__mid { height: 78px; margin-top: calc((var(--ph) - 78px) / 2); }
+  .duo__chain .duo__link { margin-top: calc(var(--ph) / 2 - 6px); }
+  .duo__photo { width: var(--ph); }
+  .duo__trio { gap: 0 6px; grid-template-columns: auto minmax(30px, 1fr) auto minmax(30px, 1fr) auto; }
+  .duo__pill { flex-direction: column; gap: 2px; padding: 4px 5px; }
+  .duo__pills { margin-top: 8px; }
+  .duo__tphoto { width: 40px; height: 40px; }
+  .duo__tphoto--big { width: 58px; height: 58px; }
+  .duo__h-row { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .duo__day { min-height: 50px; }
+}
+@media (hover: hover) and (max-width: 560px) { .duo__card { padding: 12px 12px 12px 34px; } }
+
+/* ---------- the Home card's art: the unknown level with the photos, and its own row on a phone ---------- */
+.home-duo-live { --hp: clamp(64px, 8.5vw, 104px); align-items: start; grid-template-columns: minmax(0, 1fr) minmax(24px, 56px) 76px minmax(24px, 56px) minmax(0, 1fr); }
+.home-duo-end > span { width: var(--hp); }
+.home-duo-wire { margin-top: calc(var(--hp) / 2 - 6px); }
+.home-duo-q { height: var(--hp); }
+.home-duo-q b { font-size: calc(var(--hp) * .5); }
+@media (max-width: 640px) {
+  .editorial-home .home-secondary-modes .home-mode-card--duo { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+  .editorial-home .home-mode-card--duo .home-mode-art--duo { display: block; grid-column: 1; grid-row: auto; order: 1; margin: 2px 0 14px; }
+  .editorial-home .home-mode-card--duo .mcard__foot { order: 2; max-width: none; margin-top: 0; gap: 14px; }
+  .home-duo-live { --hp: 64px; max-width: none; grid-template-columns: minmax(0, 1fr) minmax(20px, 44px) 60px minmax(20px, 44px) minmax(0, 1fr); }
+  .home-duo-end figcaption { font-size: 1.05rem; }
+  .home-duo-q b { font-size: 2rem; }
+}
