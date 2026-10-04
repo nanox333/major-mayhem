@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ROSTERS, CREDITS } from '../data/rosters';
 import { Modal } from '../ui/Modal';
 import { HowSteps, resetTips } from '../ui/tips';
+import { SHORTCUTS } from '../ui/shortcuts';
 
 export type HelpTab = 'play' | 'sources';
 
@@ -44,16 +45,39 @@ function HowToPlay() {
   return (
     <>
       <HowSteps />
-      <h3>The details</h3>
-      <p className="muted small">The game explains each of these the first time it comes up. They're all here as well.</p>
+      <div className="hpflow" aria-label="A run at a glance">
+        {['Draft seven', 'Lobby', 'Swiss stage', 'Playoffs', 'Results'].map((x, i) => <React.Fragment key={x}>{i > 0 && <i aria-hidden="true">›</i>}<span>{x}</span></React.Fragment>)}
+      </div>
+      <p className="hp__lead">Seven picks build your team: <b>five starters</b> (one each of IGL, AWPer, Entry, Lurker and Support / Anchor), <b>a coach</b> and <b>a bench player</b>. Then you play the Major with them. The game explains each part the first time it comes up; everything is here too. Open a section below.</p>
+
+      <h4 className="hpg">Drafting <small>Rounds 1 to 7</small></h4>
       <div className="details">
         <details>
-          <summary>Cases, cards and rerolls</summary>
-          <p>A case holds three real rosters. The colour of a card, and the label beside it, show how that roster finished its Major: gold for champions, red for runners-up, pink for semifinalists, purple for quarterfinalists. You get two rerolls for the whole draft, and you can't draft the same person twice.</p>
+          <summary>Cases, cards and spins</summary>
+          <div className="hps">
+            <p>Each round you open a case: three real rosters from Major history. You pick one player from one of them.</p>
+            <dl className="hpl">
+              <dt>Card colour</dt><dd>Shows how that roster finished its Major: gold for champions, red for runners-up, pink for semifinalists, purple for quarterfinalists.</dd>
+              <dt>Spins</dt><dd>Don't like the case? Spin again for a new one. You get two spins for the whole draft, not per round.</dd>
+              <dt>No repeats</dt><dd>You can't draft the same person twice, even from two different years.</dd>
+              <dt>Seven rounds</dt><dd>Rounds 1 to 5 are your starters, round 6 your coach, round 7 your bench player.</dd>
+            </dl>
+            <p className="hpx"><b>Example.</b> A case shows Heroic 2021, The MongolZ 2024 and Ninjas in Pyjamas 2015. You pick stavn from Heroic: he joins your lineup, and the next round opens a new case.</p>
+          </div>
         </details>
         <details>
           <summary>Roles and fit</summary>
-          <p>Every player has a main role: IGL, AWPer, Entry, Lurker or Support / Anchor. Players can cover roles close to their own. Each Draft button says how well the player fits that slot: main role, secondary role (small penalty) or off-role (big penalty). Hard mode hides the role labels.</p>
+          <div className="hps">
+            <p>Every player has a main role, and each of your five slots takes one player: IGL, AWPer, Entry, Lurker or Support / Anchor. A player can also cover roles close to their own, at a cost.</p>
+            <dl className="hpl">
+              <dt>Main role</dt><dd>The slot is their own role. No penalty.</dd>
+              <dt>Secondary role</dt><dd>A role close to their own. A small penalty.</dd>
+              <dt>Off-role</dt><dd>Anything else. A big penalty.</dd>
+              <dt>Taken slots</dt><dd>When a player's main slot is already filled, their row says so and shows the role they would play instead. The Draft button always names the slot and how well they fit it.</dd>
+              <dt>Hard mode</dt><dd>Hides the role labels, fit, chemistry and card colours. You choose the slot yourself and draft on knowledge alone.</dd>
+            </dl>
+            <p className="hpx"><b>Example.</b> Snappi is an IGL. If your IGL slot is full, his row reads "IGL taken" with Support as his second role. You can still draft him there, with a small penalty.</p>
+          </div>
         </details>
         <details>
           <summary>Chemistry</summary>
@@ -83,39 +107,121 @@ function HowToPlay() {
         </details>
         <details>
           <summary>Coach and bench</summary>
-          <p>Round 6 is the coach: a better coach lifts the team and makes timeouts count for more, and a coach who coached one of your players adds chemistry. Round 7 is the bench: anyone, any role. Before each match you can sub the bench player in for one starter.</p>
+          <div className="hps">
+            <dl className="hpl">
+              <dt>Coach (round 6)</dt><dd>A better coach lifts the whole team and makes your timeouts count for more. A coach who has coached one of your players also adds a chemistry link.</dd>
+              <dt>Bench (round 7)</dt><dd>Anyone, in any role.</dd>
+              <dt>Subbing in</dt><dd>Before each match you can swap your bench player in for one starter, for that match only. They play that starter's role, and the fit is shown before you accept. Your starters are back for the next match.</dd>
+            </dl>
+            <p className="hpx"><b>Example.</b> One of your starters shows ▼ cold form today. Swap your bench player in for him, and check the fit note first: a bench player who is off-role in that slot may cost more than the cold form does.</p>
+          </div>
         </details>
+      </div>
+
+      <h4 className="hpg">Playing the Major <small>Matches, maps and sides</small></h4>
+      <div className="details">
         <details>
           <summary>The Major</summary>
-          <p>The Swiss stage is three wins to reach the playoffs, three losses and you're out, with best-of-threes for the matches that can send you through or out. Then come the best-of-three quarterfinal, semifinal and grand final.</p>
+          <div className="hps">
+            <dl className="hpl">
+              <dt>Swiss stage</dt><dd>Three wins and you reach the playoffs; three losses and you're out. Matches that can send you through or out are best of three, the rest are a single map.</dd>
+              <dt>Playoffs</dt><dd>A best-of-three quarterfinal, semifinal and grand final.</dd>
+              <dt>Opponents</dt><dd>Real rosters from Major history, picked so they don't share players with your team where possible.</dd>
+              <dt>How you finish</dt><dd>Swiss stage exit, quarterfinal, semifinal, runner-up or Major champions.</dd>
+            </dl>
+          </div>
         </details>
         <details>
           <summary>Match-day form</summary>
-          <p>Before each match everyone has form: ▲▲ hot, ▲ good, ▼ cold. The bench player can sub in for one match and plays the starter's role, with the fit shown before you accept.</p>
+          <div className="hps">
+            <p>Before each match everyone, your bench player included, is rolled a form for the day. It nudges how well they play by a few rating points.</p>
+            <p className="hpf"><span><b>▲▲</b> hot</span><span><b>▲</b> good</span><span><b>·</b> normal</span><span><b>▼</b> cold</span></p>
+            <p>The arrows show next to each player before you accept the match. That is when to decide on a substitution.</p>
+          </div>
         </details>
         <details>
           <summary>Map veto</summary>
-          <p>Every match opens with a map veto. Each roster has maps it was comfortable on (game values, like the ratings); your team's comfort is the average of each player's original lineup. Ban their best maps and keep yours. Comfort is one input among many, so an edge is not a win chance.</p>
+          <div className="hps">
+            <p>Every match opens with a veto. Each roster has maps it is more comfortable on (game values, like the ratings). Your team's comfort is the average of each player's original lineup.</p>
+            <dl className="hpl">
+              <dt>Best of three</dt><dd>Ban, ban, pick, pick, ban, ban. The map left over is the decider.</dd>
+              <dt>Single map</dt><dd>Six bans, taking turns. The map left over is played.</dd>
+              <dt>Reading it</dt><dd>Each map shows comfort pips for both teams and who has the edge. Ban their best maps and keep yours.</dd>
+            </dl>
+            <p className="hpx"><b>Example.</b> They have 5 pips on Nuke and you have 2: ban Nuke. You have 5 on Train and they have 2: pick it. An edge is one input among many, not a win chance.</p>
+          </div>
         </details>
         <details>
           <summary>Knife round, sides and pistols</summary>
-          <p>Before each map there's a knife round (on a picked map, the other team chooses sides instead). Win it and you pick your starting side: T attacks, CT defends. Some maps favour one side, entry fraggers and lurkers shine on T, and AWPers and anchors shine on CT. Sides swap at halftime, and the team leading at the half carries momentum into the second half. Pistol rounds (1 and 13) put the losers on an eco for the next two rounds.</p>
+          <div className="hps">
+            <dl className="hpl">
+              <dt>Who chooses sides</dt><dd>On a map one team picked, the other team chooses its starting side. On the decider, and in a single-map match, a knife round decides.</dd>
+              <dt>T and CT</dt><dd>T attacks and CT defends. Some maps favour one side. Entry fraggers and lurkers shine on T; AWPers and anchors shine on CT.</dd>
+              <dt>Halftime</dt><dd>Sides swap, and the team leading at the half carries momentum into the second.</dd>
+              <dt>Pistol rounds</dt><dd>Rounds 1 and 13. The team that loses one is on an eco for the next two rounds.</dd>
+            </dl>
+          </div>
         </details>
         <details>
           <summary>Tactical calls</summary>
-          <p>During a map you have one timeout per half, which stops the opponent's run and lifts your next three rounds. After a lost pistol you choose to save or force buy. You can pause, step a round at a time and slow the playback to a Tactical speed.</p>
+          <div className="hps">
+            <dl className="hpl">
+              <dt>Timeout</dt><dd>One per half (one in overtime). It stops the opponent's run and lifts your next three rounds, more with a better coach. Press T, or use the button.</dd>
+              <dt>Save or force</dt><dd>After a lost pistol you choose: save for a full buy, or force buy for a better next round, at the price of being broke the round after if it fails.</dd>
+              <dt>Playback</dt><dd>Pause, step one round at a time, and slow the match to its tactical speed whenever you like.</dd>
+            </dl>
+            <p className="muted small">A draft duel's showmatch has no tactical calls for either team.</p>
+          </div>
         </details>
         <details>
           <summary>Ratings and results</summary>
-          <p>Player strength is hidden, so trust your CS knowledge. After every map you get a scoreboard with kills, deaths and a match rating (1.00 is average). Stronger players tend to post better ratings, but anyone can have a bad map. Results also depend on role fit, synergies, the coach, form and luck. When the run ends, Pick strength reveals the hidden ratings and shows the strongest individual option you passed up each round, and the team review covers roles, chemistry, maps and calls. Your run, lifetime stats and achievements save in this browser.</p>
+          <div className="hps">
+            <p>Player strength is hidden, so trust your Counter-Strike knowledge. Results depend on role fit, chemistry, the coach, form and luck as well as the players.</p>
+            <dl className="hpl">
+              <dt>Scoreboard</dt><dd>After every map: kills, deaths and a match rating, where 1.00 is average. Stronger players tend to post better ratings, but anyone can have a bad map.</dd>
+              <dt>Pick strength</dt><dd>When the run ends it reveals the hidden ratings and shows the strongest option you passed up each round.</dd>
+              <dt>Team review</dt><dd>Covers roles, chemistry, maps and calls.</dd>
+              <dt>Saved here</dt><dd>Your run, lifetime stats and achievements are kept in this browser.</dd>
+            </dl>
+          </div>
+        </details>
+      </div>
+
+      <h4 className="hpg">Modes <small>Ways to play</small></h4>
+      <div className="details">
+        <details>
+          <summary>Daily and free play</summary>
+          <div className="hps">
+            <dl className="hpl">
+              <dt>Daily</dt><dd>Everyone gets the same cases that day, and it resets at your local midnight. Copy your result or share a result card at the end to compare with friends.</dd>
+              <dt>Free play</dt><dd>Play as often as you like. You can limit it to one era (CS:GO or CS2), to champions only or underdogs only, or switch on hard mode.</dd>
+              <dt>Guess the pro</dt><dd>A second daily: find the day's pro in eight guesses.</dd>
+            </dl>
+          </div>
         </details>
         <details>
-          <summary>Daily, free play, duels and Twitch</summary>
-          <p>The daily challenge deals everyone the same cases that day; copy your result or share a result card at the end. Guess the pro is a second daily: find the day's pro in eight guesses. Free play has modes: one era, champions only, underdogs only, or hard mode without role labels. Challenge a friend from the results screen: they are dealt the same cases you were (and can spin only where you did), then your teams play a best-of-three on equal terms: no match-day form, substitutions or tactical calls for either side, and maps and sides chosen by the same rule for both, with a coin flip for who vetoes first. A link from before this change is a challenge to beat a saved team instead, and says so. Streamers can let Twitch chat vote on every pick (the Twitch button in the header).</p>
+          <summary>Draft duels</summary>
+          <div className="hps">
+            <p>Challenge a friend from your results screen. The link carries your team and every case you saw.</p>
+            <dl className="hpl">
+              <dt>Same cases</dt><dd>Your friend is dealt the cases you were, in the same order, and can spin only where you did.</dd>
+              <dt>Equal terms</dt><dd>Then the two teams play a best of three with no match-day form, substitutions or tactical calls for either side. Maps and sides are chosen by the same rule for both, and a coin flip decides who vetoes first.</dd>
+              <dt>Older links</dt><dd>A link made before this existed is a challenge to beat a saved team instead, and says so.</dd>
+            </dl>
+          </div>
+        </details>
+        <details>
+          <summary>Twitch</summary>
+          <div className="hps">
+            <p>Streamers can let chat vote on every pick, the coach, map bans and sides. Open it from the Twitch button in the header or the menu.</p>
+          </div>
         </details>
         <details>
           <summary>Keyboard</summary>
-          <p>Space pauses and resumes a match, and the right arrow plays one round while it's paused.</p>
+          <div className="hps">
+            <p className="muted small">Single keys never fire while you are typing, and you can turn them off in Settings.</p>
+            <ul className="hpk">{SHORTCUTS.map((k) => <li key={k.keys}><kbd>{k.keys}</kbd><span>{k.does}</span><small>{k.where}</small></li>)}</ul>
+          </div>
         </details>
       </div>
       <div className="help__foot">
