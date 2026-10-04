@@ -31,17 +31,6 @@
 .duo__modes-t span { font: 700 .75rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; color: var(--text-2); }
 .duo__modes-t small { color: var(--muted); font-size: var(--fs-caption); }
 .duo__modes-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.duo__mode { position: relative; isolation: isolate; overflow: hidden; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 76px; padding: 0 78px 0 22px; text-align: left; border: 0; border-radius: 0; background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); color: #170c03; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); }
-.duo__mode::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 62px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
-.duo__mode > svg { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); }
-.duo__mode > span { display: grid; gap: 3px; }
-.duo__mode b { font: 800 1.55rem/1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; }
-.duo__mode small { font: 600 .82rem/1.2 var(--f-read); opacity: .82; }
-.duo__mode:hover { filter: brightness(1.08); }
-.duo__mode--hard { background: #14110f; color: var(--strong); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .5); }
-.duo__mode--hard::after { background: repeating-linear-gradient(-45deg, rgba(249, 132, 37, .22) 0 6px, rgba(249, 132, 37, .1) 6px 12px), #1e1812; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(249, 132, 37, .4); }
-.duo__mode--hard > svg { color: var(--accent-hi); }
-.duo__mode:focus-visible, .duo__card:focus-visible { outline: 2px solid var(--accent-hi); outline-offset: 3px; }
 
 /* once playing: the mode, the tries left */
 .duo__state { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 16px; margin: 0; color: var(--text-2); font: 700 .78rem/1 var(--f-read); letter-spacing: .1em; text-transform: uppercase; }
@@ -92,7 +81,6 @@
   .duo__mid small { display: none; }
   .duo__who strong { font-size: 1.35rem; }
   .duo__modes-row { grid-template-columns: 1fr; }
-  .duo__mode { min-height: 68px; }
   .duo__cards { gap: 8px; }
   .duo__card { flex-direction: column; align-items: flex-start; gap: 8px; min-height: 124px; padding: 12px; }
   .duo__cphoto { width: 52px; height: 52px; }
@@ -103,3 +91,134 @@
   .duo__answers strong { font-size: 1.5rem; }
 }
 @media (forced-colors: active) { .duo__mode, .duo__chain, .duo__reveal { clip-path: none; border: 1px solid ButtonText; } }
+
+/* ---------- the button: the Home's cut orange button, with its light sweep and moving stripes ---------- */
+.duo .dbtn { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; justify-content: flex-start; gap: 12px; min-height: 58px; padding: 0 78px 0 24px; border: 0; border-radius: 0; background: linear-gradient(100deg, #ff9a3d 0%, var(--accent) 55%, #e8700f 100%); color: #170c03; font: 800 1.3rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; text-align: left; cursor: pointer; clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px)); transition: filter .18s, transform .12s; }
+.duo .dbtn > span { display: grid; gap: 4px; }
+.duo .dbtn small { font: 600 .8rem/1.2 var(--f-read); letter-spacing: .01em; text-transform: none; opacity: .8; }
+.duo .dbtn b { font: inherit; }
+/* the striped arrow block */
+.duo .dbtn::after { content: ""; position: absolute; z-index: -1; top: 0; right: 0; bottom: 0; width: 62px; background: repeating-linear-gradient(-45deg, rgba(23, 12, 3, .26) 0 6px, rgba(23, 12, 3, .12) 6px 12px), #c75d08; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(255, 255, 255, .25); }
+.duo .dbtn > svg { position: absolute; right: 20px; top: 50%; width: 22px; height: 22px; margin-top: -11px; color: #fff; transition: transform .18s ease-out; }
+/* a band of light that crosses the button on hover */
+.duo .dbtn::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .5), transparent); transform: skewX(-18deg); transition: left .55s ease-out; }
+.duo .dbtn:not(:disabled):hover { filter: brightness(1.1); }
+.duo .dbtn:not(:disabled):hover::before { left: 115%; }
+.duo .dbtn:not(:disabled):hover::after { animation: mode-stripes .7s linear infinite; }
+.duo .dbtn:not(:disabled):hover > svg { transform: translateX(4px); }
+.duo .dbtn:not(:disabled):active { transform: translateY(1px); filter: brightness(.96); }
+.duo .dbtn:focus-visible { outline: 2px solid var(--strong); outline-offset: 3px; }
+.duo .dbtn:disabled { cursor: not-allowed; filter: saturate(.35) brightness(.62); }
+
+/* the dark button: an orange edge round a dark face, with the same sweep and stripes (the Home's Replay) */
+.duo .dbtn--dark { background: rgba(249, 132, 37, .88); color: var(--strong); }
+.duo .dbtn--dark::before { top: 1px; bottom: 1px; left: 1px; right: 1px; width: auto; transform: none; clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px)); background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .42) 50%, transparent 80%) -130% 0 / 55% 100% no-repeat, linear-gradient(100deg, #1c1d1c, #121312); transition: background-position .6s ease-out; }
+.duo .dbtn--dark:not(:disabled):hover { filter: none; }
+.duo .dbtn--dark:not(:disabled):hover::before { left: 1px; background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .42) 50%, transparent 80%) 260% 0 / 55% 100% no-repeat, linear-gradient(100deg, #2a2826, #161514); }
+.duo .dbtn--dark::after { background: repeating-linear-gradient(-45deg, rgba(249, 132, 37, .26) 0 6px, rgba(249, 132, 37, .1) 6px 12px), #1d1710; background-size: 17px 17px, auto; box-shadow: inset 1px 0 0 rgba(249, 132, 37, .5); }
+.duo .dbtn--dark > svg { color: var(--accent-hi); }
+.duo .dbtn--sm { min-height: 46px; padding: 0 62px 0 20px; font-size: 1.05rem; }
+.duo .dbtn--sm::after { width: 46px; }
+.duo .dbtn--sm > svg { right: 14px; width: 18px; height: 18px; margin-top: -9px; }
+.duo .dbtn--try { min-width: 170px; min-height: 56px; }
+.duo .dbtn--try:disabled { filter: none; background: #2a1d10; color: rgba(255, 255, 255, .45); }
+.duo .dbtn--try:disabled::after { background: repeating-linear-gradient(-45deg, rgba(255, 255, 255, .08) 0 6px, rgba(255, 255, 255, .03) 6px 12px), #1f1710; background-size: 17px 17px, auto; }
+.duo .dbtn--try:disabled > svg { color: rgba(255, 255, 255, .35); }
+.duo .duo__mode { min-height: 82px; }
+.duo .duo__mode b { font-size: 1.6rem; }
+.duo .duo__next { min-width: 300px; }
+/* Copy result: the same dark button, without the arrow block */
+.duo .share-bar .ghost-btn { position: relative; isolation: isolate; overflow: hidden; display: inline-flex; align-items: center; gap: 8px; min-height: 46px; padding: 0 22px; border: 0; border-radius: 0; background: rgba(249, 132, 37, .88); color: var(--strong); font: 800 1.05rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; clip-path: polygon(0 0, calc(100% - 13px) 0, 100% 13px, 100% 100%, 13px 100%, 0 calc(100% - 13px)); }
+.duo .share-bar .ghost-btn::before { content: ""; position: absolute; z-index: -1; inset: 1px; clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px)); background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .42) 50%, transparent 80%) -130% 0 / 55% 100% no-repeat, linear-gradient(100deg, #1c1d1c, #121312); transition: background-position .6s ease-out; }
+.duo .share-bar .ghost-btn:hover::before { background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, .42) 50%, transparent 80%) 260% 0 / 55% 100% no-repeat, linear-gradient(100deg, #2a2826, #161514); }
+.duo .share-bar .ghost-btn svg { color: var(--accent-hi); }
+.duo .guess__after { gap: 14px; }
+.duo .guess__after .dbtn { justify-self: center; }
+
+/* ---------- the unknown becomes the answer ---------- */
+.duo__mid { position: relative; overflow: visible; }
+.duo__mid.is-open { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--go); }
+.duo__mid-photo { position: absolute; inset: 0; overflow: hidden; background: #181918; }
+.duo__mid-photo .photo { box-shadow: none; }
+.duo__mid.is-open small { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 0 6px; background: linear-gradient(0deg, rgba(0, 0, 0, .85), transparent); color: var(--strong); text-align: center; }
+.duo__chain.is-won .duo__mid small { color: var(--go-text); }
+.duo__chain.is-lost .duo__mid { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--loss); }
+.duo__chain.is-lost .duo__mid .duo__mid-photo { filter: grayscale(.7) brightness(.8); }
+.duo__burst { position: absolute; left: 50%; top: 50%; pointer-events: none; }
+.duo__burst i { position: absolute; left: -3px; top: -9px; width: 6px; height: 18px; background: var(--go-text); transform-origin: 50% 9px; opacity: 0; }
+.duo__burst i:nth-child(3n) { background: var(--accent-hi); }
+.duo__burst i:nth-child(3n + 1) { background: #fff; width: 4px; }
+
+/* ---------- motion ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .duo__chain { animation: duo-rise .55s cubic-bezier(.2, .8, .2, 1) both; }
+  .duo__chain .duo__who:first-child { animation: duo-from-left .7s cubic-bezier(.2, .8, .2, 1) .12s both; }
+  .duo__chain .duo__who:last-child { animation: duo-from-right .7s cubic-bezier(.2, .8, .2, 1) .12s both; }
+  .duo__link { transform-origin: left center; animation: duo-wire .6s ease-out .55s both; }
+  .duo__mid ~ .duo__link { transform-origin: right center; }
+  /* energy travelling along the wires while the pair waits for an answer */
+  .duo__link::after { content: ""; position: absolute; top: 50%; left: 0; width: 18px; height: 3px; margin-top: -1.5px; background: linear-gradient(90deg, transparent, var(--accent-hi)); opacity: 0; animation: duo-spark 2.6s ease-in-out 1.4s infinite; }
+  .duo__mid ~ .duo__link::after { background: linear-gradient(270deg, transparent, var(--accent-hi)); left: auto; right: 0; animation-name: duo-spark-r; }
+  .duo__chain:not(.is-won):not(.is-lost) .duo__mid { animation: duo-pop .6s cubic-bezier(.3, 1.6, .5, 1) .5s both, duo-glow 2.8s ease-in-out 1.3s infinite; }
+  .duo__chain.is-won .duo__link, .duo__chain.is-lost .duo__link { background-image: radial-gradient(circle, var(--go) 1.6px, transparent 2px); }
+  .duo__chain.is-lost .duo__link { background-image: radial-gradient(circle, var(--loss) 1.6px, transparent 2px); }
+  .duo__chain.is-won .duo__link::after, .duo__chain.is-lost .duo__link::after { display: none; }
+  .duo__mid.is-open { animation: duo-flip .7s cubic-bezier(.2, .8, .2, 1) both; }
+  .duo__chain.is-won .duo__burst i { animation: duo-burst .9s cubic-bezier(.1, .8, .3, 1) .35s both; }
+  .duo__chain.is-won .duo__who .duo__photo { animation: duo-win-ring 1.1s ease-out .4s both; }
+  .duo__chain.is-lost .duo__mid { animation: duo-flip .7s cubic-bezier(.2, .8, .2, 1) both; }
+
+  .duo__modes { animation: duo-rise .5s cubic-bezier(.2, .8, .2, 1) .25s both; }
+  .duo__modes-row .dbtn:nth-child(1) { animation: duo-rise .5s cubic-bezier(.2, .8, .2, 1) .35s both; }
+  .duo__modes-row .dbtn:nth-child(2) { animation: duo-rise .5s cubic-bezier(.2, .8, .2, 1) .45s both; }
+  .duo__state { animation: duo-rise .4s ease-out both; }
+  .duo__badge { animation: duo-pop .45s cubic-bezier(.3, 1.6, .5, 1) both; }
+  .duo__state .guess__pips i { transition: background .25s, transform .25s; }
+  .duo__state .guess__pips i:not(.on) { transform: skewX(-20deg) scale(.7); }
+
+  .duo__card { animation: duo-rise .5s cubic-bezier(.2, .8, .2, 1) calc(var(--i, 0) * 80ms + .05s) both; }
+  .duo__card .duo__cphoto { transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+  .duo__card:not(:disabled):hover .duo__cphoto { transform: scale(1.06); }
+  .duo__card:not(:disabled):active { transform: translateY(1px) scale(.99); }
+  .duo__card.is-struck:not(.is-new) { animation: none; }
+  .duo__card.is-new { animation: duo-shake .45s ease-in-out both; }
+  .duo__card.is-new .duo__x { animation: duo-pop .45s cubic-bezier(.3, 1.8, .5, 1) .1s both; }
+  .duo__card.is-struck .duo__ctext strong { text-decoration: none; position: relative; }
+  .duo__card.is-struck .duo__ctext strong::after { content: ""; position: absolute; left: -2px; right: -2px; top: 54%; height: 2px; background: var(--loss); transform-origin: left; }
+  .duo__card.is-new .duo__ctext strong::after { animation: duo-strike .35s ease-out .12s both; }
+  .duo__misses li { animation: duo-from-left .4s cubic-bezier(.2, .8, .2, 1) both; }
+  .guess__bar.is-shake .guess__box { animation: gp-shake .4s ease-in-out; }
+
+  .duo__reveal { animation: duo-rise .6s cubic-bezier(.2, .8, .2, 1) .5s both; }
+  .duo__answers li { animation: duo-rise .5s cubic-bezier(.2, .8, .2, 1) calc(var(--i, 0) * 120ms + .75s) both; }
+  .duo__answers li.is-chosen strong i { animation: duo-pop .5s cubic-bezier(.3, 1.8, .5, 1) 1.1s both; }
+  .duo .guess__after > * { animation: duo-rise .5s cubic-bezier(.2, .8, .2, 1) both; }
+  .duo .guess__after > :nth-child(1) { animation-delay: .9s; }
+  .duo .guess__after > :nth-child(2) { animation-delay: 1s; }
+  .duo .guess__after > :nth-child(3) { animation-delay: 1.1s; }
+  .duo .guess__after > :nth-child(4) { animation-delay: 1.2s; }
+  .duo .guess__suggest { animation: duo-rise .18s ease-out both; }
+}
+@keyframes duo-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes duo-from-left { from { opacity: 0; transform: translateX(-28px); } to { opacity: 1; transform: none; } }
+@keyframes duo-from-right { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
+@keyframes duo-wire { from { transform: scaleX(0); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes duo-pop { 0% { opacity: 0; transform: scale(.55); } 100% { opacity: 1; transform: none; } }
+@keyframes duo-glow { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--accent), 0 0 0 rgba(249, 132, 37, 0); } 50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), inset 0 -3px 0 var(--accent-hi), 0 0 26px rgba(249, 132, 37, .45); } }
+@keyframes duo-spark { 0% { left: 0; opacity: 0; } 12% { opacity: 1; } 55% { opacity: 1; } 70%, 100% { left: calc(100% - 18px); opacity: 0; } }
+@keyframes duo-spark-r { 0% { right: 0; opacity: 0; } 12% { opacity: 1; } 55% { opacity: 1; } 70%, 100% { right: calc(100% - 18px); opacity: 0; } }
+@keyframes duo-flip { from { opacity: .2; transform: perspective(500px) rotateY(-90deg) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes duo-burst { 0% { opacity: 1; transform: rotate(var(--a)) translateY(-12px) scaleY(.6); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--r))) scaleY(1.4); } }
+@keyframes duo-win-ring { 0% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -3px 0 var(--accent), 0 0 0 0 rgba(79, 179, 79, .7); } 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -3px 0 var(--go), 0 0 0 16px rgba(79, 179, 79, 0); } }
+@keyframes duo-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-7px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@keyframes duo-strike { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* the suggestions open upwards: under the box there is only the end of the panel, so they would be cut off */
+.duo .guess__suggest { top: auto; bottom: calc(100% + 6px); max-height: 280px; overflow-y: auto; z-index: 20; }
+
+@media (max-width: 560px) {
+  .duo .duo__next { min-width: 0; width: 100%; }
+  .duo .dbtn { font-size: 1.15rem; padding-left: 18px; }
+  .duo .dbtn--try { min-width: 130px; }
+  .duo .guess__after .dbtn--sm { width: 100%; }
+}

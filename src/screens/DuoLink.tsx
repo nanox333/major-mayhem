@@ -51,6 +51,8 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
   const [active, setActive] = useState(0);
   const [shake, setShake] = useState(false);
   const [announce, setAnnounce] = useState('');
+  /** The player picked in this visit, so only a new answer animates, not one restored from a reload. */
+  const [fresh, setFresh] = useState<string | null>(null);
   const left = MAX_TRIES - day.picks.length;
   const exclude = [...day.picks, puzzle.a, puzzle.b];
   const found = searchState(all, text, exclude);
@@ -62,7 +64,7 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
   const pick = (id: string) => {
     const next = addPick(day, id, puzzle);
     if (next === day) return;
-    setDay(next); setText(''); setActive(0);
+    setDay(next); setText(''); setActive(0); setFresh(id);
     const right = puzzle.connectors.includes(id);
     const nick = all.get(id)!.nick;
     play(right ? 'hit' : 'miss');
@@ -79,12 +81,17 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
   };
 
   const rightIds = puzzle.connectors;
+  const shown = day.done ? all.get(day.won ? day.picks[day.picks.length - 1] : rightIds[0]) : null;
   return (
     <>
-      <div className={`duo__chain ${day.won ? 'is-won' : ''}`} role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
+      <div className={`duo__chain ${day.won ? 'is-won' : day.done ? 'is-lost' : ''}`} role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
         <Who p={a} />
         <span className="duo__link" aria-hidden="true" />
-        <span className="duo__mid" aria-hidden="true"><b>{day.won ? '✓' : '?'}</b><small>{day.won ? 'Linked' : 'Link'}</small></span>
+        <span className={`duo__mid ${shown ? 'is-open' : ''}`} aria-hidden="true">
+          {shown ? <span className="duo__mid-photo"><Avatar player={photoOf(shown)} roster={lastRoster(shown)} /></span> : <b>?</b>}
+          <small>{day.won ? 'Linked' : day.done ? 'Missed' : 'Link'}</small>
+          {fresh && day.won && <span className="duo__burst">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ ['--a' as string]: `${(i * 360) / 16}deg`, ['--r' as string]: `${70 + (i % 3) * 18}px` }} />)}</span>}
+        </span>
         <span className="duo__link" aria-hidden="true" />
         <Who p={b} />
       </div>
@@ -93,8 +100,8 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
         <div className="duo__modes">
           <p className="duo__modes-t"><span>Choose your way in</span><small>Locked for today once you pick</small></p>
           <div className="duo__modes-row">
-            <button type="button" className="duo__mode" data-sfx="none" onClick={() => choose('normal')}><span><b>Normal</b><small>Pick from four cards</small></span><ArrowRightIcon size={22} /></button>
-            <button type="button" className="duo__mode duo__mode--hard" data-sfx="none" onClick={() => choose('hard')}><span><b>Hard 💀</b><small>Type the name yourself</small></span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="dbtn duo__mode" data-sfx="none" onClick={() => choose('normal')}><span><b>Normal</b><small>Pick from four cards</small></span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="dbtn dbtn--dark duo__mode" data-sfx="none" onClick={() => choose('hard')}><span><b>Hard 💀</b><small>Type the name yourself</small></span><ArrowRightIcon size={22} /></button>
           </div>
         </div>
       )}
@@ -107,11 +114,11 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
 
           {day.mode === 'normal' && (
             <div className="duo__cards" role="group" aria-label="Who played with both?">
-              {options.map((id) => {
+              {options.map((id, i) => {
                 const p = all.get(id)!;
                 const struck = day.picks.includes(id);
                 return (
-                  <button key={id} type="button" className={`duo__card ${struck ? 'is-struck' : ''}`} disabled={struck} data-sfx="none" onClick={() => pick(id)}
+                  <button key={id} type="button" className={`duo__card ${struck ? 'is-struck' : ''} ${struck && fresh === id ? 'is-new' : ''}`} style={{ ['--i' as string]: i }} disabled={struck} data-sfx="none" onClick={() => pick(id)}
                     aria-label={struck ? `${p.nick}, ${p.country}. Not a connector.` : `${p.nick}, ${p.country}`}>
                     <span className="duo__cphoto"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
                     <span className="duo__ctext"><strong>{p.nick}</strong><span className="duo__sub"><Flag code={p.country} size={14} decorative /><b>{p.country}</b></span></span>
@@ -149,7 +156,7 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
                     </ul>
                   )}
                 </div>
-                <button type="button" className="cta cta--orange guess__go" data-sfx="none" disabled={!choices[active]} onClick={submit}>Try</button>
+                <button type="button" className="dbtn dbtn--try" data-sfx="none" disabled={!choices[active]} onClick={submit}><span>Try</span><ArrowRightIcon size={22} /></button>
               </div>
               <div className="sr" role="status" aria-live="polite">{spoken}</div>
               {found.kind === 'none' && <p className="guess__empty">No players found for “{text.trim()}”. Check the spelling, or try part of a nickname.</p>}
@@ -170,11 +177,11 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
         <div className={`duo__reveal ${day.won ? 'is-won' : ''}`}>
           <small className="guess__verdict">{day.won ? `Linked in ${day.picks.length} ${day.picks.length === 1 ? 'try' : 'tries'}` : 'Nobody you named played with both. These did:'}</small>
           <ul className="duo__answers">
-            {rightIds.map((id) => {
+            {rightIds.map((id, i) => {
               const p = all.get(id)!;
               const chosen = day.picks.includes(id);
               return (
-                <li key={id} className={chosen ? 'is-chosen' : ''}>
+                <li key={id} className={chosen ? 'is-chosen' : ''} style={{ ['--i' as string]: i }}>
                   <span className="duo__cphoto"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
                   <div>
                     <strong><Flag code={p.country} size={16} decorative />{p.nick}{chosen && <i aria-hidden="true"> ✓</i>}</strong>
@@ -261,9 +268,9 @@ export function DuoScreen({ next }: { next: { label: string; go: () => void } })
               <span>Next daily in {cd.clock}</span>
             </p>
           )}
-          <button type="button" className="cta cta--orange guess__next" onClick={startPractice}>{practice ? 'Another practice pair' : 'Practice another pair'}</button>
-          {practice && <button type="button" className="ghost-btn" onClick={() => setPractice(null)}>Back to today</button>}
-          {!practice && <button type="button" className="ghost-btn" onClick={next.go}>{next.label}</button>}
+          <button type="button" className="dbtn duo__next" onClick={startPractice}><span>{practice ? 'Another practice pair' : 'Practice another pair'}</span><ArrowRightIcon size={22} /></button>
+          {practice && <button type="button" className="dbtn dbtn--dark dbtn--sm" onClick={() => setPractice(null)}><span>Back to today</span><ArrowRightIcon size={18} /></button>}
+          {!practice && <button type="button" className="dbtn dbtn--dark dbtn--sm" onClick={next.go}><span>{next.label}</span><ArrowRightIcon size={18} /></button>}
         </div>
       )}
 
