@@ -272,13 +272,13 @@ const SAMPLE: Roster = [...ROSTERS].filter((r) => r.result === 'Champions').sort
 function HowItWorks() {
   const shown = true;
   const steps = [
-    { title: 'Open a case', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
-    { title: 'Draft your team', art: (
+    { title: 'Open a case', text: 'Three iconic rosters from Major history.', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
+    { title: 'Draft your team', text: 'Pick a player at a time: five, a coach and a bench player.', art: (
       <span className="how__art how__art--roster" title={`${SAMPLE.org} ${SAMPLE.year}`}>
         {SAMPLE.players.map((p) => <span key={p.id} className="how__face"><Avatar player={p} roster={SAMPLE} /></span>)}
       </span>
     ) },
-    { title: 'Play the Major', art: (
+    { title: 'Play the Major', text: 'A Swiss stage, then the playoffs, against rosters from Major history.', art: (
       <svg className="how__art how__art--bracket" viewBox="0 0 120 64" aria-hidden="true" focusable="false">
         <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M6 8h22v10H6zM6 46h22v10H6z" /><path d="M28 13h10v19M28 51h10V32M38 32h14" />
@@ -286,7 +286,7 @@ function HowItWorks() {
         </g>
       </svg>
     ) },
-    { title: 'Share', art: (
+    { title: 'Share', text: 'See how far you got and compare with friends.', art: (
       <span className="how__art how__art--card"><FlagIcon size={20} /><b>1st place</b><ShareIcon size={16} /></span>
     ) },
   ];
@@ -298,8 +298,9 @@ function HowItWorks() {
       {shown && (
         <>
           <ol className="how__steps">
-            {steps.map((x) => <li key={x.title} className="how__step">{x.art}<b>{x.title}</b></li>)}
+            {steps.map((x) => <li key={x.title} className="how__step">{x.art}<b>{x.title}</b><span className="how__text">{x.text}</span></li>)}
           </ol>
+          <p className="how__sample muted small">The roster above is a real one: {SAMPLE.org} {SAMPLE.year}, {SAMPLE.event}.</p>
         </>
       )}
     </section>
