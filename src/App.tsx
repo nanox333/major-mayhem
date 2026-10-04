@@ -5,7 +5,7 @@ import { STATS_KEY, abandonDaily, dailyStarted, forgetStats, loadStats, recordDu
 import { GUESS_KEY, forgetGuesses } from './game/guess';
 import { registerDuel } from './game/duel';
 import { UnsavedBar } from './ui/UnsavedBar';
-import { Duel, decodeDuel, duelCode } from './game/duel';
+import { Duel, decodeDuel, duelCode, duelTerms } from './game/duel';
 import { BoardHost } from './ui/Board';
 import { Modal } from './ui/Modal';
 import { useRunTracking } from './ui/useTracking';
@@ -225,7 +225,9 @@ function DuelInvite({ duel, abandon, onAccept, onClose }: { duel: Duel | null; a
         {duel ? (
           <>
             <h3>{duel.name} challenges you</h3>
-            <p>A draft duel: you open the same cases {duel.name} did and draft your own seven, then your team plays theirs in a best-of-three showmatch.</p>
+            <p>A draft duel: you draft your own seven, then your team plays {duel.name}'s in a best-of-three showmatch.</p>
+            <p><b>{duelTerms(duel).headline}.</b></p>
+            <ul className="duel-terms">{duelTerms(duel).lines.map((l) => <li key={l}>{l}</li>)}</ul>
             {abandon && <p className="muted small">Accepting now counts today's daily as abandoned.</p>}
             <div className="final__actions"><button className="cta cta--orange" onClick={() => onAccept(duel)}>Accept the duel</button></div>
           </>

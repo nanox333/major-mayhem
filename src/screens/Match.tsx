@@ -2,7 +2,7 @@ import { usePlaybackCovered } from '../ui/usePlaybackCovered';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Pending, Run, benchLineup, lineupFor } from '../game/state';
+import { Action, Pending, Run, benchLineup, equalDuel, lineupFor } from '../game/state';
 import { Avatar, MapArt, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
@@ -125,6 +125,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
             </div>
           </div>
           <SubPanel s={s} pending={pending} dispatch={dispatch} />
+          {equalDuel(s) && <p className="muted small duel-rules">Equal terms: no match-day form, substitutions or tactical calls for either team. Maps and sides are chosen by the same rule, and the first ban goes to a coin flip.</p>}
           <div className="action-bar">
             <div className="accept-bar"><span /></div>
             <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
@@ -274,6 +275,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
     dispatch({ type: 'call', call: { kind, round: n } });
     track('call', { kind, round: n, stage: m.stage });
   };
+  // An equal-conditions showmatch has no tactical calls for either team (#172).
+  const noCalls = G.equalShowmatch(m.stage);
   const canTimeout = !!game && lastMap && !mapDone && n >= 1 && G.canCall(m, { kind: 'timeout', round: n });
   callTimeout.current = canTimeout ? () => call('timeout') : null;
   useChatVote(buyQuestion ? `buy-${m.form}-${mapIdx}-${n}` : null,
@@ -379,7 +382,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
       {vetoing ? (
         <VetoPanel m={{ ...m, veto: replay.veto }} opp={opp} mine={mine} dispatch={dispatch} latest={replay.latest} />
       ) : !game ? (
-        m.next && <><SeriesPreview m={m} opp={opp} /><KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} dispatch={dispatch} /></>
+        m.next && <><SeriesPreview m={m} opp={opp} /><KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} auto={!!m.veto.auto} dispatch={dispatch} /></>
       ) : !mapDone ? (
         <div className="match-workspace">
           <aside className="match-five" aria-label="Your fielded five"><h3>Your fielded five · {side}</h3>{mine.map((x) => <div key={x.player.id}><Avatar player={x.player} roster={x.roster} /><span><b>{x.player.nick}</b><small>{ROLE_SHORT[x.slot]} · {x.roster.org} {x.roster.year}</small></span><FormTag v={m.playerForm?.[x.player.id] ?? 0} /></div>)}</aside>
@@ -417,13 +420,13 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
           )}
           <div className="controls">
             {/* Every control keeps its place whatever is happening: the ones that do not apply are hidden, not removed, so nothing moves when you pause, resume or answer a buy. */}
-            <div className={`calls ${buyQuestion ? 'is-away' : ''}`} aria-hidden={buyQuestion || undefined}>
+            {!noCalls && <div className={`calls ${buyQuestion ? 'is-away' : ''}`} aria-hidden={buyQuestion || undefined}>
               <button className={`ghost-btn calls__timeout ${nudge ? 'is-nudge' : ''}`} data-sfx="call" onClick={() => call('timeout')} disabled={!canTimeout || buyQuestion} tabIndex={buyQuestion ? -1 : undefined}
                 title={`One per half. Stops the opponent's run and gives your next three rounds a clear lift${coach ? `; ${coach} makes it count for more` : ''}.`}>
                 Call timeout
               </button>
               <span className={`small muted ${canTimeout ? 'is-away' : ''}`}>{n < 1 ? 'Available after the first round' : 'Timeout used this half'}</span>
-            </div>
+            </div>}
             <div className="playback">
               <button className="ghost-btn playback__pause" aria-pressed={paused} onClick={() => setPaused((p) => !p)} title="Space">{paused ? <><PlayIcon size={14} /> Resume</> : <><PauseIcon size={14} /> Pause</>}</button>
               <button className={`ghost-btn playback__next ${paused ? '' : 'is-away'}`} disabled={buyQuestion || !paused} aria-hidden={!paused || undefined} tabIndex={paused ? undefined : -1} onClick={() => setN((x) => Math.min(x + 1, total))} title="Right arrow">Next round ›</button>
@@ -432,11 +435,11 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
               </div>
               <button className={`ghost-btn playback__skip ${buyQuestion ? 'is-away' : ''}`} aria-hidden={buyQuestion || undefined} tabIndex={buyQuestion ? -1 : undefined} disabled={buyQuestion} title="Reveal this map’s simulated result; this does not forfeit" onClick={() => setN(total)}>Skip map</button>
             </div>
-            <p className={`muted small playback__note ${paused ? '' : 'is-away'}`} aria-hidden={!paused || undefined}>Paused after round {Math.min(n, total)}. Timeouts can still be called.</p>
+            <p className={`muted small playback__note ${paused ? '' : 'is-away'}`} aria-hidden={!paused || undefined}>Paused after round {Math.min(n, total)}.{noCalls ? '' : ' Timeouts can still be called.'}</p>
           </div>
           </div>
           </div>
-          {!buyQuestion && <Tip id="calls" title="Timeouts and buys">You get one timeout per half: it stops the opponent's run and lifts your next three rounds. After a lost pistol you choose whether to save or force buy. You can pause, step through rounds and slow the playback whenever you like.</Tip>}
+          {!buyQuestion && !noCalls && <Tip id="calls" title="Timeouts and buys">You get one timeout per half: it stops the opponent's run and lifts your next three rounds. After a lost pistol you choose whether to save or force buy. You can pause, step through rounds and slow the playback whenever you like.</Tip>}
           <section className="match-feed" aria-label="Round log">
           <div className="feed-heading"><h3>Round log</h3><button className="ghost-btn" onClick={() => setAllRounds((v) => !v)} aria-pressed={allRounds}>{allRounds ? 'Latest only' : 'All rounds'}</button></div>
           <p className="sr" role="status">Round {n}. You {a}, {opp.tag} {b}.{nudge ? ' Timeout available.' : ''}</p>
@@ -475,18 +478,20 @@ function SeriesPreview({ m, opp }: { m: G.Match; opp: Roster }) {
   if (m.bestOf === 1) return null;
   return <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map} className={x.map === m.next?.map ? 'is-now' : ''}>
     <MapArt map={x.map} /><b>{x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b>
-    <span>{x.by === 'decider' ? 'Knife round decides sides' : `${x.by === 'us' ? 'You' : opp.tag} picked · ${x.by === 'us' ? opp.tag : 'You'} choose sides`}</span>
+    <span>{x.by === 'decider' ? 'Knife round decides sides' : `${x.by === 'us' ? 'You' : opp.tag} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span>
   </li>)}</ol>;
 }
 
-function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
-  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; voteKey: string; dispatch: React.Dispatch<Action>;
+function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, dispatch }: {
+  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; voteKey: string; /** An equal-conditions showmatch: both teams take their stronger side, so there is nothing to choose. */ auto: boolean; dispatch: React.Dispatch<Action>;
 }) {
   const left = G.otherSide(k.oppPick);
-  useChatVote(k.won ? voteKey : null, [{ id: 'T', label: 'T · attack', aliases: ['t', 'attack'] }, { id: 'CT', label: 'CT · defend', aliases: ['ct', 'defend'] }],
+  // Where each team starts when you don't choose: the side the opponent left you, or (taking the stronger side automatically) your best one.
+  const yours = k.won ? k.best : left, theirs = G.otherSide(yours);
+  useChatVote(k.won && !auto ? voteKey : null, [{ id: 'T', label: 'T · attack', aliases: ['t', 'attack'] }, { id: 'CT', label: 'CT · defend', aliases: ['ct', 'defend'] }],
     (id) => dispatch({ type: 'side', side: id as G.Side }));
-  const title = k.how === 'our-pick' ? `Your pick: ${opp.org} choose sides`
-    : k.how === 'their-pick' ? `${opp.org}'s pick: you choose sides`
+  const title = k.how === 'our-pick' ? (auto ? `Your pick: ${opp.org} take ${theirs}` : `Your pick: ${opp.org} choose sides`)
+    : k.how === 'their-pick' ? (auto ? `${opp.org}'s pick: you take ${yours}` : `${opp.org}'s pick: you choose sides`)
       : k.won ? 'You won the knife!' : `${opp.org} won the knife`;
   const label = k.how === 'knife' ? (bestOf === 3 ? 'Decider · Knife round' : 'Knife round') : 'Side choice';
   const lean = G.sideLean(k.map);
@@ -502,14 +507,14 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
         <div className="knife__says">
           <small className="knife__kicker">{bestOf === 3 ? `Map ${mapNo} · ` : ''}{k.map} · {label}</small>
           <strong className="knife__title">{title}</strong>
-          <span className="knife__who">{k.won ? 'You choose the starting side' : `${opp.tag} choose the starting side`}</span>
+          <span className="knife__who">{auto ? 'Both teams take their stronger side' : k.won ? 'You choose the starting side' : `${opp.tag} choose the starting side`}</span>
           <p className="knife__advice">{G.sideAdvice(k, mine)} Whoever leads at halftime carries momentum into the second half.</p>
         </div>
         <span className="knife__ghost" aria-hidden="true">{k.how === 'knife' ? (k.won ? 'WON' : 'LOST') : 'SIDES'}</span>
       </header>
       <div className="knife__layout">
         <div className="knife__choose">
-          {k.won ? (
+          {k.won && !auto ? (
             <>
               <p className="knife__ask">Choose your starting side</p>
               <div className="knife__pick">
@@ -524,12 +529,12 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, dispatch }: {
             </>
           ) : (
             <>
-              <p className="knife__ask">{opp.tag} chose {k.oppPick}</p>
+              <p className="knife__ask">{k.won ? `You start on ${yours}, your stronger side` : `${opp.tag} chose ${k.oppPick}`}</p>
               <div className="knife__pick knife__pick--set">
-                <div className={`side-btn side-btn--${k.oppPick === 'T' ? 't' : 'ct'} is-theirs`}><b>{k.oppPick}</b><span>{opp.tag} start here</span><small>{k.oppPick === 'T' ? 'They attack first.' : 'They defend first.'}</small></div>
-                <div className={`side-btn side-btn--${left === 'T' ? 't' : 'ct'} is-yours`}><b>{left}</b><span>You start here</span><small>{SIDE_NOTE[left]}</small>{k.best === left && <i className="side-btn__best">★ Your stronger side</i>}</div>
+                <div className={`side-btn side-btn--${theirs === 'T' ? 't' : 'ct'} is-theirs`}><b>{theirs}</b><span>{opp.tag} start here</span><small>{theirs === 'T' ? 'They attack first.' : 'They defend first.'}</small></div>
+                <div className={`side-btn side-btn--${yours === 'T' ? 't' : 'ct'} is-yours`}><b>{yours}</b><span>You start here</span><small>{SIDE_NOTE[yours]}</small>{k.best === yours && <i className="side-btn__best">★ Your stronger side</i>}</div>
               </div>
-              <div className="action-bar knife__go"><button className="cta cta--orange" onClick={() => dispatch({ type: 'side', side: left })}>Go live</button></div>
+              <div className="action-bar knife__go"><button className="cta cta--orange" onClick={() => dispatch({ type: 'side', side: yours })}>Go live</button></div>
             </>
           )}
           <Tip id="knife" title="The knife round">It decides who picks the starting side: T attacks and CT defends, and sides swap at halftime. Rounds 1 and 13 are pistol rounds, and the team that loses one is on an eco for the next two rounds.</Tip>
@@ -552,15 +557,19 @@ const THINK_MS = 1150, SETTLE_MS = 3200;
 function useVetoReplay(m: G.Match) {
   const finished = m.pool.length > 0;
   // A veto that is already settled when the screen opens (a reload, history) is shown as it is, with no replay.
-  const [shown, setShown] = useState(m.veto.steps.length);
-  const [released, setReleased] = useState(finished);
+  // An automatic veto (equal-conditions showmatch) is complete the moment the match is set up, so it is played back from the start the first time it is seen.
+  const unseen = !!m.veto.auto && m.maps.length === 0;
+  const [shown, setShown] = useState(unseen ? 0 : m.veto.steps.length);
+  const [released, setReleased] = useState(finished && !unseen);
   const target = m.veto.steps.length;
   const quick = reduceMotion();
   useEffect(() => {
     if (quick) { setShown(target); if (finished) setReleased(true); return; }
     if (shown >= target) return;
     const next = m.veto.steps[shown];
-    const t = setTimeout(() => { setShown(shown + 1); if (next.team === 'them') play('ban'); }, shown === 0 || next.team === 'us' ? 0 : THINK_MS);
+    // In an equal-conditions showmatch neither team is yours to move, so both get the pause.
+    const auto = !!m.veto.auto;
+    const t = setTimeout(() => { setShown(shown + 1); if (next.team === 'them' || auto) play('ban'); }, shown === 0 || (next.team === 'us' && !auto) ? 0 : THINK_MS);
     return () => clearTimeout(t);
   }, [shown, target, quick]);
   useEffect(() => {
@@ -569,7 +578,7 @@ function useVetoReplay(m: G.Match) {
     return () => clearTimeout(t);
   }, [finished, released, shown, target]);
   const steps = m.veto.steps.slice(0, shown);
-  const veto: G.Veto = { order: m.veto.order, steps, left: G.MAPS.filter((x) => !steps.some((st) => st.map === x)) };
+  const veto: G.Veto = { order: m.veto.order, auto: m.veto.auto, steps, left: G.MAPS.filter((x) => !steps.some((st) => st.map === x)) };
   const holding = finished && !released;
   return { veto, holding, latest: steps[steps.length - 1] as G.VetoStep | undefined };
 }
@@ -578,8 +587,10 @@ function useVetoReplay(m: G.Match) {
 function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster; mine: G.Lineup[]; dispatch: React.Dispatch<Action>; /** The step that just landed, so its card can play its animation. */ latest?: G.VetoStep }) {
   const oppL = useMemo(() => G.naturalLineup(opp), [opp]);
   const t = G.vetoTurn(m.veto);
-  const mineTurn = t?.team === 'us';
+  const auto = !!m.veto.auto;
+  const mineTurn = !auto && t?.team === 'us';
   const waiting = !!t && !mineTurn;
+  const actor = t?.team === 'us' ? 'You' : opp.tag;
   const done = (map: string) => m.veto.steps.find((x) => x.map === map);
   useChatVote(mineTurn ? `veto-${m.form}-${m.veto.steps.length}` : null,
     G.MAPS.filter((map) => m.veto.left.includes(map)).map((map) => ({ id: map, label: map, aliases: [map, ...(map === 'Dust2' ? ['d2', 'dust'] : [])] })),
@@ -606,11 +617,11 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
   return (
     <div className={`veto anim-in ${t ? `veto--${t.action}` : 'veto--done'} ${waiting ? 'veto--wait' : ''}`}>
       <header className="veto__banner">
-        <span className="veto__badge" aria-hidden="true"><i>{t?.action === 'ban' ? '✕' : '✓'}</i><b>{waiting ? opp.tag : t ? verb : 'Done'}</b></span>
+        <span className="veto__badge" aria-hidden="true"><i>{t?.action === 'ban' ? '✕' : '✓'}</i><b>{waiting ? actor : t ? verb : 'Done'}</b></span>
         <div className="veto__says">
           <small className="knife__kicker">Map veto · Best of {m.bestOf}</small>
-          <strong className="knife__title">{waiting ? <>{opp.tag} is <em>{t.action === 'ban' ? 'banning' : 'picking'}</em><span className="veto__dots" aria-hidden="true"><i /><i /><i /></span></> : t ? <>Your turn: <em>{t.action === 'ban' ? 'ban' : 'pick'}</em> a map</> : <>{m.bestOf === 3 ? 'Maps' : 'Map'} <em>locked</em></>}</strong>
-          <p className="knife__advice">{waiting ? `Waiting for ${opp.tag} to ${t.action} a map.` : t ? consequence : 'Both teams have chosen. The knife round is next.'}</p>
+          <strong className="knife__title">{waiting ? <>{actor} {actor === 'You' ? 'are' : 'is'} <em>{t.action === 'ban' ? 'banning' : 'picking'}</em><span className="veto__dots" aria-hidden="true"><i /><i /><i /></span></> : t ? <>Your turn: <em>{t.action === 'ban' ? 'ban' : 'pick'}</em> a map</> : <>{m.bestOf === 3 ? 'Maps' : 'Map'} <em>locked</em></>}</strong>
+          <p className="knife__advice">{waiting ? (auto ? `Both teams choose by the same rule; ${actor === 'You' ? 'you' : actor} ${t.action}${actor === 'You' ? '' : 's'} next.` : `Waiting for ${opp.tag} to ${t.action} a map.`) : t ? consequence : 'Both teams have chosen. The knife round is next.'}</p>
         </div>
       </header>
       {!t && (
@@ -663,7 +674,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
                   <span className="them"><b>{opp.tag}</b>{pipsRow(theirC)}</span>
                   <span className={`veto__edge edge-${edge}`}>{EDGE_TEXT[edge]}</span>
                 </span>
-                <span className="veto__state">{st ? `${st.action === 'ban' ? '✕' : '✓'} ${who(st.team)} ${st.action === 'ban' ? 'banned' : 'picked'}` : mineTurn ? `${t.action === 'ban' ? '✕' : '✓'} ${verb} this map` : waiting ? `${opp.tag} is choosing…` : left ? '★ Played' : ''}</span>
+                <span className="veto__state">{st ? `${st.action === 'ban' ? '✕' : '✓'} ${who(st.team)} ${st.action === 'ban' ? 'banned' : 'picked'}` : mineTurn ? `${t.action === 'ban' ? '✕' : '✓'} ${verb} this map` : waiting ? `${actor} ${actor === 'You' ? 'are' : 'is'} choosing…` : left ? '★ Played' : ''}</span>
               </button>
             </li>
           );
@@ -672,9 +683,10 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
       <p className="veto__note muted small">
         Comfort is a game value worked out from each player's original lineup, not historical map statistics. It's one input among players, form, sides and luck, so an edge is not a win chance.
         {' '}{m.bestOf === 3 ? 'Order: ban, ban, pick, pick, ban, ban; the last map is the decider.' : 'Bans alternate until one map is left.'}
+        {auto && <> A coin flip decided that {who(m.veto.order[0].team)} {m.veto.order[0].team === 'us' ? 'go' : 'goes'} first.</>}
       </p>
       {!t && (
-        <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map}><MapArt map={x.map} /><b>{m.bestOf === 1 ? 'Match map' : x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b><span>{x.by === 'decider' ? 'Knife round decides sides' : `${who(x.by)} picked · ${x.by === 'us' ? opp.tag : 'You'} choose sides`}</span></li>)}</ol>
+        <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map}><MapArt map={x.map} /><b>{m.bestOf === 1 ? 'Match map' : x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b><span>{x.by === 'decider' ? (m.veto.auto ? 'Knife round decides who starts where' : 'Knife round decides sides') : `${who(x.by)} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span></li>)}</ol>
       )}
     </div>
   );

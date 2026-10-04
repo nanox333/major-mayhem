@@ -28,7 +28,7 @@ A Counter-Strike take on LoLdle's *Worlds Mayhem*. You get three historical Majo
 | --- | --- |
 | **Daily challenge** | Everyone gets the same cases each day. Copy your result to share it. |
 | **Free play** | Any time. Limit it to CS:GO or CS2, champions or underdogs, or turn on hard mode (no role labels). |
-| **Draft duels** | Send a friend your challenge link. They draft from the same cases and the two teams play a best-of-three. |
+| **Draft duels** | Send a friend your challenge link. They are dealt the same cases you saw (spins only where you spun) and the two teams play a best-of-three on equal terms: no form, subs or tactical calls, and one rule for both teams' vetoes and sides. |
 | **Twitch chat votes** | A streamer's chat picks teams, players, the coach, map bans and sides. Read-only, no login. |
 | **Guess the pro** | A second daily: everyone hunts the same pro in eight guesses. |
 

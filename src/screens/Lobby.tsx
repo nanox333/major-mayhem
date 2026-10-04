@@ -2,7 +2,7 @@ import React from 'react';
 import { ROLE_LABEL } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Run, benchLineup } from '../game/state';
-import { challengerLineup } from '../game/duel';
+import { challengerLineup, duelTerms } from '../game/duel';
 import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
 import { Synergy, nationCore, strength } from '../game/synergy';
@@ -110,6 +110,8 @@ function Challenger({ s }: { s: Run }) {
       <small>Your opponent: {d.name}'s team, best of three</small>
       <ul>{lineup.map((l) => <li key={l.player.id}><RoleIcon role={l.slot} size={12} /> {l.player.nick} <span className="muted">{l.roster.org} {l.roster.year}</span></li>)}</ul>
       {d.coach && <span className="muted small">Coach {d.coach}</span>}
+      <strong className="small">{duelTerms(d).headline}</strong>
+      <ul className="duel-terms">{duelTerms(d).lines.map((l) => <li key={l}>{l}</li>)}</ul>
     </div>
   );
 }

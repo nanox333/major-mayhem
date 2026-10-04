@@ -10,7 +10,7 @@ import { keyMoments } from '../game/highlights';
 import { fmt, useMedia } from '../ui/util';
 import { play } from '../ui/sound';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
-import { cleanName, duelFrom, duelLink } from '../game/duel';
+import { cleanName, duelFrom, duelLink, duelTerms } from '../game/duel';
 import { reportError, track } from '../analytics';
 import { RosterList, Staff } from './Lobby';
 import { achievementById } from '../game/achievements';
@@ -192,15 +192,18 @@ export function ShareBar({ text, image, props = {}, onImageReady }: {
 }
 
 const NAME_KEY = 'mm-name';
-/** Sends this team as a draft duel: the friend drafts from the same cases, then the two teams play a Bo3. */
+/** Sends this team as a draft duel (#172): an equal-conditions one when the run kept its cases, otherwise a challenge to beat the team. */
 function ChallengeBar({ s }: { s: Run }) {
   const [name, setName] = useState(() => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } });
   const [state, setState] = useState<'idle' | 'copied' | 'shared' | 'failed'>('idle');
   const done = (x: typeof state) => { setState(x); setTimeout(() => setState('idle'), 2200); };
+  // What the link will promise, so the page says it before the link is sent (#172).
+  const terms = duelTerms(duelFrom(s, name || 'your friend'));
   const send = async () => {
     try { localStorage.setItem(NAME_KEY, name); } catch { /* storage unavailable */ }
-    const link = duelLink(pageUrl() ?? __SITE__.url, duelFrom(s, name));
-    const text = `${cleanName(name)} challenges you to a Major Mayhem draft duel: same cases, then a best-of-three.`;
+    const duel = duelFrom(s, name);
+    const link = duelLink(pageUrl() ?? __SITE__.url, duel);
+    const text = `${cleanName(name)} challenges you to a Major Mayhem draft duel: ${duel.v === 2 ? 'the same cases, equal terms, then a best-of-three.' : 'can you beat this team in a best-of-three?'}`;
     if (canShareLink()) {
       try { await navigator.share({ text, url: link }); track('challenge', { method: 'share', mode: s.mode }); return done('shared'); }
       catch (e) { if (e instanceof DOMException && e.name === 'AbortError') return; }
@@ -215,6 +218,7 @@ function ChallengeBar({ s }: { s: Run }) {
         <span>{s.duel ? 'Challenge back, or send this team to someone else' : 'Challenge a friend with this team'}</span>
         <input value={name} maxLength={24} placeholder="Your name" onChange={(e) => setName(e.target.value)} aria-label="Your name for the challenge" />
       </label>
+      <small className="challenge__terms muted">{terms.headline}: {terms.lines[0]}</small>
       <button className="ghost-btn" onClick={send}>
         {state === 'copied' ? '✓ Link copied' : state === 'shared' ? '✓ Sent' : state === 'failed' ? 'Copy blocked by the browser' : <><ShareIcon size={16} /> Send challenge</>}
       </button>

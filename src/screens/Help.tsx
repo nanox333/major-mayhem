@@ -89,7 +89,7 @@ function HowToPlay() {
         </details>
         <details>
           <summary>Daily, free play, duels and Twitch</summary>
-          <p>The daily challenge deals everyone the same cases that day; copy your result or share a result card at the end. Guess the pro is a second daily: find the day's pro in eight guesses. Free play has modes: one era, champions only, underdogs only, or hard mode without role labels. Challenge a friend from the results screen: they draft from the same cases, then your teams play a best-of-three. Streamers can let Twitch chat vote on every pick (the Twitch button in the header).</p>
+          <p>The daily challenge deals everyone the same cases that day; copy your result or share a result card at the end. Guess the pro is a second daily: find the day's pro in eight guesses. Free play has modes: one era, champions only, underdogs only, or hard mode without role labels. Challenge a friend from the results screen: they are dealt the same cases you were (and can spin only where you did), then your teams play a best-of-three on equal terms: no match-day form, substitutions or tactical calls for either side, and maps and sides chosen by the same rule for both, with a coin flip for who vetoes first. A link from before this change is a challenge to beat a saved team instead, and says so. Streamers can let Twitch chat vote on every pick (the Twitch button in the header).</p>
         </details>
         <details>
           <summary>Keyboard</summary>

@@ -4,6 +4,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Changed
+- **Draft duels are an equal-conditions comparison (rules v5, #172, #171):** the link now carries every case the challenger saw, spins included, so your friend is dealt exactly those cases whatever they pick, and can spin only where the challenger spun and no more often than they did. If none of three cases fits a slot you have left, any open slot takes any player (off-role costs rating) instead of leaving a dead end. The showmatch gives neither team match-day form, substitutions or tactical calls (the bench players sit it out), both teams ban, pick and take sides by one rule, and a seeded coin flip says who vetoes first. The invite, the lobby and the send button say what the link promises. Links made before this change stay valid, play under the rules they were made with, and say plainly that they are a challenge to beat a saved team, not an equal match. Every other mode plays as before.
+
 ### Fixed
 - **The draft art pass is finished** (#225): evidence for every state in `docs/design/draft-evidence` (hard, coach, bench, secondary role, light, high contrast, effects off, 200% zoom, phone, missing art), the size and asset record, and a radar fix: markers keep a full 52px apart at any radar width, so each can be tapped. The weekly UI and full e2e suites run again (they had fallen behind the restyle) and `scripts/draft-evidence.ts` regenerates the captures. A Skip map button that covered the buy question on phones (a bug in the phone pass) is fixed, and the live match's footer is no longer hidden by the control dock. Sharper portraits are tracked in #267.
 - The sideways tilt of the outer reels during the case roll now also plays in lite mode, so browsers that report few cores no longer lose it, and it eases in from flat when the roll starts (#264).
