@@ -4,8 +4,10 @@ import { useSyncExternalStore } from 'react';
 export const DEBUG_FLAG = 'mm-debug';
 const RATINGS = 'mm-debug-ratings';
 
+/** `?debug` in the address, before the # (`/?debug`) or after it (`/#/?debug`, which is where it ends up when typed onto a page address). */
+export const debugInUrl = () => { try { return /[?&]debug\b/.test(location.search + location.hash); } catch { return false; } };
 /** Whether the debug tools are on at all. */
-export const debugEnabled = () => { try { return localStorage.getItem(DEBUG_FLAG) === '1' || /[?&]debug\b/.test(location.search); } catch { return false; } };
+export const debugEnabled = () => { try { return localStorage.getItem(DEBUG_FLAG) === '1' || debugInUrl(); } catch { return debugInUrl(); } };
 
 const listeners = new Set<() => void>();
 const ratingsOn = () => { try { return debugEnabled() && localStorage.getItem(RATINGS) === '1'; } catch { return false; } };

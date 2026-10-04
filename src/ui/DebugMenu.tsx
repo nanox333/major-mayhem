@@ -3,7 +3,7 @@ import { ROSTERS } from '../data/rosters';
 import { ACHIEVEMENTS } from '../game/achievements';
 import { Run, today } from '../game/state';
 import { DebugStop, randomRun } from './debugRuns';
-import { DEBUG_FLAG, debugEnabled as enabled, setDebugRatings, useDebugRatings } from './debugFlags';
+import { DEBUG_FLAG, debugEnabled as enabled, debugInUrl, setDebugRatings, useDebugRatings } from './debugFlags';
 
 /** Debug tools: hidden unless ?debug is in the address or Ctrl+Shift+D was pressed (remembered in this browser), in every build. Nothing here is part of the game. */
 const FLAG = DEBUG_FLAG;
@@ -21,7 +21,8 @@ const dailyEntry = (i: number) => { const [placement, reached] = PLACES[i % PLAC
 const write = (st: unknown) => { try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch { /* ignore */ } };
 
 export function DebugMenu({ jump }: { /** Replaces the run on screen and opens the draft page. */ jump?: (run: Run) => void }) {
-  const [on, setOn] = useState(enabled);
+  // Asking for it in the address turns it on for this browser, since a page address can lose the `?debug` as you move about (until "Hide debug").
+  const [on, setOn] = useState(() => { if (debugInUrl()) { try { localStorage.setItem(FLAG, '1'); } catch { /* storage unavailable */ } } return enabled(); });
   const [open, setOpen] = useState(false);
   const [keys, setKeys] = useState(read);
   const [note, setNote] = useState('');
