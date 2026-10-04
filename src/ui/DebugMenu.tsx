@@ -110,7 +110,7 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
             <button type="button" onClick={loadDummy}>Load dummy stats</button>
             <button type="button" onClick={() => setAch(true)}>Unlock all achievements</button>
             <button type="button" onClick={() => setAch(false)}>Clear achievements</button>
-            <button type="button" aria-pressed={ratings} onClick={() => setDebugRatings(!ratings)}>Player ratings in the archive: {ratings ? 'on' : 'off'}</button>
+            <button type="button" aria-pressed={ratings} onClick={() => setDebugRatings(!ratings)}>Player ratings (archive and draft): {ratings ? 'on' : 'off'}</button>
             <label className="dbg__streak"><span>Streak</span><input type="number" min={0} max={60} value={days} onChange={(e) => setDays(Math.max(0, Math.min(60, Number(e.target.value) || 0)))} aria-label="Daily streak days" /><button type="button" onClick={() => setStreak(days)}>Set</button></label>
           </div>
           <h4>Saved in this browser</h4>

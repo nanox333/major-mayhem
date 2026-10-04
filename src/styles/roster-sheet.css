@@ -125,3 +125,7 @@
 @media (max-width: 640px) { .ra-chips__label { width: 100%; } .ra-year h4.ra-group { flex-wrap: wrap; gap: 8px 12px; font-size: 1.6rem; } .ra-year h4.ra-group::after { display: none; } .ra-group__stats { margin-left: 0; flex-basis: 100%; } }
 /* On a phone the two chip rows wrap onto a second line instead of scrolling sideways, so every option is in view. */
 @media (max-width: 640px) { :root:root .archive-page .roster-filters .ra-chips.ra-chips--row { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; } }
+
+/* Debug only: the hidden game rating, beside the nick in the draft. */
+.prow__rating { flex: none; align-self: center; padding: 1px 6px; background: rgba(249, 132, 37, .18); color: var(--accent-hi); font: 800 max(.7rem, 11px)/1.3 var(--f-read); font-variant-numeric: tabular-nums; text-decoration: none; }
+.prow__rating--big { margin-left: 10px; font-size: 1rem; vertical-align: middle; }

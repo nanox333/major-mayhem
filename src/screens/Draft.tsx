@@ -18,6 +18,7 @@ import { HowSteps, Tip, useTipSeen } from '../ui/tips';
 import { ArrowRightIcon, CaseIcon, MedalIcon, RefreshIcon, TrophyIcon } from '../ui/icons';
 import { DailyDone } from './Modes';
 import { usePrefs } from '../ui/prefs';
+import { useDebugRatings } from '../ui/debugFlags';
 import { RosterBrowser } from '../ui/RosterBrowser';
 import { ArrivalFocus } from '../ui/ArrivalFocus';
 import { Flag } from '../ui/flags';
@@ -113,6 +114,7 @@ const blurLevel = (speed: number, rows: number) => {
 
 /** The winning roster's card as it will look, drawn inside its reel, so that the reel visibly becomes the card (the real, clickable card replaces it right after). */
 function CardPreview({ roster: r, hard }: { roster: Roster; hard: boolean }) {
+  const ratings = useDebugRatings();
   return (
     <div className="lane__preview" aria-hidden="true">
       <article className="case-card case-card--preview" style={{ ['--team' as string]: r.color }}>
@@ -131,7 +133,7 @@ function CardPreview({ roster: r, hard }: { roster: Roster; hard: boolean }) {
               <div className="prow" style={{ ['--i' as string]: i }}>
                 <span className="prow__face"><Avatar player={p} roster={r} /></span>
                 <span className="prow__main">
-                  <span className="prow__name"><b>{p.nick}</b><em className="prow__cc"><Flag code={p.country} size={11} decorative />{p.name ?? p.country}</em></span>
+                  <span className="prow__name"><b>{p.nick}</b>{ratings && <u className="prow__rating" title="Game rating (debug)">{p.rating}</u>}<em className="prow__cc"><Flag code={p.country} size={11} decorative />{p.name ?? p.country}</em></span>
                   <span className="prow__meta">{!hard && <span className="prow__role"><RoleIcon role={p.roles[0]} size={13} /> {ROLE_SHORT[p.roles[0]]}</span>}</span>
                 </span>
               </div>
@@ -407,6 +409,7 @@ type Chosen = { r: Roster; p: Player };
  * It drafts through the same two steps as before (open the team, then draft the player), so a seed plays out exactly as it did.
  */
 function CaseCards({ s, dispatch, onPreview, onRolled, arrived }: { s: Run; dispatch: React.Dispatch<Action>; onPreview: (p: Preview | null) => void; /** Spin again went through: play the reels for the new three. */ onRolled: () => void; /** The cards replace the reels' previews of them, so they do not animate in. */ arrived?: boolean }) {
+  const ratings = useDebugRatings();
   const [details, setDetails] = useState<string | null>(null);
   const { out, reroll } = useReroll(dispatch, stampOf(s), onRolled);
   const bench = roundOf(s) === 'bench';
@@ -531,7 +534,7 @@ function CaseCards({ s, dispatch, onPreview, onRolled, arrived }: { s: Run; disp
                     <>
                       <span className="prow__face"><Avatar player={p} roster={r} /></span>
                       <span className="prow__main">
-                        <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}><Flag code={p.country} size={11} decorative />{p.name ?? p.country}{p.name && <Sr> ({COUNTRY[p.country] ?? p.country})</Sr>}</em></span>
+                        <span className="prow__name"><b>{p.nick}</b>{ratings && <u className="prow__rating" title="Game rating (debug)">{p.rating}</u>}<em className="prow__cc" title={COUNTRY[p.country] ?? p.country}><Flag code={p.country} size={11} decorative />{p.name ?? p.country}{p.name && <Sr> ({COUNTRY[p.country] ?? p.country})</Sr>}</em></span>
                         <span className="prow__meta">
                           {!ok && <small className="prow__why" title={unavailableReason(p, s, taken)}>{rowReason(p, s, taken)}</small>}
                           {ok && !hard && st.state === 'main' && <span className="prow__role" title="Main role"><RoleIcon role={p.roles[0]} size={13} /> <Sr>Main role: </Sr>{ROLE_SHORT[p.roles[0]]}</span>}
@@ -623,6 +626,7 @@ function WhyList({ lines }: { lines: Why[] }) {
 
 /** The portrait, name and team of whoever you are pointing at or have chosen: one block, so the two states look like the same panel. */
 function Candidate({ cand, hard, state }: { cand: Chosen; hard: boolean; state: string }) {
+  const ratings = useDebugRatings();
   return (
     <div className="draftbar__identity">
       <span className="draftbar__portrait" style={{ ['--team' as string]: cand.r.color }}>
@@ -630,7 +634,7 @@ function Candidate({ cand, hard, state }: { cand: Chosen; hard: boolean; state: 
         <Avatar player={cand.p} roster={cand.r} />
       </span>
       <p className="draftbar__who">
-        <b>{cand.p.nick}</b>
+        <b>{cand.p.nick}{ratings && <u className="prow__rating prow__rating--big" title="Game rating (debug)">{cand.p.rating}</u>}</b>
         <span className="draftbar__meta"><Flag code={cand.p.country} size={13} decorative /> {cand.p.name ?? cand.p.country}{cand.p.name && <Sr> ({COUNTRY[cand.p.country] ?? cand.p.country})</Sr>}{!hard && <> · <RoleIcon role={cand.p.roles[0]} size={13} /> {ROLE_SHORT[cand.p.roles[0]]}</>}</span>
         <span>{cand.r.org} {cand.r.year}</span>
         <small>{state}</small>
