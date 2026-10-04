@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_ORDER, ROSTERS, Role, Roster } from '../data/rosters';
 import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
-import { MAX_TRIES, duoStreak, loadDuo } from '../game/duo';
+import { MAX_TRIES, duoFor, duoPros, duoStreak, loadDuo } from '../game/duo';
+import type { DuoDay } from '../game/duo';
 import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, replaceRisk, runWhere } from '../game/home';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
@@ -160,13 +161,10 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
         </article>
 
         <article className="mcard home-mode-card home-mode-card--duo" aria-labelledby="mcard-duo-h">
-          <span className="home-mode-art home-mode-art--duo" aria-hidden="true"><DuoArt /></span>
+          <span className="home-mode-art home-mode-art--duo"><DuoLive date={cd.day} duo={duo} /></span>
           <p className="home-mode-label">Duo Link</p><h2 className="mcard__title" id="mcard-duo-h">Two pros.<br />One link.</h2>
           <div className="mcard__foot">
-            {(duo?.done || duo?.picks.length || dStreak > 0) && <p className="mcard__state">
-              {duo?.done ? (duo.won ? `Linked in ${duo.picks.length} of ${MAX_TRIES}` : 'Not linked today') : duo?.picks.length ? `${duo.picks.length} of ${MAX_TRIES} tries used` : ''}
-              {dStreak > 0 && `${duo?.done || duo?.picks.length ? ' · ' : ''}${dStreak}-day streak`}
-            </p>}
+            <DuoPips duo={duo} streak={dStreak} />
             <button type="button" className="mbtn home-mode-start" onClick={showDuo}><span>{duo?.done ? "See today's link" : duo?.picks.length ? 'Keep going' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
           </div>
         </article>
@@ -179,22 +177,31 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
   );
 }
 
-/** Two pros joined through a "?": the Duo Link puzzle, drawn with neutral silhouettes (no real player). */
-function DuoArt() {
-  const card = (x: number) => <g transform={`translate(${x},22)`}>
-    <rect width="132" height="156" rx="3" fill="var(--inset)" stroke="var(--control)" />
-    <path d="M10 10h16" stroke="var(--accent)" strokeWidth="3" />
-    <circle cx="66" cy="62" r="26" fill="var(--muted)" opacity=".34" />
-    <path d="M22 156v-14c0-34 88-34 88 0v14z" fill="var(--muted)" opacity=".34" />
-    <rect y="153" width="132" height="3" fill="var(--accent)" opacity=".85" />
-  </g>;
-  return <svg className="home-duo-art" viewBox="0 0 560 200" role="presentation" focusable="false">
-    {card(18)}{card(410)}
-    <path d="M150 100H246M314 100H410" stroke="var(--control)" strokeWidth="2" strokeDasharray="3 7" strokeLinecap="round" />
-    <circle cx="150" cy="100" r="5" fill="var(--accent)" /><circle cx="410" cy="100" r="5" fill="var(--accent)" />
-    <rect x="246" y="50" width="68" height="100" rx="3" fill="var(--inset)" stroke="var(--accent)" strokeWidth="2.5" />
-    <text x="280" y="116" textAnchor="middle" fontSize="64" fontWeight="800" fill="var(--accent)" style={{ fontFamily: 'var(--f-head)' }}>?</text>
-  </svg>;
+/** Today's actual pair with the unknown between them, which becomes the answer once solved: the card shows the puzzle instead of describing it. */
+function DuoLive({ date, duo }: { date: string; duo?: DuoDay }) {
+  const all = duoPros(date), p = duoFor(date);
+  const a = all.get(p.a)!, b = all.get(p.b)!;
+  const solved = duo?.won ? all.get(duo.picks[duo.picks.length - 1]) : null;
+  const face = (x: typeof a) => <figure className="home-duo-end"><span><Avatar player={{ id: x.id, nick: x.nick, roles: x.roles, rating: 80, country: x.country, portrait: x.portrait }} roster={x.rosters[x.rosters.length - 1]} /></span><figcaption>{x.nick}</figcaption></figure>;
+  return (
+    <span className={`home-duo-live ${solved ? 'is-won' : ''}`} aria-hidden="true">
+      {face(a)}<i className="home-duo-wire" />
+      <span className="home-duo-q">{solved ? <Avatar player={{ id: solved.id, nick: solved.nick, roles: solved.roles, rating: 80, country: solved.country, portrait: solved.portrait }} roster={solved.rosters[solved.rosters.length - 1]} /> : <b>?</b>}</span>
+      <i className="home-duo-wire" />{face(b)}
+    </span>
+  );
+}
+
+/** Tries as three pips (green for the one that linked them, red for a miss) and the streak as a flame: no sentence needed. */
+function DuoPips({ duo, streak }: { duo?: DuoDay; streak: number }) {
+  const used = duo?.picks.length ?? 0;
+  const said = duo?.done ? (duo.won ? `Linked in ${used} of ${MAX_TRIES}` : 'Not linked today') : used ? `${used} of ${MAX_TRIES} tries used` : 'Not played yet';
+  return (
+    <p className="home-duo-state" aria-label={`${said}${streak > 0 ? `, ${streak}-day streak` : ''}`}>
+      <span className="home-duo-pips" aria-hidden="true">{Array.from({ length: MAX_TRIES }, (_, i) => <i key={i} className={i < used ? (duo?.won && i === used - 1 ? 'is-win' : 'is-miss') : ''} />)}</span>
+      {streak > 0 && <span className="home-duo-streak" aria-hidden="true"><FlameIcon size={16} />{streak}</span>}
+    </p>
+  );
 }
 
 /** Decorative archive cards: neutral silhouettes, no invented historical player. */

@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { dailyNumber } from '../game/state';
-import { DuoDay, DuoMode, DuoPuzzle, MAX_TRIES, MODE_LABEL, addPick, candidates, duoFor, duoPros, duoShare, duoStreak, emptyDay, lineupLabel, linksFor, loadDuo, normalizeDuoDay, optionsFor, saveDuo, sharedLineups } from '../game/duo';
+import { DuoDay, DuoMode, DuoPuzzle, MAX_TRIES, MODE_LABEL, addPick, candidates, cardsFor, duoFor, duoPros, duoShare, duoStreak, emptyDay, hintLineups, linksFor, loadDuo, normalizeDuoDay, saveDuo, sharedLineups } from '../game/duo';
 import { Pro, searchState } from '../game/guess';
+import { Roster } from '../data/rosters';
+import { usePrefs } from '../ui/prefs';
+import { useShortcuts } from '../ui/shortcuts';
 import { pageUrl } from '../game/share';
 import { Avatar, TeamBadge } from '../ui/art';
 import { Flag } from '../ui/flags';
@@ -19,13 +22,15 @@ const lastRoster = (p: Pro) => p.rosters[p.rosters.length - 1];
 const badgeRoster = (p: Pro, org: string) => [...p.rosters].reverse().find((r) => r.org === org)!;
 
 /** One end of the chain: photo, nick, nation and the teams they played for (never roles or ratings). */
-function Who({ p }: { p: Pro }) {
+function Who({ p, hint }: { p: Pro; hint?: Roster }) {
   return (
     <div className="duo__who">
       <span className="duo__photo"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
       <strong>{p.nick}</strong>
       <span className="duo__sub"><Flag code={p.country} size={16} decorative /><b>{p.country}</b></span>
       <span className="duo__orgs" aria-label={`Teams: ${p.orgs.join(', ')}`}>{p.orgs.slice(-3).map((org) => <span key={org} title={org}><TeamBadge roster={badgeRoster(p, org)} size={24} /></span>)}</span>
+      {/* A clue, drawn: the lineup the answer shared with this pro. It appears after a wrong try in Normal mode. */}
+      {hint && <span className="duo__hint" role="img" aria-label={`Clue: the answer played with ${p.nick} at ${hint.org} in ${hint.year}`}><TeamBadge roster={hint} size={22} /><b>{hint.year}</b></span>}
     </div>
   );
 }
@@ -46,7 +51,11 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
   const all = useMemo(() => duoPros(date), [date]);
   const links = useMemo(() => linksFor(date), [date]);
   const a = all.get(puzzle.a)!, b = all.get(puzzle.b)!;
-  const options = useMemo(() => (day.mode === 'normal' ? optionsFor(date, puzzle, seed) : []), [day.mode, date, puzzle, seed]);
+  const cards = useMemo(() => (day.mode === 'normal' ? cardsFor(date, puzzle, seed) : null), [day.mode, date, puzzle, seed]);
+  const options = cards?.options ?? [];
+  const hints = useMemo(() => (cards ? hintLineups(date, puzzle, cards.right) : null), [cards, date, puzzle]);
+  const wrong = day.won ? day.picks.length - 1 : day.picks.length;
+  const chain = useRef<HTMLDivElement>(null);
   const [text, setText] = useState('');
   const [active, setActive] = useState(0);
   const [shake, setShake] = useState(false);
@@ -80,12 +89,24 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
     if (text.trim()) { setShake(true); setTimeout(() => setShake(false), 420); }
   };
 
+  const prefs = usePrefs();
+  const live = day.mode === 'normal' && !day.done;
+  useShortcuts(prefs.shortcuts, live ? Object.fromEntries(options.map((id, i) => [String(i + 1), () => { if (!day.picks.includes(id)) pick(id); }])) : {}, false);
+  /** The photos lean a little towards the pointer. Only with a mouse, and never with reduced motion (the CSS ignores the variables then). */
+  const tilt = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse' || !chain.current) return;
+    const r = chain.current.getBoundingClientRect();
+    chain.current.style.setProperty('--px', String(Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - .5) * 2)).toFixed(3)));
+    chain.current.style.setProperty('--py', String(Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - .5) * 2)).toFixed(3)));
+  };
+  const untilt = () => { chain.current?.style.setProperty('--px', '0'); chain.current?.style.setProperty('--py', '0'); };
+
   const rightIds = puzzle.connectors;
   const shown = day.done ? all.get(day.won ? day.picks[day.picks.length - 1] : rightIds[0]) : null;
   return (
     <>
-      <div className={`duo__chain ${day.won ? 'is-won' : day.done ? 'is-lost' : ''}`} role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
-        <Who p={a} />
+      <div ref={chain} onPointerMove={tilt} onPointerLeave={untilt} className={`duo__chain ${day.won ? 'is-won' : day.done ? 'is-lost' : ''}`} role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
+        <Who p={a} hint={!day.done && wrong >= 1 ? hints?.a : undefined} />
         <span className="duo__link" aria-hidden="true" />
         <span className={`duo__mid ${shown ? 'is-open' : ''}`} aria-hidden="true">
           {shown ? <span className="duo__mid-photo"><Avatar player={photoOf(shown)} roster={lastRoster(shown)} /></span> : <b>?</b>}
@@ -93,15 +114,15 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
           {fresh && day.won && <span className="duo__burst">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ ['--a' as string]: `${(i * 360) / 16}deg`, ['--r' as string]: `${70 + (i % 3) * 18}px` }} />)}</span>}
         </span>
         <span className="duo__link" aria-hidden="true" />
-        <Who p={b} />
+        <Who p={b} hint={!day.done && wrong >= 2 ? hints?.b : undefined} />
       </div>
 
       {day.mode === null && !day.done && (
         <div className="duo__modes">
-          <p className="duo__modes-t"><span>Choose your way in</span><small>Locked for today once you pick</small></p>
+          <p className="duo__modes-t"><span>Choose your way in</span><small><LockGlyph /> Locked once you pick</small></p>
           <div className="duo__modes-row">
-            <button type="button" className="dbtn duo__mode" data-sfx="none" onClick={() => choose('normal')}><span><b>Normal</b><small>Pick from four cards</small></span><ArrowRightIcon size={22} /></button>
-            <button type="button" className="dbtn dbtn--dark duo__mode" data-sfx="none" onClick={() => choose('hard')}><span><b>Hard 💀</b><small>Type the name yourself</small></span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="dbtn duo__mode" data-sfx="none" onClick={() => choose('normal')}><i className="duo__mini duo__mini--cards" aria-hidden="true"><s /><s /><s /><s /></i><span><b>Normal</b><small>Four cards</small></span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="dbtn dbtn--dark duo__mode" data-sfx="none" onClick={() => choose('hard')}><i className="duo__mini duo__mini--type" aria-hidden="true"><s /></i><span><b>Hard 💀</b><small>Type it yourself</small></span><ArrowRightIcon size={22} /></button>
           </div>
         </div>
       )}
@@ -120,6 +141,7 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
                 return (
                   <button key={id} type="button" className={`duo__card ${struck ? 'is-struck' : ''} ${struck && fresh === id ? 'is-new' : ''}`} style={{ ['--i' as string]: i }} disabled={struck} data-sfx="none" onClick={() => pick(id)}
                     aria-label={struck ? `${p.nick}, ${p.country}. Not a connector.` : `${p.nick}, ${p.country}`}>
+                    <kbd className="duo__key" aria-hidden="true">{i + 1}</kbd>
                     <span className="duo__cphoto"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
                     <span className="duo__ctext"><strong>{p.nick}</strong><span className="duo__sub"><Flag code={p.country} size={14} decorative /><b>{p.country}</b></span></span>
                     {struck && <span className="duo__x" aria-hidden="true">✗<small>Not a connector</small></span>}
@@ -182,12 +204,14 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
               const chosen = day.picks.includes(id);
               return (
                 <li key={id} className={chosen ? 'is-chosen' : ''} style={{ ['--i' as string]: i }}>
-                  <span className="duo__cphoto"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
-                  <div>
-                    <strong><Flag code={p.country} size={16} decorative />{p.nick}{chosen && <i aria-hidden="true"> ✓</i>}</strong>
-                    <span>With <b>{a.nick}</b>: {sharedLineups(links, id, a.id).map(lineupLabel).join(', ')}</span>
-                    <span>With <b>{b.nick}</b>: {sharedLineups(links, id, b.id).map(lineupLabel).join(', ')}</span>
+                  <div className="duo__trio">
+                    <span className="duo__t-end"><span className="duo__tphoto"><Avatar player={photoOf(a)} roster={lastRoster(a)} /></span><b>{a.nick}</b></span>
+                    <Pills rosters={sharedLineups(links, id, a.id)} />
+                    <span className="duo__t-mid"><span className="duo__tphoto duo__tphoto--big"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span><strong><Flag code={p.country} size={16} decorative />{p.nick}{chosen && <i aria-hidden="true"> ✓</i>}</strong></span>
+                    <Pills rosters={sharedLineups(links, id, b.id)} />
+                    <span className="duo__t-end"><span className="duo__tphoto"><Avatar player={photoOf(b)} roster={lastRoster(b)} /></span><b>{b.nick}</b></span>
                   </div>
+                  <span className="sr">{p.nick} played with {a.nick}: {sharedLineups(links, id, a.id).map((r) => `${r.org} ${r.year}`).join(', ')}. And with {b.nick}: {sharedLineups(links, id, b.id).map((r) => `${r.org} ${r.year}`).join(', ')}.</span>
                 </li>
               );
             })}
@@ -198,6 +222,13 @@ function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps)
     </>
   );
 }
+
+/** The lineups two pros shared, as badges with a year: the proof of a link, drawn on the wire between them. */
+function Pills({ rosters }: { rosters: Roster[] }) {
+  return <span className="duo__pills" aria-hidden="true">{rosters.slice(-2).map((r) => <span key={r.id} className="duo__pill" title={`${r.org} ${r.year}`}><TeamBadge roster={r} size={22} /><b>{r.year}</b></span>)}</span>;
+}
+
+const LockGlyph = () => <svg className="duo__lock" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" fill="none" stroke="currentColor" strokeWidth="2.4" /></svg>;
 
 /** The faceless pair over the title: two silhouettes joined through a question mark, in the same box as Guess the pro's. */
 function DuoMark() {

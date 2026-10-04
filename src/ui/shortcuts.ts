@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 export interface Shortcut { keys: string; does: string; where: string }
 export const SHORTCUTS: Shortcut[] = [
   { keys: '1  2  3', does: 'Go to the first player in that team', where: 'Draft' },
+  { keys: '1  2  3  4', does: 'Pick that card', where: 'Duo Link' },
   { keys: 'Enter', does: 'Draft the player you chose', where: 'Draft' },
   { keys: 'Space', does: 'Pause or resume playback', where: 'Match' },
   { keys: '→', does: 'Next round, while paused', where: 'Match' },
@@ -22,7 +23,7 @@ export function typing(e: KeyboardEvent): boolean {
 }
 
 /** The handlers a screen gives; a key with no handler is left alone. */
-export type ShortcutHandlers = Partial<Record<'1' | '2' | '3' | 'Enter' | 't' | 'm' | '?', () => void>>;
+export type ShortcutHandlers = Partial<Record<'1' | '2' | '3' | '4' | 'Enter' | 't' | 'm' | '?', () => void>>;
 
 export function useShortcuts(on: boolean, handlers: ShortcutHandlers, blocked: boolean) {
   const ref = useRef(handlers);

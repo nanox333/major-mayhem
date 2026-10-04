@@ -222,3 +222,119 @@
   .duo .dbtn--try { min-width: 130px; }
   .duo .guess__after .dbtn--sm { width: 100%; }
 }
+
+/* ---------- more show, less tell ---------- */
+/* a clue, drawn under the pro it belongs to */
+.duo__hint { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 4px 10px 4px 6px; background: rgba(249, 132, 37, .14); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .55); transform: skewX(-12deg); }
+.duo__hint > * { transform: skewX(12deg); }
+.duo__hint b { font: 800 1rem/1 var(--f-head); letter-spacing: .06em; color: var(--accent-hi); }
+/* the number keys, on each card */
+.duo__key { position: absolute; left: 6px; top: 6px; z-index: 2; display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; background: rgba(0, 0, 0, .55); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); color: var(--text-2); font: 700 .72rem/1 var(--f-read); }
+.duo__card:not(:disabled):hover .duo__key { background: var(--accent); color: #170c03; box-shadow: none; }
+.duo__card.is-struck .duo__key { opacity: .3; }
+@media (hover: none) { .duo__key { display: none; } }
+/* the cards get the buttons' light sweep */
+.duo__card { overflow: hidden; isolation: isolate; }
+.duo__card::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .13), transparent); transform: skewX(-18deg); transition: left .6s ease-out; pointer-events: none; }
+.duo__card:not(:disabled):hover::before { left: 115%; }
+/* what the two ways in look like */
+.duo .duo__mode { gap: 16px; }
+.duo__mini { flex: none; display: block; width: 46px; height: 46px; }
+.duo__mini--cards { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.duo__mini--cards s { background: rgba(23, 12, 3, .5); box-shadow: inset 0 0 0 1px rgba(23, 12, 3, .25); transition: background .2s, transform .2s; }
+.duo__mini--cards s:nth-child(2) { background: rgba(23, 12, 3, .8); }
+.duo__mini--cards s:nth-child(3) { background: rgba(23, 12, 3, .3); }
+.duo .dbtn:hover .duo__mini--cards s:nth-child(2) { transform: translateY(-3px); background: #170c03; }
+.duo__mini--type { display: flex; align-items: center; padding: 0 7px; background: rgba(249, 132, 37, .1); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .6); }
+.duo__mini--type s { display: block; width: 3px; height: 22px; background: var(--accent-hi); }
+.duo__lock { vertical-align: -1px; margin-right: 2px; color: var(--accent); }
+
+/* the proof of a link: the two ends, the lineups they shared with the answer, and the answer between them */
+.duo__answers li { display: block; }
+.duo__trio { display: grid; grid-template-columns: auto minmax(70px, 1fr) auto minmax(70px, 1fr) auto; align-items: center; gap: 0 10px; max-width: 760px; margin: 0 auto; }
+.duo__t-end, .duo__t-mid { display: grid; justify-items: center; gap: 6px; min-width: 0; }
+.duo__t-end b { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 1.1rem/1 var(--f-head); letter-spacing: .04em; color: var(--text-2); }
+.duo__tphoto { display: block; width: 58px; height: 58px; overflow: hidden; background: #181918; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12), inset 0 -3px 0 var(--accent); }
+.duo__tphoto--big { width: 88px; height: 88px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--go); }
+.duo__reveal:not(.is-won) .duo__tphoto--big { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--loss); }
+.duo__t-mid strong { display: flex; align-items: center; gap: 8px; font: 800 1.7rem/1 var(--f-head); letter-spacing: .03em; color: var(--strong); }
+.duo__t-mid strong i { color: var(--go-text); font-style: normal; }
+.duo__pills { position: relative; display: grid; gap: 6px; justify-items: center; align-self: start; margin-top: 26px; min-width: 0; padding: 0 4px; }
+.duo__pills::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; z-index: 0; background: repeating-linear-gradient(90deg, var(--control) 0 4px, transparent 4px 8px); }
+.duo__pill { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 5px; padding: 3px 8px 3px 4px; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
+.duo__pill b { font: 800 .95rem/1 var(--f-head); letter-spacing: .06em; color: var(--strong); }
+.duo__answers .sr { position: absolute; }
+
+/* the photos lean towards the pointer (set by DuoLink.tsx); nothing moves with reduced motion */
+@media (prefers-reduced-motion: no-preference) and (hover: hover) {
+  .duo__chain { perspective: 900px; }
+  .duo__chain .duo__photo { transition: transform .18s ease-out; transform: translate3d(calc(var(--px, 0) * 7px), calc(var(--py, 0) * 5px), 0) rotateY(calc(var(--px, 0) * 9deg)) rotateX(calc(var(--py, 0) * -7deg)); }
+  .duo__chain .duo__who:first-child .duo__photo { transform: translate3d(calc(var(--px, 0) * 10px), calc(var(--py, 0) * 6px), 0) rotateY(calc(var(--px, 0) * 12deg)) rotateX(calc(var(--py, 0) * -8deg)); }
+  .duo__chain .duo__mid { transform: translate3d(calc(var(--px, 0) * -6px), calc(var(--py, 0) * -4px), 0); }
+}
+/* a clue arrives, and a hint pill lands */
+@media (prefers-reduced-motion: no-preference) {
+  .duo__hint { animation: duo-hint .6s cubic-bezier(.3, 1.5, .5, 1) .15s both; }
+  .duo__pills .duo__pill { animation: duo-pop .45s cubic-bezier(.3, 1.6, .5, 1) calc(1.3s + var(--i, 0) * .1s) both; }
+  .duo__pills::before { transform-origin: left; animation: duo-wire .5s ease-out 1.1s both; }
+  .duo__t-end, .duo__t-mid { animation: duo-pop .5s cubic-bezier(.3, 1.4, .5, 1) 1s both; }
+  .duo__t-mid { animation-delay: 1.15s; }
+  /* a green beam races to the middle when you get it */
+  .duo__chain.is-won .duo__link::after { display: block; width: 46%; height: 5px; margin-top: -2.5px; background: linear-gradient(90deg, transparent, var(--go-text)); filter: drop-shadow(0 0 6px var(--go)); animation: duo-beam .5s cubic-bezier(.5, 0, .9, .4) both; }
+  .duo__chain.is-won .duo__mid ~ .duo__link::after { background: linear-gradient(270deg, transparent, var(--go-text)); left: auto; right: 0; animation-name: duo-beam-r; }
+  .duo__mode .duo__mini--type s { animation: duo-caret 1s steps(1) infinite; }
+}
+@keyframes duo-hint { from { opacity: 0; transform: skewX(-12deg) translateY(10px) scale(.7); } to { opacity: 1; transform: skewX(-12deg); } }
+@keyframes duo-beam { from { left: 0; opacity: 1; } to { left: 54%; opacity: 0; } }
+@keyframes duo-beam-r { from { right: 0; opacity: 1; } to { right: 54%; opacity: 0; } }
+@keyframes duo-caret { 50% { opacity: 0; } }
+@media (max-width: 560px) {
+  .duo__mini { width: 36px; height: 36px; }
+  .duo .duo__mode { gap: 12px; }
+  .duo__trio { gap: 0 4px; }
+  .duo__tphoto { width: 42px; height: 42px; }
+  .duo__tphoto--big { width: 60px; height: 60px; }
+  .duo__t-mid strong { font-size: 1.15rem; flex-direction: column; gap: 4px; }
+  .duo__t-end b { max-width: 64px; font-size: .9rem; }
+  .duo__pills { min-width: 0; margin-top: 16px; padding: 0; }
+  .duo__trio { grid-template-columns: auto minmax(34px, 1fr) auto minmax(34px, 1fr) auto; }
+  .duo__pill { padding: 2px 5px 2px 3px; gap: 3px; }
+  .duo__pill b { font-size: .8rem; }
+  .duo__hint { padding: 3px 7px 3px 4px; }
+}
+
+/* ---------- the Home's Duo Link card: today's pair, live ---------- */
+.home-duo-live { display: grid; grid-template-columns: minmax(0, 1fr) minmax(24px, 56px) 86px minmax(24px, 56px) minmax(0, 1fr); align-items: center; width: 100%; max-width: 560px; margin-left: auto; padding: 8px 0; }
+.home-duo-end { display: grid; justify-items: center; gap: 8px; margin: 0; min-width: 0; }
+.home-duo-end > span { display: block; width: clamp(72px, 9vw, 112px); aspect-ratio: 1; overflow: hidden; background: #181918; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14), inset 0 -3px 0 var(--accent); }
+.home-duo-end figcaption { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 1.25rem/1 var(--f-head); letter-spacing: .04em; color: var(--strong); }
+.home-duo-wire { position: relative; display: block; height: 12px; background: radial-gradient(circle, var(--control) 1.3px, transparent 1.6px) 0 50% / 9px 9px repeat-x; }
+.home-duo-wire::before { content: ""; position: absolute; top: 50%; left: 0; width: 7px; height: 7px; background: var(--accent); transform: translateY(-50%) skewX(-20deg); }
+.home-duo-wire:last-of-type::before { left: auto; right: 0; }
+.home-duo-q { position: relative; display: grid; place-items: center; height: 104px; background: #0b0c0b; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--accent); overflow: hidden; }
+.home-duo-q b { font: 800 3.2rem/1 var(--f-head); color: var(--accent); }
+.home-duo-live.is-won .home-duo-q { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), inset 0 -3px 0 var(--go); }
+.home-duo-live.is-won .home-duo-wire { background-image: radial-gradient(circle, var(--go) 1.6px, transparent 2px); }
+.home-duo-state { display: flex; align-items: center; gap: 14px; margin: 0; min-height: 22px; }
+.home-duo-pips { display: inline-flex; gap: 6px; }
+.home-duo-pips i { width: 26px; height: 8px; background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28); transform: skewX(-20deg); }
+.home-duo-pips i.is-miss { background: var(--loss); box-shadow: none; }
+.home-duo-pips i.is-win { background: var(--go); box-shadow: none; }
+.home-duo-streak { display: inline-flex; align-items: center; gap: 5px; color: var(--accent-hi); font: 800 1.1rem/1 var(--f-head); }
+@media (prefers-reduced-motion: no-preference) {
+  .home-duo-q { animation: duo-glow 2.8s ease-in-out infinite; }
+  .home-duo-live.is-won .home-duo-q { animation: none; }
+  .home-duo-wire::after { content: ""; position: absolute; top: 50%; left: 0; width: 18px; height: 3px; margin-top: -1.5px; background: linear-gradient(90deg, transparent, var(--accent-hi)); opacity: 0; animation: duo-spark 2.6s ease-in-out infinite; }
+  .home-duo-wire:last-of-type::after { background: linear-gradient(270deg, transparent, var(--accent-hi)); left: auto; right: 0; animation-name: duo-spark-r; animation-delay: .3s; }
+  .home-duo-live.is-won .home-duo-wire::after { display: none; }
+  .home-mode-card--duo:hover .home-duo-wire::after { animation-duration: 1.1s; }
+  .home-mode-card--duo:hover .home-duo-end > span { transform: translateY(-3px); }
+  .home-duo-end > span { transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+}
+@media (max-width: 640px) {
+  .home-duo-live { grid-template-columns: minmax(0, 1fr) 14px 50px 14px minmax(0, 1fr); }
+  .home-duo-q { height: 62px; }
+  .home-duo-q b { font-size: 2rem; }
+  .home-duo-end figcaption { font-size: 1rem; }
+  .home-duo-end > span { width: 60px; }
+}

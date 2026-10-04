@@ -97,7 +97,7 @@ const take = <T,>(xs: T[], n: number): T[] => shuffle(xs).slice(0, n);
  * end, and never someone who shared a team (in any year) with both ends, so a correct card is never marked wrong. Two decoys are near misses (a teammate of just one
  * end), the third is a stranger to both, from another nation when there is one.
  */
-export function optionsFor(date: string, p: DuoPuzzle, seed = `duo-opts-${date}`): string[] {
+export function cardsFor(date: string, p: DuoPuzzle, seed = `duo-opts-${date}`): { options: string[]; right: string } {
   const { all, known, links } = dayData(date);
   return G.seeded(seed, () => {
     const knownConnectors = p.connectors.filter((c) => all.get(c) && isKnown(all.get(c)!));
@@ -115,8 +115,16 @@ export function optionsFor(date: string, p: DuoPuzzle, seed = `duo-opts-${date}`
     picked.push(...take(strangers.length ? strangers : far, 1));
     // Not enough of one kind (a small day): fill from whoever is left.
     for (const x of shuffle(pool)) { if (picked.length >= 3) break; if (!picked.includes(x)) picked.push(x); }
-    return shuffle([right, ...picked.slice(0, 3).map((x) => x.id)]);
+    return { options: shuffle([right, ...picked.slice(0, 3).map((x) => x.id)]), right };
   });
+}
+export const optionsFor = (date: string, p: DuoPuzzle, seed?: string): string[] => cardsFor(date, p, seed).options;
+
+/** The lineup the right card shared with each end (their latest one), which Normal mode shows as a clue after a wrong try: a team badge and a year. */
+export function hintLineups(date: string, p: DuoPuzzle, right: string): { a: Roster; b: Roster } {
+  const links = linksFor(date);
+  const last = (end: string) => { const l = sharedLineups(links, right, end); return l[l.length - 1]; };
+  return { a: last(p.a), b: last(p.b) };
 }
 
 /** The lineups two players shared, oldest first, as "Cloud9 2016": why they are linked. */
