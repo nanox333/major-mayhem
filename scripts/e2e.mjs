@@ -96,7 +96,7 @@ async function run(viewport, tag) {
       await p.screenshot({ path: `shots/${tag}-2b-coach.png`, fullPage: true });
     }
     // The draft screen has the lineup and the sidebar's hint from the first case on (#102, #109).
-    if (r === 0 && !(await p.locator('.side-card .chem__total').count())) throw new Error('the sidebar has no chemistry panel');
+    if (r === 0 && !(await p.locator('.dstat__word').count())) throw new Error('the draft has no chemistry line');
     const picked = await pickFrom(p, r % 3, r === 0 ? `shots/${tag}-2-players.png` : undefined);
     if (r === 6 && !/Bench/.test(picked)) throw new Error('round 7 is not the bench round, got "' + picked + '"');
     await p.waitForTimeout(300);
@@ -436,8 +436,8 @@ async function draftui() {
   const row = p.locator('button.prow').first();
   await row.hover();
   if ((await p.locator('.strip__slot.is-preview').count()) !== 1) throw new Error('hovering a player should preview them in the lineup');
-  if (!(await p.locator('.chem__if h4').count())) throw new Error('hovering a player should show what they add to chemistry');
-  if (!(await p.locator('.chem__majors').count())) throw new Error('hovering a player should show the Majors they attended (#48)');
+  if (!(await p.locator('.why li', { hasText: /chemistry|Same country|era|Shared/i }).count())) throw new Error('hovering a player should show what they add to chemistry');
+  if (!(await p.locator('.why li', { hasText: 'Majors:' }).count())) throw new Error('hovering a player should show the Majors they attended (#48)');
   await p.mouse.move(2, 2); await p.waitForTimeout(150);
   if (await p.locator('.strip__slot.is-preview').count()) throw new Error('leaving a player should remove a hover preview');
   await row.click(); await p.mouse.move(2, 2); await p.waitForTimeout(150);

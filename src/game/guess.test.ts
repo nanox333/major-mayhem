@@ -8,8 +8,8 @@ describe('guess the pro', () => {
     const s1 = all.get('s1mple')!;
     expect(s1.country).toBe('UA');
     expect(s1.best).toBe(3);
-    expect(s1.first).toBe(2016);
-    expect(s1.orgs).toEqual(expect.arrayContaining(['Team Liquid', 'Natus Vincere']));
+    expect(s1.first).toBe(2014); // HellRaisers at DreamHack Winter 2014
+    expect(s1.orgs).toEqual(expect.arrayContaining(['Team Liquid', 'Natus Vincere', 'HellRaisers']));
     expect(s1.majors).toBeGreaterThanOrEqual(3);
   });
   it('gives everyone the same answer for a day, from rosters that day, and a known name', () => {

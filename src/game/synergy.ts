@@ -9,16 +9,16 @@ export interface Synergy { kind: SynergyKind; label: string; value: number }
 /** Countries that count together for a core. The CIS scene shares a language and a talent pipeline. */
 const REGION: Record<string, string> = { RU: 'CIS', UA: 'CIS', KZ: 'CIS', BY: 'CIS' };
 export const NATION: Record<string, string> = {
-  AU: 'Australian', BA: 'Bosnian', BG: 'Bulgarian', BR: 'Brazilian', CA: 'Canadian', CH: 'Swiss', DE: 'German', DK: 'Danish',
-  EE: 'Estonian', FI: 'Finnish', FR: 'French', GB: 'British', GT: 'Guatemalan', HU: 'Hungarian', IL: 'Israeli', KZ: 'Kazakh',
-  LT: 'Lithuanian', LV: 'Latvian', ME: 'Montenegrin', MK: 'Macedonian', MN: 'Mongolian', NO: 'Norwegian', PL: 'Polish',
+  AU: 'Australian', BA: 'Bosnian', BE: 'Belgian', BG: 'Bulgarian', BR: 'Brazilian', CA: 'Canadian', CH: 'Swiss', CZ: 'Czech', DE: 'German', DK: 'Danish',
+  EE: 'Estonian', FI: 'Finnish', FR: 'French', GB: 'British', GT: 'Guatemalan', HU: 'Hungarian', IL: 'Israeli', JO: 'Jordanian', KZ: 'Kazakh',
+  LT: 'Lithuanian', LV: 'Latvian', ME: 'Montenegrin', MK: 'Macedonian', MN: 'Mongolian', NL: 'Dutch', NO: 'Norwegian', PL: 'Polish',
   PT: 'Portuguese', RO: 'Romanian', RS: 'Serbian', RU: 'Russian', SE: 'Swedish', SK: 'Slovak', TR: 'Turkish', UA: 'Ukrainian',
   US: 'American', XK: 'Kosovar', CIS: 'CIS',
 };
 export const COUNTRY: Record<string, string> = {
-  AU: 'Australia', BA: 'Bosnia and Herzegovina', BG: 'Bulgaria', BR: 'Brazil', CA: 'Canada', CH: 'Switzerland', DE: 'Germany',
-  DK: 'Denmark', EE: 'Estonia', FI: 'Finland', FR: 'France', GB: 'United Kingdom', GT: 'Guatemala', HU: 'Hungary', IL: 'Israel',
-  KZ: 'Kazakhstan', LT: 'Lithuania', LV: 'Latvia', ME: 'Montenegro', MK: 'North Macedonia', MN: 'Mongolia', NO: 'Norway',
+  AU: 'Australia', BA: 'Bosnia and Herzegovina', BE: 'Belgium', BG: 'Bulgaria', BR: 'Brazil', CA: 'Canada', CH: 'Switzerland', CZ: 'Czechia', DE: 'Germany',
+  DK: 'Denmark', EE: 'Estonia', FI: 'Finland', FR: 'France', GB: 'United Kingdom', GT: 'Guatemala', HU: 'Hungary', IL: 'Israel', JO: 'Jordan',
+  KZ: 'Kazakhstan', LT: 'Lithuania', LV: 'Latvia', ME: 'Montenegro', MK: 'North Macedonia', MN: 'Mongolia', NL: 'Netherlands', NO: 'Norway',
   PL: 'Poland', PT: 'Portugal', RO: 'Romania', RS: 'Serbia', RU: 'Russia', SE: 'Sweden', SK: 'Slovakia', TR: 'Türkiye',
   UA: 'Ukraine', US: 'United States', XK: 'Kosovo',
 };

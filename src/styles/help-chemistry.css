@@ -1,0 +1,54 @@
+/* How to play, Chemistry: the links as small cards, each with a worked example, the chip sizes, and a worked total. */
+.chemg { display: grid; gap: 12px; margin-top: 10px; }
+.chemg p { margin: 0; }
+.chemg__legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; color: var(--muted); font-size: .85rem; }
+.chemg__chip { display: inline-block; min-width: 2.2em; padding: 2px 8px; text-align: center; background: rgba(255, 255, 255, .06); color: var(--go-text); font: 800 .78rem/1.3 var(--f-read); letter-spacing: .06em; }
+.chemg__chip.is-bad { color: var(--loss-text); }
+.chemg__list { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; }
+.chemg__item, .chemg__list > li { display: grid; align-content: start; gap: 6px; padding: 12px 14px 14px; background: rgba(255, 255, 255, .035); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 3px 0 0 var(--go); }
+.chemg__list > li.is-bad { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 3px 0 0 var(--loss); }
+.chemg__list h5 { margin: 0; font: 800 1rem/1.1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; color: var(--strong); }
+.chemg__list p { color: var(--text-2); font-size: .9rem; line-height: 1.45; }
+.chemg__ex { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.chemg__ex span { display: inline-flex; align-items: center; gap: 8px; padding: 3px 4px 3px 10px; background: rgba(0, 0, 0, .28); color: var(--muted); font-size: .8rem; }
+.chemg__sub { margin: 6px 0 -4px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .1); color: var(--muted); font: 700 .7rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.chemg__eg { padding: 10px 14px; background: rgba(249, 132, 37, .08); box-shadow: inset 3px 0 0 var(--accent); }
+.chemg__eg .chemg__chip { margin: 0 2px; }
+@media (max-width: 620px) { .chemg__list { grid-template-columns: 1fr; } }
+/* The generic help paragraph padding is for plain text; here the cards own their spacing. */
+.details .chemg { padding: 12px 14px 14px; }
+.details .chemg p { padding: 0; }
+.details .chemg__list h5, .details .chemg__sub { padding-left: 0; }
+.details .chemg__sub { padding-top: 12px; }
+.details .chemg__list > li { gap: 4px; padding: 10px 12px 12px; }
+.details .chemg p.chemg__eg { padding: 10px 14px; }
+
+/* ---------- How to play: the whole guide ---------- */
+.hpflow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 16px 0 12px; }
+.hpflow span { padding: 6px 12px; background: rgba(255, 255, 255, .06); box-shadow: inset 0 -2px 0 var(--accent); font: 800 .8rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; color: var(--strong); }
+.hpflow i { color: var(--accent-hi); font-style: normal; font-size: 1.1rem; }
+.hp .hp__lead { margin: 0 0 6px; font-size: .92rem; line-height: 1.55; color: var(--text-2); }
+.hp .hpg { display: flex; align-items: baseline; gap: 12px; margin: 26px 0 10px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, .1); font: 800 1.35rem/1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; color: var(--strong); }
+.hp .hpg small { color: var(--muted); font: 600 .68rem/1 var(--f-read); letter-spacing: .16em; }
+.hp .hpg::before { content: ""; align-self: center; width: 8px; height: 16px; background: var(--accent); transform: skewX(-18deg); }
+.hps { display: grid; gap: 10px; padding: 12px 14px 14px; }
+.hp .details .hps p { margin: 0; padding: 0; font-size: .9rem; line-height: 1.55; color: var(--text-2); }
+.hp .details .hps p.muted { color: var(--muted); font-size: .8rem; }
+.hpl { display: grid; grid-template-columns: minmax(7.5rem, 11rem) minmax(0, 1fr); gap: 0; margin: 0; }
+.hpl dt, .hpl dd { margin: 0; padding: 9px 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+.hpl dt:first-of-type, .hpl dt:first-of-type + dd { border-top: 0; }
+.hpl dt { padding-right: 14px; font: 800 .86rem/1.35 var(--f-head); letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
+.hpl dd { font-size: .9rem; line-height: 1.5; color: var(--text-2); }
+.hp .details .hps p.hpx { padding: 10px 14px; background: rgba(249, 132, 37, .08); box-shadow: inset 3px 0 0 var(--accent); }
+.hp .details .hps p.hpx b { color: var(--accent-hi); }
+.hp .details .hps p.hpf { display: flex; flex-wrap: wrap; gap: 6px; }
+.hpf span { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; background: rgba(255, 255, 255, .06); font-size: .85rem; color: var(--text-2); }
+.hpf b { color: var(--accent-hi); letter-spacing: .08em; }
+.hpk { list-style: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 14px; margin: 0; padding: 0; }
+.hpk li { display: contents; }
+.hpk li > * { padding: 8px 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+.hpk li:first-child > * { border-top: 0; }
+.hpk kbd { min-width: 3.4em; padding: 3px 9px; text-align: center; background: rgba(255, 255, 255, .08); box-shadow: inset 0 -2px 0 rgba(255, 255, 255, .18); font: 700 .8rem/1.4 var(--f-read); color: var(--strong); align-self: center; justify-self: start; }
+.hpk span { font-size: .9rem; color: var(--text-2); }
+.hpk small { color: var(--muted); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; }
+@media (max-width: 620px) { .hpl { grid-template-columns: 1fr; } .hpl dd { border-top: 0; padding-top: 0; } .hpl dt:first-of-type + dd { padding-top: 0; } }

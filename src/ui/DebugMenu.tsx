@@ -3,12 +3,12 @@ import { ROSTERS } from '../data/rosters';
 import { ACHIEVEMENTS } from '../game/achievements';
 import { Run, today } from '../game/state';
 import { DebugStop, randomRun } from './debugRuns';
+import { DEBUG_FLAG, debugEnabled as enabled, debugInUrl, setDebugRatings, useDebugRatings } from './debugFlags';
 
 /** Debug tools: hidden unless ?debug is in the address or Ctrl+Shift+D was pressed (remembered in this browser), in every build. Nothing here is part of the game. */
-const FLAG = 'mm-debug';
+const FLAG = DEBUG_FLAG;
 const mine = (k: string) => k.startsWith('major-mayhem') || k.startsWith('mm-');
 const read = () => { try { return Object.keys(localStorage).filter(mine).sort().map((k) => ({ k, n: (localStorage.getItem(k) ?? '').length })); } catch { return []; } };
-const enabled = () => { try { return localStorage.getItem(FLAG) === '1' || /[?&]debug\b/.test(location.search); } catch { return false; } };
 
 
 const STATS_KEY = 'major-mayhem-stats-v1';
@@ -21,11 +21,13 @@ const dailyEntry = (i: number) => { const [placement, reached] = PLACES[i % PLAC
 const write = (st: unknown) => { try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch { /* ignore */ } };
 
 export function DebugMenu({ jump }: { /** Replaces the run on screen and opens the draft page. */ jump?: (run: Run) => void }) {
-  const [on, setOn] = useState(enabled);
+  // Asking for it in the address turns it on for this browser, since a page address can lose the `?debug` as you move about (until "Hide debug").
+  const [on, setOn] = useState(() => { if (debugInUrl()) { try { localStorage.setItem(FLAG, '1'); } catch { /* storage unavailable */ } } return enabled(); });
   const [open, setOpen] = useState(false);
   const [keys, setKeys] = useState(read);
   const [note, setNote] = useState('');
   const [days, setDays] = useState(5);
+  const ratings = useDebugRatings();
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') { e.preventDefault(); try { localStorage.setItem(FLAG, '1'); } catch { /* storage unavailable */ } setOn(true); setOpen((o) => !o); }
@@ -108,6 +110,7 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
             <button type="button" onClick={loadDummy}>Load dummy stats</button>
             <button type="button" onClick={() => setAch(true)}>Unlock all achievements</button>
             <button type="button" onClick={() => setAch(false)}>Clear achievements</button>
+            <button type="button" aria-pressed={ratings} onClick={() => setDebugRatings(!ratings)}>Player ratings (archive and draft): {ratings ? 'on' : 'off'}</button>
             <label className="dbg__streak"><span>Streak</span><input type="number" min={0} max={60} value={days} onChange={(e) => setDays(Math.max(0, Math.min(60, Number(e.target.value) || 0)))} aria-label="Daily streak days" /><button type="button" onClick={() => setStreak(days)}>Set</button></label>
           </div>
           <h4>Saved in this browser</h4>

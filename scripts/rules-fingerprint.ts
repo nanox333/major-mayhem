@@ -3,7 +3,7 @@
 // v1 fingerprints with the ones recorded from the launch code (commit afeb745).
 import { ROSTERS } from '../src/data/rosters';
 import * as G from '../src/game/logic';
-import { Run, fresh, reducer, roundOf } from '../src/game/state';
+import { Run, fresh, reducer, roundOf, setPoolCutoff } from '../src/game/state';
 import { answerFor } from '../src/game/guess';
 
 function draftThrough(start: Run): Run {
@@ -44,16 +44,23 @@ function playThrough(start: Run): Run {
 }
 
 /** Fingerprints under rules `rules`: runs are compared on outcomes (narration text is left out). */
+/** The data as it stood when the pins were taken: rosters added later (they carry a later \`since\`) are left out, so new data never reads as a rules change. */
+const PINNED_DATA = '2026-10-04';
 export function fingerprints(rules: number) {
-  const fp = (x: unknown) => G.hash(JSON.stringify(x, (k, v) => (k === 'text' ? undefined : v))).toString(16);
+  setPoolCutoff(PINNED_DATA);
+  try { return fingerprintsOnPinnedData(rules); } finally { setPoolCutoff(null); }
+}
+function fingerprintsOnPinnedData(rules: number) {
+  // Text is narration; a player's real name is display data. Neither is part of how a run plays out.
+  const fp = (x: unknown) => G.hash(JSON.stringify(x, (k, v) => (k === 'text' || k === 'name' ? undefined : v))).toString(16);
   const runs: Record<string, string> = {};
   for (const date of ['2026-09-28', '2026-09-29']) runs[`daily ${date}`] = fp(playThrough(fresh('daily', date)).t);
   // A daily played under v2 (from 2026-09-30), so later versions can be checked against it too.
   if (rules >= 2) runs['daily 2026-09-30'] = fp(playThrough(fresh('daily', '2026-09-30')).t);
   for (const seed of ['a', 'b', 'c', 'd']) runs[`free ${seed}`] = fp(playThrough({ ...fresh('free', '2026-09-29'), seed: `free-${seed}`, rules } as Run).t);
   const [lineups, guesses] = G.withRules(rules, () => [
-    fp(ROSTERS.map((r) => G.naturalLineup(r).map((x) => [x.slot, x.player.id]))),
-    fp(['2026-09-28', '2026-09-29'].map((d) => answerFor(d))),
+    fp(ROSTERS.filter((r) => !r.since || r.since <= PINNED_DATA).map((r) => G.naturalLineup(r).map((x) => [x.slot, x.player.id]))),
+    fp(['2026-09-28', '2026-09-29'].map((d) => answerFor(d).id)), // the id only: the rest of a pro is display data (logos, photos)
   ]);
   return { runs, lineups, guesses };
 }

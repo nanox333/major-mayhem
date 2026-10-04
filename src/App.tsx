@@ -11,7 +11,7 @@ import { Modal } from './ui/Modal';
 import { useRunTracking } from './ui/useTracking';
 import { TopBar, View } from './ui/TopBar';
 import { RunProgress } from './ui/RunProgress';
-import { DraftSidebar } from './ui/DraftSidebar';
+import { DraftStatus } from './ui/DraftSidebar';
 import { DebugMenu } from './ui/DebugMenu';
 import { SettingsDialog } from './ui/Settings';
 import { usePrefs } from './ui/prefs';
@@ -169,7 +169,7 @@ function Game() {
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} showDraft={beginDraft} showSetup={() => setView('setup')} showGuess={() => setView('guess')} onStats={() => setView('stats')} onBrowse={() => setView('archive')} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
-      {view === 'stats' && <StatsPage stats={stats} />}
+      {view === 'stats' && <StatsPage stats={stats} next={guessNext} />}
       {view === 'setup' && <SetupScreen s={s} dispatch={dispatch} onStart={beginDraft} onBack={() => setView('home')} />}
       {view === 'archive' && <RosterBrowser page hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setView('home')} />}
       {view !== 'home' && view !== 'guess' && view !== 'archive' && view !== 'stats' && view !== 'setup' && <main className="console">
@@ -187,7 +187,7 @@ function Game() {
               )}</div>}
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
-        {view === 'draft' && s.phase === 'draft' && <><div className={`${drafting ? 'desktop-strip' : ''} ${start ? 'strip-wait' : 'strip-in'}`} aria-hidden={start ? true : undefined}><TeamStrip s={s} preview={preview} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
+        {view === 'draft' && s.phase === 'draft' && <><div className={`${drafting ? 'desktop-strip' : ''} ${start ? 'strip-wait' : 'strip-in'}`} aria-hidden={start ? true : undefined}><TeamStrip s={s} preview={preview} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}{drafting && <DraftStatus s={s} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${s.phase}`}>
           <section className="console__main">
@@ -198,13 +198,12 @@ function Game() {
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} board={<BoardHost s={s} mine={playing} />} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>
-          {drafting && <DraftSidebar s={s} preview={preview} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
           {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
       </main>}
 
       <footer className="foot">
-        <div className="foot__group"><DatabaseIcon size={24} /><p><strong>Data and credits</strong>Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.</p></div>
+        <div className="foot__group"><DatabaseIcon size={24} /><p><strong>Data and credits</strong>Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep and 4 Oct 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.</p></div>
         <div className="foot__group"><RosterIcon size={24} /><p><strong>Fan project</strong>Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated.</p></div>
         <div className="foot__group"><GamepadIcon size={24} /><p><strong>Built by fans</strong>A love letter to Counter-Strike and its Major history.</p></div>
       </footer>

@@ -268,12 +268,18 @@ export type Action =
 /** A daily draws only from rosters available on its date, so later data additions don't change it. */
 const eraOf = (year: number) => (year >= 2024 ? 'cs2' : 'csgo');
 /** The rosters a run can face: a daily's pinned set, or free play's active rosters (one era, if chosen and big enough). */
+/**
+ * Rosters added after the rules versions were pinned carry a `since` date. The fingerprint script and its test limit free play to the data as it stood when the pins
+ * were taken, so adding rosters never looks like a change to an old rules version (`scripts/rules-fingerprint.ts`). The game itself never sets it.
+ */
+let poolCutoff: string | null = null;
+export const setPoolCutoff = (date: string | null) => { poolCutoff = date; };
 export const rostersFor = (s: Run) => {
   const date = dailyDate(s);
   if (date) return rostersOn(date);
   const pinned = s.duel ? duelRosters(s.duel) : null;
   if (pinned) return pinned;
-  const all = activeRosters();
+  const all = activeRosters().filter((r) => !poolCutoff || !r.since || r.since <= poolCutoff);
   const era = s.opts?.era ? all.filter((r) => eraOf(r.year) === s.opts!.era) : all;
   return era.length >= 16 ? era : all;
 };

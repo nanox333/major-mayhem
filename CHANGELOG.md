@@ -4,6 +4,37 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
+
+### Changed
+- **Map screenshots instead of radars in the map veto, the knife round and the series list:** each map now shows an in-game screenshot with a dark foot for its name, in place of a radar sitting in a black box. The radar stays on the live board, where positions matter. Six of the seven are 1920x1080 Counter-Strike 2 screenshots (from the public repository neustcs/cs2mapsthumbnails); Train is still the small bo3.gg picture, and `assets-src/maps/README.md` says how to drop in a larger one (the build uses the largest file for each map).
+
+### Added
+- **More ways to sort the Roster archive:** a Sort by menu (Newest first, Oldest first, Best placing, Team A–Z, Most titles). Newest and oldest keep the year and Major sections; Best placing groups by Champions, Runner-up, Semifinalist and Quarterfinalist; Team A–Z and Most titles group each team's lineups together with how many lineups and titles it has and the years it spans. Search now also finds real names and coaches.
+- **Seven more team logos:** Copenhagen Wolves, HellRaisers, Epsilon eSports, Keyd Stars, PENTA Sports (supplied), FlipSid3 Tactics and Team SoloMid (from bo3.gg).
+
+### Fixed
+- **Logos that vanished on the dark interface:** a logo that is almost entirely near-black (SK Gaming, North, MOUZ, FaZe, Gambit, PENTA, Epsilon, Keyd Stars) is now found when the media is built and drawn on a light plate, keeping its own colours.
+- **Team names you couldn't read:** a pale team colour (NRG, Vitality, NaVi, Spirit, NiP, Team SoloMid...) used to make the card header and roster-sheet header too light for its white name. The header background now uses a capped version of the colour; borders and underlines keep the real one.
+- **Debug: player ratings in the archive.** The debug menu has a switch that shows every player's hidden game rating on the roster archive cards and in the corner of each portrait on a roster sheet. It only does anything while the debug tools are on.
+
+### Changed
+- **Roster sheets and the archive, redesigned:** opening a lineup (from the draft's "View roster & sources" or from the archive) is now a sheet: a team-coloured header, at-a-glance tiles (placement, era, nationalities as flags, coach), five player cards with a large portrait, nick, **real name**, flag and role chips, the lineup's chemistry (word and links), every lineup at the same Major in finishing order (each opens in place) and the team's own history across the archive, then sources and the report link. The archive lists lineups grouped by Major within each year, best placing first, with each face captioned by nick and the coach under the team name.
+
+### Added
+- **Complete top-eight lineups for the Majors:** 75 more lineups (from 70 to 145) fill in the champions, finalists, semifinalists and quarterfinalists that were missing, so every Major from DreamHack Winter 2013 to Shanghai 2024 now has all eight, including the whole of Paris 2023 (it had only the champions). They come from Wikipedia's "Final standings" tables, with 75 people, 19 organisations and a coach list new to the data, 44 more portraits and 11 more logos from bo3.gg, and flags for Belgium, the Netherlands, Czechia and Jordan. A lineup that already exists for the same team and year (the same five at two Majors) is not repeated. Everything new is dated 2026-10-05 so no daily changes; free play uses it straight away. The four missing Budapest 2025 quarterfinalists were written from knowledge and are marked unverified, because that Wikipedia page has no roster table, and IEM Cologne 2026 is still missing its quarterfinalists for the same reason. The Guess the pro and duel code are unchanged.
+- **Real names on the draft (#270):** each player's real name now shows beside their flag in the case rows and in the decision panel (the country code stays as the tooltip and for screen readers, and is shown when no name is known). 185 of 190 players have one, taken from their bo3.gg player pages by the new `scripts/fetch-real-names.mjs` (kept only when the page is for the same nick); the other five (sgares, mezii, kNg, Ethan, schneider) are blank rather than guessed. Names are never shown in Guess the pro or share text, and no daily changes.
+
+### Changed
+- **Team card headers:** the row of faces now fades out at both ends instead of stopping on the card's edge, the placement label (Champion, Finalist and so on) is no longer clipped by its slanted corner, and the medal icon is redrawn as a clear medal on a ribbon.
+- **The whole How to play guide, reorganised and explained:** it now opens with the four steps, a run-at-a-glance strip and what the seven picks are, then three groups (Drafting, Playing the Major, Modes). Every section has the same layout: a short lead, a term-and-explanation list, and where it helps a worked example. New or much fuller: spins and card colours, roles and fit (with the taken-slot case), coach and bench, the Major's format, match-day form, the map veto order, knife rounds and sides, timeouts and force buys, ratings and results, draft duels, and a keyboard table built from the game's own shortcuts.
+- **How to play, Chemistry, explained properly:** each way to build chemistry (same country, shared history, famous duos, one era, your coach, and the two-AWPer penalty) is now a small card with what it is and worked examples with the same +, ++, +++ and − chips the game shows, followed by how the total adds up (with the cap), a worked example and where in the game to see it.
+- **A better empty Stats page:** with no record yet, the page draws its own numbers empty (Runs, Best finish, Daily streak), says "No runs yet" in one line and offers the button for what to do next.
+- **A Home that shows instead of tells:** the hero's intro sentences, the card blurbs, the archive subtitle and the how-it-works captions are gone. The seven picks are shown as seven slots under the title, the stats band shows its empty tiles instead of a sentence, and how it works is four numbered titles.
+### Changed
+- **The draft's hint and team chemistry no longer need a scroll:** the "Draft hint" card and the chemistry panel below the cases are now one quiet status line above them. What you still need is plain muted text, and chemistry is its word, its pips and up to three link chips (with "+N more"). What the player you point at would add stays in the decision panel's "Why pick", which now also lists the Majors they attended, so the separate "If you draft…" box is gone. The decision panel still ends inside a 900px-tall window. On phones the hint is a quiet line in the lineup sheet instead of a framed card.
+
 ### Removed
 - **The light theme.** The game is dark only: the Theme setting (System, Dark, Light) is gone, nothing follows a light system any more, and a theme saved by an earlier version is ignored. High contrast remains.
 

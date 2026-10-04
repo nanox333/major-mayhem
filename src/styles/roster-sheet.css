@@ -1,0 +1,149 @@
+/* The roster archive's lineup cards, grouped by Major, and a lineup opened as a sheet (the draft's "View roster" and the archive share it). */
+
+/* ---------- the list ---------- */
+.ra-year h4 small { margin-left: auto; align-self: center; color: var(--muted); font: 600 .72rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.ra-event { margin-top: 18px; }
+.ra-event h5 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 0 0 10px; padding-left: 12px; border-left: 3px solid var(--accent); }
+.ra-event h5 b { font: 800 1.1rem/1.2 var(--f-head); letter-spacing: .06em; text-transform: uppercase; color: var(--strong); }
+.ra-event h5 span { color: var(--muted); font-size: .8rem; }
+.ra-card__top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; }
+.ra-card .ra-card__top .ra-row__result { grid-area: auto; align-self: start; }
+.ra-card__roster { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.ra-face { display: grid; justify-items: center; gap: 4px; min-width: 0; }
+.ra-face > :is(img, svg) { width: 100%; max-width: 54px; aspect-ratio: 1; height: auto; object-fit: cover; object-position: center 14%; background: #0b0c0b; box-shadow: inset 0 -2px 0 var(--team); }
+.ra-face i { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); font: 600 max(.7rem, 11px)/1.2 var(--f-read); font-style: normal; }
+.ra-card__flag { color: var(--muted); font: 700 .66rem/1 var(--f-read); letter-spacing: .12em; text-transform: uppercase; }
+.ra-rows { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+
+/* ---------- a lineup as a sheet ---------- */
+.rs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 4px; min-width: 0; }
+.rs > * { min-width: 0; }
+.rs-head { display: flex; align-items: center; gap: 22px; padding: 22px 56px 22px 22px; background: linear-gradient(100deg, color-mix(in srgb, var(--team) 40%, #0b0c0b), #0b0c0b 78%); box-shadow: inset 0 -4px 0 var(--team); }
+.rs-head__text { min-width: 0; display: grid; gap: 6px; }
+.rs-head__event { margin: 0; color: var(--text-2); font: 600 .72rem/1.2 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }
+.rs-head h3 { margin: 0; overflow-wrap: anywhere; font: 800 clamp(2rem, 5vw, 3.2rem)/1 var(--f-head); letter-spacing: .02em; text-transform: uppercase; color: var(--strong); }
+.rs-head h3 em { color: color-mix(in srgb, var(--team) 60%, #fff); font-style: normal; }
+.rs-head__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 16px; margin: 0; color: var(--text-2); font-size: .9rem; }
+.rs-facts { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0; padding: 0; background: rgba(255, 255, 255, .07); }
+.rs-facts li { display: grid; gap: 6px; align-content: start; padding: 12px 14px 14px; background: #101110; }
+.rs-facts small { color: var(--muted); font: 700 .66rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.rs-facts b { min-width: 0; font: 800 1.15rem/1.15 var(--f-head); letter-spacing: .03em; color: var(--strong); overflow-wrap: anywhere; }
+.rs-flags { display: flex; flex-wrap: wrap; gap: 6px 10px; }
+.rs-flags span { display: inline-flex; align-items: center; gap: 4px; }
+.rs-flags i { color: var(--text-2); font: 700 .85rem/1 var(--f-read); font-style: normal; }
+.rs-sub { display: flex; align-items: baseline; gap: 12px; margin: 10px 0 0; padding-top: 14px; border-top: 1px solid rgba(255, 255, 255, .08); color: var(--strong); font: 800 1.05rem/1 var(--f-head); letter-spacing: .1em; text-transform: uppercase; }
+.rs-sub small { margin-left: auto; color: var(--muted); font: 600 .7rem/1 var(--f-read); letter-spacing: .1em; }
+
+.rs-lineup { list-style: none; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; }
+.rs-player { display: grid; grid-template-rows: auto 1fr; min-width: 0; background: #101110; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.rs-player__photo { display: block; aspect-ratio: 1; overflow: hidden; background: #0b0c0b; box-shadow: inset 0 -3px 0 var(--team); }
+.rs-player__photo > :is(img, svg) { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
+.rs-player__text { display: grid; align-content: start; gap: 4px; padding: 10px 12px 12px; min-width: 0; }
+.rs-player__text b { overflow-wrap: anywhere; font: 800 1.35rem/1.05 var(--f-head); letter-spacing: .02em; color: var(--strong); }
+.rs-player__real { color: var(--text-2); font-size: .82rem; line-height: 1.3; }
+.rs-player__text small { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: .78rem; }
+.rs-player__text .flag { flex: none; border-radius: 2px; }
+.rs-roles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.rs-roles em { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; background: rgba(255, 255, 255, .06); color: var(--muted); font: 700 max(.68rem, 11px)/1.3 var(--f-read); font-style: normal; letter-spacing: .06em; text-transform: uppercase; }
+.rs-roles em.is-main { background: rgba(249, 132, 37, .16); color: var(--accent-hi); }
+
+.rs-chem { display: grid; gap: 10px; }
+.rs-chem__word { display: flex; align-items: center; gap: 12px; margin: 0; }
+.rs-chem__word b { font: 800 1.6rem/1 var(--f-head); letter-spacing: .05em; text-transform: uppercase; color: var(--strong); }
+.rs-chem__links { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; }
+.rs-chem__links li { display: inline-flex; align-items: baseline; gap: 8px; padding: 4px 10px; background: rgba(255, 255, 255, .05); color: var(--text-2); font-size: .82rem; }
+.rs-chem__links b { color: var(--go-text); font: 800 .75rem/1 var(--f-read); letter-spacing: .06em; }
+.rs-chem__links li.is-bad b { color: var(--loss-text); }
+
+.rs-field { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 0; counter-reset: place; }
+.rs-field button, .rs-history button { width: 100%; display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 12px; border: 0; background: #101110; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08), inset 3px 0 0 var(--team, rgba(255, 255, 255, .2)); color: var(--text-2); text-align: left; cursor: pointer; font: inherit; }
+.rs-field button:hover, .rs-history button:hover { background: #151615; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22), inset 3px 0 0 var(--team, var(--accent)); }
+.rs-field button.is-now, .rs-history button.is-now { background: rgba(249, 132, 37, .1); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .5), inset 3px 0 0 var(--accent); cursor: default; }
+.rs-field button b { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 1rem/1.1 var(--f-head); letter-spacing: .03em; color: var(--strong); }
+.rs-history { list-style: none; display: grid; gap: 6px; margin: 0; padding: 0; }
+.rs-history button b { flex: none; width: 3.2rem; font: 800 1.25rem/1 var(--f-head); color: var(--strong); }
+.rs-history button span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-history button em { flex: none; font-style: normal; }
+.rs .ra-row__result, .ra-event .ra-row__result { font: 700 .7rem/1 var(--f-read); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.rs .ra-row__result--champions { color: #f1d48a; }
+
+@media (max-width: 900px) { .rs-lineup { grid-template-columns: repeat(3, minmax(0, 1fr)); } .rs-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 620px) {
+  .rs-head { gap: 14px; padding: 18px 44px 18px 16px; }
+  .rs-head .badge-logo, .rs-head svg { width: 60px !important; height: 60px !important; }
+  .rs-lineup { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rs-field { grid-template-columns: 1fr; }
+  .rs-history button { flex-wrap: wrap; row-gap: 2px; }
+  .rs-history button span { flex: 1 1 calc(100% - 4.2rem); white-space: normal; }
+  .rs-history button em { margin-left: calc(3.2rem + 12px); }
+  .rs-sub { flex-wrap: wrap; }
+  .ra-rows { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Debug only: the hidden game rating, in a corner of the face. */
+.ra-face u { text-decoration: none; padding: 1px 6px; background: rgba(249, 132, 37, .18); color: var(--accent-hi); font: 800 max(.7rem, 11px)/1.3 var(--f-read); font-variant-numeric: tabular-nums; }
+.rs-player__photo { position: relative; }
+.rs-player__rating { position: absolute; top: 8px; right: 8px; padding: 3px 9px; background: rgba(0, 0, 0, .78); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent-hi); font: 800 1.1rem/1 var(--f-head); letter-spacing: .04em; text-decoration: none; font-variant-numeric: tabular-nums; }
+
+/* The sheet's header sits on the panel: the archive's backdrop picture would show above it and the header's fade would end in a visible box. */
+.archive-page:has(.rs)::before { display: none; }
+.rs-head { background: linear-gradient(100deg, color-mix(in srgb, var(--team-deep, var(--team)) 42%, transparent), transparent 80%); }
+
+/* Back to the list: a flat angular tab with an arrow that nudges left, like the other buttons. */
+.rs-back { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; min-height: 40px; margin: 0 0 14px; padding: 0 20px 0 14px; border: 0; background: none; color: var(--text-2); font: 800 .8rem/1 var(--f-head); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.rs-back::before { content: ""; position: absolute; inset: 0; z-index: -1; background: rgba(255, 255, 255, .07); box-shadow: inset 3px 0 0 var(--accent); clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 100%, 0 100%); transition: background .15s; }
+.rs-back svg { transform: rotate(180deg); color: var(--accent-hi); transition: transform .15s; }
+.rs-back:hover { color: var(--strong); }
+.rs-back:hover::before { background: rgba(255, 255, 255, .13); }
+.rs-back:hover svg { transform: rotate(180deg) translateX(3px); }
+.rs-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { .rs-back::before, .rs-back svg { transition: none; } }
+
+/* A logo that is too dark for the dark interface (black or deep-purple marks) sits on a light plate and keeps its own colours. */
+.badge-logo--plate { background: #e7eaee; border-color: rgba(255, 255, 255, .5); }
+
+/* A team's colour is used as a background in the card headers and the sheet head, where white names sit on it. A pale team colour (NRG, Vitality, NaVi, Spirit, NiP...) would
+   leave the name unreadable, so the background version is capped in lightness; borders and underlines keep the real colour. */
+.case-card, .rs { --team-deep: var(--team); }
+@supports (color: oklch(from red l c h)) { .case-card, .rs { --team-deep: oklch(from var(--team) min(l, .5) min(c, .17) h); } }
+
+/* ---------- the filter bar: three quiet rows (search and year, placing, sort) ---------- */
+.roster-filters { row-gap: 14px; }
+.ra-chips--row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 8px; }
+.ra-chips__label { flex: none; width: 3.4rem; color: var(--muted); font: 700 .66rem/1 var(--f-read); letter-spacing: .16em; text-transform: uppercase; }
+.ra-sort { padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .07); }
+.ra-sort button[aria-pressed="true"]::before { background: color-mix(in srgb, var(--accent) 86%, #fff); }
+
+/* ---------- group headers for the sorts that aren't by date ---------- */
+.ra-year h4.ra-group { align-items: center; gap: 14px; padding-bottom: 12px; font-size: 1.9rem; }
+.ra-year h4.ra-group::before { display: none; }
+.ra-group__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ra-group__stats { display: inline-flex; flex-wrap: wrap; gap: 6px; margin-left: 4px; }
+.ra-group__stats em { padding: 4px 10px; background: rgba(255, 255, 255, .06); color: var(--text-2); font: 700 .68rem/1 var(--f-read); font-style: normal; letter-spacing: .12em; text-transform: uppercase; }
+.ra-group__stats em.is-gold { background: rgba(217, 184, 101, .16); color: #f1d48a; }
+.ra-year h4.ra-group::after { min-width: 24px; }
+@media (max-width: 640px) { .ra-chips__label { width: 100%; } .ra-year h4.ra-group { flex-wrap: wrap; gap: 8px 12px; font-size: 1.6rem; } .ra-year h4.ra-group::after { display: none; } .ra-group__stats { margin-left: 0; flex-basis: 100%; } }
+/* On a phone the two chip rows wrap onto a second line instead of scrolling sideways, so every option is in view. */
+@media (max-width: 640px) { :root:root .archive-page .roster-filters .ra-chips.ra-chips--row { flex-wrap: wrap; overflow: visible; margin-inline: 0; padding-inline: 0; } }
+
+/* Debug only: the hidden game rating, beside the nick in the draft. */
+.prow__rating { flex: none; align-self: center; padding: 1px 6px; background: rgba(249, 132, 37, .18); color: var(--accent-hi); font: 800 max(.7rem, 11px)/1.3 var(--f-read); font-variant-numeric: tabular-nums; text-decoration: none; }
+.prow__rating--big { margin-left: 10px; font-size: 1rem; vertical-align: middle; }
+
+/* ---------- map screenshots in the veto and the series lists ---------- */
+.map-art.map-art--shot { padding: 0 !important; object-fit: cover !important; object-position: center; background: #0b0c0b; border-radius: 0; filter: saturate(1.05) contrast(1.02); }
+.veto__art { position: relative; }
+.veto__art::before { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, .0) 40%, rgba(0, 0, 0, .55)), linear-gradient(90deg, rgba(0, 0, 0, .18), transparent 30%); }
+.veto__map.is-banned .map-art--shot { filter: grayscale(1) brightness(.55); opacity: .5; }
+.veto__final-map { position: relative; overflow: hidden; }
+.veto__final-map .map-art--shot { height: 100%; max-height: none; min-height: 150px; }
+.veto__final-map::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 35%, rgba(0, 0, 0, .75)); }
+.veto__final-info { position: relative; z-index: 1; }
+.veto-series .map-art--shot { height: 110px; width: 100%; }
+
+/* The knife round's map: the screenshot fills the whole figure, with the name and the side lean over its foot, instead of a radar floating in a black box. */
+.knife__map { position: relative; overflow: hidden; display: grid; }
+.knife__map .map-art.map-art--shot { width: 100%; height: 100%; min-height: 340px; max-height: none; }
+.knife__map:has(.map-art--shot)::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(0, 0, 0, .15), transparent 30%, rgba(0, 0, 0, .82) 100%); }
+.knife__map:has(.map-art--shot) figcaption { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; background: none; border: 0; }
+@media (max-width: 900px) { .knife__map .map-art.map-art--shot { min-height: 220px; } }

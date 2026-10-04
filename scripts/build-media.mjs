@@ -6,7 +6,9 @@ import fs from 'fs'; import sharp from 'sharp';
 const OUT = 'src/data/media.json';
 const INPUTS = ['assets-src/major-mayhem-assets.json', 'assets-src/major-mayhem-bo3.json', fileURLToPath(import.meta.url)];
 const mtime = (f) => fs.statSync(f).mtimeMs;
-if (!process.argv.includes('--force') && fs.existsSync(OUT) && INPUTS.every((f) => mtime(f) < mtime(OUT))) {
+// The map screenshots are inputs too: a new or changed one rebuilds the media.
+const MAP_FILES = fs.existsSync('assets-src/maps') ? fs.readdirSync('assets-src/maps').filter((x) => /\.(webp|png|jpe?g)$/i.test(x)).map((x) => `assets-src/maps/${x}`) : [];
+if (!process.argv.includes('--force') && fs.existsSync(OUT) && [...INPUTS, ...MAP_FILES].every((f) => mtime(f) < mtime(OUT))) {
   console.log('media.json is up to date');
   process.exit(0);
 }
@@ -24,7 +26,7 @@ const CROP = {
   Xizt: [.5, .35, .85], tarik: [.5, .3, .9], ZywOo: [.5, .38, .85], mou: [.5, .38, .9], EliGE: [.5, .42, .95],
 };
 const DEF = [.5, .36, .82];
-const out = { players: {}, logos: {} };
+const out = { players: {}, logos: {}, maps: {} };
 const credit = (v) => ({ source: 'Wikimedia Commons', file: v.file, author: v.author || 'Unknown', license: v.license, page: v.page });
 for (const [nick, v] of Object.entries(a.players)) {
   if (DROP.has(nick)) continue;
@@ -37,6 +39,16 @@ for (const [nick, v] of Object.entries(a.players)) {
   const img = await sharp(buf).extract({ left, top, width: side, height: side }).resize(168, 168).jpeg({ quality: 78, mozjpeg: true }).toBuffer();
   out.players[pid(nick)] = { src: 'data:image/jpeg;base64,' + img.toString('base64'), ...credit(v) };
 }
+/**
+ * Whether a logo would disappear on the dark interface: the visible pixels are almost all near-black. Such a logo is drawn on a light plate
+ * (`dark` in the media file, `badge-logo--plate` in the page) rather than recoloured, so it keeps its own colours and its black outlines.
+ */
+const tooDark = async (png) => {
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let n = 0, dark = 0;
+  for (let i = 0; i < data.length; i += info.channels) if (data[i + 3] > 128) { n++; if (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2] < 60) dark++; }
+  return n > 0 && dark / n >= 0.85; // nearly all of it is near-black
+};
 const LOGO_DROP = new Set(['Team Spirit', 'Team Dignitas']);   // wrong organizations with the same name
 const INVERT = new Set(['MIBR', 'Team EnVyUs']);               // black logos: shown white on the dark UI
 for (const [org, v] of Object.entries(a.logos)) {
@@ -44,7 +56,7 @@ for (const [org, v] of Object.entries(a.logos)) {
   let img = sharp(Buffer.from(v.data.split(',')[1], 'base64')).trim().resize(96, 96, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
   if (INVERT.has(org)) img = img.negate({ alpha: false });
   const b = await img.png({ palette: true }).toBuffer();
-  out.logos[org] = { src: 'data:image/png;base64,' + b.toString('base64'), ...credit(v) };
+  out.logos[org] = { src: 'data:image/png;base64,' + b.toString('base64'), dark: INVERT.has(org) ? false : await tooDark(b), ...credit(v) };
 }
 // ---- bo3.gg (primary source when present): studio photos and team logos read from public pages ----
 const b = JSON.parse(fs.readFileSync('assets-src/major-mayhem-bo3.json', 'utf8'));
@@ -61,9 +73,23 @@ for (const [nick, v] of Object.entries(b.players)) {
 }
 for (const [org, v] of Object.entries(b.teams)) {
   const img = await sharp(Buffer.from(v.data.split(',')[1], 'base64')).trim().resize(96, 96, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).webp({ quality: 85, alphaQuality: 90 }).toBuffer();
-  out.logos[org] = { src: 'data:image/webp;base64,' + img.toString('base64'), source: 'bo3.gg', file: org + ' logo', author: org, license: 'Trademark of ' + org + '; used for identification', page: v.page };
+  out.logos[org] = { src: 'data:image/webp;base64,' + img.toString('base64'), dark: await tooDark(img), source: 'bo3.gg', file: org + ' logo', author: org, license: 'Trademark of ' + org + '; used for identification', page: v.page };
   bl++;
 }
 console.log('bo3 players', bp, 'bo3 logos', bl);
+// ---- map screenshots (assets-src/maps/<Map>.webp|png|jpg): the picture shown for a map in the veto, the knife round and the series lists ----
+// Several files may exist for one map (the small bo3.gg picture, a 1080p one dropped in later): the largest wins, and it is cut to 16:9 at up to 960x540.
+if (fs.existsSync('assets-src/maps')) {
+  const best = {};
+  for (const f of fs.readdirSync('assets-src/maps').filter((x) => /\.(webp|png|jpe?g)$/i.test(x))) {
+    const name = f.replace(/\.[a-z]+$/i, '').replace(/[-_ ]\d+$/, '');
+    const m = await sharp(`assets-src/maps/${f}`).metadata();
+    if (!best[name] || m.width * m.height > best[name].px) best[name] = { f, px: m.width * m.height, w: m.width };
+  }
+  for (const [name, { f, w }] of Object.entries(best)) {
+    const img = await sharp(`assets-src/maps/${f}`).resize(Math.min(960, w), null).webp({ quality: 74 }).toBuffer();
+    out.maps[name] = 'data:image/webp;base64,' + img.toString('base64');
+  }
+}
 fs.writeFileSync(OUT, JSON.stringify(out));
 console.log('players', Object.keys(out.players).length, 'logos', Object.keys(out.logos).length, 'KB', Math.round(fs.statSync(OUT).size / 1024));
