@@ -1,7 +1,7 @@
 import React from 'react';
 import { ROSTERS } from '../data/rosters';
 import { Avatar } from '../ui/art';
-import { FlameIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
+import { ArrowRightIcon, FlameIcon, StarIcon, StatsIcon, TrophyIcon } from '../ui/icons';
 import { FINISH_SHORT, Stats, dailyStreak, recentDailies, statsSections, DayBar } from '../game/stats';
 import { dailyNumber, today } from '../game/state';
 import { ACHIEVEMENTS } from '../game/achievements';
@@ -41,7 +41,8 @@ export function StatsPage({ stats, next }: { stats: Stats; /** What to do next, 
           </ul>
           <h4 id="sp-empty-h">No runs yet</h4>
           <p>Finish a run or play the daily and your record starts here.</p>
-          {next && <button type="button" className="cta cta--orange" onClick={next.go}><span className="cta__main">{next.label}</span></button>}
+          {/* The Home's own button, with the Home's wrappers so it is styled the same. */}
+          {next && <div className="editorial-home sp-empty__go"><div className="home-daily-action"><button type="button" className="cta cta--orange home__daily" data-sfx="open" onClick={next.go}><span className="cta__main">{next.label}<ArrowRightIcon size={20} /></span></button></div></div>}
         </section>
       )}
       {show.runs && (

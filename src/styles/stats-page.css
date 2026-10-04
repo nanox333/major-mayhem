@@ -12,6 +12,8 @@
 .sp-empty__ghosts li { display: grid; justify-items: center; gap: 6px; padding: 16px 10px 14px; border: 1px dashed var(--sp-line); color: var(--muted-2); opacity: .75; }
 .sp-empty__ghosts b { font: 800 2rem/1 var(--f-head); color: var(--muted-2); }
 .sp-empty__ghosts span { font: 600 .66rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; }
+.sp-empty .sp-empty__go { width: auto; margin-top: 4px; }
+.sp-empty .home-daily-action { margin-top: 0; justify-content: center; }
 .sp-empty h4 { margin: 0; font: 800 1.5rem/1.1 var(--f-head); letter-spacing: .06em; text-transform: uppercase; color: var(--strong); }
 .sp-empty p { margin: 0 0 12px; max-width: 34ch; color: var(--muted); }
 @media (max-width: 520px) { .sp-empty__ghosts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
