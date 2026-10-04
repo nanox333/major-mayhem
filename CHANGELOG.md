@@ -7,6 +7,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ### Fixed
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 
+### Added
+- **Real names on the draft (#270):** each player's real name now shows beside their flag in the case rows and in the decision panel (the country code stays as the tooltip and for screen readers, and is shown when no name is known). 185 of 190 players have one, taken from their bo3.gg player pages by the new `scripts/fetch-real-names.mjs` (kept only when the page is for the same nick); the other five (sgares, mezii, kNg, Ethan, schneider) are blank rather than guessed. Names are never shown in Guess the pro or share text, and no daily changes.
+
 ### Changed
 - **Team card headers:** the row of faces now fades out at both ends instead of stopping on the card's edge, the placement label (Champion, Finalist and so on) is no longer clipped by its slanted corner, and the medal icon is redrawn as a clear medal on a ribbon.
 - **The whole How to play guide, reorganised and explained:** it now opens with the four steps, a run-at-a-glance strip and what the seven picks are, then three groups (Drafting, Playing the Major, Modes). Every section has the same layout: a short lead, a term-and-explanation list, and where it helps a worked example. New or much fuller: spins and card colours, roles and fit (with the taken-slot case), coach and bench, the Major's format, match-day form, the map veto order, knife rounds and sides, timeouts and force buys, ratings and results, draft duels, and a keyboard table built from the game's own shortcuts.

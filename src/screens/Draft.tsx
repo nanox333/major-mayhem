@@ -131,7 +131,7 @@ function CardPreview({ roster: r, hard }: { roster: Roster; hard: boolean }) {
               <div className="prow" style={{ ['--i' as string]: i }}>
                 <span className="prow__face"><Avatar player={p} roster={r} /></span>
                 <span className="prow__main">
-                  <span className="prow__name"><b>{p.nick}</b><em className="prow__cc"><Flag code={p.country} size={11} decorative />{p.country}</em></span>
+                  <span className="prow__name"><b>{p.nick}</b><em className="prow__cc"><Flag code={p.country} size={11} decorative />{p.name ?? p.country}</em></span>
                   <span className="prow__meta">{!hard && <span className="prow__role"><RoleIcon role={p.roles[0]} size={13} /> {ROLE_SHORT[p.roles[0]]}</span>}</span>
                 </span>
               </div>
@@ -531,7 +531,7 @@ function CaseCards({ s, dispatch, onPreview, onRolled, arrived }: { s: Run; disp
                     <>
                       <span className="prow__face"><Avatar player={p} roster={r} /></span>
                       <span className="prow__main">
-                        <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}><Flag code={p.country} size={11} decorative />{p.country}</em></span>
+                        <span className="prow__name"><b>{p.nick}</b><em className="prow__cc" title={COUNTRY[p.country] ?? p.country}><Flag code={p.country} size={11} decorative />{p.name ?? p.country}{p.name && <Sr> ({COUNTRY[p.country] ?? p.country})</Sr>}</em></span>
                         <span className="prow__meta">
                           {!ok && <small className="prow__why" title={unavailableReason(p, s, taken)}>{rowReason(p, s, taken)}</small>}
                           {ok && !hard && st.state === 'main' && <span className="prow__role" title="Main role"><RoleIcon role={p.roles[0]} size={13} /> <Sr>Main role: </Sr>{ROLE_SHORT[p.roles[0]]}</span>}
@@ -631,7 +631,7 @@ function Candidate({ cand, hard, state }: { cand: Chosen; hard: boolean; state: 
       </span>
       <p className="draftbar__who">
         <b>{cand.p.nick}</b>
-        <span className="draftbar__meta"><Flag code={cand.p.country} size={13} decorative /> {cand.p.country}{!hard && <> · <RoleIcon role={cand.p.roles[0]} size={13} /> {ROLE_SHORT[cand.p.roles[0]]}</>}</span>
+        <span className="draftbar__meta"><Flag code={cand.p.country} size={13} decorative /> {cand.p.name ?? cand.p.country}{cand.p.name && <Sr> ({COUNTRY[cand.p.country] ?? cand.p.country})</Sr>}{!hard && <> · <RoleIcon role={cand.p.roles[0]} size={13} /> {ROLE_SHORT[cand.p.roles[0]]}</>}</span>
         <span>{cand.r.org} {cand.r.year}</span>
         <small>{state}</small>
       </p>

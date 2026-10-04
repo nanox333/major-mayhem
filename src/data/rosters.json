@@ -145,574 +145,759 @@
  },
  "players": {
   "910": {
-   "country": "MN"
+   "country": "MN",
+   "name": "Usukhbayar Banzragch"
   },
   "adren": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Dauren Kystaubayev"
   },
   "adren-us": {
-   "country": "US"
+   "country": "US",
+   "name": "Dauren Kystaubayev"
   },
   "aerial": {
-   "country": "FI"
+   "country": "FI",
+   "name": "Jani Jussila"
   },
   "aizy": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Philip Aistrup"
   },
   "aleksib": {
-   "country": "FI"
+   "country": "FI",
+   "name": "Aleksi Virolainen"
   },
   "alex": {
-   "country": "GB"
+   "country": "GB",
+   "name": "Alejandro Masanet"
   },
   "allu": {
-   "country": "FI"
+   "country": "FI",
+   "name": "Aleksi Jalli"
   },
   "amanek": {
-   "country": "FR"
+   "country": "FR",
+   "name": "François Delaunay"
   },
   "apex": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Dan Madesclaire"
   },
   "art": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Andrei Piovezan"
   },
   "autimatic": {
-   "country": "US"
+   "country": "US",
+   "name": "Timothy Ta"
   },
   "ax1le": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Sergey Rykhtorov"
   },
   "azr": {
-   "country": "AU"
+   "country": "AU",
+   "name": "Aaron Ward"
   },
   "b1t": {
-   "country": "UA"
+   "country": "UA",
+   "name": "Valeriy Vakhovskiy"
   },
   "blitz": {
-   "country": "MN"
+   "country": "MN",
+   "name": "Garidmagnai Byambasuren"
   },
   "bodyy": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Alexandre Pianaro"
   },
   "boltz": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Ricardo Prass"
   },
   "boombl4": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Kirill Mikhailov"
   },
   "brehze": {
-   "country": "US"
+   "country": "US",
+   "name": "Vincent Cayonte"
   },
   "broky": {
-   "country": "LV"
+   "country": "LV",
+   "name": "Helvijs Saukants"
   },
   "brollan": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Ludvig Brolin"
   },
   "buster": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Timur Tulepov"
   },
   "byali": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Paweł Bieliński"
   },
   "cadian": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Casper Møller"
   },
   "cajunb": {
-   "country": "DK"
+   "country": "DK",
+   "name": "René Borg"
   },
   "calyx": {
-   "country": "TR"
+   "country": "TR",
+   "name": "Buğra Arkın"
   },
   "cerq": {
-   "country": "BG"
+   "country": "BG",
+   "name": "Tsvetelin Dimitrov"
   },
   "chopper": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Leonid Vishnyakov"
   },
   "coldzera": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Marcelo David"
   },
   "cype": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Isak Rydman"
   },
   "degster": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Abdul Gasanov"
   },
   "dennis": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Dennis Edman"
   },
   "dev1ce": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Nicolai Reedtz"
   },
   "devilwalk": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Jonatan Lundberg"
   },
   "dexter": {
-   "country": "AU"
+   "country": "AU",
+   "name": "Christopher Nong"
   },
   "discodoplan": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Joakim Gidetun"
   },
   "donk": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Danil Kryshkovets"
   },
   "dosia": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Mihail Stolyarov"
   },
   "drop": {
-   "country": "BR"
+   "country": "BR",
+   "name": "André Abreu"
   },
   "dupreeh": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Peter Rasmussen"
   },
   "dycha": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Paweł Dycha"
   },
   "edward": {
-   "country": "UA"
+   "country": "UA",
+   "name": "Ioann Sukhariev"
   },
   "electronic": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Denis Sharipov"
   },
   "elige": {
-   "country": "US"
+   "country": "US",
+   "name": "Jonathan Jablonowski"
   },
   "ethan": {
    "country": "US"
   },
   "f0rest": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Patrik Lindberg"
   },
   "fallen": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Gabriel Toledo"
   },
   "fame": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Petr Bolyshev"
   },
   "felps": {
-   "country": "BR"
+   "country": "BR",
+   "name": "João Vasconcellos"
   },
   "fer": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Fernando Alvarenga"
   },
   "fetish": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Henrik Christensen"
   },
   "fifflaren": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Robin Johansson"
   },
   "fl1t": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Evgeny Lebedev"
   },
   "flamez": {
-   "country": "IL"
+   "country": "IL",
+   "name": "Shahar Shushan"
   },
   "flamie": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Egor Vasilyev"
   },
   "flusha": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Robin Rönnquist"
   },
   "fnx": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Lincoln Lau"
   },
   "fox": {
-   "country": "PT"
+   "country": "PT",
+   "name": "Ricardo Pacheco"
   },
   "friberg": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Adam Friberg"
   },
   "frozen": {
-   "country": "SK"
+   "country": "SK",
+   "name": "David Čerňanský"
   },
   "getright": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Christopher Alesund"
   },
   "gla1ve": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Lukas Rossander"
   },
   "gobb": {
-   "country": "DE"
+   "country": "DE",
+   "name": "Fatih Dayik"
   },
   "gratisfaction": {
-   "country": "AU"
+   "country": "AU",
+   "name": "Sean Kaiwai"
   },
   "guardian": {
-   "country": "SK"
+   "country": "SK",
+   "name": "Ladislav Kovács"
   },
   "hades": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Aleksander Miskiewicz"
   },
   "happy": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Vincent Cervoni"
   },
   "hen1": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Henrique Teles"
   },
   "hiko": {
-   "country": "US"
+   "country": "US",
+   "name": "Spencer Martin"
   },
   "hobbit": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Abay Khasenov"
   },
   "hooxi": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Rasmus Nielsen"
   },
   "hunter": {
-   "country": "BA"
+   "country": "BA",
+   "name": "Hunter Meyer"
   },
   "im": {
-   "country": "RO"
+   "country": "RO",
+   "name": "Ivan Mihai"
   },
   "interz": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Timofey Yakushin"
   },
   "jabbi": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Jakob Nygaard"
   },
   "jackz": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Audric Jug"
   },
   "jame": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Ali Djami"
   },
   "jcobbb": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Jakub Pietruszewski"
   },
   "jdc": {
-   "country": "DE"
+   "country": "DE",
+   "name": "Jon de Castro"
   },
   "jdm64": {
-   "country": "US"
+   "country": "US",
+   "name": "Josh Marzano"
   },
   "jimpphat": {
-   "country": "FI"
+   "country": "FI",
+   "name": "Jimi Salo"
   },
   "jkaem": {
-   "country": "NO"
+   "country": "NO",
+   "name": "Joakim Myrbostad"
   },
   "jks": {
-   "country": "AU"
+   "country": "AU",
+   "name": "Justin Savage"
   },
   "jl": {
-   "country": "LT"
+   "country": "LT",
+   "name": "Jessica Le"
   },
   "jw": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Jesper Wecksell"
   },
   "karrigan": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Finn Andersen"
   },
   "kennys": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Kenny Schrub"
   },
   "kioshima": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Fabien Fiey"
   },
   "kjaerbye": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Markus Kjærbye"
   },
   "kng": {
    "country": "BR"
   },
   "kqly": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Hovik Tovmassian"
   },
   "krimz": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Freddy Johansson"
   },
   "kscerato": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Kaike Cerato"
   },
   "kyojin": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Jayson Nguyen Van"
   },
   "kyousuke": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Maxim Lukin"
   },
   "kyxsan": {
-   "country": "MK"
+   "country": "MK",
+   "name": "Damjan Stoilkovski"
   },
   "liazz": {
-   "country": "AU"
+   "country": "AU",
+   "name": "Jay Tregillgas"
   },
   "lucas1": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Lucas Teles"
   },
   "m0nesy": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Ilya Osipov"
   },
   "maden": {
-   "country": "ME"
+   "country": "ME",
+   "name": "Pavle Bošković"
   },
   "magisk": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Emil Reif"
   },
   "magixx": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Boris Vorobiev"
   },
   "maj3r": {
-   "country": "TR"
+   "country": "TR",
+   "name": "Engin Küpeli"
   },
   "makazze": {
-   "country": "XK"
+   "country": "XK",
+   "name": "Drin Shaqiri"
   },
   "malbsmd": {
-   "country": "GT"
+   "country": "GT",
+   "name": "Mario Samayoa"
   },
   "maniac": {
-   "country": "CH"
+   "country": "CH",
+   "name": "Mathieu Quiquerez"
   },
   "mezii": {
    "country": "GB"
   },
   "misutaaa": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Kévin Rabier"
   },
   "molodoy": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Danil Golubenko"
   },
   "mou": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Rustem Telepov"
   },
   "mzinho": {
-   "country": "MN"
+   "country": "MN",
+   "name": "Ayush Batbold"
   },
   "n0rb3r7": {
-   "country": "RU"
+   "country": "RU",
+   "name": "David Danielyan"
   },
   "n0thing": {
-   "country": "US"
+   "country": "US",
+   "name": "Jordan Gilbert"
   },
   "naf": {
-   "country": "CA"
+   "country": "CA",
+   "name": "Keith Markovic"
   },
   "nafany": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Vladislav Gorshkov"
   },
   "nbk": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Nathan Schmitt"
   },
   "neo": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Filip Kubski"
   },
   "nex": {
-   "country": "DE"
+   "country": "DE",
+   "name": "Johannes Maget"
   },
   "nexa": {
-   "country": "RS"
+   "country": "RS",
+   "name": "Nemanja Isaković"
   },
   "nicoodoz": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Nico Tamjidi"
   },
   "niko": {
-   "country": "BA"
+   "country": "BA",
+   "name": "Nikola Kovač"
   },
   "nitr0": {
-   "country": "US"
+   "country": "US",
+   "name": "Nick Cannella"
   },
   "olofmeister": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Olof Kajbjer Gustafsson"
   },
   "pashabiceps": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Jarosław Jarząbkowski"
   },
   "patsi": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Robert Isyanov"
   },
   "perfecto": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Ilya Zalutskiy"
   },
   "pronax": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Markus Wallsten"
   },
   "qikert": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Alexey Golubev"
   },
   "rain": {
-   "country": "NO"
+   "country": "NO",
+   "name": "Håvard Nygaard"
   },
   "refrezh": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Ismail Ali"
   },
   "roej": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Fredrik Jørgensen"
   },
   "ropz": {
-   "country": "EE"
+   "country": "EE",
+   "name": "Robin Kool"
   },
   "rpk": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Cédric Guipouy"
   },
   "rush": {
-   "country": "US"
+   "country": "US",
+   "name": "William Wierzba"
   },
   "s1mple": {
-   "country": "UA"
+   "country": "UA",
+   "name": "Oleksandr Kostyliev"
   },
   "s1ren": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Pavel Ogloblin"
   },
   "saffee": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Rafael Costa"
   },
   "sanji": {
-   "country": "KZ"
+   "country": "KZ",
+   "name": "Sanjar Kuliev"
   },
   "schneider": {
    "country": "SE"
   },
   "seized": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Denis Kostin"
   },
   "semphis": {
-   "country": "GB"
+   "country": "GB",
+   "name": "Kory Friesen"
   },
   "senzu": {
-   "country": "MN"
+   "country": "MN",
+   "name": "Azbayar Munkhbold"
   },
   "sergej": {
-   "country": "FI"
+   "country": "FI",
+   "name": "Jere Salo"
   },
   "sgares": {
    "country": "US"
   },
   "sh1ro": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Dmitriy Sokolov"
   },
   "shox": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Richard Papillon"
   },
   "shroud": {
-   "country": "CA"
+   "country": "CA",
+   "name": "Mike Grzesiek"
   },
   "siuhy": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Kamil Szkaradek"
   },
   "sjuush": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Rasmus Beck"
   },
   "skadoodle": {
-   "country": "US"
+   "country": "US",
+   "name": "Tyler Latham"
   },
   "smithzz": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Edouard Dubourdeaux"
   },
   "smooya": {
-   "country": "GB"
+   "country": "GB",
+   "name": "Owen Butterfield"
   },
   "snappi": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Marco Pfeiffer"
   },
   "snax": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Janusz Pogorzelski"
   },
   "soulfly": {
-   "country": "TR"
+   "country": "TR",
+   "name": "Caner Kesici"
   },
   "spinx": {
-   "country": "IL"
+   "country": "IL",
+   "name": "Lotan Giladi"
   },
   "stanislaw": {
-   "country": "CA"
+   "country": "CA",
+   "name": "Peter Jarguz"
   },
   "stavn": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Martin Lund"
   },
   "steel": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Lucas Lopes"
   },
   "stewie2k": {
-   "country": "US"
+   "country": "US",
+   "name": "Jake Yip"
   },
   "tabsen": {
-   "country": "DE"
+   "country": "DE",
+   "name": "Johannes Wodarz"
   },
   "taco": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Epitácio de Melo"
   },
   "tarik": {
-   "country": "US"
+   "country": "US",
+   "name": "Tarik Celik"
   },
   "taz": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Wiktor Wojtas"
   },
   "techno4k": {
-   "country": "MN"
+   "country": "MN",
+   "name": "Sodbayar Munkhbold"
   },
   "teses": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Rene Madsen"
   },
   "tizian": {
-   "country": "DE"
+   "country": "DE",
+   "name": "Tizian Feldbusch"
   },
   "tn1r": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Andrey Tatarinovich"
   },
   "torzsi": {
-   "country": "HU"
+   "country": "HU",
+   "name": "Ádám Torzsás"
   },
   "twist": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Simon Eliasson"
   },
   "twistzz": {
-   "country": "CA"
+   "country": "CA",
+   "name": "Russel Van Dulken"
   },
   "ultimate": {
-   "country": "PL"
+   "country": "PL",
+   "name": "Alexander Pauls"
   },
   "uzzziii": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Kevin Vernel"
   },
   "vini": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Vinicius Figueiredo"
   },
   "w0nderful": {
-   "country": "UA"
+   "country": "UA",
+   "name": "Ihor Zhdanov"
   },
   "wicadia": {
-   "country": "TR"
+   "country": "TR",
+   "name": "Ali Haydar Yalçın"
   },
   "woxic": {
-   "country": "TR"
+   "country": "TR",
+   "name": "Özgür Eker"
   },
   "xantares": {
-   "country": "TR"
+   "country": "TR",
+   "name": "Ismailcan Dörtkardeş"
   },
   "xertion": {
-   "country": "IL"
+   "country": "IL",
+   "name": "Dorian Berman"
   },
   "xizt": {
-   "country": "SE"
+   "country": "SE",
+   "name": "Richard Landström"
   },
   "xseven": {
-   "country": "FI"
+   "country": "FI",
+   "name": "Sami Laasanen"
   },
   "xyp9x": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Andreas Højsleth"
   },
   "yekindar": {
-   "country": "LV"
+   "country": "LV",
+   "name": "Mareks Gaļinskis"
   },
   "yuurih": {
-   "country": "BR"
+   "country": "BR",
+   "name": "Yuri Boian"
   },
   "zeus": {
-   "country": "UA"
+   "country": "UA",
+   "name": "Danylo Teslenko"
   },
   "zont1x": {
-   "country": "UA"
+   "country": "UA",
+   "name": "Myroslav Plakhotja"
   },
   "zweih": {
-   "country": "RU"
+   "country": "RU",
+   "name": "Ivan Gogin"
   },
   "zyphon": {
-   "country": "DK"
+   "country": "DK",
+   "name": "Rasmus Nordfoss"
   },
   "zywoo": {
-   "country": "FR"
+   "country": "FR",
+   "name": "Mathieu Herbaut"
   }
  },
  "coaches": {

@@ -33,6 +33,8 @@ export interface Player {
   rating: number;     // game rating
   /** ISO 3166-1 alpha-2 country code (XK for Kosovo). */
   country: string;
+  /** The person's real name, from bo3.gg (scripts/fetch-real-names.mjs); missing when no source gave one. Never shown in Guess the pro or share text. */
+  name?: string;
   portrait?: string;  // optional image URL (filled by the fetch script when images are permitted)
 }
 
@@ -62,7 +64,7 @@ export interface Roster {
 /** The shape of rosters.json. */
 export interface RosterFile {
   orgs: Record<string, { tag: string; color: string }>;
-  players: Record<string, { country: string }>;
+  players: Record<string, { country: string; name?: string }>;
   coaches: Record<string, { rating: number }>;
   rosters: {
     org: string; year: number; event: string; dates: string; result: string; wiki: string;
@@ -115,7 +117,7 @@ export const ROSTERS: Roster[] = DATA.rosters.map((r) => {
     players: r.players.map((p) => {
       const id = p.id ?? pid(p.nick);
       // Photos are keyed by nick; a player with an explicit id (a nick shared with someone else) has none.
-      const player: Player = { id, nick: p.nick, roles: p.roles as Role[], rating: p.rating, country: DATA.players[id]?.country ?? '', portrait: p.id ? undefined : PHOTOS[id]?.src };
+      const player: Player = { id, nick: p.nick, roles: p.roles as Role[], rating: p.rating, country: DATA.players[id]?.country ?? '', name: DATA.players[id]?.name, portrait: p.id ? undefined : PHOTOS[id]?.src };
       if (p.rolesV1) CORRECTED.push([player, p.roles as Role[], p.rolesV1 as Role[]]);
       return player;
     }),
