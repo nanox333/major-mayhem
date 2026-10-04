@@ -50,6 +50,8 @@ export interface Roster {
   sourceUrl: string;  // Wikipedia page the roster was read from
   liquipediaUrl: string;
   logo?: string;
+  /** The logo is too dark to show on the dark interface by itself, so it is drawn on a light plate. */
+  logoDark?: boolean;
   /** The team's coach at that Major, when the source lists one. */
   coach?: string;
   /** Written from knowledge rather than read from the cached source; check with `npm run fetch-data`. */
@@ -85,7 +87,7 @@ export const rosterId = (org: string, year: number, event: string) => `${pid(org
 
 // Images: player photos and team logos from bo3.gg's public pages, with freely licensed Wikimedia Commons
 // files filling gaps (see CREDITS). Cropped and embedded at build time by scripts/build-media.mjs.
-interface Media { src: string; source: string; file: string; author: string; license: string; page: string }
+interface Media { dark?: boolean; src: string; source: string; file: string; author: string; license: string; page: string }
 const PHOTOS = media.players as Record<string, Media>;
 const LOGOS = media.logos as Record<string, Media>;
 export const CREDITS = {
@@ -110,6 +112,7 @@ export const ROSTERS: Roster[] = DATA.rosters.map((r) => {
     sourceUrl: WIKI + r.wiki,
     liquipediaUrl: lq(r.event),
     logo: LOGOS[r.org]?.src,
+    logoDark: LOGOS[r.org]?.dark,
     coach: r.coach,
     unverified: r.source === 'unverified' || undefined,
     since: r.since,

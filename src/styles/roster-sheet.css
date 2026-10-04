@@ -87,7 +87,7 @@
 
 /* The sheet's header sits on the panel: the archive's backdrop picture would show above it and the header's fade would end in a visible box. */
 .archive-page:has(.rs)::before { display: none; }
-.rs-head { background: linear-gradient(100deg, color-mix(in srgb, var(--team) 42%, transparent), transparent 80%); }
+.rs-head { background: linear-gradient(100deg, color-mix(in srgb, var(--team-deep, var(--team)) 42%, transparent), transparent 80%); }
 
 /* Back to the list: a flat angular tab with an arrow that nudges left, like the other buttons. */
 .rs-back { position: relative; isolation: isolate; display: inline-flex; align-items: center; gap: 10px; min-height: 40px; margin: 0 0 14px; padding: 0 20px 0 14px; border: 0; background: none; color: var(--text-2); font: 800 .8rem/1 var(--f-head); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
@@ -98,3 +98,11 @@
 .rs-back:hover svg { transform: rotate(180deg) translateX(3px); }
 .rs-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .rs-back::before, .rs-back svg { transition: none; } }
+
+/* A logo that is too dark for the dark interface (black or deep-purple marks) sits on a light plate and keeps its own colours. */
+.badge-logo--plate { background: #e7eaee; border-color: rgba(255, 255, 255, .5); }
+
+/* A team's colour is used as a background in the card headers and the sheet head, where white names sit on it. A pale team colour (NRG, Vitality, NaVi, Spirit, NiP...) would
+   leave the name unreadable, so the background version is capped in lightness; borders and underlines keep the real colour. */
+.case-card, .rs { --team-deep: var(--team); }
+@supports (color: oklch(from red l c h)) { .case-card, .rs { --team-deep: oklch(from var(--team) min(l, .5) min(c, .17) h); } }

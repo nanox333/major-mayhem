@@ -37,7 +37,7 @@ export function TeamBadge({ roster, size = 40 }: { roster: Roster; size?: number
   const [broken, setBroken] = useState(false);
   if (roster.logo && !broken)
     return (
-      <span className="badge-logo" style={{ width: size, height: size, padding: Math.round(size * 0.14), ['--team' as string]: roster.color }}>
+      <span className={`badge-logo ${roster.logoDark ? 'badge-logo--plate' : ''}`} style={{ width: size, height: size, padding: Math.round(size * 0.14), ['--team' as string]: roster.color }}>
         <img src={roster.logo} alt={roster.org} onError={() => setBroken(true)} />
       </span>
     );

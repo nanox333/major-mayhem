@@ -8,6 +8,12 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 
 ### Added
+- **More ways to sort the Roster archive:** a Sort by menu (Newest first, Oldest first, Best placing, Team A–Z, Most titles). Newest and oldest keep the year and Major sections; Best placing groups by Champions, Runner-up, Semifinalist and Quarterfinalist; Team A–Z and Most titles group each team's lineups together with how many lineups and titles it has and the years it spans. Search now also finds real names and coaches.
+- **Seven more team logos:** Copenhagen Wolves, HellRaisers, Epsilon eSports, Keyd Stars, PENTA Sports (supplied), FlipSid3 Tactics and Team SoloMid (from bo3.gg).
+
+### Fixed
+- **Logos that vanished on the dark interface:** a logo that is almost entirely near-black (SK Gaming, North, MOUZ, FaZe, Gambit, PENTA, Epsilon, Keyd Stars) is now found when the media is built and drawn on a light plate, keeping its own colours.
+- **Team names you couldn't read:** a pale team colour (NRG, Vitality, NaVi, Spirit, NiP, Team SoloMid...) used to make the card header and roster-sheet header too light for its white name. The header background now uses a capped version of the colour; borders and underlines keep the real one.
 - **Debug: player ratings in the archive.** The debug menu has a switch that shows every player's hidden game rating on the roster archive cards and in the corner of each portrait on a roster sheet. It only does anything while the debug tools are on.
 
 ### Changed

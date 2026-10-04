@@ -37,6 +37,16 @@ for (const [nick, v] of Object.entries(a.players)) {
   const img = await sharp(buf).extract({ left, top, width: side, height: side }).resize(168, 168).jpeg({ quality: 78, mozjpeg: true }).toBuffer();
   out.players[pid(nick)] = { src: 'data:image/jpeg;base64,' + img.toString('base64'), ...credit(v) };
 }
+/**
+ * Whether a logo would disappear on the dark interface: the visible pixels are almost all near-black. Such a logo is drawn on a light plate
+ * (`dark` in the media file, `badge-logo--plate` in the page) rather than recoloured, so it keeps its own colours and its black outlines.
+ */
+const tooDark = async (png) => {
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  let n = 0, dark = 0;
+  for (let i = 0; i < data.length; i += info.channels) if (data[i + 3] > 128) { n++; if (0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2] < 60) dark++; }
+  return n > 0 && dark / n >= 0.85; // nearly all of it is near-black
+};
 const LOGO_DROP = new Set(['Team Spirit', 'Team Dignitas']);   // wrong organizations with the same name
 const INVERT = new Set(['MIBR', 'Team EnVyUs']);               // black logos: shown white on the dark UI
 for (const [org, v] of Object.entries(a.logos)) {
@@ -44,7 +54,7 @@ for (const [org, v] of Object.entries(a.logos)) {
   let img = sharp(Buffer.from(v.data.split(',')[1], 'base64')).trim().resize(96, 96, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } });
   if (INVERT.has(org)) img = img.negate({ alpha: false });
   const b = await img.png({ palette: true }).toBuffer();
-  out.logos[org] = { src: 'data:image/png;base64,' + b.toString('base64'), ...credit(v) };
+  out.logos[org] = { src: 'data:image/png;base64,' + b.toString('base64'), dark: INVERT.has(org) ? false : await tooDark(b), ...credit(v) };
 }
 // ---- bo3.gg (primary source when present): studio photos and team logos read from public pages ----
 const b = JSON.parse(fs.readFileSync('assets-src/major-mayhem-bo3.json', 'utf8'));
@@ -61,7 +71,7 @@ for (const [nick, v] of Object.entries(b.players)) {
 }
 for (const [org, v] of Object.entries(b.teams)) {
   const img = await sharp(Buffer.from(v.data.split(',')[1], 'base64')).trim().resize(96, 96, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } }).webp({ quality: 85, alphaQuality: 90 }).toBuffer();
-  out.logos[org] = { src: 'data:image/webp;base64,' + img.toString('base64'), source: 'bo3.gg', file: org + ' logo', author: org, license: 'Trademark of ' + org + '; used for identification', page: v.page };
+  out.logos[org] = { src: 'data:image/webp;base64,' + img.toString('base64'), dark: await tooDark(img), source: 'bo3.gg', file: org + ' logo', author: org, license: 'Trademark of ' + org + '; used for identification', page: v.page };
   bl++;
 }
 console.log('bo3 players', bp, 'bo3 logos', bl);
