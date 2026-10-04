@@ -118,16 +118,23 @@ export function seriesRatings(maps: MapGame[], side: 'mine' | 'opp' | 'both' = '
 const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1, ROLL = 0.4, ROLL_CAP = 1.2, TIMEOUT = 1.2, TIMEOUT_V4 = 2.4;
 
 /** Side choice before map `i`: the non-picker chooses on a picked map, a knife round decides the decider and Bo1s. */
-function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL: Lineup[]): Knife {
+function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL: Lineup[], veto: Veto): Knife {
   const map = pool[i];
-  const how: Knife['how'] = bestOf === 3 && i === 0 ? 'our-pick' : bestOf === 3 && i === 1 ? 'their-pick' : 'knife';
+  // The first two maps of a Bo3 are picks: whoever picked a map, the other team chooses its side. Usually that is you for the first one, but not after a coin flip.
+  const picker = veto.steps.filter((x) => x.action === 'pick')[i]?.team ?? (i === 0 ? 'us' : 'them');
+  const how: Knife['how'] = bestOf === 3 && i < 2 ? (picker === 'us' ? 'our-pick' : 'their-pick') : 'knife';
   const won = how === 'their-pick' ? true : how === 'our-pick' ? false : random() < 0.5;
   return { map, how, won, best: bestSide(map, mine, oppL), oppPick: bestSide(map, oppL, mine) };
 }
 
+/** Whether a stage is a showmatch played on equal terms: no form, subs or calls, and a veto and sides chosen by the same rule for both teams (#172). */
+export const equalShowmatch = (stage: StageKey) => stage === 'DUEL' && hasRule('equalDuel');
+
 /** Sets up a series: match-day form and an empty map veto. No maps are played yet. */
 export function startMatch(stage: StageKey, mine: Lineup[], oppId: string, bestOf: 1 | 3 = BEST_OF[stage]): Match {
-  const form = (random() - 0.5) * 5; // match-day form
+  const roll = (random() - 0.5) * 5;
+  // An equal-conditions showmatch has no match-day form: neither team gets a lift or a dip (#172).
+  const form = equalShowmatch(stage) ? 0 : roll; // match-day form
   const impact: Record<string, number> = Object.fromEntries(mine.map((x) => [x.player.id, 0]));
   const veto: Veto = { order: VETO_ORDER[bestOf], steps: [], left: [...MAPS] };
   return { stage, opponentId: oppId, bestOf, maps: [], impact, form, veto, pool: [], next: null, done: false, won: false, score: [0, 0] };
@@ -148,7 +155,23 @@ export function applyVeto(m: Match, mine: Lineup[], map: string): Match {
   if (vetoTurn(v)) return { ...m, veto: v };
   const picks = v.steps.filter((x) => x.action === 'pick').map((x) => x.map);
   const pool = [...picks, v.left[0]];
-  return { ...m, veto: v, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL) };
+  return { ...m, veto: v, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL, v) };
+}
+
+/**
+ * The whole veto, chosen by one rule for both teams (#172): each bans the map that suits the other most and picks the one that suits itself most. A coin
+ * flip, seeded like the rest of the match, says who goes first, so neither side has the first ban.
+ */
+export function autoVeto(m: Match, mine: Lineup[]): Match {
+  const oppL = naturalLineup(rosterById.get(m.opponentId)!);
+  const swap = random() < 0.5;
+  let v: Veto = { ...m.veto, auto: true, order: swap ? m.veto.order.map((o) => ({ ...o, team: (o.team === 'us' ? 'them' : 'us') as Team })) : m.veto.order };
+  for (let t = vetoTurn(v); t; t = vetoTurn(v)) {
+    const map = vetoChoice(v, t.team, mine, oppL);
+    v = { ...v, steps: [...v.steps, { team: t.team, action: t.action, map }], left: v.left.filter((x) => x !== map) };
+  }
+  const pool = [...v.steps.filter((x) => x.action === 'pick').map((x) => x.map), v.left[0]];
+  return { ...m, veto: v, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL, v) };
 }
 
 /** Plays the next map with your team starting on `start`, then sets up the following side choice if the series goes on. */
@@ -167,7 +190,7 @@ export function playNextMap(m: Match, mine: Lineup[], start: Side, coach?: strin
   const need = Math.ceil(m.bestOf / 2);
   const done = w >= need || l >= need;
   const score: [number, number] = m.bestOf === 1 ? maps[0].score : [w, l];
-  return { ...m, maps, impact, done, won: done && w > l, score, next: done ? null : setupMap(m.bestOf, m.pool, maps.length, mine, oppL) };
+  return { ...m, maps, impact, done, won: done && w > l, score, next: done ? null : setupMap(m.bestOf, m.pool, maps.length, mine, oppL, m.veto) };
 }
 
 /**
@@ -188,6 +211,7 @@ export function replayLastMap(m: Match, mine: Lineup[], coach: string | null | u
  * (once in overtime), a force buy only in the round after a lost pistol.
  */
 export function canCall(m: Match, call: Call): boolean {
+  if (equalShowmatch(m.stage)) return false; // the other team has no calls, so nobody does
   const g = m.maps[m.maps.length - 1];
   if (!g?.knife || !g.impact || call.round < 1 || call.round >= g.rounds.length) return false;
   const calls = g.calls ?? noCalls();

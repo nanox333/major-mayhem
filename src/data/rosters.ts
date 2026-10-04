@@ -136,11 +136,14 @@ export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.
  *   IGL labels (#13).
  * - v3 (from 2026-10-01): opponents are chosen from the rosters that share nobody with your team for as long as any are left,
  *   instead of switching to ones that do once fewer than eight remain (#167).
+ * - v4 (from 2026-10-04): a timeout lifts the next three rounds about twice as much.
+ * - v5 (from 2026-10-05): a draft duel is an equal-conditions comparison (#172): the friend is dealt the same cases, and the showmatch has no
+ *   match-day form, substitutions or tactical calls, with both teams choosing maps and sides by the same rule. Only duels change; every other run plays as v4.
  * To add a version: append it here with tomorrow's date, name each behaviour it changes in `RULE_SINCE` below and read it
  * with `hasRule('name')` (never compare the version number in the code), put any changed roles in `rolesV1`-style fields,
  * and pin the previous version's fingerprints in `rules.test.ts`, which fails until you do.
  */
-export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }, { v: 4, from: '2026-10-04' }] as const;
+export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }, { v: 4, from: '2026-10-04' }, { v: 5, from: '2026-10-05' }] as const;
 export const LATEST_RULES: number = RULES[RULES.length - 1].v;
 export const rulesOn = (date: string): number => [...RULES].reverse().find((r) => r.from <= date)?.v ?? 1;
 /** Each behaviour that differs between rules versions, and the first version it applies in. Code reads these with `hasRule`, not with version numbers. */
@@ -157,6 +160,8 @@ export const RULE_SINCE = {
   cleanOpponentPool: 3,
   /** A timeout lifts the next three rounds about twice as much as it did, so calling one visibly matters. */
   strongerTimeout: 4,
+  /** A draft duel is played on equal terms: recorded cases, neutral form, no subs or calls, automatic veto and sides for both teams (#172). */
+  equalDuel: 5,
 } as const;
 export type RuleSwitch = keyof typeof RULE_SINCE;
 /** Whether rules version `v` includes the behaviour `f`. */

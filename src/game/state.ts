@@ -38,6 +38,8 @@ export interface Run {
   offerKey: number;
   rerollKey: number;
   seen: string[];
+  /** Every case this run was shown, round by round, with the spins in order: what a duel link carries so a friend is dealt the same ones (#172). */
+  offerLog?: string[][][];
   team: string | null;
   picks: G.Pick[];
   rerolls: number;
@@ -67,10 +69,32 @@ export interface Run {
 }
 export const newAttempt = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 export const rulesOf = (s: Pick<Run, 'rules'>) => s.rules ?? 1;
+/** Whether this run is an equal-conditions draft duel: the cases are the challenger's, and the showmatch gives neither team form, subs or calls (#172). */
+export const equalDuel = (s: Pick<Run, 'duel'>) => s.duel?.v === 2;
+
+/** The cases a duel's challenger saw in a round, in the order they were shown. */
+const recordedCases = (s: Run, round: number) => s.duel?.offers?.[round] ?? [];
+/** Whether a spin is possible on this case: a duel has one only where the challenger spun. */
+/** Spins this run can still use in a duel: only where the challenger spun, as many as they did, and never more than the run has left. */
+export const canReroll = (s: Run) => s.rerolls > 0 && (!equalDuel(s) || !!recordedCases(s, roundNumber(s) - 1)[(s.offerLog?.[roundNumber(s) - 1]?.length ?? 1)]);
+export const rerollsLeft = (s: Run) => {
+  if (!equalDuel(s)) return s.rerolls;
+  const here = roundNumber(s) - 1;
+  const used = (s.offerLog?.[here]?.length ?? 1) - 1;
+  const spare = (s.duel!.offers ?? []).reduce((n, chain, i) => n + (i < here ? 0 : chain.length - 1 - (i === here ? used : 0)), 0);
+  return Math.max(0, Math.min(s.rerolls, spare));
+};
 
 /** Slots a player can go into: the roles they cover, or in hard mode any open slot (off-role costs as usual). */
 export const slotsFor = (s: Run, p: Player): Role[] =>
-  s.opts?.hard ? (G.draftedIds(s.picks).has(p.id) ? [] : G.openSlots(s.picks)) : G.eligibleSlots(p, s.picks);
+  s.opts?.hard || flexRound(s) ? (G.draftedIds(s.picks).has(p.id) ? [] : G.openSlots(s.picks)) : G.eligibleSlots(p, s.picks);
+
+/**
+ * In an equal-conditions duel the cases are the challenger's, and none of the three may suit the slots you have left. When none does, any open slot takes
+ * any player and the usual off-role cost applies, so the case is never a dead end (#172).
+ */
+export const flexRound = (s: Run) => equalDuel(s) && s.picks.length < 5 && s.offer.length > 0
+  && !s.offer.some((id) => { const r = G.rosterById.get(id); return !!r && G.rosterEligible(r, s.picks); });
 
 export type Round = 'player' | 'coach' | 'bench';
 /** Which kind of draft round is next: five players, then the coach, then the bench. */
@@ -106,7 +130,7 @@ export const fresh = (mode: Mode = 'free', date = today(), opts?: Opts): Run => 
   ...(mode === 'free' && opts && optsLabel(opts).length ? { opts } : {}),
   v: 3, mode, seed: mode === 'daily' ? `daily-${date}` : `free-${Math.random().toString(36).slice(2, 10)}`,
   phase: 'draft', step: 'spin', offer: [], offerKey: 0, rerollKey: 0, seen: [], team: null, picks: [], rerolls: 2,
-  t: G.newTournament(), pending: null, current: null, recorded: false, extras: true, bench: null, attempt: newAttempt(),
+  t: G.newTournament(), pending: null, current: null, recorded: false, extras: true, bench: null, attempt: newAttempt(), offerLog: [],
   // A daily plays under the rules of its date; everything else starts on the latest.
   rules: mode === 'daily' ? rulesOn(date) : LATEST_RULES,
 });
@@ -201,6 +225,7 @@ export function validRun(r: any): boolean {
   if (new Set(r.picks.map((p: G.Pick) => p.playerId)).size !== r.picks.length) return false;
   if (!Array.isArray(r.offer) || r.offer.length > 3 || !r.offer.every(roster)) return false;
   if (!Array.isArray(r.seen) || r.seen.length > 400 || !r.seen.every(roster)) return false;
+  if (r.offerLog !== undefined && !(Array.isArray(r.offerLog) && r.offerLog.length <= 7 && r.offerLog.every((c: unknown) => Array.isArray(c) && c.length >= 1 && c.length <= 3 && c.every((o: unknown) => Array.isArray(o) && o.length <= 3 && o.every(roster))))) return false;
   if (!(r.team === null || roster(r.team)) || (r.step === 'players' && r.team === null)) return false;
   if (!(r.coach === undefined || r.coach === null || isCoach(r.coach)) || !(r.coachFrom === undefined || roster(r.coachFrom))) return false;
   if (r.bench && (!pickOk(r.bench) || r.picks.some((p: G.Pick) => p.playerId === r.bench.playerId))) return false;
@@ -278,9 +303,14 @@ export const draftPoolFor = (s: Run) => {
 const offerFor = (s: Run) => G.seeded(`${s.seed}:offer:${s.picks.length}:${s.rerolls}`, () => G.makeOffer(s.picks, s.seen, draftPoolFor(s)));
 const opponentFor = (s: Run, t: G.Tournament, stage: G.StageKey) => stage === 'DUEL' ? DUEL_ID :
   G.seeded(`${s.seed}:opp:${t.matches.length}`, () => G.pickOpponent(t, stage, squadOf(s), rostersFor(s)));
+/** The run's case log with this round's cases replaced. */
+const logCase = (s: Run, chain: string[][]): string[][][] => { const log = [...(s.offerLog ?? [])]; log[roundNumber(s) - 1] = chain; return log; };
 /** The offer for whichever round is next. Coach and bench offers are seeded apart from the player rounds. */
 const offerForRound = (s: Run) => {
   const round = roundOf(s);
+  // A duel deals the challenger's cases, not new ones: what you pick can't change what comes next, so both drafts face the same offers.
+  const first = equalDuel(s) ? recordedCases(s, roundNumber(s) - 1)[0] : undefined;
+  if (first) return first;
   if (round === 'coach') return G.seeded(`${s.seed}:coach:${s.rerolls}`, () => G.makeCoachOffer(s.seen, draftPoolFor(s)));
   if (round === 'bench') return G.seeded(`${s.seed}:bench:${s.rerolls}`, () => G.makeBenchOffer(s.picks, s.seen, draftPoolFor(s)));
   return offerFor(s);
@@ -288,7 +318,7 @@ const offerForRound = (s: Run) => {
 /** A found match: the opponent, plus everyone's match-day form (only for drafts with a bench). */
 const pendingFor = (s: Run, t: G.Tournament, stage: G.StageKey): Pending => {
   const oppId = opponentFor(s, t, stage);
-  if (!s.extras) return { stage, oppId };
+  if (!s.extras || equalDuel(s)) return { stage, oppId };
   const ids = squadOf(s).map((x) => x.player.id);
   return { stage, oppId, form: G.seeded(`${s.seed}:form:${t.matches.length}`, () => G.rollForm(ids)), subOut: null };
 };
@@ -308,13 +338,20 @@ function reduce(s: Run, a: Action): Run {
   switch (a.type) {
     case 'spin': {
       const offer = offerForRound(s);
-      return { ...s, step: 'teams', offer, seen: [...s.seen, ...offer], offerKey: s.offerKey + 1, team: null };
+      return { ...s, step: 'teams', offer, seen: [...s.seen, ...offer], offerKey: s.offerKey + 1, team: null, offerLog: logCase(s, [offer]) };
     }
     case 'reroll': {
       if (s.rerolls <= 0 || s.step !== 'teams') return s;
-      const next = { ...s, rerolls: s.rerolls - 1 };
-      const offer = offerForRound(next);
-      return { ...next, offer, seen: [...s.seen, ...offer], rerollKey: s.rerollKey + 1 };
+      const here = roundNumber(s) - 1, shown = s.offerLog?.[here] ?? [s.offer];
+      let next = { ...s, rerolls: s.rerolls - 1 };
+      let offer: string[];
+      if (equalDuel(s)) {
+        // Only the cases the challenger spun to exist, and in the rounds where they spun.
+        const spun = recordedCases(s, here)[shown.length];
+        if (!spun) return s;
+        offer = spun;
+      } else offer = offerForRound(next);
+      return { ...next, offer, seen: [...s.seen, ...offer], rerollKey: s.rerollKey + 1, offerLog: logCase(s, [...shown, offer]) };
     }
     case 'team': return { ...s, step: 'players', team: a.id };
     case 'back': return { ...s, step: 'teams', team: null };
@@ -347,7 +384,11 @@ function reduce(s: Run, a: Action): Run {
     case 'start': {
       if (!s.pending) return s;
       const { stage, oppId, form, subOut } = s.pending;
-      const m = G.seeded(`${s.seed}:match:${s.t.matches.length}`, () => G.startMatch(stage, lineupFor(s, subOut, form), oppId, G.bestOfFor(stage, s.t)));
+      const m = G.seeded(`${s.seed}:match:${s.t.matches.length}`, () => {
+        const lineup = lineupFor(s, subOut, form);
+        const start = G.startMatch(stage, lineup, oppId, G.bestOfFor(stage, s.t));
+        return equalDuel(s) ? G.autoVeto(start, lineup) : start;
+      });
       return { ...s, phase: 'live', current: { ...m, ...(form ? { playerForm: form, subOut: subOut ?? null } : {}) } };
     }
     case 'veto': {
@@ -361,9 +402,11 @@ function reduce(s: Run, a: Action): Run {
       // its place in the series, so in a daily the same pick always plays out the same way.
       const m = s.current;
       if (!m?.next || m.done) return s;
-      if (!m.next.won && a.side !== G.otherSide(m.next.oppPick)) return s;
+      // Equal-conditions showmatch: both teams take their stronger side, so the choice isn't yours to make.
+      const side = m.veto.auto ? G.autoSide(m.next) : a.side;
+      if (!m.next.won && side !== G.otherSide(m.next.oppPick)) return s;
       const k = m.maps.length;
-      return { ...s, current: G.seeded(`${s.seed}:match:${s.t.matches.length}:map:${k}`, () => G.playNextMap(m, currentLineup(s), a.side, s.coach)) };
+      return { ...s, current: G.seeded(`${s.seed}:match:${s.t.matches.length}:map:${k}`, () => G.playNextMap(m, currentLineup(s), side, s.coach)) };
     }
     case 'call': {
       // A tactical call replays the map being watched under the same seed: rounds already shown don't change.

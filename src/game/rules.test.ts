@@ -40,6 +40,15 @@ const PINNED: Record<number, ReturnType<typeof fingerprints>> = {
     lineups: '383254de',
     guesses: 'f539f431',
   },
+  // Recorded from the code at the end of v4 (before equal-conditions duels).
+  4: {
+    runs: {
+      'daily 2026-09-28': 'c33f075b', 'daily 2026-09-29': 'b8787ff3', 'daily 2026-09-30': '9d5d95e0',
+      'free a': '6fd8bbeb', 'free b': '71bfafaf', 'free c': 'cb7f95', 'free d': '3e0d449c',
+    },
+    lineups: '383254de',
+    guesses: 'f539f431',
+  },
 };
 
 describe('rules versions (#24)', () => {
@@ -56,6 +65,9 @@ describe('rules versions (#24)', () => {
   });
   it('replays rules v3 as it was when v4 was added', () => {
     expect(fingerprints(3)).toEqual(PINNED[3]);
+  });
+  it('replays rules v4 as it was when v5 was added', () => {
+    expect(fingerprints(4)).toEqual(PINNED[4]);
   });
   it('names every behaviour switch after a version that exists', () => {
     const versions = RULES.map((r) => r.v as number);

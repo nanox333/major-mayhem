@@ -6,7 +6,11 @@ export const MAPS = ['Mirage', 'Inferno', 'Nuke', 'Ancient', 'Anubis', 'Dust2', 
 
 export type Team = 'us' | 'them';
 export interface VetoStep { team: Team; action: 'ban' | 'pick'; map: string }
-export interface Veto { order: { team: Team; action: 'ban' | 'pick' }[]; steps: VetoStep[]; left: string[] }
+export interface Veto {
+  order: { team: Team; action: 'ban' | 'pick' }[]; steps: VetoStep[]; left: string[];
+  /** Both teams chose by the same rule, with a coin flip for who started (an equal-conditions showmatch, #172): nobody on screen vetoes. */
+  auto?: boolean;
+}
 
 const turn = (team: Team, action: 'ban' | 'pick') => ({ team, action });
 /** Bo1: six alternating bans, the last map is played. Bo3: ban, ban, pick, pick, ban, ban, then the decider. */

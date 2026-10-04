@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
 import { ChemPreview, Preview, chemPreview, defaultSlot, placementLabel, playerState, sameCandidate } from '../game/draftui';
-import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, draftRounds, poolCheck, roundNumber, roundOf, slotsFor, today } from '../game/state';
+import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, canReroll, draftRounds, equalDuel, flexRound, poolCheck, rerollsLeft, roundNumber, roundOf, slotsFor, today } from '../game/state';
 import { Stats, dailyStreak } from '../game/stats';
 import { REACHED } from './Stats';
 import { pageUrl } from '../game/share';
@@ -326,10 +326,14 @@ const stampOf = (s: Run) => `${s.attempt}:${s.offerKey}:${s.rerollKey}`;
 
 /** "Spin again" with the real number of spins left (#103). */
 function SpinAgain({ s, reroll, busy }: { s: Run; reroll: () => void; busy?: boolean }) {
+  // In a duel you are dealt the cases the challenger saw, so a spin exists only where they spun (#172).
+  const left = rerollsLeft(s), can = canReroll(s);
+  const duel = equalDuel(s);
   return (
     <div className="reroll-row anim-in" style={{ animationDelay: '220ms' }}>
-      <button className="ghost-btn ghost-btn--big" data-sfx="reroll" onClick={reroll} disabled={s.rerolls <= 0 || busy}>
-        <RefreshIcon size={14} /> Spin again · {s.rerolls <= 0 ? 'no spins left' : `${s.rerolls} spin${s.rerolls === 1 ? '' : 's'} left`}
+      <button className="ghost-btn ghost-btn--big" data-sfx="reroll" onClick={reroll} disabled={!can || busy}
+        title={duel ? `Same cases as ${s.duel!.name}: you can spin where they spun, and no more often than they did` : undefined}>
+        <RefreshIcon size={14} /> Spin again · {!can ? (duel && s.rerolls > 0 ? `${s.duel!.name} didn't spin here` : 'no spins left') : `${left} spin${left === 1 ? '' : 's'} left`}
       </button>
     </div>
   );
@@ -562,7 +566,7 @@ function CaseCards({ s, dispatch, onPreview, onRolled, arrived }: { s: Run; disp
       <div className="draft-decision">
         {!sel && !hov && (
           <div className="draft-decision-empty is-compact">
-            <b>Select a player</b><span>{bench ? 'Choose a bench player from any roster.' : 'Point at a player to see where they fit.'}</span>
+            <b>Select a player</b><span>{bench ? 'Choose a bench player from any roster.' : flexRound(s) ? 'None of these three fit your open slots, so any open slot takes any player here. Off-role picks cost rating.' : 'Point at a player to see where they fit.'}</span>
           </div>
         )}
         {!sel && hov && <PeekBar s={s} cand={hov} slot={candSlot} chem={chem} bench={bench} hard={hard} />}
