@@ -1,7 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
-import { ChemPreview, Preview, chemPreview, defaultSlot, placementLabel, playerState, sameCandidate } from '../game/draftui';
+import { ChemPreview, Preview, chemPreview, defaultSlot, majorsOf, placementLabel, playerState, sameCandidate } from '../game/draftui';
 import { Action, MIN_POOL, Opts, Run, dailyDate, dailyNumber, canReroll, draftRounds, equalDuel, flexRound, poolCheck, rerollsLeft, roundNumber, roundOf, slotsFor, today } from '../game/state';
 import { Stats, dailyStreak } from '../game/stats';
 import { REACHED } from './Stats';
@@ -585,7 +585,10 @@ type Why = { key: string; text: string; role?: Role; sign?: '+' | '−' };
  * would add or break, named as the model names it. Hard mode keeps its promise: no fit and no chemistry, only the slot you chose.
  */
 function whyLines(s: Run, cand: Chosen, slot: Role | 'bench' | null, chem: ChemPreview | null, bench: boolean, hard: boolean): Why[] {
-  if (bench) return [{ key: 'bench', text: 'Joins as your bench player' }, { key: 'sub', text: "Subs in for a starter who's off form" }];
+  // The Majors they attended and how far their team got (#48), as one quiet line; hard mode shows no placements.
+  const majors = hard ? [] : majorsOf(cand.p.id);
+  const history: Why[] = majors.length ? [{ key: 'majors', text: `Majors: ${majors.map((m) => `${m.year} ${m.result}`).join(' · ')}` }] : [];
+  if (bench) return [{ key: 'bench', text: 'Joins as your bench player' }, { key: 'sub', text: "Subs in for a starter who's off form" }, ...history];
   const out: Why[] = [];
   if (slot && slot !== 'bench') {
     const note = G.fitNote(cand.p, slot);
@@ -600,7 +603,7 @@ function whyLines(s: Run, cand: Chosen, slot: Role | 'bench' | null, chem: ChemP
       if (chem.capped) out.push({ key: 'cap', text: 'Chemistry is already at its maximum' });
     } else out.push({ key: 'none', text: s.picks.length === 0 ? 'No chemistry links yet' : 'No new chemistry links' });
   }
-  return out;
+  return [...out, ...history];
 }
 
 function WhyList({ lines }: { lines: Why[] }) {

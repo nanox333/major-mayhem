@@ -4,6 +4,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Changed
+- **The draft's hint and team chemistry no longer need a scroll:** the "Draft hint" card and the chemistry panel below the cases are now one quiet status line above them. What you still need is plain muted text, and chemistry is its word, its pips and up to three link chips (with "+N more"). What the player you point at would add stays in the decision panel's "Why pick", which now also lists the Majors they attended, so the separate "If you draft…" box is gone. The decision panel still ends inside a 900px-tall window. On phones the hint is a quiet line in the lineup sheet instead of a framed card.
+
 ### Removed
 - **The light theme.** The game is dark only: the Theme setting (System, Dark, Light) is gone, nothing follows a light system any more, and a theme saved by an earlier version is ignored. High contrast remains.
 

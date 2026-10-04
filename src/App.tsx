@@ -11,7 +11,7 @@ import { Modal } from './ui/Modal';
 import { useRunTracking } from './ui/useTracking';
 import { TopBar, View } from './ui/TopBar';
 import { RunProgress } from './ui/RunProgress';
-import { DraftSidebar } from './ui/DraftSidebar';
+import { DraftStatus } from './ui/DraftSidebar';
 import { DebugMenu } from './ui/DebugMenu';
 import { SettingsDialog } from './ui/Settings';
 import { usePrefs } from './ui/prefs';
@@ -187,7 +187,7 @@ function Game() {
               )}</div>}
           {view === 'draft' && <RunProgress steps={steps.map((x) => x.label)} stepIdx={stepIdx} />}
         </div>
-        {view === 'draft' && s.phase === 'draft' && <><div className={`${drafting ? 'desktop-strip' : ''} ${start ? 'strip-wait' : 'strip-in'}`} aria-hidden={start ? true : undefined}><TeamStrip s={s} preview={preview} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
+        {view === 'draft' && s.phase === 'draft' && <><div className={`${drafting ? 'desktop-strip' : ''} ${start ? 'strip-wait' : 'strip-in'}`} aria-hidden={start ? true : undefined}><TeamStrip s={s} preview={preview} /></div>{drafting && <MobileLineup s={s} preview={preview} onHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}{drafting && <DraftStatus s={s} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}</>}
 
         <div className={`console__body ${showBoard ? 'has-board' : ''} phase-${s.phase}`}>
           <section className="console__main">
@@ -198,7 +198,6 @@ function Game() {
             {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} board={<BoardHost s={s} mine={playing} />} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>
-          {drafting && <DraftSidebar s={s} preview={preview} onChemistryHelp={() => { setHelpTopic('Chemistry'); setHelp('play'); }} />}
           {showBoard && <BoardHost s={s} mine={playing} />}
         </div>
       </main>}

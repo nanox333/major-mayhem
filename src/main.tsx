@@ -11,6 +11,7 @@ import './styles/editorial-finish.css';
 import './styles/roster-archive.css';
 import './styles/draft-scene.css';
 import './styles/draft-open.css';
+import './styles/draft-status.css';
 import './styles/stats-page.css';
 import './styles/guess-page.css';
 import './styles/setup-page.css';

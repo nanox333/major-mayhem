@@ -23,6 +23,31 @@ export function DraftSidebar({ s, onChemistryHelp, preview }: { s: Run; /** Open
   );
 }
 
+/**
+ * The draft's status line (#107 to #109, reworked): one quiet row between the lineup and the cases, so it is on screen without scrolling. What the lineup still
+ * needs is plain muted text; chemistry is its word, its pips and the links behind it as small chips. What a player you point at would add is already in the
+ * decision panel's "Why pick", so it isn't repeated here. Still built only from your picks and the open slots, never from ratings.
+ */
+export function DraftStatus({ s, onChemistryHelp }: { s: Run; onChemistryHelp: () => void }) {
+  const chem = liveChemistry(s.picks, s.coach, !!s.opts?.hard);
+  const shown = chem.rows.slice(0, 3);
+  return (
+    <div className="dstat" role="group" aria-label="Draft status">
+      <p className="dstat__hint">{draftHint(s)}</p>
+      <div className="dstat__chem">
+        <span className="dstat__label">Chemistry</span>
+        <b className="dstat__word">{chem.word}</b>
+        <span className="pips" aria-hidden="true">{[1, 2, 3].map((i) => <i key={i} className={i <= chem.pips ? 'on' : ''} />)}</span>
+        <span className="sr" role="status">Chemistry: {chem.word}</span>
+        {shown.map((x) => <span key={x.label} className={`dstat__link ${x.value < 0 ? 'is-bad' : ''}`}><b>{strength(x.value)}</b>{x.label}</span>)}
+        {chem.rows.length > shown.length && <span className="dstat__more">+{chem.rows.length - shown.length} more</span>}
+        <button type="button" className="info-btn" onClick={onChemistryHelp} aria-label="What is team chemistry? Opens the help" title="What is this?" data-sfx="none">?</button>
+      </div>
+      {!s.opts?.hard && <Tip id="chem" title="Team chemistry" anchor="up" short="Same country, team or era works better together.">Players from the same country, team or era work better together. Point at a player to see what they would add before you draft.</Tip>}
+    </div>
+  );
+}
+
 /** Chemistry as the list of links behind it, with one word for the total. The pips are decoration; the word and the list carry it. */
 function ChemistryCard({ chem, onHelp, preview }: { chem: Chemistry; onHelp: () => void; preview: Preview | null }) {
   const chem_h = useId();
