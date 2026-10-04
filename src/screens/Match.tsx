@@ -478,7 +478,7 @@ function SeriesPreview({ m, opp }: { m: G.Match; opp: Roster }) {
   if (m.bestOf === 1) return null;
   return <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map} className={x.map === m.next?.map ? 'is-now' : ''}>
     <MapArt map={x.map} /><b>{x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b>
-    <span>{x.by === 'decider' ? 'Knife round decides sides' : `${x.by === 'us' ? 'You' : opp.tag} picked · ${x.by === 'us' ? opp.tag : 'You'} choose sides`}</span>
+    <span>{x.by === 'decider' ? 'Knife round decides sides' : `${x.by === 'us' ? 'You' : opp.tag} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span>
   </li>)}</ol>;
 }
 
@@ -490,8 +490,8 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, dispatch }: {
   const yours = k.won ? k.best : left, theirs = G.otherSide(yours);
   useChatVote(k.won && !auto ? voteKey : null, [{ id: 'T', label: 'T · attack', aliases: ['t', 'attack'] }, { id: 'CT', label: 'CT · defend', aliases: ['ct', 'defend'] }],
     (id) => dispatch({ type: 'side', side: id as G.Side }));
-  const title = k.how === 'our-pick' ? `Your pick: ${opp.org} choose sides`
-    : k.how === 'their-pick' ? `${opp.org}'s pick: you choose sides`
+  const title = k.how === 'our-pick' ? (auto ? `Your pick: ${opp.org} take ${theirs}` : `Your pick: ${opp.org} choose sides`)
+    : k.how === 'their-pick' ? (auto ? `${opp.org}'s pick: you take ${yours}` : `${opp.org}'s pick: you choose sides`)
       : k.won ? 'You won the knife!' : `${opp.org} won the knife`;
   const label = k.how === 'knife' ? (bestOf === 3 ? 'Decider · Knife round' : 'Knife round') : 'Side choice';
   const lean = G.sideLean(k.map);
@@ -557,8 +557,10 @@ const THINK_MS = 1150, SETTLE_MS = 3200;
 function useVetoReplay(m: G.Match) {
   const finished = m.pool.length > 0;
   // A veto that is already settled when the screen opens (a reload, history) is shown as it is, with no replay.
-  const [shown, setShown] = useState(m.veto.steps.length);
-  const [released, setReleased] = useState(finished);
+  // An automatic veto (equal-conditions showmatch) is complete the moment the match is set up, so it is played back from the start the first time it is seen.
+  const unseen = !!m.veto.auto && m.maps.length === 0;
+  const [shown, setShown] = useState(unseen ? 0 : m.veto.steps.length);
+  const [released, setReleased] = useState(finished && !unseen);
   const target = m.veto.steps.length;
   const quick = reduceMotion();
   useEffect(() => {
@@ -619,7 +621,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
         <div className="veto__says">
           <small className="knife__kicker">Map veto · Best of {m.bestOf}</small>
           <strong className="knife__title">{waiting ? <>{actor} {actor === 'You' ? 'are' : 'is'} <em>{t.action === 'ban' ? 'banning' : 'picking'}</em><span className="veto__dots" aria-hidden="true"><i /><i /><i /></span></> : t ? <>Your turn: <em>{t.action === 'ban' ? 'ban' : 'pick'}</em> a map</> : <>{m.bestOf === 3 ? 'Maps' : 'Map'} <em>locked</em></>}</strong>
-          <p className="knife__advice">{waiting ? (auto ? `Both teams choose by the same rule; ${actor} ${t.action}${actor === 'You' ? '' : 's'} next.` : `Waiting for ${opp.tag} to ${t.action} a map.`) : t ? consequence : 'Both teams have chosen. The knife round is next.'}</p>
+          <p className="knife__advice">{waiting ? (auto ? `Both teams choose by the same rule; ${actor === 'You' ? 'you' : actor} ${t.action}${actor === 'You' ? '' : 's'} next.` : `Waiting for ${opp.tag} to ${t.action} a map.`) : t ? consequence : 'Both teams have chosen. The knife round is next.'}</p>
         </div>
       </header>
       {!t && (
@@ -684,7 +686,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
         {auto && <> A coin flip decided that {who(m.veto.order[0].team)} {m.veto.order[0].team === 'us' ? 'go' : 'goes'} first.</>}
       </p>
       {!t && (
-        <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map}><MapArt map={x.map} /><b>{m.bestOf === 1 ? 'Match map' : x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b><span>{x.by === 'decider' ? 'Knife round decides sides' : `${who(x.by)} picked · ${x.by === 'us' ? opp.tag : 'You'} choose sides`}</span></li>)}</ol>
+        <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map}><MapArt map={x.map} /><b>{m.bestOf === 1 ? 'Match map' : x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b><span>{x.by === 'decider' ? (m.veto.auto ? 'Knife round decides who starts where' : 'Knife round decides sides') : `${who(x.by)} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span></li>)}</ol>
       )}
     </div>
   );
