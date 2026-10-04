@@ -578,7 +578,7 @@ function CaseCards({ s, dispatch, onPreview, onRolled, arrived }: { s: Run; disp
   );
 }
 
-type Why = { key: string; text: string; role?: Role; sign?: '+' | '−' };
+type Why = { key: string; text: string; role?: Role; sign?: '+' | '−'; /** The full text, when the line shows a shortened one. */ title?: string };
 
 /**
  * The reasons under "Why pick" (#225), all from the real model: the slot they would fill and how well it suits them, and each chemistry link their pick
@@ -587,7 +587,9 @@ type Why = { key: string; text: string; role?: Role; sign?: '+' | '−' };
 function whyLines(s: Run, cand: Chosen, slot: Role | 'bench' | null, chem: ChemPreview | null, bench: boolean, hard: boolean): Why[] {
   // The Majors they attended and how far their team got (#48), as one quiet line; hard mode shows no placements.
   const majors = hard ? [] : majorsOf(cand.p.id);
-  const history: Why[] = majors.length ? [{ key: 'majors', text: `Majors: ${majors.map((m) => `${m.year} ${m.result}`).join(' · ')}` }] : [];
+  // The latest four fit on one line; the rest are counted, and the whole list is in the line's tooltip.
+  const recent = majors.slice(-4);
+  const history: Why[] = majors.length ? [{ key: 'majors', text: `Majors: ${recent.map((m) => `${m.year} ${m.result}`).join(' · ')}${majors.length > recent.length ? ` · +${majors.length - recent.length} earlier` : ''}`, title: majors.map((m) => `${m.year} ${m.result}`).join(' · ') }] : [];
   if (bench) return [{ key: 'bench', text: 'Joins as your bench player' }, { key: 'sub', text: "Subs in for a starter who's off form" }, ...history];
   const out: Why[] = [];
   if (slot && slot !== 'bench') {
@@ -610,7 +612,7 @@ function WhyList({ lines }: { lines: Why[] }) {
   return (
     <ul className="why">
       {lines.map((x) => (
-        <li key={x.key} className={x.sign ? (x.sign === '+' ? 'is-good' : 'is-bad') : ''}>
+        <li key={x.key} title={x.title} className={`${x.sign ? (x.sign === '+' ? 'is-good' : 'is-bad') : ''} ${x.key === 'majors' ? 'why__majors' : ''}`}>
           <span className="why__mark" aria-hidden="true">{x.role ? <RoleIcon role={x.role} size={15} /> : x.sign ?? '•'}</span>
           <span>{x.sign && <Sr>{x.sign === '+' ? 'Bonus: ' : 'Penalty: '}</Sr>}{x.text}</span>
         </li>

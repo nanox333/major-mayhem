@@ -22,3 +22,10 @@
 :root .page.is-scene .desktop-strip { margin-bottom: 4px; }
 :root .page.is-scene .dstat + .console__body { padding-top: 0; }
 .stats-panel__tiles.is-empty b { color: var(--muted-2); }
+
+/* The Majors line is one line, never two: it would push "Why pick" out of the decision panel. The full list is its tooltip. */
+.page.is-scene .draft-decision .why li.why__majors { min-width: 0; color: var(--muted); white-space: nowrap; }
+.page.is-scene .draft-decision .why li.why__majors > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+
+/* When you only point at a player, the reasons use the panel's full height. They sat in its first row, which a short window leaves too small, and clipped the heading. */
+@media (min-width: 900px) { .page.is-scene .draft-decision .peekbar .draftbar__chem { grid-row: 1 / span 2; } }
