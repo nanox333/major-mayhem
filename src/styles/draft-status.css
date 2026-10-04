@@ -34,3 +34,8 @@
 @media (min-width: 900px) {
   .page.is-scene .draft-decision .draftbar__portrait { box-shadow: inset 0 -4px 0 var(--team, var(--accent)); -webkit-mask-image: linear-gradient(90deg, #000 0, #000 55%, transparent 100%); mask-image: linear-gradient(90deg, #000 0, #000 55%, transparent 100%); }
 }
+
+/* Team cards: the five faces feather out at both ends instead of ending on the card's edge, and the placement label is a plain flag, not a clipped one. */
+.page.is-scene .montage { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 30%, #000 84%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 30%, #000 84%, transparent 100%); }
+.page.is-scene .montage__faces { inset: 0; }
+.page.is-scene .case-card .place, .page.is-scene .case-item--coach .place { gap: 7px; padding: 3px 12px 3px 12px; clip-path: none; white-space: nowrap; overflow: visible; }

@@ -49,7 +49,7 @@ export const ArrowRightIcon = (p: P) => <Svg {...p}><path d="M5 12h14M13 6l6 6-6
 export const ShareIcon = (p: P) => <Svg {...p}><path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4" /></Svg>;
 export const ClockIcon = (p: P) => <Svg {...p}><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" /></Svg>;
 /** A medal: a placement below first. */
-export const MedalIcon = (p: P) => <Svg {...p}><path d="M12 21a5.5 5.5 0 1 0 0-11 5.5 5.5 0 0 0 0 11zM9 10.5 7 3h4l1 4 1-4h4l-2 7.5" /></Svg>;
+export const MedalIcon = (p: P) => <Svg {...p}><path d="M12 21.5a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM8.6 12.2 6 3h4l2 5M15.4 12.2 18 3h-4l-2 5" /></Svg>;
 export const PlusIcon = (p: P) => <Svg {...p}><path d="M12 5v14M5 12h14" /></Svg>;
 /** Playback: resume and pause, drawn as shapes so no platform substitutes a coloured emoji. */
 export const PlayIcon = (p: P) => <Svg {...p} fill><path d="M8 5.5v13l10.5-6.5z" stroke="none" /></Svg>;
