@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal';
 import { SHORTCUTS } from './shortcuts';
-import { Theme, setPrefs, usePrefs } from './prefs';
+import { setPrefs, usePrefs } from './prefs';
 import { setTipsOn, useTipsOn } from './tips';
 import { useSoundOn } from './sound';
 import { RefreshIcon, TwitchIcon } from './icons';
@@ -17,8 +17,6 @@ function Switch({ label, hint, on, onChange }: { label: string; hint?: string; o
     </div>
   );
 }
-
-const THEMES: [Theme, string][] = [['system', 'System'], ['dark', 'Dark'], ['light', 'Light']];
 
 /**
  * Settings (#110): everything you can change about how the game looks, sounds and listens, and the things the top bar used to hold (chat votes, a new run).
@@ -48,12 +46,6 @@ export function SettingsDialog({ onClose, onTwitch, onNewRun, abandon, toShortcu
 
       <section className="settings__sec" aria-labelledby="set-look">
         <h4 id="set-look">Appearance</h4>
-        <div className="setrow">
-          <div className="setrow__text"><b id="set-theme">Theme</b><small>System follows your device.</small></div>
-          <div className="seg" role="group" aria-labelledby="set-theme">
-            {THEMES.map(([v, name]) => <button key={v} type="button" className={prefs.theme === v ? 'is-on' : ''} aria-pressed={prefs.theme === v} data-sfx="none" onClick={() => setPrefs({ theme: v })}>{name}</button>)}
-          </div>
-        </div>
         <Switch label="High contrast" hint="Stronger borders, brighter text and a thicker focus ring." on={prefs.contrast} onChange={(contrast) => setPrefs({ contrast })} />
         <Switch label="Fast case reveals" hint="Show the dealt case immediately. Reduced motion always skips the reel." on={prefs.fastReveals} onChange={(fastReveals) => setPrefs({ fastReveals })} />
       </section>

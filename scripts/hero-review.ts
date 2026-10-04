@@ -7,10 +7,10 @@ const server = await preview({preview:{host:'127.0.0.1',port:4197,strictPort:tru
 const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH});
 const out='docs/design/arena-hero';
 try {
-  for(const width of [320,375,768,1440,1920]) for(const palette of ['dark','light','dark-high','light-high']) {
+  for(const width of [320,375,768,1440,1920]) for(const palette of ['dark','dark-high']) {
     const context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});
     const p=await context.newPage();await p.goto('http://127.0.0.1:4197');
-    await p.evaluate(({key,run,tips,palette})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify(run));localStorage.setItem('mm-tips',JSON.stringify(tips));localStorage.setItem('mm-prefs',JSON.stringify({theme:palette.startsWith('light')?'light':'dark',contrast:palette.endsWith('high')}));},{key:KEY,run:fresh('free'),tips:TIP_IDS,palette});await p.reload();
+    await p.evaluate(({key,run,tips,palette})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify(run));localStorage.setItem('mm-tips',JSON.stringify(tips));localStorage.setItem('mm-prefs',JSON.stringify({contrast:palette.endsWith('high')}));},{key:KEY,run:fresh('free'),tips:TIP_IDS,palette});await p.reload();
     const fits=async()=>assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'horizontal overflow');await fits();
     const action=p.locator('.home__daily'), box=await action.boundingBox();assert(box&&box.height>=44);
     if(width<768){assert(box.y+box.height<=900,'mobile action below first viewport');assert(!(await p.locator('.home-invitation > .home-lineup-art').isVisible()));}

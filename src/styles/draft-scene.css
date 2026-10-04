@@ -1,7 +1,6 @@
 /* The draft's art and effects pass (#225), refined. A premium tactical esports look over the existing draft: near-black surfaces, one restrained orange, a small
    type hierarchy (a big condensed heading, team names, player names, body, tiny metadata), thin lines, small radii, light that stays at the edges. Everything is
-   scoped to .is-scene (the active draft view), so Home, Guess and the match keep their own looks. The surface colours are variables: dark by default, and the
-   light theme maps them back to its own paper tones. Orange means active, selected, interactive or important, and is kept neutral everywhere else. */
+   scoped to .is-scene (the active draft view), so Home, Guess and the match keep their own looks. The surface colours are variables. Orange means active, selected, interactive or important, and is kept neutral everywhere else. */
 
 .is-scene {
   --ds-bg: #070807; --ds-panel: #0b0c0c; --ds-raise: #111312; --ds-line: #222623; --ds-line-2: #313632;
@@ -11,13 +10,12 @@
   --ds-label: 600 .72rem/1.2 var(--f-read);
 }
 /* A rich, warm orange across the whole draft page (the top bar included, so the two match). It is strongest where it means something: the selected row, the active step, the reel's lock line and the Draft button. */
-:root.has-scene:not([data-theme="light"]) { --accent: #f98425; --accent-hi: #ffa24f; }
-:root[data-theme="light"] .is-scene { --ds-bg: var(--bg); --ds-panel: var(--panel); --ds-raise: var(--panel-2); --ds-line: var(--line); --ds-line-2: var(--line-2); --ds-glow: rgba(169, 74, 6, .3); --ds-deep: var(--panel); --ds-deeper: var(--panel-2); --ds-sel-bg: var(--panel); --ds-name: var(--strong); --ds-meta: var(--muted); --ds-text-shadow: none; --ds-slot: var(--panel-2); --ds-slot-hover: var(--panel); --ds-slot-line: var(--line); --ds-slot-line-hover: var(--line-2); }
+:root.has-scene { --accent: #f98425; --accent-hi: #ffa24f; }
 
 /* ---------- atmosphere ---------- */
 /* Back to front: a near-black page with a grain you only see when you look for it, the arena photograph across the top edge, a strong vertical black fade,
    a horizontal vignette that keeps the middle (behind the cards) almost black, a faint warm glow by the lights, then the interface. */
-:root.has-scene:not([data-theme="light"]):not([data-contrast="high"]) body { background: linear-gradient(rgba(7, 8, 7, .78), rgba(7, 8, 7, .78)), url('../assets/draft/tactical-noise.webp') repeat #070807; background-size: auto, 256px 256px; }
+:root.has-scene:not([data-contrast="high"]) body { background: linear-gradient(rgba(7, 8, 7, .78), rgba(7, 8, 7, .78)), url('../assets/draft/tactical-noise.webp') repeat #070807; background-size: auto, 256px 256px; }
 .draft-scene { position: absolute; top: 0; left: 0; width: 100%; height: 560px; z-index: -1; pointer-events: none; overflow: hidden; }
 .draft-scene__arena { position: absolute; inset: 0; background: url('../assets/draft/major-arena-bg.webp') center top / cover no-repeat; filter: saturate(1.3) brightness(1.4); }
 .draft-scene__light { position: absolute; inset: 0; background:
@@ -25,7 +23,7 @@
   radial-gradient(ellipse 26% 46% at 5% 2%, rgba(249, 132, 37, .24), transparent 72%),
   linear-gradient(90deg, rgba(7, 8, 7, 0) 0, rgba(7, 8, 7, .4) 10%, rgba(7, 8, 7, .74) 26%, rgba(7, 8, 7, .78) 56%, rgba(7, 8, 7, .5) 82%, rgba(7, 8, 7, .26) 100%),
   linear-gradient(180deg, rgba(7, 8, 7, .18) 0, rgba(7, 8, 7, .5) 20%, rgba(7, 8, 7, .9) 46%, #070807 74%); }
-:root[data-theme="light"] .draft-scene, :root[data-contrast="high"] .draft-scene { display: none; }
+:root[data-contrast="high"] .draft-scene { display: none; }
 @media (forced-colors: active) { .draft-scene { display: none; } }
 
 /* The no-photo portrait is a tall picture of an anonymous player; show the head and shoulders wherever it is cropped to a square. */

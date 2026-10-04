@@ -117,13 +117,12 @@ try {
     await shot(p, name);
     await ctx.close();
   }
-  // 3. alternate palettes, effects off (reduced motion, fast reveals), 200% zoom (a 720x450 window at double density), a short laptop window
-  const variants: [string, { w: number; h: number; scheme: 'light' | 'dark'; prefs: Record<string, unknown>; dsf?: number; reduce?: boolean }][] = [
-    ['11-light', { w: 1440, h: 900, scheme: 'light', prefs: { theme: 'light' } }],
-    ['12-high-contrast', { w: 1440, h: 900, scheme: 'dark', prefs: { theme: 'dark', contrast: true } }],
-    ['13-effects-off', { w: 1440, h: 900, scheme: 'dark', prefs: { theme: 'dark', fastReveals: true }, reduce: true }],
-    ['14-zoom-200', { w: 720, h: 450, scheme: 'dark', prefs: { theme: 'dark' }, dsf: 2, reduce: true }],
-    ['15-laptop-1366x768', { w: 1366, h: 768, scheme: 'dark', prefs: { theme: 'dark' }, reduce: true }],
+  // 3. the high-contrast palette, effects off (reduced motion, fast reveals), 200% zoom (a 720x450 window at double density), a short laptop window
+  const variants: [string, { w: number; h: number; scheme: 'dark'; prefs: Record<string, unknown>; dsf?: number; reduce?: boolean }][] = [
+    ['12-high-contrast', { w: 1440, h: 900, scheme: 'dark', prefs: { contrast: true } }],
+    ['13-effects-off', { w: 1440, h: 900, scheme: 'dark', prefs: { fastReveals: true }, reduce: true }],
+    ['14-zoom-200', { w: 720, h: 450, scheme: 'dark', prefs: {}, dsf: 2, reduce: true }],
+    ['15-laptop-1366x768', { w: 1366, h: 768, scheme: 'dark', prefs: {}, reduce: true }],
   ];
   for (const [name, v] of variants) {
     const ctx = await browser.newContext({ viewport: { width: v.w, height: v.h }, colorScheme: v.scheme, deviceScaleFactor: v.dsf ?? 1, reducedMotion: v.reduce ? 'reduce' : 'no-preference' });

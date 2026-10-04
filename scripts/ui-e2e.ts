@@ -219,16 +219,16 @@ try {
     await context.close();
     console.log(`UI flows passed at ${width}px`);
   }
-  // The alternate palette and narrow desktop widths must support the same decisions,
+  // The high-contrast palette and narrow desktop widths must support the same decisions,
   // not merely change the root preference attribute.
   for (const width of [375, 768]) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, reducedMotion: 'reduce' });
     const p = await context.newPage();
-    for (const prefs of [{ theme: 'light' }, { theme: 'dark', contrast: true }]) {
+    for (const prefs of [{ contrast: true }]) {
       for (const [name, run] of [['home', start], ['draft', opened], ['live', live], ['results', { ...final, recorded: true }]] as const) {
         await load(p, run, prefs);
-        assert.equal(await p.locator('html').getAttribute('data-theme'), prefs.theme);
-        if ('contrast' in prefs) assert.equal(await p.locator('html').getAttribute('data-contrast'), 'high');
+        assert.equal(await p.locator('html').getAttribute('data-theme'), null, 'there is no theme attribute');
+        assert.equal(await p.locator('html').getAttribute('data-contrast'), 'high');
         await fits(p);
         const primary = name === 'home' ? p.getByRole('button', { name: "Start today's run", exact: true })
           : name === 'draft' ? p.locator('button.prow:visible').first()
@@ -237,11 +237,11 @@ try {
         await primary.focus();
         assert(await primary.evaluate(e => e === document.activeElement), `${name} primary control cannot receive keyboard focus`);
         await p.evaluate(() => scrollTo(0, 0));
-        await p.screenshot({ path: `shots/ui/${name}-${width}-${prefs.theme}${'contrast' in prefs ? '-contrast' : ''}.png`, fullPage: true });
+        await p.screenshot({ path: `shots/ui/${name}-${width}-contrast.png`, fullPage: true });
       }
     }
     await context.close();
-    console.log(`Alternate palette checks passed at ${width}px`);
+    console.log(`High-contrast palette checks passed at ${width}px`);
   }
   // Home navigation must retain the identity of an unfinished or completed daily.
   const homeContext = await browser.newContext({ viewport: { width: 375, height: 812 }, reducedMotion: 'reduce' });

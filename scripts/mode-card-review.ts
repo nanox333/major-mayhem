@@ -10,14 +10,14 @@ const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH}
 const day=today(), answer=answerFor(day), wrong=[...prosOn(day).values()].filter(p=>p.id!==answer.id).slice(0,8).map(p=>p.id);
 const states=[{name:'fresh',guesses:[],done:false,won:false,label:'Play now'}, {name:'progress',guesses:wrong.slice(0,2),done:false,won:false,label:'Keep guessing'}, {name:'solved',guesses:[answer.id],done:true,won:true,label:"See today's answer"}, {name:'failed',guesses:wrong,done:true,won:false,label:"See today's answer"}];
 try {
- for(const width of [1440,375,320,768,1920]) for(const palette of ['dark','light','dark-high','light-high']) {
+ for(const width of [1440,375,320,768,1920]) for(const palette of ['dark','dark-high']) {
   const ctx=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'});const p=await ctx.newPage(); const errors:string[]=[]; p.on('pageerror',e=>errors.push(e.message));
   await p.goto('http://127.0.0.1:4195');
   for(const state of states) {
    let run=reducer(fresh('daily'),{type:'spin'});
    const roster=G.rosterById.get(run.offer[0])!, player=roster.players.find(p=>G.eligibleSlots(p,run.picks).length)!;
    run=reducer(reducer(run,{type:'team',id:roster.id}),{type:'draft',player,slot:G.eligibleSlots(player,run.picks)[0]});
-   await p.evaluate(({key,guessKey,day,run,state,palette,tips})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify(run));localStorage.setItem(guessKey,JSON.stringify({[day]:state}));localStorage.setItem('mm-tips',JSON.stringify(tips));localStorage.setItem('mm-prefs',JSON.stringify({theme:palette.startsWith('light')?'light':'dark',contrast:palette.endsWith('high')}));},{key:KEY,guessKey:GUESS_KEY,day,run,state,palette,tips:TIP_IDS});await p.reload(); if (!(await p.locator('.editorial-home').count())) await p.getByRole('button',{name:'Major Mayhem: home',exact:true}).click();
+   await p.evaluate(({key,guessKey,day,run,state,palette,tips})=>{localStorage.clear();localStorage.setItem(key,JSON.stringify(run));localStorage.setItem(guessKey,JSON.stringify({[day]:state}));localStorage.setItem('mm-tips',JSON.stringify(tips));localStorage.setItem('mm-prefs',JSON.stringify({contrast:palette.endsWith('high')}));},{key:KEY,guessKey:GUESS_KEY,day,run,state,palette,tips:TIP_IDS});await p.reload(); if (!(await p.locator('.editorial-home').count())) await p.getByRole('button',{name:'Major Mayhem: home',exact:true}).click();
    const card=p.locator('.home-mode-card--guess'), button=card.getByRole('button',{name:state.label,exact:true});await button.waitFor();
    assert.equal(await button.locator('.sr').count(),0,'action hidden visually'); const box=await button.boundingBox();assert(box&&box.height>=44&&box.width>=44);
    assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'overflow');

@@ -7,7 +7,7 @@
   background-size: cover; background-position: center; }
 .home-invitation__copy { min-width: 0; }
 .home-invitation h1 > span, .home-invitation h1 > em { display: block; }
-:root[data-theme="light"] .home-invitation::before, :root[data-contrast="high"] .home-invitation::before { display: none; }
+:root[data-contrast="high"] .home-invitation::before { display: none; }
 .home-kicker { margin: 0 0 14px; color: var(--accent); font-family: var(--f-head); font-weight: 800; text-transform: uppercase; letter-spacing: .07em; font-size: 1rem; }
 .home-kicker span { margin-left: .4em; }
 .home-invitation h1 { margin: 0; color: var(--strong); font-family: var(--f-head); font-size: clamp(3rem, 6.9vw, 7rem); font-weight: 800; line-height: .98; letter-spacing: -.025em; }
@@ -164,7 +164,7 @@
 /* The arena and the lineup poster are one scene: the picture fades out at the right edge instead of ending in a line, a dark pool sits behind the cards so the stage lights do not fight them, and a warm spotlight falls on the lead card. */
 .home-invitation::before { -webkit-mask-image: linear-gradient(90deg, #000 78%, transparent 99%); mask-image: linear-gradient(90deg, #000 78%, transparent 99%); background-position: 70% center; }
 .home-invitation::after { content: ""; position: absolute; z-index: -1; pointer-events: none; right: 0; bottom: 0; width: min(560px, 48%); height: 92%; background: radial-gradient(ellipse 60% 52% at 52% 66%, rgba(7, 8, 7, .62), transparent 74%), radial-gradient(ellipse 34% 36% at 52% 44%, rgba(249, 132, 37, .26), transparent 72%); }
-:root[data-theme="light"] .home-invitation::after, :root[data-contrast="high"] .home-invitation::after { display: none; }
+:root[data-contrast="high"] .home-invitation::after { display: none; }
 @media (max-width: 860px) { .home-invitation::after { display: none; } }
 
 /* The footer on Home: small and out of the way, brighter only when you reach for it. */
