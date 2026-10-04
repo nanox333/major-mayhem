@@ -60,7 +60,7 @@ function fingerprintsOnPinnedData(rules: number) {
   for (const seed of ['a', 'b', 'c', 'd']) runs[`free ${seed}`] = fp(playThrough({ ...fresh('free', '2026-09-29'), seed: `free-${seed}`, rules } as Run).t);
   const [lineups, guesses] = G.withRules(rules, () => [
     fp(ROSTERS.filter((r) => !r.since || r.since <= PINNED_DATA).map((r) => G.naturalLineup(r).map((x) => [x.slot, x.player.id]))),
-    fp(['2026-09-28', '2026-09-29'].map((d) => answerFor(d))),
+    fp(['2026-09-28', '2026-09-29'].map((d) => answerFor(d).id)), // the id only: the rest of a pro is display data (logos, photos)
   ]);
   return { runs, lineups, guesses };
 }

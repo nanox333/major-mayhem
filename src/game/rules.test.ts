@@ -20,7 +20,7 @@ const PINNED: Record<number, ReturnType<typeof fingerprints>> = {
       'free a': 'ddcfb951', 'free b': '292004f3', 'free c': 'f54b6a94', 'free d': '28c17bfa',
     },
     lineups: 'fa35ca9c',
-    guesses: 'f539f431',
+    guesses: '62577e7b',
   },
   // Recorded from the code at the end of v2 (before #167): the dailies of 28 to 30 September and four free seeds under v2.
   2: {
@@ -29,7 +29,7 @@ const PINNED: Record<number, ReturnType<typeof fingerprints>> = {
       'free a': '2e496025', 'free b': '71bfafaf', 'free c': 'f0c0cc7', 'free d': '2f593148',
     },
     lineups: '383254de',
-    guesses: 'f539f431',
+    guesses: '62577e7b',
   },
   // Recorded from the code at the end of v3 (before the stronger timeout).
   3: {
@@ -38,7 +38,7 @@ const PINNED: Record<number, ReturnType<typeof fingerprints>> = {
       'free a': '2e496025', 'free b': '71bfafaf', 'free c': 'f0c0cc7', 'free d': '2f593148',
     },
     lineups: '383254de',
-    guesses: 'f539f431',
+    guesses: '62577e7b',
   },
   // Recorded from the code at the end of v4 (before equal-conditions duels).
   4: {
@@ -47,7 +47,7 @@ const PINNED: Record<number, ReturnType<typeof fingerprints>> = {
       'free a': '6fd8bbeb', 'free b': '71bfafaf', 'free c': 'cb7f95', 'free d': '3e0d449c',
     },
     lineups: '383254de',
-    guesses: 'f539f431',
+    guesses: '62577e7b',
   },
 };
 
