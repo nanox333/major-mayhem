@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, equalDuel, lineupFor } from '../game/state';
-import { Avatar, MapArt, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
+import { Avatar, MapArt, MapShot, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
@@ -477,7 +477,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
 function SeriesPreview({ m, opp }: { m: G.Match; opp: Roster }) {
   if (m.bestOf === 1) return null;
   return <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map} className={x.map === m.next?.map ? 'is-now' : ''}>
-    <MapArt map={x.map} /><b>{x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b>
+    <MapShot map={x.map} /><b>{x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b>
     <span>{x.by === 'decider' ? 'Knife round decides sides' : `${x.by === 'us' ? 'You' : opp.tag} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span>
   </li>)}</ol>;
 }
@@ -540,7 +540,7 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, dispatch }: {
           <Tip id="knife" title="The knife round">It decides who picks the starting side: T attacks and CT defends, and sides swap at halftime. Rounds 1 and 13 are pistol rounds, and the team that loses one is on an eco for the next two rounds.</Tip>
         </div>
         <figure className="knife__map">
-          <MapArt map={k.map} />
+          <MapShot map={k.map} />
           <figcaption><b>{k.map}</b><span>{lean}</span></figcaption>
         </figure>
       </div>
@@ -628,7 +628,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
         <ol className="veto__final" aria-label="Maps in this series">
           {lastLeft.map((x, i) => (
             <li key={x.map} className="veto__final-map" style={{ animationDelay: `${i * 160}ms` }}>
-              <MapArt map={x.map} />
+              <MapShot map={x.map} />
               <span className="veto__final-info">
                 <small>{m.bestOf === 3 ? (x.by === 'decider' ? 'Decider' : `Map ${i + 1}`) : 'Map picked'}</small>
                 <b>{x.map}</b>
@@ -664,7 +664,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
               <button disabled={!!st || !mineTurn} data-sfx={t?.action === 'ban' ? 'ban' : 'draft'} onClick={() => commit(map)}
                 aria-label={`${t?.action ?? ''} ${map}: ${EDGE_TEXT[edge].slice(2)}, you ${mineC} of 5, ${opp.tag} ${theirC} of 5`}>
                 <span className="veto__art">
-                  <MapArt map={map} />
+                  <MapShot map={map} />
                   {st && <span className="veto__stamp"><i>{st.action === 'ban' ? '✕' : '✓'}</i>{st.action === 'ban' ? 'Banned' : 'Picked'}<small>{who(st.team)}</small></span>}
                   {!st && mineTurn && <span className="veto__hover"><i>{t.action === 'ban' ? '✕' : '✓'}</i>{verb}</span>}
                 </span>
@@ -686,7 +686,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
         {auto && <> A coin flip decided that {who(m.veto.order[0].team)} {m.veto.order[0].team === 'us' ? 'go' : 'goes'} first.</>}
       </p>
       {!t && (
-        <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map}><MapArt map={x.map} /><b>{m.bestOf === 1 ? 'Match map' : x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b><span>{x.by === 'decider' ? (m.veto.auto ? 'Knife round decides who starts where' : 'Knife round decides sides') : `${who(x.by)} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span></li>)}</ol>
+        <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map}><MapShot map={x.map} /><b>{m.bestOf === 1 ? 'Match map' : x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b><span>{x.by === 'decider' ? (m.veto.auto ? 'Knife round decides who starts where' : 'Knife round decides sides') : `${who(x.by)} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span></li>)}</ol>
       )}
     </div>
   );

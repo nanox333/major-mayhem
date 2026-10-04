@@ -24,7 +24,7 @@ const CROP = {
   Xizt: [.5, .35, .85], tarik: [.5, .3, .9], ZywOo: [.5, .38, .85], mou: [.5, .38, .9], EliGE: [.5, .42, .95],
 };
 const DEF = [.5, .36, .82];
-const out = { players: {}, logos: {} };
+const out = { players: {}, logos: {}, maps: {} };
 const credit = (v) => ({ source: 'Wikimedia Commons', file: v.file, author: v.author || 'Unknown', license: v.license, page: v.page });
 for (const [nick, v] of Object.entries(a.players)) {
   if (DROP.has(nick)) continue;
@@ -75,5 +75,19 @@ for (const [org, v] of Object.entries(b.teams)) {
   bl++;
 }
 console.log('bo3 players', bp, 'bo3 logos', bl);
+// ---- map screenshots (assets-src/maps/<Map>.webp|png|jpg): the picture shown for a map in the veto, the knife round and the series lists ----
+// Several files may exist for one map (the small bo3.gg picture, a 1080p one dropped in later): the largest wins, and it is cut to 16:9 at up to 960x540.
+if (fs.existsSync('assets-src/maps')) {
+  const best = {};
+  for (const f of fs.readdirSync('assets-src/maps').filter((x) => /\.(webp|png|jpe?g)$/i.test(x))) {
+    const name = f.replace(/\.[a-z]+$/i, '').replace(/[-_ ]\d+$/, '');
+    const m = await sharp(`assets-src/maps/${f}`).metadata();
+    if (!best[name] || m.width * m.height > best[name].px) best[name] = { f, px: m.width * m.height, w: m.width };
+  }
+  for (const [name, { f, w }] of Object.entries(best)) {
+    const img = await sharp(`assets-src/maps/${f}`).resize(Math.min(960, w), null).webp({ quality: 74 }).toBuffer();
+    out.maps[name] = 'data:image/webp;base64,' + img.toString('base64');
+  }
+}
 fs.writeFileSync(OUT, JSON.stringify(out));
 console.log('players', Object.keys(out.players).length, 'logos', Object.keys(out.logos).length, 'KB', Math.round(fs.statSync(OUT).size / 1024));

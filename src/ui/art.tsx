@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Role, Roster, Player } from '../data/rosters';
 import radars from '../data/radars.json';
+import media from '../data/media.json';
 import PLACEHOLDER from '../assets/draft/player-placeholder.webp';
 
 const RADARS = radars as Record<string, string>;
@@ -70,6 +71,13 @@ export function Avatar({ player, roster, className }: { player: Player; roster: 
 
 /** The radar picture's address, so other code can read it (the board checks which spots are on the map). */
 export const radarSrc = (map: string) => RADARS[map] ?? RADARS.Dust2;
+
+/** A screenshot of the map (from bo3.gg's map pages, see scripts/build-media.mjs), for the veto and the series lists; the radar is for the board where positions matter. */
+const SHOTS = ((media as { maps?: Record<string, string> }).maps ?? {});
+export function MapShot({ map }: { map: string }) {
+  if (!SHOTS[map]) return <MapArt map={map} />;
+  return <img className="map-art map-art--shot" src={SHOTS[map]} alt={map} draggable={false} />;
+}
 
 /** Map radar (images supplied by the player, built by scripts/build-radars.mjs). Coordinates on it are 0–100 of the square. */
 export function MapArt({ map }: { map: string }) {
