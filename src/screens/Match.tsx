@@ -501,7 +501,7 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, dispatch }: {
       <header className="knife__banner">
         <span className="knife__badge" aria-hidden="true">
           {k.how === 'knife'
-            ? <><svg viewBox="0 0 48 48" width="44" height="44"><path d="M7 41 31 7l7 4-24 34z" /><path d="M41 41 17 7l-7 4 24 34z" opacity=".55" /></svg><b>{k.won ? 'Won' : 'Lost'}</b></>
+            ? <><svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true"><g transform="rotate(24 24 25)"><path d="M24 2l5.6 19h-11.2z" /><path d="M16 21h16v3.6H16z" /><path d="M21 24.6h6v15H21z" /><circle cx="24" cy="42.4" r="3" /></g></svg><b>{k.won ? 'Won' : 'Lost'}</b></>
             : <><i>⇄</i><b>Sides</b></>}
         </span>
         <div className="knife__says">
