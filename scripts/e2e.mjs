@@ -193,8 +193,13 @@ async function run(viewport, tag) {
         if (!sawHalf) throw new Error('no halftime line in the killfeed');
         await p.screenshot({ path: `shots/${tag}-5b-halftime.png`, fullPage: true }); shotHalf = true;
       }
-      // The map can also end by itself while this runs (the button goes away), and a buy question shows its own Skip: press whichever is visible, and let a miss go.
-      await p.locator('.ghost-btn:visible', { hasText: 'Skip' }).first().click({ timeout: 4000 }).catch(() => {});
+      // The map can also end by itself while this runs (the button goes away), and a lost pistol puts a buy question up with its own Skip: answer it, press whichever
+      // Skip is visible, and look again until the map's scoreboard is there.
+      for (let i = 0; i < 40 && !(await p.$('.sb')); i++) {
+        await answerBuy();
+        await p.locator('.ghost-btn:visible', { hasText: 'Skip' }).first().click({ timeout: 1500 }).catch(() => {});
+        await p.waitForTimeout(150);
+      }
       await p.waitForSelector('.sb');
       maps.push((await p.textContent('.sb__head')).trim());
       if (!shotSb && (await p.$('.result-stamp'))) { await p.screenshot({ path: `shots/${tag}-6-scoreboard.png`, fullPage: true }); shotSb = true; }
