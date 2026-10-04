@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { ACHIEVEMENTS } from './achievements';
 import { achievementCount, bestFinish, clockText, dailyButton, dailyPanel, homeState, howExpanded, msUntilMidnight, replaceRisk, runWhere, spokenLeft } from './home';
-import { fresh, reducer } from './state';
+import { Run, fresh, reducer } from './state';
 import { emptyStats } from './stats';
 
 const DAY = '2026-10-01';
@@ -45,6 +45,12 @@ describe('the home you get (#115)', () => {
   it('knows a free run in progress, and that a fresh free run is not one', () => {
     expect(homeState(started('free'), emptyStats(), DAY)).toMatchObject({ daily: 'new', freeInProgress: true });
     expect(homeState(fresh('free'), emptyStats(), DAY).freeInProgress).toBe(false);
+  });
+  it('lets a draft duel under way be continued from the Home, and asks before replacing it (#222)', () => {
+    const duel = { ...started('free'), mode: 'duel', duel: { name: 'Ann' } } as unknown as Run;
+    const h = homeState(duel, emptyStats(), DAY);
+    expect(h.freeInProgress).toBe(true);
+    expect(replaceRisk(h, duel)).toMatch(/draft duel against Ann/);
   });
   it('says where a run is', () => {
     expect(runWhere(started('daily'))).toBe('round 1 of 7');
