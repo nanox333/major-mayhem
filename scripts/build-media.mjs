@@ -6,7 +6,9 @@ import fs from 'fs'; import sharp from 'sharp';
 const OUT = 'src/data/media.json';
 const INPUTS = ['assets-src/major-mayhem-assets.json', 'assets-src/major-mayhem-bo3.json', fileURLToPath(import.meta.url)];
 const mtime = (f) => fs.statSync(f).mtimeMs;
-if (!process.argv.includes('--force') && fs.existsSync(OUT) && INPUTS.every((f) => mtime(f) < mtime(OUT))) {
+// The map screenshots are inputs too: a new or changed one rebuilds the media.
+const MAP_FILES = fs.existsSync('assets-src/maps') ? fs.readdirSync('assets-src/maps').filter((x) => /\.(webp|png|jpe?g)$/i.test(x)).map((x) => `assets-src/maps/${x}`) : [];
+if (!process.argv.includes('--force') && fs.existsSync(OUT) && [...INPUTS, ...MAP_FILES].every((f) => mtime(f) < mtime(OUT))) {
   console.log('media.json is up to date');
   process.exit(0);
 }

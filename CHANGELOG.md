@@ -8,7 +8,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 
 ### Changed
-- **Map screenshots instead of radars in the map veto, the knife round and the series list:** each map now shows an in-game screenshot with a dark foot for its name, in place of a radar sitting in a black box. The radar stays on the live board, where positions matter. The pictures are the small ones from bo3.gg for now; `assets-src/maps/README.md` says how to drop in 1920x1080 ones (the build uses the largest file for each map).
+- **Map screenshots instead of radars in the map veto, the knife round and the series list:** each map now shows an in-game screenshot with a dark foot for its name, in place of a radar sitting in a black box. The radar stays on the live board, where positions matter. Six of the seven are 1920x1080 Counter-Strike 2 screenshots (from the public repository neustcs/cs2mapsthumbnails); Train is still the small bo3.gg picture, and `assets-src/maps/README.md` says how to drop in a larger one (the build uses the largest file for each map).
 
 ### Added
 - **More ways to sort the Roster archive:** a Sort by menu (Newest first, Oldest first, Best placing, Team A–Z, Most titles). Newest and oldest keep the year and Major sections; Best placing groups by Champions, Runner-up, Semifinalist and Quarterfinalist; Team A–Z and Most titles group each team's lineups together with how many lineups and titles it has and the years it spans. Search now also finds real names and coaches.
