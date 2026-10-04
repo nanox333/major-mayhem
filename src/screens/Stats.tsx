@@ -15,7 +15,7 @@ const whoById = new Map(ROSTERS.flatMap((r) => r.players.map((p) => [p.id, { p, 
  * Your record as a page. Major runs, duels and dailies each show as soon as they have something in them (#64): a duel or an abandoned daily doesn't wait
  * for a finished Major. Achievements always show, locked ones included, so new players see the goals.
  */
-export function StatsPage({ stats }: { stats: Stats }) {
+export function StatsPage({ stats, next }: { stats: Stats; /** What to do next, in the Home's own words ("Play today's draft", "Continue…"), shown on an empty page. */ next?: { label: string; go: () => void } }) {
   const most = Object.entries(stats.drafted).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const dailies = Object.entries(stats.daily).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 7);
   const max = Math.max(1, ...stats.reached);
@@ -34,7 +34,16 @@ export function StatsPage({ stats }: { stats: Stats }) {
           <p>Everything is kept in this browser.</p>
         </div>
       </header>
-      {show.empty && <p className="sp-empty">Nothing here yet. Finish a Major run, play a daily or a draft duel to start your record.</p>}
+      {show.empty && (
+        <section className="sp-empty" aria-labelledby="sp-empty-h">
+          <ul className="sp-empty__ghosts" aria-hidden="true">
+            {[['Runs', <StatsIcon size={18} key="r" />], ['Best finish', <TrophyIcon size={18} key="b" />], ['Daily streak', <FlameIcon size={18} key="s" />]].map(([label, icon]) => <li key={label as string}>{icon}<b>–</b><span>{label}</span></li>)}
+          </ul>
+          <h4 id="sp-empty-h">No runs yet</h4>
+          <p>Finish a run or play the daily and your record starts here.</p>
+          {next && <button type="button" className="cta cta--orange" onClick={next.go}><span className="cta__main">{next.label}</span></button>}
+        </section>
+      )}
       {show.runs && (
         <ul className="sp-kpis" aria-label="Major runs">
           <li><StatsIcon size={22} /><b>{stats.runs}</b><span>Major runs</span></li>

@@ -76,12 +76,12 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
         <div className="home-invitation__copy">
           <p className="home-kicker">Daily challenge <span>#{todayN}</span></p>
           <h1 id="home-invitation-title"><span>Five players.</span><em>One Major.</em></h1>
-          <p className="home-invitation__intro">Draft from Major history. See how far your team goes.</p>
           <div className="home-daily-status">
             {home.daily === 'done' && doneToday
               ? null
-              : <p>{home.daily === 'abandoned' ? "Today's run was abandoned. You can play for practice; it won't change your record." : home.daily === 'progress' ? `Your run is waiting · ${runWhere(s)}.` : 'Seven picks: five starters, a coach and a bench player. Same cases for everyone.'}</p>}
+              : home.daily === 'new' ? null : <p>{home.daily === 'abandoned' ? "Today's run was abandoned. You can play for practice; it won't change your record." : `Your run is waiting · ${runWhere(s)}.`}</p>}
             {home.daily === 'done' && <p className="home-practice-note">{resultAvailable ? 'Your result is saved in this browser.' : "Replay for practice. It won't change your record."}</p>}
+            {!panel.progress && home.daily === 'new' && <ol className="dots" aria-label="Seven picks: five starters, a coach and a bench player">{Array.from({ length: 7 }, (_, i) => <li key={i} />)}</ol>}
             {panel.progress && <ol className="dots" aria-label={`Round ${panel.progress.at} of ${panel.progress.of}`}>
               {Array.from({ length: panel.progress.of }, (_, i) => <li key={i} className={i < panel.progress!.at - 1 ? 'is-done' : i === panel.progress!.at - 1 ? 'is-now' : ''} />)}
             </ol>}
@@ -94,7 +94,6 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
               <ClockIcon size={20} />
               <span aria-hidden="true">Next daily in <b className="clock clock--inline">{cd.clock}</b></span>
               <span className="sr">{cd.spoken}</span>
-              <small>At your local midnight</small>
             </div>
           </div>
           {/* The site opens on this page, so a run that has just finished (and isn't today's daily, which has its own button above) stays one press from its results. */}
@@ -127,7 +126,6 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
         <article className={`mcard home-mode-card home-mode-card--free ${home.freeInProgress || ask === 'free' ? 'home-mode-card--expanded' : ''}`} aria-labelledby="mcard-free-h">
           <span className="home-mode-art home-mode-art--free" aria-hidden="true"><img src={caseArt} alt="" width="480" height="240" /><span className="home-case-mark"><LogoMark size={30} /></span></span>
           <p className="home-mode-label">Free play</p><h2 className="mcard__title" id="mcard-free-h">Draft anytime.<br />Any era.</h2>
-          <p className="mcard__text">Draft as often as you like, in any era.</p>
           <div className="mcard__foot">
             {ask === 'free' && risk && (
               <div className="mcard__ask" role="alert">
@@ -148,7 +146,6 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
             <img src={proArt} alt="" width="480" height="456" /><span className="home-pro-question">?</span>
           </span>
           <p className="home-mode-label">Guess the Pro</p><h2 className="mcard__title" id="mcard-guess-h">Eight guesses.<br />One pro.</h2>
-          <p className="mcard__text">Name the pro in eight guesses.</p>
           <div className="mcard__foot">
             {(g?.done || g?.guesses.length || gStreak > 0) && <p className="mcard__state">
               {g?.done ? (g.won ? `Solved in ${g.guesses.length} of ${MAX_GUESSES}` : 'Not solved today') : g?.guesses.length ? `${g.guesses.length} of ${MAX_GUESSES} guesses used` : ''}
@@ -159,7 +156,7 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
         </article>
       </div>
 
-      {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><ArchiveArt /><span><b>Roster archive</b><small>Explore historical Major rosters.</small></span><ArrowRightIcon size={20} /></button>}
+      {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><ArchiveArt /><span><b>Roster archive</b></span><ArrowRightIcon size={20} /></button>}
       <StatsPanel stats={stats} streak={streak} onStats={onStats} />
       <HowItWorks />
     </div>
@@ -217,11 +214,9 @@ function StatsPanel({ stats, streak, onStats }: { stats: Stats; streak: number; 
         <h2 id="stats-panel-h">Your stats</h2>
         <button type="button" className="link-btn stats-panel__all" onClick={onStats}>View all stats <ArrowRightIcon size={16} /></button>
       </div>
-      {empty
-        ? <p className="stats-panel__empty">No runs yet. Finish a run to set your best finish, and play the daily to start a streak. Your record stays in this browser.</p>
-        : <ul className="stats-panel__tiles">
+      <ul className={`stats-panel__tiles ${empty ? 'is-empty' : ''}`}>
           {tiles.map((x) => <li key={x.label} className={x.tone ? `is-${x.tone}` : ''}><span className="stats-panel__icon" aria-hidden="true">{x.icon}</span><b>{x.value}</b><small>{x.label}</small></li>)}
-        </ul>}
+      </ul>
     </section>
   );
 }
@@ -236,13 +231,13 @@ const SAMPLE: Roster = [...ROSTERS].filter((r) => r.result === 'Champions').sort
 function HowItWorks() {
   const shown = true;
   const steps = [
-    { title: 'Open a case', text: 'Three iconic rosters from Major history.', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
-    { title: 'Draft your team', text: 'Pick a player at a time: five, a coach and a bench player.', art: (
+    { title: 'Open a case', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
+    { title: 'Draft your team', art: (
       <span className="how__art how__art--roster" title={`${SAMPLE.org} ${SAMPLE.year}`}>
         {SAMPLE.players.map((p) => <span key={p.id} className="how__face"><Avatar player={p} roster={SAMPLE} /></span>)}
       </span>
     ) },
-    { title: 'Play the Major', text: 'A Swiss stage, then the playoffs, against rosters from Major history.', art: (
+    { title: 'Play the Major', art: (
       <svg className="how__art how__art--bracket" viewBox="0 0 120 64" aria-hidden="true" focusable="false">
         <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M6 8h22v10H6zM6 46h22v10H6z" /><path d="M28 13h10v19M28 51h10V32M38 32h14" />
@@ -250,7 +245,7 @@ function HowItWorks() {
         </g>
       </svg>
     ) },
-    { title: 'Share', text: 'See how far you got and compare with friends.', art: (
+    { title: 'Share', art: (
       <span className="how__art how__art--card"><FlagIcon size={20} /><b>1st place</b><ShareIcon size={16} /></span>
     ) },
   ];
@@ -262,9 +257,8 @@ function HowItWorks() {
       {shown && (
         <>
           <ol className="how__steps">
-            {steps.map((x) => <li key={x.title} className="how__step">{x.art}<b>{x.title}</b><span className="how__text">{x.text}</span></li>)}
+            {steps.map((x) => <li key={x.title} className="how__step">{x.art}<b>{x.title}</b></li>)}
           </ol>
-          <p className="how__sample muted small">The roster above is a real one: {SAMPLE.org} {SAMPLE.year}, {SAMPLE.event}.</p>
         </>
       )}
     </section>

@@ -52,7 +52,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
         </h1>
 
         <nav className="shell-nav" aria-label="Game modes">
-          <button type="button" className="shell-link" aria-current={!inGuess && !inArchive && view !== 'stats' ? 'page' : undefined} onClick={() => setView(inGuess ? backView : 'home')}>Home</button>
+          <button type="button" className="shell-link" aria-current={!inGuess && !inArchive && view !== 'stats' ? 'page' : undefined} onClick={() => setView('home')}>Home</button>
           <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label="Guess the pro" onClick={toggleGame}>
             <span>Guess the pro</span>
           </button>
@@ -65,7 +65,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
           <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label="Settings" title="Settings" data-sfx="none"><I.SettingsIcon /></button>
           {/* Once chat votes are connected (or trying to), the button stays in view so the connection state does. Before that it's in the menu. */}
           {twitch !== 'off' && <TwitchButton onClick={onTwitch} />}
-          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView(inGuess ? backView : 'home')} />
+          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView('home')} />
         </div>
       </div>
     </header>

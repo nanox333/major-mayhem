@@ -4,6 +4,12 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Fixed
+- **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
+
+### Changed
+- **A better empty Stats page:** with no record yet, the page draws its own numbers empty (Runs, Best finish, Daily streak), says "No runs yet" in one line and offers the button for what to do next.
+- **A Home that shows instead of tells:** the hero's intro sentences, the card blurbs, the archive subtitle and the how-it-works captions are gone. The seven picks are shown as seven slots under the title, the stats band shows its empty tiles instead of a sentence, and how it works is four numbered titles.
 ### Changed
 - **The draft's hint and team chemistry no longer need a scroll:** the "Draft hint" card and the chemistry panel below the cases are now one quiet status line above them. What you still need is plain muted text, and chemistry is its word, its pips and up to three link chips (with "+N more"). What the player you point at would add stays in the decision panel's "Why pick", which now also lists the Majors they attended, so the separate "If you draft…" box is gone. The decision panel still ends inside a 900px-tall window. On phones the hint is a quiet line in the lineup sheet instead of a framed card.
 

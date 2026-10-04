@@ -169,7 +169,7 @@ function Game() {
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} showDraft={beginDraft} showSetup={() => setView('setup')} showGuess={() => setView('guess')} onStats={() => setView('stats')} onBrowse={() => setView('archive')} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
-      {view === 'stats' && <StatsPage stats={stats} />}
+      {view === 'stats' && <StatsPage stats={stats} next={guessNext} />}
       {view === 'setup' && <SetupScreen s={s} dispatch={dispatch} onStart={beginDraft} onBack={() => setView('home')} />}
       {view === 'archive' && <RosterBrowser page hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setView('home')} />}
       {view !== 'home' && view !== 'guess' && view !== 'archive' && view !== 'stats' && view !== 'setup' && <main className="console">

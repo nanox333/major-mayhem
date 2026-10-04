@@ -21,3 +21,4 @@
 /* The status line takes the gap the strip used to leave above the cases, so the decision panel stays inside the window. */
 :root .page.is-scene .desktop-strip { margin-bottom: 4px; }
 :root .page.is-scene .dstat + .console__body { padding-top: 0; }
+.stats-panel__tiles.is-empty b { color: var(--muted-2); }
