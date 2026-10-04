@@ -29,3 +29,8 @@
 
 /* When you only point at a player, the reasons use the panel's full height. They sat in its first row, which a short window leaves too small, and clipped the heading. */
 @media (min-width: 900px) { .page.is-scene .draft-decision .peekbar .draftbar__chem { grid-row: 1 / span 2; } }
+
+/* The portrait dissolves into the panel instead of ending on a hard edge: its right side fades to the panel's own dark, and the team colour line fades with it. */
+@media (min-width: 900px) {
+  .page.is-scene .draft-decision .draftbar__portrait { box-shadow: inset 0 -4px 0 var(--team, var(--accent)); -webkit-mask-image: linear-gradient(90deg, #000 0, #000 55%, transparent 100%); mask-image: linear-gradient(90deg, #000 0, #000 55%, transparent 100%); }
+}
