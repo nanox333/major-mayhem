@@ -193,7 +193,8 @@ async function run(viewport, tag) {
         if (!sawHalf) throw new Error('no halftime line in the killfeed');
         await p.screenshot({ path: `shots/${tag}-5b-halftime.png`, fullPage: true }); shotHalf = true;
       }
-      const skip = p.locator('.ghost-btn', { hasText: 'Skip' }); if (await skip.count()) await skip.click();
+      // The map can also end by itself while this runs (the button goes away), and a buy question shows its own Skip: press whichever is visible, and let a miss go.
+      await p.locator('.ghost-btn:visible', { hasText: 'Skip' }).first().click({ timeout: 4000 }).catch(() => {});
       await p.waitForSelector('.sb');
       maps.push((await p.textContent('.sb__head')).trim());
       if (!shotSb && (await p.$('.result-stamp'))) { await p.screenshot({ path: `shots/${tag}-6-scoreboard.png`, fullPage: true }); shotSb = true; }
@@ -306,7 +307,7 @@ async function duel() {
     await p.waitForSelector('.knife');
     const sides = p.locator('button.side-btn');
     if (await sides.count()) await sides.first().click(); else await p.locator('button.cta', { hasText: 'Go live' }).click();
-    await p.locator('.ghost-btn', { hasText: 'Skip' }).click();
+    await p.locator('.ghost-btn:visible', { hasText: 'Skip' }).first().click({ timeout: 4000 }).catch(() => {});
     await p.waitForSelector('.sb');
     const next = p.locator('button.cta', { hasText: 'Next map' });
     if (await next.count()) await next.click(); else break;
