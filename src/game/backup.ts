@@ -2,6 +2,7 @@
 // browser. Restoring replaces what is saved, after everything in the file has been checked, so a bad file changes nothing; and because it replaces and does
 // not merge, a result or an attempt in the file can never be counted on top of the same one already here.
 import { GUESS_KEY, GuessDay, loadGuesses, sanitizeGuesses } from './guess';
+import { DUO_KEY, DuoDay, loadDuo, sanitizeDuo } from './duo';
 import { KEY as RUN_KEY, Run, parseRun, roundNumber, draftRounds } from './state';
 import { STATS_KEY, Stats, loadStats, sanitizeStats } from './stats';
 import { readKey, removeKey, safeSet } from './persist';
@@ -15,13 +16,15 @@ export interface Backup {
   exportedAt: string;
   stats: Stats;
   guess: Record<string, GuessDay>;
+  /** Duo Link history. Backups made before Duo Link have none, and restoring one leaves the history here as it is. */
+  duo?: Record<string, DuoDay>;
   /** The run you had open, or null. */
   run: Run | null;
 }
 
 /** Everything worth keeping, as this tab knows it (so it is right even when the browser would not save it). `run` is the one on screen, if any. */
 export function createBackup(run?: Run | null): Backup {
-  return { app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), stats: loadStats(), guess: loadGuesses(), run: run ?? parseRun(readKey(RUN_KEY)) };
+  return { app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), stats: loadStats(), guess: loadGuesses(), duo: loadDuo(), run: run ?? parseRun(readKey(RUN_KEY)) };
 }
 export const backupText = (b: Backup) => JSON.stringify(b, null, 2);
 export const backupFileName = (d = new Date()) => `major-mayhem-backup-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}.json`;
@@ -32,7 +35,7 @@ export const backupFileName = (d = new Date()) => `major-mayhem-backup-${d.getFu
  */
 export function rawBackupText(): string {
   const raw = (k: string) => { const v = readKey(k); try { return v === null ? null : JSON.parse(v); } catch { return v; } };
-  return JSON.stringify({ app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), raw: true, run: raw(RUN_KEY), stats: raw(STATS_KEY), guess: raw(GUESS_KEY) }, null, 2);
+  return JSON.stringify({ app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: new Date().toISOString(), raw: true, run: raw(RUN_KEY), stats: raw(STATS_KEY), guess: raw(GUESS_KEY), duo: raw(DUO_KEY) }, null, 2);
 }
 
 export interface BackupSummary { runs: number; titles: number; dailies: number; guessDays: number; run: string | null; exportedAt: string }
@@ -56,21 +59,22 @@ export function previewBackup(text: string): BackupPreview {
   }
   const stats = sanitizeStats(o.stats);
   const guess = sanitizeGuesses(o.guess);
+  const duo = isObj(o.duo) ? sanitizeDuo(o.duo) : undefined;
   const where = run ? (run.phase === 'draft' ? `round ${roundNumber(run)} of ${draftRounds(run)} of the draft` : run.phase === 'final' ? 'finished' : run.phase === 'ready' ? 'in the lobby' : 'in the Major') : null;
   const what = run ? `${run.mode === 'daily' ? `Daily ${run.seed.replace('daily-', '')}` : run.mode === 'duel' ? 'A draft duel' : 'A free-play run'}, ${where}` : null;
   return {
     ok: true,
-    backup: { app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt : '', stats, guess, run },
+    backup: { app: BACKUP_APP, format: BACKUP_FORMAT, exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt : '', stats, guess, ...(duo ? { duo } : {}), run },
     summary: { runs: stats.runs, titles: stats.titles, dailies: Object.keys(stats.daily).length, guessDays: Object.keys(guess).length, run: what, exportedAt: typeof o.exportedAt === 'string' ? o.exportedAt.slice(0, 10) : '' },
   };
 }
 
 /** Puts a checked backup in place of what is saved. If any write fails, what was there before is put back and false is returned. */
 export function applyBackup(b: Backup): boolean {
-  const before = { run: readKey(RUN_KEY), stats: readKey(STATS_KEY), guess: readKey(GUESS_KEY) };
+  const before = { run: readKey(RUN_KEY), stats: readKey(STATS_KEY), guess: readKey(GUESS_KEY), duo: readKey(DUO_KEY) };
   const put = (k: string, v: string | null) => (v === null ? (removeKey(k), true) : safeSet(k, v, 'your data'));
-  const ok = put(STATS_KEY, JSON.stringify(b.stats)) && put(GUESS_KEY, JSON.stringify(b.guess)) && put(RUN_KEY, b.run ? JSON.stringify(b.run) : null);
-  if (!ok) { put(STATS_KEY, before.stats); put(GUESS_KEY, before.guess); put(RUN_KEY, before.run); }
+  const ok = put(STATS_KEY, JSON.stringify(b.stats)) && put(GUESS_KEY, JSON.stringify(b.guess)) && (!b.duo || put(DUO_KEY, JSON.stringify(b.duo))) && put(RUN_KEY, b.run ? JSON.stringify(b.run) : null);
+  if (!ok) { put(STATS_KEY, before.stats); put(GUESS_KEY, before.guess); put(DUO_KEY, before.duo); put(RUN_KEY, before.run); }
   return ok;
 }
 

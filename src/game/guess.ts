@@ -51,14 +51,16 @@ export function pros(rosters: Roster[] = ROSTERS): Map<string, Pro> {
 /** Every player a Guess the pro daily on `date` knows about, with roles as that date's rules had them (#24). */
 export const prosOn = (date: string) => G.withRules(rulesOn(date), () => pros(rostersOn(date)));
 
+/** A pro people can reasonably know: two or more Majors in the data, or a top game rating. Guess the pro and Duo Link both draw only from these. */
+export const isKnown = (p: Pro) => p.majors >= 2 || p.rosters.some((r) => r.players.find((x) => x.id === p.id)!.rating >= 88);
+
 /**
  * Today's answer: seeded by the date, from rosters available that day (so data additions don't change it), and only
  * from players people can reasonably know: two or more Majors in the data, or a top game rating.
  */
 export function answerFor(date: string): Pro {
   const all = prosOn(date);
-  const known = [...all.values()].filter((p) => p.majors >= 2 || p.rosters.some((r) => r.players.find((x) => x.id === p.id)!.rating >= 88))
-    .sort((a, b) => a.id.localeCompare(b.id));
+  const known = [...all.values()].filter(isKnown).sort((a, b) => a.id.localeCompare(b.id));
   return G.seeded(`guess-${date}`, () => known[G.rand(known.length)]);
 }
 

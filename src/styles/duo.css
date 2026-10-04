@@ -1,0 +1,55 @@
+/* Duo Link: two pros at the ends of a chain, a "?" between them, and the cards or the box to answer with. The header, search box and result strip are Guess the pro's. */
+.duo { display: grid; gap: 20px; }
+.duo__chain { display: grid; grid-template-columns: minmax(0, 1fr) 28px 64px 28px minmax(0, 1fr); align-items: center; gap: 0; padding: 20px 8px; background: var(--inset); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
+.duo__who { display: grid; justify-items: center; gap: 6px; min-width: 0; text-align: center; }
+.duo__who strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 clamp(1.3rem, 3.4vw, 1.9rem)/1.1 var(--f-head); letter-spacing: .02em; }
+.duo__photo { width: clamp(76px, 18vw, 112px); aspect-ratio: 1; overflow: hidden; background: var(--panel-2); box-shadow: inset 0 -3px 0 var(--accent); }
+.duo__sub { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-size: var(--fs-caption); }
+.duo__sub b { font-weight: 700; }
+.duo__orgs { display: flex; gap: 6px; justify-content: center; }
+.duo__link { height: 2px; background: repeating-linear-gradient(90deg, var(--control) 0 4px, transparent 4px 8px); }
+.duo__mid { display: grid; place-items: center; aspect-ratio: 1; background: var(--panel); box-shadow: inset 0 0 0 2px var(--accent); color: var(--accent); font: 800 2rem/1 var(--f-head); }
+.duo__modes { display: grid; gap: 12px; }
+.duo__modes-t { margin: 0; font-weight: 700; }
+.duo__modes-t small { display: block; margin-top: 2px; color: var(--muted); font-weight: 400; font-size: var(--fs-caption); }
+.duo__modes-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.duo__mode { display: grid; gap: 4px; justify-items: start; min-height: 76px; padding: 14px 16px; text-align: left; border: 0; background: rgba(249, 132, 37, .13); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .38); color: var(--strong); }
+.duo__mode:hover { background: rgba(249, 132, 37, .24); box-shadow: inset 0 0 0 1px rgba(249, 132, 37, .7); }
+.duo__mode b { font: 800 1.35rem/1 var(--f-head); letter-spacing: .04em; text-transform: uppercase; }
+.duo__mode span { color: var(--text-2); font-size: var(--fs-caption); }
+.duo__state { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px; margin: 0; color: var(--text-2); font-size: var(--fs-caption); font-weight: 700; }
+.duo__badge { padding: 3px 10px; background: rgba(255, 255, 255, .08); color: var(--strong); letter-spacing: .08em; text-transform: uppercase; }
+.duo__cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.duo__card { position: relative; display: flex; align-items: center; gap: 12px; min-height: 88px; padding: 10px 14px 10px 10px; text-align: left; border: 0; background: var(--panel); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .12); color: var(--text); }
+.duo__card:not(:disabled):hover { background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--accent); }
+.duo__card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.duo__cphoto { flex: none; width: 64px; height: 64px; overflow: hidden; background: var(--panel-2); }
+.duo__ctext { display: grid; gap: 4px; min-width: 0; }
+.duo__ctext strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 800 1.4rem/1.1 var(--f-head); }
+.duo__card.is-struck { opacity: .62; box-shadow: inset 0 0 0 1px var(--loss); }
+.duo__card.is-struck .duo__cphoto { filter: grayscale(1); }
+.duo__card.is-struck .duo__ctext strong { text-decoration: line-through; }
+.duo__x { position: absolute; right: 10px; top: 8px; display: grid; justify-items: end; color: var(--loss-text); font: 800 1.3rem/1 var(--f-head); }
+.duo__x small { font: 600 .68rem/1.2 var(--f-read); letter-spacing: .02em; }
+.duo__misses { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.duo__misses li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 12px; background: rgba(255, 255, 255, .04); box-shadow: inset 3px 0 0 var(--loss); }
+.duo__misses i { color: var(--loss-text); font-style: normal; font-weight: 800; }
+.duo__misses span { color: var(--muted); font-size: var(--fs-caption); }
+.duo__reveal { display: grid; gap: 12px; padding: 16px; background: var(--inset); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 3px 0 0 var(--loss); }
+.duo__reveal.is-won { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), inset 3px 0 0 var(--go); }
+.duo__answers { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.duo__answers li { display: flex; gap: 14px; align-items: center; }
+.duo__answers li > div { display: grid; gap: 2px; min-width: 0; }
+.duo__answers strong { display: flex; align-items: center; gap: 8px; font: 800 1.5rem/1.1 var(--f-head); }
+.duo__answers strong i { color: var(--go-text); font-style: normal; }
+.duo__answers span { color: var(--text-2); font-size: var(--fs-caption); }
+.duo__note { margin: 0; color: var(--muted); font-size: var(--fs-caption); }
+@media (max-width: 560px) {
+  .duo__chain { grid-template-columns: minmax(0, 1fr) 14px 48px 14px minmax(0, 1fr); padding: 14px 4px; }
+  .duo__mid { font-size: 1.5rem; }
+  .duo__modes-row { grid-template-columns: 1fr; }
+  .duo__cards { gap: 8px; }
+  .duo__card { flex-direction: column; align-items: flex-start; gap: 6px; min-height: 112px; padding: 10px; }
+  .duo__cphoto { width: 48px; height: 48px; }
+  .duo__x { right: 6px; top: 6px; }
+}

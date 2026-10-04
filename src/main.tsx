@@ -14,6 +14,7 @@ import './styles/draft-open.css';
 import './styles/draft-status.css';
 import './styles/stats-page.css';
 import './styles/guess-page.css';
+import './styles/duo.css';
 import './styles/setup-page.css';
 import './styles/lobby-page.css';
 import './styles/match-page.css';

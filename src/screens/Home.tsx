@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_ORDER, ROSTERS, Role, Roster } from '../data/rosters';
 import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
+import { MAX_TRIES, duoStreak, loadDuo } from '../game/duo';
 import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, replaceRisk, runWhere } from '../game/home';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
@@ -21,6 +22,7 @@ interface HomeProps {
   /** Opens the free-play setup page. */
   showSetup: () => void;
   showGuess: () => void;
+  showDuo: () => void;
   onStats: () => void;
   onBrowse?: () => void;
 }
@@ -29,7 +31,7 @@ interface HomeProps {
  * The home screen (#113): the first page, and somewhere you can come back to without touching a run in progress (#115).
  * One daily invitation, quieter secondary modes, your actual record and expandable instructions.
  */
-export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess, onStats, onBrowse }: HomeProps) {
+export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess, showDuo, onStats, onBrowse }: HomeProps) {
   const cd = useCountdown();
   const todayN = dailyNumber(cd.day);
   const home = homeState(s, stats, cd.day);
@@ -63,6 +65,8 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
 
   const g = useMemo(() => loadGuesses()[cd.day], [cd.day]);
   const gStreak = useMemo(() => guessStreak(loadGuesses(), cd.day), [cd.day]);
+  const duo = useMemo(() => loadDuo()[cd.day], [cd.day]);
+  const dStreak = useMemo(() => duoStreak(loadDuo(), cd.day), [cd.day]);
   const streak = dailyStreak(stats.daily, cd.day).current;
 
   const savedDaily = dailyDate(s);
@@ -156,11 +160,25 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
         </article>
       </div>
 
+      <button type="button" className="home-archive home-duo" aria-label="Duo Link" onClick={showDuo}><DuoArt /><span><b>Duo Link</b><small>{duo?.done ? (duo.won ? `Solved in ${duo.picks.length} of ${MAX_TRIES}` : 'Not solved today') : duo?.picks.length ? `${duo.picks.length} of ${MAX_TRIES} tries used` : 'Who played with both?'}{dStreak > 0 && ` · ${dStreak}-day streak`}</small></span><ArrowRightIcon size={20} /></button>
       {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><ArchiveArt /><span><b>Roster archive</b></span><ArrowRightIcon size={20} /></button>}
       <StatsPanel stats={stats} streak={streak} onStats={onStats} />
       <HowItWorks />
     </div>
   );
+}
+
+/** Two pros joined through a "?": the Duo Link puzzle, drawn with neutral silhouettes. */
+function DuoArt() {
+  return <svg className="home-archive-art" width="72" height="48" viewBox="0 0 72 48" aria-hidden="true" focusable="false">
+    {[8, 52].map((x) => <g key={x} transform={`translate(${x},9)`}>
+      <rect width="20" height="30" rx="2" fill="var(--inset)" stroke="var(--control)" />
+      <circle cx="10" cy="11" r="4.5" fill="var(--muted)" opacity=".45" /><path d="M3 27v-2c0-8 14-8 14 0v2z" fill="var(--muted)" opacity=".45" />
+    </g>)}
+    <path d="M28 24h16" stroke="var(--control)" strokeDasharray="2 3" />
+    <rect x="29" y="14" width="14" height="20" rx="2" fill="var(--inset)" stroke="var(--accent)" />
+    <text x="36" y="29" textAnchor="middle" fontSize="13" fontWeight="800" fill="var(--accent)">?</text>
+  </svg>;
 }
 
 /** Decorative archive cards: neutral silhouettes, no invented historical player. */

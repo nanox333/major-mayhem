@@ -3,6 +3,7 @@ import * as G from './game/logic';
 import { Action, Phase, currentLineup, dailyDate, dailyNumber, draftRounds, KEY, load, optsLabel, parseRun, reducer, roundNumber, roundOf, save, today } from './game/state';
 import { STATS_KEY, abandonDaily, dailyStarted, forgetStats, loadStats, recordDuel, recordRun } from './game/stats';
 import { GUESS_KEY, forgetGuesses } from './game/guess';
+import { DUO_KEY, forgetDuo } from './game/duo';
 import { registerDuel } from './game/duel';
 import { UnsavedBar } from './ui/UnsavedBar';
 import { Duel, decodeDuel, duelCode, duelTerms } from './game/duel';
@@ -35,6 +36,7 @@ import { StatsPage } from './screens/Stats';
 import { SetupScreen } from './screens/Setup';
 import { ChatVoteBar, ChatVoteProvider, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
+import { DuoScreen } from './screens/DuoLink';
 import { useView } from './ui/route';
 
 export default function App() {
@@ -71,6 +73,7 @@ function Game() {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STATS_KEY) { forgetStats(); setStats(loadStats()); }
       else if (e.key === GUESS_KEY) forgetGuesses();
+      else if (e.key === DUO_KEY) forgetDuo();
       else if (e.key === KEY) {
         const run = parseRun(e.newValue);
         if (run && JSON.stringify(run) !== JSON.stringify(latest.current)) { if (run.duel) registerDuel(run.duel); rawDispatch({ type: 'adopt', run }); }
@@ -167,12 +170,13 @@ function Game() {
     <UnsavedBar run={s} />
     {scene && <DraftScene />}
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
-      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} showDraft={beginDraft} showSetup={() => setView('setup')} showGuess={() => setView('guess')} onStats={() => setView('stats')} onBrowse={() => setView('archive')} />}
+      {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} showDraft={beginDraft} showSetup={() => setView('setup')} showGuess={() => setView('guess')} showDuo={() => setView('duo')} onStats={() => setView('stats')} onBrowse={() => setView('archive')} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
+      {view === 'duo' && <DuoScreen next={guessNext} />}
       {view === 'stats' && <StatsPage stats={stats} next={guessNext} />}
       {view === 'setup' && <SetupScreen s={s} dispatch={dispatch} onStart={beginDraft} onBack={() => setView('home')} />}
       {view === 'archive' && <RosterBrowser page hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setView('home')} />}
-      {view !== 'home' && view !== 'guess' && view !== 'archive' && view !== 'stats' && view !== 'setup' && <main className="console">
+      {view !== 'home' && view !== 'guess' && view !== 'duo' && view !== 'archive' && view !== 'stats' && view !== 'setup' && <main className="console">
         <div className={`console__head ${s.phase === 'live' || s.phase === 'final' ? 'console__head--progress' : ''}`}>
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
