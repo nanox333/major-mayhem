@@ -57,7 +57,8 @@ export function ninjaTime(t: number, start = 11) {
     /** Push-in towards the display until the click, then the camera eases back and the tension releases. */
     push: success ? 1 - .35 * ease(1.05, 1.22, t) : ease(.05, 1, t),
     relax: (() => { const k = clamp((t - NINJA_CLICK - .03) / .24); return k * k * k * (k * (k * 6 - 15) + 10); })(),
-    dim: .88 * ease(0, .05, t) * (1 - .2 * ease(1.2, 1.3, t)),
+    /** Fully opaque from the first beat to the end of the hold; the match only shows through during the final fade. */
+    dim: .88 * ease(0, .05, t),
     ninja: ease(1.15, 1.25, t), defuse: ease(1.21, 1.28, t),
     person: ease(1.34, 1.5, t),
     /** The title and the player hold on screen from about 1.3 to 1.9, then the whole thing fades. */
