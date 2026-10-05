@@ -142,14 +142,15 @@ export async function createNinjaScene(start = 11) {
     keys[idx].getWorldPosition(keyTarget); keys[next].getWorldPosition(keyNext); keyTarget.lerp(keyNext, glide);
     keys.forEach((k, i) => { k.position.y = keyY[i] - (i === idx ? press * .02 : 0); });
     const sway = Math.sin(t * 2.3) * .004 * work;
-    handR.position.set(keyTarget.x + .1 + s.relax * .1 + sway, .53 + (1 - press) * .04 + s.relax * .2, keyTarget.z + .4 + s.relax * .1);
-    handR.rotation.set(-.3 - press * .12, .28 + (keyTarget.x - .27) * .5 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.85);
+    const reach = aspect < 1 ? Math.max(.4, aspect * .75) : 1; // on a tall screen the hands come in closer so they stay in the picture
+    handR.position.set(keyTarget.x + .44 * reach + s.relax * .12 + sway, .5 + (1 - press) * .04 + s.relax * .2, keyTarget.z + .38 + s.relax * .1);
+    handR.rotation.set(-.3 - press * .12, .82 + (keyTarget.x - .27) * .4 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.85);
     // left hand: holds the case steady, with a soft tremor that grows with the tension
     const trem = s.shake * work;
-    handL.position.set(-.42 + Math.sin(t * 5.3) * .003 * trem - s.relax * .05, .5 + s.relax * .18 + Math.sin(t * 7.1) * .0025 * trem, .56 + s.relax * .12);
-    handL.scale.setScalar(.85); handL.rotation.set(-.2, -.22 + Math.sin(t * 4.1) * .01 * trem, 0);
+    handL.position.set(-.8 * reach + Math.sin(t * 5.3) * .003 * trem - s.relax * .08, .5 + s.relax * .18 + Math.sin(t * 7.1) * .0025 * trem, .55 + s.relax * .12);
+    handL.scale.setScalar(.85); handL.rotation.set(-.2, -.85 + Math.sin(t * 4.1) * .01 * trem, 0);
     // camera: a slow orbit and push-in (real parallax), a handheld tremor that grows with the tension, dead still at the click, easing back after it
-    const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .95 : 1;
+    const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .7 : 1;
     camera.position.lerpVectors(homeA, homeB, k); camera.position.x += Math.sin(t * .9) * .05 * (1 - s.relax);
     look.set(lcdWorld.x * .5 * k + .08, .28, .1); pull.copy(camera.position).sub(look).multiplyScalar(back - 1); camera.position.add(pull);
     camera.position.x += sh.x * 2; camera.position.y += sh.y * 2; camera.up.set(0, 1, 0); camera.lookAt(look); camera.rotateZ(sh.roll);
@@ -173,5 +174,7 @@ export async function createNinjaScene(start = 11) {
     owned.forEach((r) => r.dispose()); env.dispose(); key.shadow.map?.dispose(); composer?.dispose();
   };
   update(0); resize(1, 1);
-  return { scene, camera, update, resize, render, setLow, dispose };
+  /** Where the hands and camera are right now: used by the debug diagnostics to check the motion has no pops. */
+  const pose = () => [...handR.position.toArray(), ...handR.rotation.toArray().slice(0, 3) as number[], ...handL.position.toArray(), ...camera.position.toArray()];
+  return { scene, camera, update, resize, render, setLow, dispose, pose };
 }

@@ -60,7 +60,14 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
         world.update(t); world.render(renderer);
         ninjaDiagnostics.last = { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, fps: seconds > 0 ? frames / (seconds * NINJA_SLOW) : 0, dpr: renderer.getPixelRatio() };
       }
+      if (world) (ninjaDiagnostics as { pose?: number[] }).pose = world.pose();
       sounds(t);
+    };
+    /** Debug only: draws the given moments (real seconds) into one contact sheet, so every frame can be looked at. Returns a PNG data URL. */
+    (ninjaDiagnostics as { capture?: unknown }).capture = (times: number[], cols = 4, w = 400) => {
+      const h = Math.round(w * c.height / c.width); const sheet = document.createElement('canvas'); sheet.width = cols * w; sheet.height = Math.ceil(times.length / cols) * h; const g = sheet.getContext('2d')!;
+      times.forEach((t, i) => { draw(t / NINJA_SLOW); g.drawImage(c, 0, 0, c.width, c.height, (i % cols) * w, Math.floor(i / cols) * h, w, h); g.fillStyle = '#000b'; g.fillRect((i % cols) * w, Math.floor(i / cols) * h, 64, 18); g.fillStyle = '#fff'; g.font = '13px monospace'; g.fillText(t.toFixed(2), (i % cols) * w + 5, Math.floor(i / cols) * h + 13); });
+      return sheet.toDataURL('image/png');
     };
     const tick = (now: number) => {
       if (dead) return; frames++;
