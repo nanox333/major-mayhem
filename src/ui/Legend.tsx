@@ -3,20 +3,22 @@ import type * as G from '../game/logic';
 import { Avatar, TeamBadge } from './art';
 import { play } from './sound';
 import { reduceMotion } from './util';
-import hole1 from '../assets/legend/hole-1.webp';
-import hole2 from '../assets/legend/hole-2.webp';
-import hole3 from '../assets/legend/hole-3.webp';
-import flash1 from '../assets/legend/flash-1.webp';
+import hole from '../assets/legend/hole.webp';
+import blast from '../assets/legend/blast.webp';
 import flash2 from '../assets/legend/flash-2.webp';
 import smoke1 from '../assets/legend/smoke-1.webp';
 import casing from '../assets/legend/casing.webp';
 import spark from '../assets/legend/spark.webp';
 import slash1 from '../assets/legend/slash-1.webp';
 import slash2 from '../assets/legend/slash-2.webp';
+import bomb from '../assets/legend/bomb.webp';
+import awp from '../assets/legend/awp.webp';
+import foe from '../assets/legend/foe.webp';
 
-// Generated art for the scenes (scripts/legend-assets/generate.html): bullet holes in glass, muzzle flashes, smoke, a casing, a spark and knife slashes.
-const HOLES = [hole1, hole2, hole3];
-const FLASHES = [flash1, flash2];
+// Art for the scenes. The bullet hole, the blast, the C4 bomb and the AWP were made with ChatGPT's image generation and cut out here (scripts/legend-assets/PROMPTS.md);
+// the muzzle flash, smoke, casing, spark, slashes and enemy are drawn in code (scripts/legend-assets/generate.html).
+const HOLES = [hole, hole, hole];
+const FLASHES = [blast, flash2];
 const SLASHES = [slash1, slash2];
 
 type Info = { title: string; tag: string; how: string };
@@ -59,13 +61,15 @@ function useCount(from: number, to: number, ms: number, delay: number, still: bo
 /** Where the five shots of an ace land (percent of the screen), which art each uses, and how it is turned and scaled. */
 const SHOTS = [{ x: 24, y: 30, h: 0, f: 0, r: -12, s: 1 }, { x: 72, y: 24, h: 1, f: 1, r: 20, s: 1.1 }, { x: 47, y: 52, h: 2, f: 0, r: 70, s: .95 }, { x: 80, y: 62, h: 0, f: 1, r: -40, s: 1.15 }, { x: 30, y: 70, h: 1, f: 0, r: 8, s: 1 }];
 const SHOT_GAP = 0.17;
+/** The bomb display counts from this to this (seconds) while it is defused. */
+const LEFT_AT = 0.07;
 const ROUNDS_UP = (e: G.MatchEvent) => Number(/after (\d+) rounds/.exec(e.text)?.[1] ?? 36);
 const BEHIND = (e: G.MatchEvent) => Number(/(\d+) rounds down/.exec(e.text)?.[1] ?? 9);
 
 /** The part of the cinematic that is different for each moment. Decorative; the card under it says what happened. */
 function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
   const kind = e.legend ?? 'ace';
-  const timer = useCount(0.6, 0.07, 900, 100, still, 2);
+  const timer = useCount(0.6, LEFT_AT, 900, 100, still, 2);
   const won = useCount(0, 13, 700, 150, still);
   const rounds = useCount(24, ROUNDS_UP(e), 1100, 100, still);
   const down = BEHIND(e);
@@ -98,28 +102,41 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
         </div>
       );
     case 'ninja':
+      // A 1v3 with the bomb about to go off: three enemies, the C4 counting down on its display, a defuse bar filling, then it is defused.
       return (
         <div className="lg lg-ninja" aria-hidden="true">
+          <div className="lg-ninja__foes"><span>{[0, 1, 2].map((n) => <img key={n} src={foe} alt="" />)}</span><b>1v3</b></div>
           <div className="lg-bomb">
-            <small>Defusing</small>
-            <b>{timer}</b>
-            <span className="lg-wires"><u /><u /><u /></span>
+            <img className="lg-bomb__pic" src={bomb} alt="" />
+            <b className="lg-bomb__lcd">0:00.{timer.slice(2)}</b>
+            <i className="lg-bomb__led" />
+            <span className="lg-bomb__bar"><u /></span>
+            <small className="lg-bomb__say">Defusing</small>
             <em className="lg-stamp">Defused</em>
+            <span className="lg-bomb__spare">{LEFT_AT.toFixed(2)}s to spare</span>
           </div>
         </div>
       );
     case 'noscope':
+      // An AWP fired from the hip: the rifle slides in, a "no scope" mark strikes through a scope, one shot goes through two enemies.
       return (
-        <div className="lg lg-scope" aria-hidden="true">
-          <span className="lg-ring" />
-          <span className="lg-trail" />
-          {[{ x: 38, h: 0 }, { x: 62, h: 1 }].map((p, i) => (
-            <div key={i} className="lg-shot lg-shot--late" style={{ left: `${p.x}%`, top: '40%', ['--d' as string]: `${0.6 + i * 0.06}s`, ['--r' as string]: `${i * 40 - 20}deg`, ['--k' as string]: 0.9 }}>
-              <img className="lg-hole" src={HOLES[p.h]} alt="" />
-              <img className="lg-muzzle" src={FLASHES[i]} alt="" />
-              <img className="lg-spark lg-spark--a" src={spark} alt="" /><img className="lg-spark lg-spark--b" src={spark} alt="" />
+        <div className="lg lg-nos" aria-hidden="true">
+          <div className="lg-nos__row">
+            <div className="lg-nos__gun">
+              <img className="lg-nos__awp" src={awp} alt="" />
+              <img className="lg-muzzle lg-nos__flash" src={FLASHES[0]} alt="" />
+              <img className="lg-casing lg-nos__casing" src={casing} alt="" />
+              <span className="lg-nos__tag"><i /><b>No scope</b></span>
             </div>
-          ))}
+            <span className="lg-nos__tracer" />
+            {[0, 1].map((n) => (
+              <div key={n} className="lg-nos__foe" style={{ ['--n' as string]: n }}>
+                <img src={foe} alt="" />
+                <span className="lg-nos__x" />
+                <img className="lg-muzzle lg-nos__hit" src={FLASHES[1]} alt="" />
+              </div>
+            ))}
+          </div>
         </div>
       );
     case 'knife':

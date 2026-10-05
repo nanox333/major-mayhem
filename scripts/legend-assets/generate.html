@@ -130,12 +130,78 @@ function slash(seed, W = 960, H = 96) {
   return c;
 }
 
+
+// A C4 bomb: a black case with a keypad, a dark display window (the page draws the numbers on it), a red LED, an antenna and wires.
+function bomb() {
+  const W = 480, H = 300, [c, g] = mk(W, H);
+  g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 22; g.shadowOffsetY = 10;
+  let grad = g.createLinearGradient(0, 40, 0, 250); grad.addColorStop(0, '#34383f'); grad.addColorStop(.5, '#1c1f24'); grad.addColorStop(1, '#101215');
+  g.fillStyle = grad; g.beginPath(); g.roundRect(20, 50, 440, 200, 18); g.fill(); g.shadowColor = 'transparent';
+  g.strokeStyle = 'rgba(255,255,255,.18)'; g.lineWidth = 2; g.beginPath(); g.roundRect(21, 51, 438, 198, 17); g.stroke();
+  // straps
+  for (const x of [70, 410]) { g.fillStyle = '#2a2d33'; g.fillRect(x - 12, 50, 24, 200); g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(x - 12, 50, 3, 200); }
+  // yellow-black hazard strip
+  g.save(); g.beginPath(); g.rect(40, 62, 400, 14); g.clip(); g.fillStyle = '#e4ae39'; g.fillRect(40, 62, 400, 14);
+  g.fillStyle = '#111'; for (let x = 20; x < 460; x += 28) { g.beginPath(); g.moveTo(x, 76); g.lineTo(x + 14, 76); g.lineTo(x + 28, 62); g.lineTo(x + 14, 62); g.closePath(); g.fill(); } g.restore();
+  // display window
+  g.fillStyle = '#05100a'; g.beginPath(); g.roundRect(100, 96, 190, 92, 8); g.fill();
+  grad = g.createLinearGradient(100, 96, 100, 188); grad.addColorStop(0, 'rgba(120,255,160,.10)'); grad.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = grad; g.beginPath(); g.roundRect(100, 96, 190, 92, 8); g.fill();
+  g.strokeStyle = '#3a3f47'; g.lineWidth = 4; g.beginPath(); g.roundRect(100, 96, 190, 92, 8); g.stroke();
+  // keypad
+  for (let i = 0; i < 12; i++) { const x = 318 + (i % 3) * 30, y = 100 + Math.floor(i / 3) * 24; g.fillStyle = '#3b4048'; g.beginPath(); g.roundRect(x, y, 22, 16, 4); g.fill(); g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(x + 2, y + 2, 18, 2); }
+  // led and antenna
+  g.fillStyle = '#ff3030'; g.shadowColor = '#ff3030'; g.shadowBlur = 16; g.beginPath(); g.arc(112, 212, 7, 0, 7); g.fill(); g.shadowColor = 'transparent';
+  g.fillStyle = '#c9ccd2'; g.fillRect(246, 14, 5, 40); g.beginPath(); g.arc(248.5, 14, 6, 0, 7); g.fill();
+  // wires
+  for (const [x0, col, bend] of [[150, '#e4ae39', -18], [190, '#4ade80', 10], [230, '#6ea8ff', -6], [270, '#ff4d4d', 16]]) {
+    g.strokeStyle = col; g.lineWidth = 5; g.lineCap = 'round'; g.beginPath(); g.moveTo(x0, 250); g.bezierCurveTo(x0, 272, x0 + bend, 276, x0 + bend * 1.6, 296); g.stroke();
+  }
+  return c;
+}
+
+// An AWP seen from the side: a long barrel with a brake, the receiver, a scope on top, a bolt handle, a magazine and a stock.
+function awp() {
+  const W = 760, H = 210, [c, g] = mk(W, H);
+  const metal = (y0, y1, a, b) => { const gr = g.createLinearGradient(0, y0, 0, y1); gr.addColorStop(0, a); gr.addColorStop(1, b); return gr; };
+  g.shadowColor = 'rgba(0,0,0,.65)'; g.shadowBlur = 20; g.shadowOffsetY = 10;
+  // stock
+  g.fillStyle = metal(110, 190, '#4a5b49', '#243026'); g.beginPath(); g.moveTo(10, 112); g.lineTo(190, 104); g.lineTo(200, 150); g.lineTo(150, 168); g.lineTo(60, 190); g.lineTo(18, 176); g.closePath(); g.fill();
+  g.shadowColor = 'transparent';
+  // receiver and magazine
+  g.fillStyle = metal(96, 140, '#566a54', '#2b382d'); g.beginPath(); g.roundRect(186, 96, 190, 46, 8); g.fill();
+  g.fillStyle = '#1d261f'; g.beginPath(); g.roundRect(262, 138, 44, 46, 5); g.fill();
+  // barrel and brake
+  g.fillStyle = metal(106, 124, '#8b95a0', '#3d444c'); g.fillRect(370, 107, 330, 16);
+  g.fillStyle = '#2b3036'; g.beginPath(); g.roundRect(690, 100, 56, 30, 4); g.fill(); g.fillStyle = '#0b0d0f'; for (const x of [700, 716, 732]) g.fillRect(x, 104, 4, 22);
+  // scope: tube, bells and mounts
+  g.fillStyle = metal(52, 84, '#69727d', '#262b31'); g.beginPath(); g.roundRect(210, 52, 260, 30, 12); g.fill();
+  g.fillStyle = metal(42, 94, '#555d67', '#1d2126'); g.beginPath(); g.roundRect(196, 44, 50, 46, 10); g.fill(); g.beginPath(); g.roundRect(438, 48, 50, 38, 9); g.fill();
+  g.fillStyle = 'rgba(120,180,255,.55)'; g.beginPath(); g.ellipse(200, 67, 5, 18, 0, 0, 7); g.fill();
+  g.fillStyle = '#1d2126'; for (const x of [250, 420]) g.fillRect(x, 82, 16, 18);
+  // bolt handle
+  g.strokeStyle = '#8b95a0'; g.lineWidth = 7; g.lineCap = 'round'; g.beginPath(); g.moveTo(330, 108); g.lineTo(352, 78); g.stroke(); g.fillStyle = '#8b95a0'; g.beginPath(); g.arc(354, 76, 8, 0, 7); g.fill();
+  // highlights
+  g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 2; g.beginPath(); g.moveTo(14, 114); g.lineTo(186, 106); g.moveTo(212, 58); g.lineTo(468, 58); g.moveTo(376, 109); g.lineTo(690, 109); g.stroke();
+  return c;
+}
+
+// An enemy, head and shoulders, in red with a rim light.
+function foe() {
+  const W = 140, H = 180, [c, g] = mk(W, H);
+  g.shadowColor = 'rgba(255,60,50,.8)'; g.shadowBlur = 20;
+  const gr = g.createLinearGradient(0, 20, 0, 180); gr.addColorStop(0, '#ff6a58'); gr.addColorStop(1, '#8c1d18'); g.fillStyle = gr;
+  g.beginPath(); g.arc(70, 52, 30, 0, 7); g.fill();
+  g.beginPath(); g.moveTo(10, 176); g.bezierCurveTo(10, 112, 34, 96, 70, 96); g.bezierCurveTo(106, 96, 130, 112, 130, 176); g.closePath(); g.fill();
+  g.shadowColor = 'transparent'; g.fillStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.moveTo(10, 176); g.bezierCurveTo(10, 130, 30, 112, 52, 106); g.lineTo(52, 176); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(255,220,210,.8)'; g.lineWidth = 2; g.beginPath(); g.arc(70, 52, 30, 3.6, 5.6); g.stroke();
+  return c;
+}
+
 const JOBS = [
-  ...[1, 2, 3, 4].map((i) => [`hole-${i}.webp`, () => hole(i * 977)]),
-  ...[1, 2, 3].map((i) => [`flash-${i}.webp`, () => flash(i * 313)]),
-  ...[1, 2].map((i) => [`smoke-${i}.webp`, () => smoke(i * 71)]),
-  ['casing.webp', casing], ['spark.webp', spark],
-  ...[1, 2, 3].map((i) => [`slash-${i}.webp`, () => slash(i * 53)]),
+  ['flash-2.webp', () => flash(2 * 313)],
+  ...[1].map((i) => [`smoke-${i}.webp`, () => smoke(i * 71)]),
+  ['casing.webp', casing], ['spark.webp', spark], ['foe.webp', foe],
+  ...[1, 2].map((i) => [`slash-${i}.webp`, () => slash(i * 53)]),
 ];
 document.getElementById('go').onclick = async () => {
   const out = document.getElementById('out'), log = document.getElementById('log');
