@@ -57,12 +57,12 @@ export async function createNinjaScene(start = 11) {
   const probe = new T.WebGLRenderer({ canvas: document.createElement('canvas') });
   const pmrem = new T.PMREMGenerator(probe);
   const env = pmrem.fromScene(new RoomEnvironment(), .04); scene.environment = env.texture; scene.environmentIntensity = .35; pmrem.dispose(); probe.dispose(); probe.forceContextLoss();
-  scene.add(new T.HemisphereLight(0x4a5260, 0x2a1a0c, .9));
-  const key = new T.DirectionalLight(0xffa35c, 4.2); key.position.set(-1.4, 2.4, 1.2); key.castShadow = true;
+  scene.add(new T.HemisphereLight(0x5a6678, 0x3a2410, 1.5));
+  const key = new T.DirectionalLight(0xffb676, 4.2); key.position.set(-1.4, 2.4, 1.2); key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024); Object.assign(key.shadow.camera, { left: -1.6, right: 1.6, top: 1.6, bottom: -1.6, near: .5, far: 7 }); key.shadow.bias = -.0006; key.shadow.normalBias = .02;
   scene.add(key);
   const rim = new T.DirectionalLight(0xff7a2a, 3.2); rim.position.set(1.8, 1.1, -1.6); scene.add(rim);
-  const fill = new T.DirectionalLight(0x8aa6c8, .9); fill.position.set(1.4, 1.4, 2.2); scene.add(fill);
+  const fill = new T.DirectionalLight(0x9db8d8, 2.4); fill.position.set(1.4, 1.4, 2.2); scene.add(fill);
   const redLight = new T.PointLight(0xff2a1a, 0, 1.4, 2), greenLight = new T.PointLight(0x2bff6a, 0, 1.4, 2); scene.add(redLight, greenLight);
 
   // named parts the clock drives
@@ -76,7 +76,7 @@ export async function createNinjaScene(start = 11) {
     if (o.name === 'led') ledMat = o.material as T.MeshStandardMaterial;
     if (o.name === 'led_green') ledGMat = o.material as T.MeshStandardMaterial;
   });
-  hands.scene.traverse((o) => { if (o instanceof T.Mesh) { o.castShadow = true; o.receiveShadow = true; } });
+  hands.scene.traverse((o) => { if (o instanceof T.Mesh) { o.castShadow = true; o.receiveShadow = true; const m = o.material as T.MeshStandardMaterial; m.color.setScalar(1.35); m.roughness = .5; m.metalness = 0; } });
   const led = byName(bomb.scene, 'led'), ledG = byName(bomb.scene, 'led_green'), lcd = byName(bomb.scene, 'lcd');
   const handR = byName(hands.scene, 'hand_R'), handL = byName(hands.scene, 'hand_L');
   if (!led || !ledG || !lcd || !handR || !handL || !lcdMat || !ledMat || !ledGMat) throw new Error('Incomplete NINJA DEFUSE assets');
@@ -90,8 +90,19 @@ export async function createNinjaScene(start = 11) {
   const ledGlow = sprite(redTex, .16, ledWorld), ledGreen = sprite(greenTex, .16, ledWorld), lcdGlow = sprite(redTex, .78, lcdWorld.clone().add(new T.Vector3(0, .02, .06))), lcdGreen = sprite(greenTex, .78, lcdWorld.clone().add(new T.Vector3(0, .02, .06)));
 
   // each glove is one sculpted mesh (from a Meshy model, see ninja_glove.py); a dark sleeve runs back from the wrist
-  const sleeveMat = own(new T.MeshStandardMaterial({ color: 0x1d1f21, roughness: .92, metalness: 0 }));
-  for (const h of [handR, handL]) { const sl = new T.Mesh(own(new T.CylinderGeometry(.13, .165, .8, 24, 1, true)), sleeveMat); sl.rotation.x = Math.PI / 2; sl.position.set(0, .015, .6); sl.scale.set(.92, 1, 1.05); sl.castShadow = true; h.add(sl); }
+  // a woven olive field-jacket cloth, drawn once, so the sleeve reads as fabric and not as skin
+  const cloth = document.createElement('canvas'); cloth.width = cloth.height = 256; const cg = cloth.getContext('2d')!;
+  cg.fillStyle = '#3a4430'; cg.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 5200; i++) { const v = 40 + ((i * 7919) % 50); cg.fillStyle = `rgba(${v},${v + 10},${v - 6},.5)`; cg.fillRect((i * 131) % 256, (i * 71) % 256, 1 + (i % 3), 1 + (i % 2)); }
+  cg.strokeStyle = 'rgba(0,0,0,.28)'; cg.lineWidth = 1; for (let i = 0; i < 256; i += 4) { cg.beginPath(); cg.moveTo(i, 0); cg.lineTo(i, 256); cg.stroke(); cg.beginPath(); cg.moveTo(0, i); cg.lineTo(256, i); cg.stroke(); }
+  const clothTex = own(new T.CanvasTexture(cloth)); clothTex.colorSpace = T.SRGBColorSpace; clothTex.wrapS = clothTex.wrapT = T.RepeatWrapping; clothTex.repeat.set(3, 5);
+  const sleeveMat = own(new T.MeshStandardMaterial({ color: 0xcfd6c4, map: clothTex, roughness: .9, metalness: 0, side: T.DoubleSide }));
+  const cuffMat = own(new T.MeshStandardMaterial({ color: 0x0e0f10, roughness: .75 }));
+  const sleeveGeo = own(new T.CylinderGeometry(.115, .15, .75, 28, 14, true)); const sp = sleeveGeo.attributes.position;
+  for (let i = 0; i < sp.count; i++) { const x = sp.getX(i), y = sp.getY(i), z = sp.getZ(i), a = Math.atan2(z, x), f = 1 + .06 * Math.sin(a * 3 + y * 14) + .035 * Math.sin(a * 5 - y * 9); sp.setX(i, x * f); sp.setZ(i, z * f); }
+  sleeveGeo.computeVertexNormals();
+  for (const h of [handR, handL]) { const sl = new T.Mesh(sleeveGeo, sleeveMat); sl.rotation.x = Math.PI / 2 + .25; sl.position.set(0, -.06, .52); sl.scale.set(.9, 1, 1.1); sl.castShadow = true; h.add(sl);
+    const cuff = new T.Mesh(own(new T.TorusGeometry(.125, .026, 10, 28)), cuffMat); cuff.position.set(0, -.01, .2); cuff.scale.set(1.1, 1.3, 1); cuff.castShadow = true; h.add(cuff); }
 
   // dust motes and a few sparks at the critical beat
   const N = 40, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), seeds = Array.from({ length: N }, (_, i) => [Math.sin(i * 12.9) * .5 + .5, Math.sin(i * 78.2) * .5 + .5, Math.sin(i * 37.7) * .5 + .5]);
@@ -132,17 +143,17 @@ export async function createNinjaScene(start = 11) {
     keys.forEach((k, i) => { k.position.y = keyY[i] - (i === idx ? press * .02 : 0); });
     const sway = Math.sin(t * 2.3) * .004 * work;
     handR.position.set(keyTarget.x + .1 + s.relax * .1 + sway, .53 + (1 - press) * .04 + s.relax * .2, keyTarget.z + .4 + s.relax * .1);
-    handR.rotation.set(-.3 - press * .12, .28 + (keyTarget.x - .27) * .5 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.8);
+    handR.rotation.set(-.3 - press * .12, .28 + (keyTarget.x - .27) * .5 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.85);
     // left hand: holds the case steady, with a soft tremor that grows with the tension
     const trem = s.shake * work;
     handL.position.set(-.42 + Math.sin(t * 5.3) * .003 * trem - s.relax * .05, .5 + s.relax * .18 + Math.sin(t * 7.1) * .0025 * trem, .56 + s.relax * .12);
-    handL.scale.setScalar(.8); handL.rotation.set(-.2, -.22 + Math.sin(t * 4.1) * .01 * trem, 0);
+    handL.scale.setScalar(.85); handL.rotation.set(-.2, -.22 + Math.sin(t * 4.1) * .01 * trem, 0);
     // camera: a slow orbit and push-in (real parallax), a handheld tremor that grows with the tension, dead still at the click, easing back after it
-    const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .55 : 1;
+    const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .95 : 1;
     camera.position.lerpVectors(homeA, homeB, k); camera.position.x += Math.sin(t * .9) * .05 * (1 - s.relax);
     look.set(lcdWorld.x * .5 * k + .08, .28, .1); pull.copy(camera.position).sub(look).multiplyScalar(back - 1); camera.position.add(pull);
     camera.position.x += sh.x * 2; camera.position.y += sh.y * 2; camera.up.set(0, 1, 0); camera.lookAt(look); camera.rotateZ(sh.roll);
-    camera.fov = 42 - 2 * s.critical - 3 * k; camera.updateProjectionMatrix();
+    camera.fov = (42 - 2 * s.critical - 3 * k) * (aspect < 1 ? 1.2 : 1); camera.updateProjectionMatrix();
     for (let i = 0; i < N; i++) {
       const [a, b, c] = seeds[i], spark = i >= 34;
       if (!spark) { pos[i * 3] = -1 + a * 2; pos[i * 3 + 1] = .08 + b * .9 + ((t * .04 * (c + .3)) % .25); pos[i * 3 + 2] = -.6 + c * 1.6 + Math.sin(t * .7 + b * 6) * .04; const v = low ? 0 : .3 * (.4 + .6 * Math.sin(t * 2 + a * 9) ** 2); col[i * 3] = v; col[i * 3 + 1] = v * .62; col[i * 3 + 2] = v * .3; }
