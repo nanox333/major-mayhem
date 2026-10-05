@@ -22,7 +22,7 @@ export function Stage({ kind, at, onReady }: { kind: LegendKind; at?: number | n
     let dead = false, raf = 0, ro: ResizeObserver | undefined;
     HAS_3D[kind]!().then((m) => {
       if (dead || !ref.current) return;
-      const canvas = ref.current, s = m.default(canvas); scene.current = s;
+      const canvas = ref.current, s = m.default(canvas); scene.current = s; (canvas as HTMLCanvasElement & { scene3d?: Scene3D }).scene3d = s; // the debug contact sheet draws frames through this
       const fit = () => { const b = canvas.getBoundingClientRect(); const dpr = Math.min(window.devicePixelRatio || 1, 1.75); s.resize(Math.round(b.width * dpr), Math.round(b.height * dpr)); };
       fit(); ro = new ResizeObserver(() => { fit(); s.render(atRef.current ?? 0); }); ro.observe(canvas);
       onReady?.(s.duration);

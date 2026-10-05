@@ -39,7 +39,7 @@ export const LEGEND_TITLE = LEGEND_INFO;
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
 export const LEGEND_MS = 2000;
 /** The defuse takes its time: the count-down has to be read. Every other moment holds LEGEND_MS. */
-export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && can3D(kind) ? 3800 : LEGEND_MS);
+export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && can3D(kind) ? 3900 : LEGEND_MS);
 /** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
 export const LEGEND_EXIT_MS = 440;
 
@@ -178,7 +178,7 @@ function scoreFor(kind: G.LegendKind) {
     case 'ace': return at('shot', [0, 170, 340, 510, 680]);
     case 'clutch5': return [...at('beat', [0, 420, 840]), ...at('shot', [250, 420, 590, 760, 930])];
     case 'ninja': return [...at('tick', Array.from({ length: 9 }, (_, i) => 250 + i * 190)), ...at('shot', [1950])];
-    case 'noscope': return can3D(kind) ? [...at('shot', [0]), ...at('tick', [2420])] : at('shot', [570, 820]);
+    case 'noscope': return can3D(kind) ? [...at('shot', [400]), ...at('tick', [2300, 3180])] : at('shot', [570, 820]);
     case 'knife': return at('shot', [60, 200, 340]);
     case 'flawless': return at('tick', Array.from({ length: 13 }, (_, i) => 100 + i * 45));
     case 'miracle': return at('tick', [100, 300, 500, 700, 900]);
