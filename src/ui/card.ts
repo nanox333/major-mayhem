@@ -5,6 +5,7 @@ import { ROLE_LABEL, Roster, Player } from '../data/rosters';
 import * as G from '../game/logic';
 import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { legendsOf } from '../game/achievements';
+import { LEGEND_NAME } from '../game/highlights';
 
 const W = 1080, H = 1350;
 // Flat charcoal, chalk and orange match the editorial page; no generated assets.
@@ -155,7 +156,7 @@ export async function drawResultCard(run: Run, host: string, practice = false): 
   const legends = legendsOf(run);
   if (legends.length) {
     const first = legends[0], nick = mine.find((l) => l.player.id === first.playerId)?.player.nick;
-    const line = `✦ LEGENDARY: ${first.legend === 'ace' ? 'ACE' : first.legend === 'clutch5' ? '1V5 CLUTCH' : first.legend === 'flawless' ? 'FLAWLESS VICTORY' : 'MIRACLE COMEBACK'}${nick ? ` · ${nick.toUpperCase()}` : ''}${legends.length > 1 ? ` · +${legends.length - 1}` : ''}`;
+    const line = `✦ LEGENDARY: ${LEGEND_NAME[first.legend ?? 'ace'].toUpperCase()}${nick ? ` · ${nick.toUpperCase()}` : ''}${legends.length > 1 ? ` · +${legends.length - 1}` : ''}`;
     ctx.fillStyle = '#e4ae39'; spaced(ctx, 2); fit(ctx, line, 700, 28, F.head, 960);
     ctx.fillText(line, W / 2, 1244);
   }

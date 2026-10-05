@@ -3,7 +3,7 @@ import { validRun } from '../../game/state';
 import { SCENARIOS, gameOf } from './scenarios';
 
 // Rare things (a miracle comeback, a 13–0, a legendary run) may legitimately not turn up within the search budget, so they are only checked when found.
-const RARE = new Set(['live-comeback', 'live-stomp', 'results-legend']);
+const RARE = new Set(['live-comeback', 'live-stomp', 'results-legend', 'live-legend-flawless', 'live-legend-marathon']);
 
 describe('debug scenarios (#296)', () => {
   it('has unique ids and titles', () => {

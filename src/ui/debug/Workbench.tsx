@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import * as G from '../../game/logic';
 import { LEGENDS, LegendKind, MatchEvent } from '../../game/match';
 import { debugHooks } from '../../game/debugHooks';
@@ -106,7 +107,7 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
           ['Champion, W/L blocks', 'results-champion', ''],
         ].map(([label, id, how]) => <li key={id}><button type="button" onClick={() => { const b = scenarioById.get(id)?.build(); if (b) { snapshotOnce(); jump(b); say(`${label}${how ? `: ${how}` : ''}`); } }}>{label}</button>{how && <small>{how}</small>}</li>)}
       </ul>
-      {demo && <LegendOverlay e={fakeEvent(demo.kind, demo.mine[0]?.player.id)} mine={demo.mine} map="Mirage" onDone={() => setDemo(null)} />}
+      {demo && createPortal(<LegendOverlay e={fakeEvent(demo.kind, demo.mine[0]?.player.id)} mine={demo.mine} map="Mirage" onDone={() => setDemo(null)} />, document.body)}
     </div>
   );
 }

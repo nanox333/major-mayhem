@@ -1,6 +1,6 @@
 import { Role } from '../../data/rosters';
 import * as G from '../../game/logic';
-import { LEGENDS, LegendKind } from '../../game/match';
+import { LEGENDS, LegendKind, ROLLED_LEGENDS } from '../../game/match';
 import { debugHooks } from '../../game/debugHooks';
 import { Opts, Run, fresh, reducer, roundOf, slotsFor } from '../../game/state';
 
@@ -104,6 +104,8 @@ const quiet = (run: Run): Run => ({ ...run, recorded: true });
 const lostPistol = (g: G.MapGame, i: number) => g.rounds.length > i && g.rounds[i] === false;
 const runOfLosses = (g: G.MapGame) => { for (let i = 3; i < g.rounds.length; i++) if (!g.rounds[i] && !g.rounds[i - 1] && !g.rounds[i - 2] && !g.rounds[i - 3]) return i + 1; return -1; };
 
+const LEGEND_WORDS: Record<(typeof ROLLED_LEGENDS)[number], string> = { ace: 'ace', clutch5: '1v5 clutch', ninja: 'ninja defuse', noscope: 'no-scope', knife: 'knife kill' };
+
 export const SCENARIOS: Scenario[] = [
   // ---- the draft ----
   { id: 'draft-sealed', group: 'Draft', title: 'Sealed case, round 1', note: 'The page a new run opens on.', build: () => ({ run: fresh('free'), sealed: true }) },
@@ -144,8 +146,8 @@ export const SCENARIOS: Scenario[] = [
   { id: 'map-won', group: 'Live match', title: 'Map complete: won', build: () => liveWhere((g) => g.won, (g) => g.rounds.length) },
   { id: 'map-lost', group: 'Live match', title: 'Map complete: lost', build: () => liveWhere((g) => !g.won, (g) => g.rounds.length) },
   // ---- legendary moments ----
-  ...LEGENDS.filter((k) => k === 'ace' || k === 'clutch5').map((k): Scenario => ({
-    id: `live-legend-${k}`, group: 'Legendary moments', title: `A real ${k === 'ace' ? 'ace' : '1v5 clutch'}, one round before it happens`,
+  ...ROLLED_LEGENDS.map((k): Scenario => ({
+    id: `live-legend-${k}`, group: 'Legendary moments', title: `A real ${LEGEND_WORDS[k]}, one round before it happens`,
     note: 'Arms the debug hook for the next map, so the first round your team wins is legendary; press Next round to watch it arrive.',
     build: () => {
       debugHooks.legend = k;
@@ -155,6 +157,8 @@ export const SCENARIOS: Scenario[] = [
       return at ? { run, seen: { n: at - 1, paused: true, bought: [1, 13] } } : null;
     },
   })),
+  { id: 'live-legend-flawless', group: 'Legendary moments', title: 'A real flawless 13–0, at the last round', note: 'Searched for in real maps; rare.', build: () => liveWhere((g) => g.events.some((e) => e.legend === 'flawless'), (g) => g.rounds.length - 1) },
+  { id: 'live-legend-marathon', group: 'Legendary moments', title: 'A real marathon (more than one overtime), at the last round', note: 'Searched for in real maps; rare.', build: () => liveWhere((g) => g.events.some((e) => e.legend === 'marathon'), (g) => g.rounds.length - 1) },
   // ---- results ----
   { id: 'results-champion', group: 'Results', title: 'Champions', build: () => { const r = finishedRun(placed('CHAMP')); return r ? { run: quiet(r) } : null; } },
   { id: 'results-final', group: 'Results', title: 'Runner-up', build: () => { const r = finishedRun(placed('F')); return r ? { run: quiet(r) } : null; } },

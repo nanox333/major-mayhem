@@ -4,7 +4,7 @@
 
 export const SFX_NAMES = [
   'click', 'tick', 'open', 'reveal', 'reroll', 'draft', 'found', 'accept', 'ban', 'call',
-  'roundWin', 'roundLoss', 'clutch', 'legend', 'half', 'mapWin', 'mapLose', 'champion', 'achievement', 'hit', 'near', 'miss',
+  'roundWin', 'roundLoss', 'clutch', 'legend', 'shot', 'beat', 'half', 'mapWin', 'mapLose', 'champion', 'achievement', 'hit', 'near', 'miss',
 ] as const;
 export type Sfx = (typeof SFX_NAMES)[number];
 export interface SfxOpts {
@@ -83,6 +83,8 @@ export const RECIPES: Record<string, Recipe> = {
     L('sci-sub-boom-001', 0, 0.8), L('imp-bell-heavy-000', 0.02, 0.9, 0.9), L('int-confirmation-004', 0.08, 0.7), L('int-confirmation-003', 0.3, 0.8),
     L('int-glass-004', 0.42, 0.8), L('imp-bell-heavy-001', 0.5, 0.6, 1.3),
   ]] },
+  shot: { gain: 0.5, jitter: 0.06, variants: [[L('imp-punch-heavy-003', 0, 1, 1.3), L('int-click-001', 0.01, 0.6)], [L('imp-punch-heavy-003', 0, 1, 1.5), L('int-click-005', 0.01, 0.6)]] },
+  beat: { gain: 0.6, variants: [[L('imp-soft-heavy-001', 0, 1, 0.7)]] },
   half: { gain: 0.55, variants: [[L('imp-bell-heavy-001', 0, 1, 0.8), L('imp-plate-heavy-000', 0, 0.7)]] },
   mapWin: { gain: 0.72, variants: [[L('int-confirmation-002'), L('imp-bell-heavy-003', 0, 0.6), L('int-confirmation-003', 0.14, 0.8), L('int-glass-004', 0.24, 0.6)]] },
   mapLose: { gain: 0.89, variants: [[L('imp-soft-heavy-001'), L('int-error-005', 0.06, 0.5), L('int-drop-004', 0.22, 0.7)]] },

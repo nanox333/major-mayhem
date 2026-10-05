@@ -1,64 +1,185 @@
 /* =====================================================================================================================
-   Legendary moments (#292, #293): a gold cinematic over the match. Presentation only; reduced motion gets the still card.
+   Legendary moments (#292, #293): a short scene that is different for each kind, then a gold card. Presentation only; reduced motion
+   gets the card alone. The whole thing holds for LEGEND_MS (Legend.tsx) and any key or tap ends it early.
    ===================================================================================================================== */
-.legend { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; cursor: pointer; overflow: hidden; }
-.legend__wash { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(228, 174, 57, .28), rgba(0, 0, 0, .86) 62%), rgba(0, 0, 0, .55); }
+.legend { --lg: #e4ae39; --lg-hi: #ffd37a; --at: .55s; position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center; padding: 16px 16px clamp(56px, 10vh, 96px); cursor: pointer; overflow: hidden; }
+.legend--clutch5 { --lg: #e2563e; --lg-hi: #ff9a7a; --at: .95s; }
+.legend--ninja { --lg: #4ade80; --lg-hi: #b6f5c8; --at: 1.15s; }
+.legend--noscope { --lg: #dfe7f2; --lg-hi: #ffffff; --at: .85s; }
+.legend--knife { --lg: #ff4d4d; --lg-hi: #ffd0d0; --at: .6s; }
+.legend--flawless { --lg: #f5f1e4; --lg-hi: #ffffff; --at: .8s; }
+.legend--miracle { --lg: #e4ae39; --lg-hi: #ffd37a; --at: 1.05s; }
+.legend--marathon { --lg: #6ea8ff; --lg-hi: #b8d4ff; --at: 1.2s; }
+.legend__wash { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, color-mix(in srgb, var(--lg) 24%, transparent), rgba(0, 0, 0, .88) 62%), rgba(0, 0, 0, .55); }
 .legend__sparks { position: absolute; inset: 0; pointer-events: none; }
-.legend__sparks i { position: absolute; bottom: -12px; background: #ffd37a; box-shadow: 0 0 10px #e4ae39; transform: skewX(-20deg); opacity: 0; }
-.legend__sweep { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 38%, rgba(255, 215, 130, .55) 50%, transparent 62%); transform: translateX(-120%); }
+.legend__sparks i { position: absolute; bottom: -12px; background: var(--lg-hi); box-shadow: 0 0 10px var(--lg); transform: skewX(-20deg); opacity: 0; }
+.legend__sweep { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(105deg, transparent 38%, color-mix(in srgb, var(--lg-hi) 55%, transparent) 50%, transparent 62%); transform: translateX(-120%); }
 
-.legend__card { position: relative; width: min(860px, 100%); display: grid; gap: 14px; padding: 22px 26px 26px; background: var(--cut22, none), linear-gradient(135deg, rgba(228, 174, 57, .22), rgba(255, 255, 255, .03) 60%), #0f0f10; box-shadow: inset 0 0 0 2px #e4ae39, inset 0 -6px 0 #e4ae39, 0 0 90px rgba(228, 174, 57, .35); clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%); }
-.legend__card::after { content: ""; position: absolute; top: 0; right: 0; width: 26px; height: 26px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, #e4ae39 50% calc(50% + 2px), transparent calc(50% + 2px)); }
-.legend__ring { position: absolute; left: 70px; top: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; border: 3px solid #ffd37a; opacity: 0; pointer-events: none; }
-.legend__kicker { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; font: 800 .8rem/1 var(--f-read, sans-serif); letter-spacing: .22em; text-transform: uppercase; color: #ffd37a; }
+.legend__card { position: relative; width: min(820px, 100%); display: grid; gap: 12px; padding: 20px 24px 24px; background: var(--cut22, none), linear-gradient(135deg, color-mix(in srgb, var(--lg) 22%, transparent), rgba(255, 255, 255, .03) 60%), #0f0f10; box-shadow: inset 0 0 0 2px var(--lg), inset 0 -6px 0 var(--lg), 0 0 80px color-mix(in srgb, var(--lg) 35%, transparent); clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%); }
+.legend__card::after { content: ""; position: absolute; top: 0; right: 0; width: 26px; height: 26px; pointer-events: none; background: linear-gradient(to bottom left, transparent 50%, var(--lg) 50% calc(50% + 2px), transparent calc(50% + 2px)); }
+.legend__kicker { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0; font: 800 .78rem/1 var(--f-read, sans-serif); letter-spacing: .22em; text-transform: uppercase; color: var(--lg-hi); }
 .legend__kicker b { display: flex; align-items: center; gap: 10px; font-weight: 800; }
-.legend__kicker b::before { content: ""; width: 7px; height: 15px; background: #ffd37a; transform: skewX(-18deg); }
+.legend__kicker b::before { content: ""; width: 7px; height: 15px; background: var(--lg-hi); transform: skewX(-18deg); }
 .legend__kicker span { color: rgba(255, 255, 255, .6); letter-spacing: .12em; }
-.legend__body { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr); gap: 26px; align-items: center; }
-.legend__pic { display: block; width: 100%; aspect-ratio: 1; overflow: hidden; background: rgba(255, 255, 255, .06); box-shadow: 0 0 0 3px #e4ae39, 0 0 40px rgba(228, 174, 57, .5); clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%); }
+.legend__body { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr); gap: 24px; align-items: center; }
+.legend__pic { display: block; width: 100%; aspect-ratio: 1; overflow: hidden; background: rgba(255, 255, 255, .06); box-shadow: 0 0 0 3px var(--lg), 0 0 40px color-mix(in srgb, var(--lg) 50%, transparent); clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%); }
 .legend__pic img, .legend__pic svg { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 12%; }
-.legend__crest { display: grid; place-items: center; width: 100%; height: 100%; font: 800 5rem/1 var(--f-head, sans-serif); color: #e4ae39; }
-.legend__says { display: grid; gap: 10px; min-width: 0; }
-.legend__title { font: 800 clamp(3rem, 9vw, 6.4rem)/.92 var(--f-head, sans-serif); letter-spacing: .02em; text-transform: uppercase; color: #fff; text-shadow: 0 0 36px rgba(228, 174, 57, .6); }
-.legend__tag { font: 700 1.05rem/1.3 var(--f-read, sans-serif); letter-spacing: .06em; color: #ffd37a; text-transform: uppercase; }
-.legend__who { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; }
-.legend__who b { font: 800 1.9rem/1 var(--f-head, sans-serif); letter-spacing: .04em; text-transform: uppercase; color: #fff; }
-.legend__who i { font-style: normal; font: 600 .9rem/1 var(--f-read, sans-serif); color: rgba(255, 255, 255, .65); }
+.legend__crest { display: grid; place-items: center; width: 100%; height: 100%; font: 800 5rem/1 var(--f-head, sans-serif); color: var(--lg); }
+.legend__says { display: grid; gap: 8px; min-width: 0; }
+.legend__title { font: 800 clamp(2.8rem, 8vw, 5.6rem)/.92 var(--f-head, sans-serif); letter-spacing: .02em; text-transform: uppercase; color: #fff; text-shadow: 0 0 34px color-mix(in srgb, var(--lg) 65%, transparent); }
+.legend__tag { font: 700 1rem/1.3 var(--f-read, sans-serif); letter-spacing: .06em; color: var(--lg-hi); text-transform: uppercase; }
+.legend__who { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; }
+.legend__who b { font: 800 1.8rem/1 var(--f-head, sans-serif); letter-spacing: .04em; text-transform: uppercase; color: #fff; }
+.legend__who i { font-style: normal; font: 600 .88rem/1 var(--f-read, sans-serif); color: rgba(255, 255, 255, .65); }
 .legend__bar { display: block; height: 4px; background: rgba(255, 255, 255, .12); overflow: hidden; }
-.legend__bar i { display: block; height: 100%; width: 100%; background: #e4ae39; transform-origin: 0 50%; transform: scaleX(1); }
-.legend__skip { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); padding: 10px 26px; border: 0; background: rgba(255, 255, 255, .1); color: #fff; font: 800 .74rem/1 var(--f-read, sans-serif); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
+.legend__bar i { display: block; height: 100%; width: 100%; background: var(--lg); transform-origin: 0 50%; }
+.legend__skip { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); padding: 10px 26px; border: 0; background: rgba(255, 255, 255, .1); color: #fff; font: 800 .74rem/1 var(--f-read, sans-serif); letter-spacing: .16em; text-transform: uppercase; cursor: pointer; clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%); }
 .legend__skip:hover, .legend__skip:focus-visible { background: rgba(255, 255, 255, .22); outline: 0; }
-.legend--ace, .legend--clutch5, .legend--flawless, .legend--miracle { --legend: 1; }
+.legend__crest, .legend--ace .legend__tag { --x: 1; }
+
+/* ---- the scenes ---- */
+.lg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.lg-flash { position: absolute; inset: 0; background: rgba(255, 244, 214, .6); opacity: 0; }
+/* ace: five shots, five holes, a counter */
+.lg-hole { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; opacity: 0; background: radial-gradient(circle, #000 0 15%, rgba(0, 0, 0, .8) 16% 24%, transparent 25%), conic-gradient(from 10deg, transparent 0 8%, rgba(255, 255, 255, .7) 9% 10%, transparent 11% 27%, rgba(255, 255, 255, .6) 28% 29%, transparent 30% 52%, rgba(255, 255, 255, .7) 53% 54%, transparent 55% 77%, rgba(255, 255, 255, .6) 78% 79%, transparent 80%); box-shadow: 0 0 0 2px rgba(255, 255, 255, .35) inset, 0 0 24px rgba(255, 214, 120, .6); }
+.lg-count { position: absolute; left: 7%; top: 38%; width: 1em; height: 1em; transform: translateY(-50%); font: 800 clamp(8rem, 26vw, 17rem)/1 var(--f-head, sans-serif); color: color-mix(in srgb, var(--lg) 70%, transparent); }
+.lg-count span { position: absolute; inset: 0; opacity: 0; }
+.lg-count span:last-child { opacity: 0; }
+.lg-cross { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; opacity: 0; background: linear-gradient(var(--lg-hi), var(--lg-hi)) 50% 0 / 2px 36% no-repeat, linear-gradient(var(--lg-hi), var(--lg-hi)) 50% 100% / 2px 36% no-repeat, linear-gradient(var(--lg-hi), var(--lg-hi)) 0 50% / 36% 2px no-repeat, linear-gradient(var(--lg-hi), var(--lg-hi)) 100% 50% / 36% 2px no-repeat; }
+/* 1v5: the room closes in, five marks fall one by one */
+.lg-vignette { position: absolute; inset: -20%; background: radial-gradient(circle at 50% 50%, transparent 0 28%, rgba(0, 0, 0, .92) 62%); }
+.lg-pips { position: absolute; left: 0; right: 0; top: 36%; display: flex; align-items: center; justify-content: center; gap: 8vw; transform: translateY(-50%); }
+.lg-one { width: 26px; height: 78px; background: var(--lg-hi); transform: skewX(-18deg); box-shadow: 0 0 24px var(--lg); }
+.lg-pips span { display: flex; gap: 20px; }
+.lg-pips em { position: relative; width: 22px; height: 70px; background: #e2563e; transform: skewX(-18deg); box-shadow: 0 0 18px rgba(226, 86, 62, .7); }
+.lg-pips em::before, .lg-pips em::after { content: ""; position: absolute; left: -10px; right: -10px; top: 50%; height: 3px; background: #fff; opacity: 0; transform: rotate(45deg); }
+.lg-pips em::after { transform: rotate(-45deg); }
+/* ninja: a bomb timer that runs out, then DEFUSED */
+.lg-bomb { position: absolute; left: 50%; top: 36%; width: min(520px, 86vw); transform: translate(-50%, -50%); display: grid; justify-items: center; gap: 8px; padding: 22px 26px; background: #14090a; box-shadow: inset 0 0 0 3px #7a1d1d, 0 0 60px rgba(255, 60, 60, .35); }
+.lg-bomb small { font: 800 .8rem/1 var(--f-read, sans-serif); letter-spacing: .3em; text-transform: uppercase; color: #ff6b6b; }
+.lg-bomb b { font: 800 clamp(4.5rem, 16vw, 8.5rem)/1 'Courier New', monospace; letter-spacing: .04em; color: #ff3b3b; text-shadow: 0 0 26px rgba(255, 59, 59, .7); }
+.lg-wires { display: flex; gap: 10px; width: 100%; }
+.lg-wires u { flex: 1; height: 6px; background: #e4ae39; }
+.lg-wires u:nth-child(2) { background: #4ade80; } .lg-wires u:nth-child(3) { background: #6ea8ff; }
+.lg-stamp { position: absolute; right: -14px; bottom: -18px; padding: 8px 20px; background: #4ade80; color: #04180a; font: 800 1.7rem/1 var(--f-head, sans-serif); letter-spacing: .12em; text-transform: uppercase; font-style: normal; transform: rotate(-7deg) scale(1.6); opacity: 0; }
+/* no-scope: a scope that is ignored, a shot across the screen, two hits */
+.lg-ring { position: absolute; left: 50%; top: 40%; width: min(70vmin, 600px); aspect-ratio: 1; margin: calc(min(70vmin, 600px) / -2) 0 0 calc(min(70vmin, 600px) / -2); border-radius: 50%; border: 3px solid rgba(255, 255, 255, .8); box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .86); background: linear-gradient(#fff, #fff) 50% 0 / 2px 100% no-repeat, linear-gradient(#fff, #fff) 0 50% / 100% 2px no-repeat; opacity: 0; }
+.lg-trail { position: absolute; left: -10%; top: 46%; width: 120%; height: 4px; background: linear-gradient(90deg, transparent, #fff 40%, #fff 60%, transparent); box-shadow: 0 0 22px #fff; transform: scaleX(0); transform-origin: 0 50%; opacity: 0; }
+.lg-hit { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; border: 4px solid #fff; opacity: 0; }
+.lg-hit--a { left: 38%; top: 46%; } .lg-hit--b { left: 62%; top: 46%; }
+/* knife: three slashes */
+.lg-slash { position: absolute; left: -10%; width: 120%; height: 8px; background: linear-gradient(90deg, transparent, #fff 20%, #ff4d4d 70%, transparent); box-shadow: 0 0 26px #ff4d4d; transform-origin: 0 50%; transform: rotate(-22deg) scaleX(0); opacity: 0; }
+.lg-slash--a { top: 30%; } .lg-slash--b { top: 52%; transform: rotate(18deg) scaleX(0); } .lg-slash--c { top: 70%; transform: rotate(-14deg) scaleX(0); }
+/* flawless: 13–0 */
+.lg-score { position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: .12em; font: 800 clamp(8rem, 28vw, 19rem)/1 var(--f-head, sans-serif); color: rgba(255, 255, 255, .18); white-space: nowrap; }
+.lg-score i { font-style: normal; }
+.lg-ticks { position: absolute; left: 50%; top: 56%; transform: translateX(-50%); display: flex; gap: 6px; }
+.lg-ticks u { width: 18px; height: 30px; background: #4ade80; transform: skewX(-18deg) scaleY(0); box-shadow: 0 0 14px rgba(74, 222, 128, .6); }
+.lg-shine { position: absolute; inset: 0; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .5) 50%, transparent 60%); transform: translateX(-120%); }
+/* miracle: a line that climbs out of the hole */
+.lg-miracle svg { position: absolute; left: 6%; right: 6%; top: 8%; width: 88%; height: 46%; overflow: visible; }
+.lg-zero { fill: none; stroke: rgba(255, 255, 255, .25); stroke-width: 1.5; stroke-dasharray: 4 5; vector-effect: non-scaling-stroke; }
+.lg-line { fill: none; stroke: var(--lg-hi); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 10px var(--lg)); stroke-dasharray: 600; stroke-dashoffset: 600; }
+.lg-lead { position: absolute; right: 8%; top: 6%; font: 800 clamp(4rem, 12vw, 8rem)/1 var(--f-head, sans-serif); color: var(--lg-hi); text-shadow: 0 0 28px var(--lg); }
+/* marathon: a dial that keeps going */
+.lg-dial { position: absolute; left: 50%; top: 36%; width: min(46vmin, 380px); aspect-ratio: 1; margin: calc(min(46vmin, 380px) / -2) 0 0 calc(min(46vmin, 380px) / -2); border-radius: 50%; background: conic-gradient(var(--lg) 0 25%, transparent 25% 50%, var(--lg) 50% 75%, transparent 75%); -webkit-mask: radial-gradient(circle, transparent 0 62%, #000 63% 66%, transparent 67%); mask: radial-gradient(circle, transparent 0 62%, #000 63% 66%, transparent 67%); opacity: .8; }
+.lg-rounds { position: absolute; left: 50%; top: 34%; transform: translate(-50%, -50%); font: 800 clamp(5rem, 18vw, 11rem)/1 var(--f-head, sans-serif); color: rgba(255, 255, 255, .22); }
+.lg-ots { position: absolute; left: 50%; top: 56%; transform: translateX(-50%); display: flex; gap: 14px; }
+.lg-ots i { padding: 6px 16px; border: 2px solid var(--lg); color: var(--lg-hi); font: 800 1.2rem/1 var(--f-head, sans-serif); letter-spacing: .12em; font-style: normal; opacity: 0; }
 
 @media (prefers-reduced-motion: no-preference) {
-  .legend:not(.is-still) { animation: legend-in .35s ease-out both; }
-  .legend:not(.is-still) .legend__card { animation: legend-card .7s cubic-bezier(.2, 1.2, .3, 1) both; }
-  .legend:not(.is-still) .legend__title { animation: legend-title .8s .15s cubic-bezier(.2, .9, .3, 1) both; }
-  .legend:not(.is-still) .legend__pic { animation: legend-pic .7s .1s cubic-bezier(.2, 1.3, .3, 1) both; }
-  .legend:not(.is-still) .legend__tag, .legend:not(.is-still) .legend__who { animation: legend-rise .6s .45s ease-out both; }
-  .legend:not(.is-still) .legend__sweep { animation: legend-sweep 1.1s .2s ease-out both; }
-  .legend:not(.is-still) .legend__ring { animation: legend-ring 1.2s .25s ease-out both; }
+  .legend:not(.is-still) { animation: legend-in .2s ease-out both; }
+  .legend:not(.is-still) .legend__card { animation: legend-card .45s var(--at) cubic-bezier(.2, 1.2, .3, 1) both; }
+  .legend:not(.is-still) .legend__title { animation: legend-title .5s var(--at) cubic-bezier(.2, .9, .3, 1) both; }
+  .legend:not(.is-still) .legend__pic { animation: legend-pic .45s var(--at) cubic-bezier(.2, 1.3, .3, 1) both; }
+  .legend:not(.is-still) .legend__tag, .legend:not(.is-still) .legend__who { animation: legend-rise .4s calc(var(--at) + .2s) ease-out both; }
+  .legend:not(.is-still) .legend__sweep { animation: legend-sweep .8s var(--at) ease-out both; }
   .legend:not(.is-still) .legend__sparks i { animation-name: legend-spark; animation-timing-function: ease-out; animation-iteration-count: infinite; }
   .legend:not(.is-still) .legend__bar i { animation-name: legend-bar; animation-timing-function: linear; animation-fill-mode: both; }
+  /* hide the card until its scene has played */
+  .legend:not(.is-still) .legend__kicker, .legend:not(.is-still) .legend__bar { animation: legend-rise .3s var(--at) ease-out both; }
+  /* ace */
+  .lg-ace .lg-flash { animation: lg-flash .14s ease-out both; }
+  .lg-ace .lg-hole { animation: lg-hole .12s ease-out both; }
+  .lg-ace .lg-count span { animation: lg-num .17s ease-out both; }
+  .lg-ace .lg-count span:last-child { animation: lg-num-last .5s ease-out both; animation-delay: .68s !important; }
+  .lg-ace .lg-cross { animation: lg-cross .6s ease-out both; }
+  .legend--ace .legend__wash { animation: lg-shake .8s linear both; }
+  /* clutch */
+  .lg-clutch .lg-vignette { animation: lg-close 1.1s ease-in both; }
+  .lg-clutch .lg-one { animation: lg-beat .42s ease-in-out 3 both; }
+  .lg-clutch .lg-pips em { animation: lg-fall .17s ease-out both; }
+  .lg-clutch .lg-pips em::before, .lg-clutch .lg-pips em::after { animation: lg-x .17s ease-out both; animation-delay: inherit; }
+  .lg-clutch .lg-flash { animation: lg-flash .12s ease-out both; background: rgba(255, 150, 120, .55); }
+  /* ninja */
+  .lg-ninja .lg-bomb { animation: lg-bomb 1.2s ease-out both; }
+  .lg-ninja .lg-stamp { animation: lg-stamp .3s 1.0s cubic-bezier(.2, 1.5, .3, 1) both; }
+  .lg-ninja .lg-wires u:nth-child(1) { animation: lg-cut .2s .85s ease-out both; }
+  /* no-scope */
+  .lg-scope .lg-ring { animation: lg-scope 1s ease-out both; }
+  .lg-scope .lg-trail { animation: lg-trail .35s .45s ease-out both; }
+  .lg-scope .lg-hit { animation: lg-hit .5s .62s ease-out both; }
+  .lg-scope .lg-flash { animation: lg-flash .14s ease-out both; }
+  /* knife */
+  .lg-knife .lg-slash--a { animation: lg-slash-a .22s .0s ease-out both; }
+  .lg-knife .lg-slash--b { animation: lg-slash-b .22s .12s ease-out both; }
+  .lg-knife .lg-slash--c { animation: lg-slash-c .22s .24s ease-out both; }
+  .lg-knife .lg-flash { animation: lg-flash .14s ease-out both; background: rgba(255, 90, 90, .5); }
+  .legend--knife .legend__card { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%); }
+  /* flawless */
+  .lg-flawless .lg-ticks u { animation: lg-tick .12s ease-out both; }
+  .lg-flawless .lg-shine { animation: legend-sweep .9s .7s ease-out both; }
+  .lg-flawless .lg-score { animation: lg-slam .35s ease-out both; }
+  /* miracle */
+  .lg-miracle .lg-line { animation: lg-draw 1.1s .1s ease-out forwards; }
+  .lg-miracle .lg-lead { animation: legend-rise .5s .5s ease-out both; }
+  /* marathon */
+  .lg-marathon .lg-dial { animation: lg-spin 1.2s linear both; }
+  .lg-marathon .lg-ots i { animation: lg-ot .3s ease-out both; }
+  .lg-marathon .lg-rounds { animation: legend-in .3s ease-out both; }
 }
 @keyframes legend-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes legend-card { from { transform: scale(.82) translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes legend-card { from { transform: scale(.8) translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes legend-title { from { letter-spacing: .3em; opacity: 0; filter: blur(8px); } to { letter-spacing: .02em; opacity: 1; filter: none; } }
 @keyframes legend-pic { from { transform: translateX(-40px) scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
-@keyframes legend-rise { from { transform: translateY(14px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes legend-rise { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes legend-sweep { to { transform: translateX(120%); } }
-@keyframes legend-ring { 0% { transform: scale(.3); opacity: .9; } 100% { transform: scale(7); opacity: 0; } }
 @keyframes legend-spark { 0% { transform: translateY(0) skewX(-20deg); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-110vh) skewX(-20deg); opacity: 0; } }
 @keyframes legend-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@keyframes lg-flash { 0% { opacity: .9; } 100% { opacity: 0; } }
+@keyframes lg-hole { from { transform: scale(2.2); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes lg-num { 0% { opacity: 0; transform: scale(1.4); } 25% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes lg-num-last { 0% { opacity: 0; transform: scale(1.5); } 30%, 100% { opacity: 1; transform: none; } }
+@keyframes lg-cross { 0% { opacity: 0; transform: scale(2); } 30% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(.7); } }
+@keyframes lg-shake { 0%, 100% { transform: none; } 12% { transform: translate(-7px, 4px); } 30% { transform: translate(6px, -5px); } 48% { transform: translate(-5px, 6px); } 66% { transform: translate(7px, -3px); } 84% { transform: translate(-3px, 3px); } }
+@keyframes lg-close { from { transform: scale(1.7); } to { transform: scale(.78); } }
+@keyframes lg-beat { 0%, 100% { transform: skewX(-18deg) scale(1); } 50% { transform: skewX(-18deg) scale(1.35); } }
+@keyframes lg-fall { to { opacity: .25; transform: skewX(-18deg) translateY(6px); } }
+@keyframes lg-x { to { opacity: 1; } }
+@keyframes lg-bomb { 0% { transform: translate(-50%, -50%) scale(.8); opacity: 0; } 15% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 85% { transform: translate(-50%, -50%) scale(1.04); } 100% { transform: translate(-50%, -50%) scale(1.04); opacity: 1; } }
+@keyframes lg-stamp { from { opacity: 0; transform: rotate(-7deg) scale(1.9); } to { opacity: 1; transform: rotate(-7deg) scale(1); } }
+@keyframes lg-cut { to { transform: translateY(8px) rotate(5deg); opacity: .3; } }
+@keyframes lg-scope { 0% { opacity: 0; transform: scale(.55); } 25% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: scale(1.08); } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes lg-trail { 0% { opacity: 1; transform: scaleX(0); } 70% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
+@keyframes lg-hit { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes lg-slash-a { 0% { opacity: 1; transform: rotate(-22deg) scaleX(0); } 100% { opacity: .0; transform: rotate(-22deg) scaleX(1); } }
+@keyframes lg-slash-b { 0% { opacity: 1; transform: rotate(18deg) scaleX(0); } 100% { opacity: 0; transform: rotate(18deg) scaleX(1); } }
+@keyframes lg-slash-c { 0% { opacity: 1; transform: rotate(-14deg) scaleX(0); } 100% { opacity: 0; transform: rotate(-14deg) scaleX(1); } }
+@keyframes lg-tick { to { transform: skewX(-18deg) scaleY(1); } }
+@keyframes lg-slam { from { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
+@keyframes lg-draw { to { stroke-dashoffset: 0; } }
+@keyframes lg-spin { from { transform: rotate(0); } to { transform: rotate(540deg); } }
+@keyframes lg-ot { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 @media (max-width: 640px) {
-  .legend__card { padding: 16px 16px 20px; gap: 10px; }
-  .legend__body { grid-template-columns: 96px minmax(0, 1fr); gap: 14px; }
-  .legend__title { font-size: clamp(2.2rem, 12vw, 3.4rem); }
-  .legend__who b { font-size: 1.4rem; }
-  .legend__tag { font-size: .84rem; }
-  .legend__sparks i:nth-child(n + 10) { display: none; }
-  .legend__skip { bottom: 10px; }
+  .legend__card { padding: 14px 14px 18px; gap: 8px; }
+  .legend__body { grid-template-columns: 92px minmax(0, 1fr); gap: 12px; }
+  .legend__title { font-size: clamp(2.1rem, 11vw, 3.2rem); }
+  .legend__who b { font-size: 1.35rem; }
+  .legend__tag { font-size: .8rem; }
+  .legend__sparks i:nth-child(n + 8) { display: none; }
+  .legend__skip { bottom: 8px; }
+  .lg-bomb { padding: 14px; }
 }
 
 /* a legendary round in the round log, the rounds strip and the key moments */

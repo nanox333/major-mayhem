@@ -2,7 +2,7 @@ import type { MapGame } from './match';
 import { sideAt } from './sides';
 
 /** What each legendary moment is called in lists (the on-screen card has its own, bigger wording). */
-export const LEGEND_NAME = { ace: 'Ace', clutch5: '1v5 clutch', flawless: 'Flawless victory', miracle: 'Miracle comeback' } as const;
+export const LEGEND_NAME = { ace: 'Ace', clutch5: '1v5 clutch', ninja: 'Ninja defuse', noscope: 'No-scope', knife: 'Knife kill', flawless: 'Flawless victory', miracle: 'Miracle comeback', marathon: 'Marathon' } as const;
 
 export interface Moment {
   kind: 'mvp' | 'legend' | 'pistol' | 'clutch' | 'run' | 'half' | 'comeback' | 'ot';

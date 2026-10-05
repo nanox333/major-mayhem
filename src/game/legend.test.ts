@@ -26,16 +26,21 @@ describe('legendary moments (#292, #295)', () => {
     }
   });
   it('give an ace or a 1v5 to one of your players, who takes five kills in the map', () => {
+    // (every rolled kind also names the player; only these two promise five kills)
     for (const { g, e } of found.filter((f) => f.e.legend === 'ace' || f.e.legend === 'clutch5')) {
       const who = g.stats.mine.find((p) => p.id === e.playerId);
       expect(who, e.text).toBeDefined();
       expect(who!.k).toBeGreaterThanOrEqual(5);
     }
   });
-  it('include both rolled kinds across a large sample, with aces more common than 1v5s', () => {
+  it('include every rolled kind across a large sample, with aces the most common', () => {
     const count = (k: G.LegendKind) => found.filter((f) => f.e.legend === k).length;
-    expect(count('ace')).toBeGreaterThan(count('clutch5'));
-    expect(count('ace') + count('clutch5')).toBeGreaterThan(0);
+    for (const k of G.ROLLED_LEGENDS) expect(count(k), k).toBeGreaterThan(0);
+    for (const k of G.ROLLED_LEGENDS) expect(count('ace')).toBeGreaterThanOrEqual(count(k));
+    expect(count('clutch5')).toBeGreaterThan(0);
+  });
+  it('give a no-scope only to an AWPer', () => {
+    for (const { g, e } of found.filter((f) => f.e.legend === 'noscope')) expect(g.stats.mine.some((p) => p.id === e.playerId), e.text).toBe(true);
   });
   it('do not exist before rules v6, so older runs and dailies play exactly as they did', () => {
     for (const g of maps(300, 5)) expect(legends(g)).toEqual([]);
@@ -58,11 +63,12 @@ describe('legendary moments in the record (#294)', () => {
   const run = (kinds: G.LegendKind[]) => ({ t: { matches: [{ maps: [{ events: kinds.map((legend, i) => ({ round: i + 1, text: 'x', mine: true, good: true, kind: 'legend', legend })) }] }] } }) as unknown as import('./state').Run;
   it('counts the moments in a run and earns the matching achievements', async () => {
     const { legendsOf, ACHIEVEMENTS } = await import('./achievements');
-    const earned = (legends: Partial<Record<G.LegendKind, number>>) => ACHIEVEMENTS.filter((a) => ['witness', 'ace', 'one-v-five', 'collector'].includes(a.id) && a.test(run([]), { streak: 0, dailyStreak: 0, legends })).map((a) => a.id);
+    const earned = (legends: Partial<Record<G.LegendKind, number>>) => ACHIEVEMENTS.filter((a) => ['witness', 'ace', 'one-v-five', 'ninja', 'noscope', 'collector'].includes(a.id) && a.test(run([]), { streak: 0, dailyStreak: 0, legends })).map((a) => a.id);
     expect(legendsOf(run(['ace', 'clutch5'])).length).toBe(2);
     expect(earned({ ace: 1 })).toEqual(['witness', 'ace']);
     expect(earned({})).toEqual([]);
-    expect(earned({ ace: 2, clutch5: 1, flawless: 1, miracle: 1 })).toEqual(['witness', 'ace', 'one-v-five', 'collector']);
+    expect(earned({ ace: 2, clutch5: 1, flawless: 1, miracle: 1 })).toEqual(['witness', 'ace', 'one-v-five']);
+    expect(earned(Object.fromEntries(G.LEGENDS.map((k) => [k, 1])))).toEqual(['witness', 'ace', 'one-v-five', 'ninja', 'noscope', 'collector']);
   });
   it('keeps the collection through a save and drops junk', async () => {
     const { sanitizeStats } = await import('./stats');
