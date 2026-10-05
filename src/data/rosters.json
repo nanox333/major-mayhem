@@ -218,6 +218,14 @@
   "Into the Breach": {
    "tag": "ITB",
    "color": "#8f9aa8"
+  },
+  "9z Team": {
+   "tag": "9Z",
+   "color": "#00b2ff"
+  },
+  "BetBoom Team": {
+   "tag": "BB",
+   "color": "#ff8a1a"
   }
  },
  "players": {
@@ -1268,6 +1276,50 @@
   "nertz": {
    "country": "IL",
    "name": "Guy Iluz"
+  },
+  "heavygod": {
+   "country": "IL",
+   "name": "Nikita Martynenko"
+  },
+  "matys": {
+   "country": "SK",
+   "name": "Matúš Šimko"
+  },
+  "sunpayus": {
+   "country": "ES",
+   "name": "Alvaro Garcia"
+  },
+  "dgt": {
+   "country": "UY",
+   "name": "Franco Manuel Garcia Cabrera"
+  },
+  "huasopeek": {
+   "country": "CL",
+   "name": "Matías Ibañez"
+  },
+  "luchov": {
+   "country": "AR",
+   "name": "Luciano Herrera"
+  },
+  "max": {
+   "country": "UY",
+   "name": "Maximiliano Gonzalez"
+  },
+  "meyern": {
+   "country": "AR",
+   "name": "Ignacio Meyer"
+  },
+  "fl4mus": {
+   "country": "RU",
+   "name": "Timur Marev"
+  },
+  "magnojez": {
+   "country": "RU",
+   "name": "Kirill Rodnov"
+  },
+  "zorte": {
+   "country": "RU",
+   "name": "Alexandr Zagodyrenko"
   }
  },
  "coaches": {
@@ -1456,6 +1508,12 @@
   },
   "Juve": {
    "rating": 70
+  },
+  "BIT": {
+   "rating": 74
+  },
+  "Fierce": {
+   "rating": 76
   }
  },
  "rosters": [
@@ -8847,6 +8905,208 @@
     }
    ],
    "source": "unverified",
+   "since": "2026-10-05"
+  },
+  {
+   "org": "Team Vitality",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Quarterfinalist",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "XTQZZZ",
+   "players": [
+    {
+     "nick": "apEX",
+     "roles": [
+      "IGL",
+      "ENTRY"
+     ],
+     "rating": 83
+    },
+    {
+     "nick": "flameZ",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 89
+    },
+    {
+     "nick": "mezii",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 86
+    },
+    {
+     "nick": "ropz",
+     "roles": [
+      "LURK"
+     ],
+     "rating": 92
+    },
+    {
+     "nick": "ZywOo",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 97
+    }
+   ],
+   "since": "2026-10-05"
+  },
+  {
+   "org": "G2 Esports",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Quarterfinalist",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "sAw",
+   "players": [
+    {
+     "nick": "HeavyGod",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "huNter-",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 87
+    },
+    {
+     "nick": "MATYS",
+     "roles": [
+      "ENTRY",
+      "LURK"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "NertZ",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "SunPayus",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 88
+    }
+   ],
+   "since": "2026-10-05"
+  },
+  {
+   "org": "9z Team",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Quarterfinalist",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "BIT",
+   "players": [
+    {
+     "nick": "dgt",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "HUASOPEEK",
+     "roles": [
+      "AWP"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "luchov",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 78
+    },
+    {
+     "nick": "max",
+     "roles": [
+      "ENTRY"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "meyern",
+     "roles": [
+      "LURK",
+      "SUP"
+     ],
+     "rating": 77
+    }
+   ],
+   "since": "2026-10-05"
+  },
+  {
+   "org": "BetBoom Team",
+   "year": 2026,
+   "event": "IEM Cologne Major 2026",
+   "dates": "Jun 2–21, 2026",
+   "result": "Quarterfinalist",
+   "wiki": "IEM_Cologne_Major_2026",
+   "coach": "Fierce",
+   "players": [
+    {
+     "nick": "Boombl4",
+     "roles": [
+      "IGL",
+      "SUP"
+     ],
+     "rating": 79
+    },
+    {
+     "nick": "FL4MUS",
+     "roles": [
+      "LURK",
+      "ENTRY"
+     ],
+     "rating": 82
+    },
+    {
+     "nick": "Magnojez",
+     "roles": [
+      "AWP",
+      "ENTRY"
+     ],
+     "rating": 80
+    },
+    {
+     "nick": "S1ren",
+     "roles": [
+      "ENTRY",
+      "SUP"
+     ],
+     "rating": 81
+    },
+    {
+     "nick": "zorte",
+     "roles": [
+      "SUP",
+      "LURK"
+     ],
+     "rating": 80
+    }
+   ],
    "since": "2026-10-05"
   }
  ]

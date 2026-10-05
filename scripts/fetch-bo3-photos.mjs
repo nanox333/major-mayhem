@@ -24,7 +24,7 @@ const slug = (n) => n.toLowerCase().replace(/[^a-z0-9_]+/g, '-').replace(/^-|-$/
 const PLAYER_SLUG = { saffee: 'saffe', frozen: 'frozen-david-cernansky', xertioN: 'xertionic', 910: 'player-910', kNg: 'kngv' };
 const TEAM_SLUG = { 'Luminosity Gaming': 'luminosity-cs-go', AVANGAR: 'avangar-cs-go', 'Team LDLC.com': 'ldlc-cs-go', 'Copenhagen Flames': 'cph-flames', 'Team Dignitas': 'dignitas', 'LGB eSports': 'lgb-cs-go', 'SK Gaming': 'sk', 'NRG Esports': 'nrg' };
 // team page titles use short names ("SK", "NRG")
-const TEAM_TITLE = { 'Team Dignitas': 'Dignitas', 'SK Gaming': 'SK', 'NRG Esports': 'NRG', 'Luminosity Gaming': 'Luminosity', 'Team LDLC.com': 'LDLC', 'LGB eSports': 'LGB' };
+const TEAM_TITLE = { '9z Team': '9z', 'Team Dignitas': 'Dignitas', 'SK Gaming': 'SK', 'NRG Esports': 'NRG', 'Luminosity Gaming': 'Luminosity', 'Team LDLC.com': 'LDLC', 'LGB eSports': 'LGB' };
 const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
 fs.mkdirSync('shots', { recursive: true });

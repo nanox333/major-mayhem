@@ -29,11 +29,13 @@ const star = (cx: number, cy: number, r: number, fill: string) => {
 };
 
 const SHAPES: Record<string, () => React.ReactNode> = {
+  AR: () => <>{stripesH('#74acdf', '#fff', '#74acdf')}<circle cx="15" cy="10" r="2.4" fill="#f6b40e" /></>,
   AU: () => <><rect width="30" height="20" fill="#00247d" /><UnionJack w={15} h={10} />{star(7.5, 15.5, 2.4, '#fff')}{star(22, 4, 1.3, '#fff')}{star(25.5, 9, 1.3, '#fff')}{star(21.5, 14, 1.3, '#fff')}{star(18, 8.5, 1.3, '#fff')}</>,
   BA: () => <><rect width="30" height="20" fill="#002395" /><path d="M8 0h14v20z" fill="#fecb00" />{[2.6, 6, 9.4, 12.8, 16.2].map((y, i) => <circle key={i} cx={9.6 + i * 2.6} cy={y} r="0.9" fill="#fff" />)}</>,
   BE: () => stripesV('#000', '#fdda24', '#ef3340'),
   BG: () => stripesH('#fff', '#00966e', '#d62612'),
   BR: () => <><rect width="30" height="20" fill="#009c3b" /><path d="M15 2.5L27 10 15 17.5 3 10z" fill="#ffdf00" /><circle cx="15" cy="10" r="4.2" fill="#002776" /><path d="M11 9.4c2.6-.6 5.6 0 8 1.8" stroke="#fff" strokeWidth=".9" fill="none" /></>,
+  CL: () => <><rect width="30" height="20" fill="#fff" /><rect y="10" width="30" height="10" fill="#d52b1e" /><rect width="10" height="10" fill="#0039a6" />{star(5, 5, 3, '#fff')}</>,
   CA: () => <><rect width="30" height="20" fill="#fff" /><rect width="7.5" height="20" fill="#d52b1e" /><rect x="22.5" width="7.5" height="20" fill="#d52b1e" /><path d="M15 4l1.3 3.2 2.2-1.1-.8 3.8 2.3-.5-1.8 2.3 1.6.9-4.5 1.1v3.1h-.6v-3.1l-4.5-1.1 1.6-.9-1.8-2.3 2.3.5-.8-3.8 2.2 1.1z" fill="#d52b1e" /></>,
   CH: () => <><rect width="30" height="20" fill="#da291c" /><path d="M13 4h4v5h5v4h-5v5h-4v-5H8V9h5z" fill="#fff" /></>,
   CZ: () => <>{stripesH('#fff', '#d7141a')}<path d="M0 0L15 10 0 20z" fill="#11457e" /></>,
@@ -41,6 +43,7 @@ const SHAPES: Record<string, () => React.ReactNode> = {
   DK: () => <><rect width="30" height="20" fill="#c8102e" />{cross(9, 3.2, '#fff')}</>,
   EE: () => stripesH('#0072ce', '#000', '#fff'),
   FI: () => <><rect width="30" height="20" fill="#fff" />{cross(8, 4, '#003580')}</>,
+  ES: () => <><rect width="30" height="20" fill="#c60b1e" /><rect y="5" width="30" height="10" fill="#ffc400" /></>,
   FR: () => stripesV('#0055a4', '#fff', '#ef4135'),
   GB: () => <UnionJack />,
   GT: () => <>{stripesV('#4997d0', '#fff', '#4997d0')}<circle cx="15" cy="10" r="2.6" fill="none" stroke="#5a8f29" strokeWidth=".9" /></>,
@@ -64,6 +67,7 @@ const SHAPES: Record<string, () => React.ReactNode> = {
   SK: () => <>{stripesH('#fff', '#0b4ea2', '#ee1c25')}<path d="M6 4h6.400v6c0 2.200-3.200 3.800-3.200 3.800S6 12.200 6 10z" fill="#ee1c25" stroke="#fff" strokeWidth=".7" /><path d="M9.200 5.400v5M7.600 7h3.200M7.900 8.600h2.600" stroke="#fff" strokeWidth=".8" /></>,
   TR: () => <><rect width="30" height="20" fill="#e30a17" /><circle cx="11" cy="10" r="5" fill="#fff" /><circle cx="12.4" cy="10" r="4" fill="#e30a17" />{star(17.2, 10, 2, '#fff')}</>,
   UA: () => stripesH('#0057b7', '#ffd700'),
+  UY: () => <><rect width="30" height="20" fill="#fff" />{[1, 3, 5, 7].map((i) => <rect key={i} y={(20 / 9) * i} width="30" height={20 / 9} fill="#0038a8" />)}<rect width="11" height="11.1" fill="#fff" /><circle cx="5.5" cy="5.5" r="2.6" fill="#fcd116" /></>,
   US: () => (
     <>
       <rect width="30" height="20" fill="#fff" />
