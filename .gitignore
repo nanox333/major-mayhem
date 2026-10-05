@@ -5,4 +5,8 @@ shots/
 .DS_Store
 src/data/media.json
 src/data/radars.json
-public/
+public/*
+!public/legend/
+
+__pycache__/
+*.pyc

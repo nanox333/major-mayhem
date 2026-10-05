@@ -6,7 +6,7 @@ import { debugHooks } from '../../game/debugHooks';
 import { clockOffset, nowDate, setClockOffset } from '../../game/clock';
 import { Run, today } from '../../game/state';
 import { LEGEND_INFO, LegendOverlay } from '../Legend';
-import { HAS_3D, webglOk } from '../legend3d/Stage';
+import { CINEMATICS } from '../legend3d/Stage';
 import { Scrub } from './Scrub';
 import { debugForceLite, debugForceReducedMotion, setDebugForceLite, setDebugForceReducedMotion } from '../debugFlags';
 import { SCENARIOS, SCENARIO_GROUPS, Built, draftedRun, scenarioById } from './scenarios';
@@ -53,7 +53,7 @@ export function ScenariosTab({ jump, say, onRan }: { jump: (b: Built) => void; s
 
 const fakeEvent = (kind: LegendKind, who?: string): MatchEvent => ({
   round: 14, kind: 'legend', legend: kind, mine: true, good: true, playerId: who,
-  text: kind === 'ace' ? 'Somebody aces the round: five kills and nobody left to answer.' : kind === 'clutch5' ? 'Somebody clutches a 1v5. Five of them, one player.' : kind === 'flawless' ? 'Flawless victory: 13–0 and not one round dropped.' : 'Miracle comeback: 9 rounds down and still won the map.',
+  text: kind === 'ace' ? 'Somebody aces the round: five kills and nobody left to answer.' : kind === 'clutch5' ? 'Somebody clutches a 1v5. Five of them, one player.' : kind === 'flawless' ? 'Flawless victory: 13–0 and not one round dropped.' : LEGEND_INFO[kind].how,
 });
 
 export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }) {
@@ -84,9 +84,9 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
         {LEGENDS.map((k) => <button key={k} type="button" onClick={() => open(k)}>{LEGEND_INFO[k].title}</button>)}
       </div>
       <p className="dbg__hint">Plays the real card with a random lineup. Any key or a tap closes it.</p>
-      <h4>3D scenes: frame scrubber</h4>
+      <h4>Cinematics: frame scrubber</h4>
       <div className="dbg__grid">
-        {(Object.keys(HAS_3D) as LegendKind[]).map((k) => <button key={k} type="button" disabled={!webglOk()} onClick={() => setScrub(k)}>{LEGEND_INFO[k].title}</button>)}
+        {(Object.keys(CINEMATICS) as LegendKind[]).map((k) => <button key={k} type="button" onClick={() => setScrub(k)}>{LEGEND_INFO[k].title}</button>)}
       </div>
       <p className="dbg__hint">Drag to any moment, or use ◀ ▶ (or the arrow keys) to step one frame. Space plays and pauses, Esc closes.</p>
       <h4>Arm a real one</h4>

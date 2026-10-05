@@ -3,7 +3,7 @@ import type * as G from '../game/logic';
 import { Avatar, TeamBadge } from './art';
 import { play } from './sound';
 import { reduceMotion } from './util';
-import { Stage, can3D } from './legend3d/Stage';
+import { Stage, hasCinematic } from './legend3d/Stage';
 import hole from '../assets/legend/hole.webp';
 import blast from '../assets/legend/blast.webp';
 import flash2 from '../assets/legend/flash-2.webp';
@@ -13,7 +13,6 @@ import spark from '../assets/legend/spark.webp';
 import slash1 from '../assets/legend/slash-1.webp';
 import slash2 from '../assets/legend/slash-2.webp';
 import bomb from '../assets/legend/bomb.webp';
-import awp from '../assets/legend/awp.webp';
 import foe from '../assets/legend/foe.webp';
 
 // Art for the scenes. The bullet hole, the blast, the C4 bomb and the AWP were made with ChatGPT's image generation and cut out here (scripts/legend-assets/PROMPTS.md);
@@ -28,7 +27,7 @@ export const LEGEND_INFO: Record<G.LegendKind, Info> = {
   ace: { title: 'Ace', tag: 'Five kills. One player.', how: 'One of your players takes all five kills in a round.' },
   clutch5: { title: '1v5 clutch', tag: 'Five of them. One player.', how: 'The last player alive wins the round against five.' },
   ninja: { title: 'Ninja defuse', tag: 'A tenth of a second to spare.', how: 'A 1v3 won by defusing with the clock almost out.' },
-  noscope: { title: 'No-scope', tag: 'Never looked through the scope.', how: 'Your AWPer lands a no-scope collateral.' },
+  noscope: { title: 'No-scope', tag: 'Never looked through the scope.', how: 'Your AWPer lands a long-range no-scope.' },
   knife: { title: 'Knife kill', tag: 'Not a bullet left to spare.', how: 'The last player standing is knifed to win the round.' },
   flawless: { title: 'Flawless victory', tag: '13–0. Not one round dropped.', how: 'A map won 13–0 against a side that was not far weaker.' },
   miracle: { title: 'Miracle comeback', tag: 'Down by eight or more, and still won.', how: 'A map won after trailing by eight or more rounds.' },
@@ -38,8 +37,8 @@ export const LEGEND_TITLE = LEGEND_INFO;
 
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
 export const LEGEND_MS = 2000;
-/** The defuse takes its time: the count-down has to be read. Every other moment holds LEGEND_MS. */
-export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && can3D(kind) ? 4900 : LEGEND_MS);
+/** The defuse and rendered no-scope run longer; the other scenes hold for LEGEND_MS. */
+export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && hasCinematic(kind) ? 4900 : LEGEND_MS);
 /** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
 export const LEGEND_EXIT_MS = 440;
 
@@ -120,24 +119,7 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
           </div>
         </div>
       );
-    case 'noscope':
-      // An AWP fired without looking through the scope: a crossed-out scope sign, the rifle slides in, one shot goes across the screen and hits.
-      return (
-        <div className="lg lg-nos" aria-hidden="true">
-          <div className="lg-nos__gun">
-            <img className="lg-nos__awp" src={awp} alt="" />
-            <span className="lg-nos__sign" />
-            <img className="lg-muzzle lg-nos__flash" src={blast} alt="" />
-            <img className="lg-casing lg-nos__casing" src={casing} alt="" />
-            <span className="lg-nos__tracer" />
-            <div className="lg-shot lg-nos__impact" style={{ ['--d' as string]: '0.8s', ['--r' as string]: '14deg', ['--k' as string]: 1.15 }}>
-              <img className="lg-hole" src={hole} alt="" />
-              <img className="lg-muzzle" src={blast} alt="" />
-              <img className="lg-spark lg-spark--a" src={spark} alt="" /><img className="lg-spark lg-spark--b" src={spark} alt="" />
-            </div>
-          </div>
-        </div>
-      );
+    case 'noscope': return null; // Rendered video, or the static card if it cannot load.
     case 'knife':
       return (
         <div className="lg lg-knife" aria-hidden="true">
@@ -178,7 +160,7 @@ function scoreFor(kind: G.LegendKind) {
     case 'ace': return at('shot', [0, 170, 340, 510, 680]);
     case 'clutch5': return [...at('beat', [0, 420, 840]), ...at('shot', [250, 420, 590, 760, 930])];
     case 'ninja': return [...at('tick', Array.from({ length: 9 }, (_, i) => 250 + i * 190)), ...at('shot', [1950])];
-    case 'noscope': return can3D(kind) ? [...at('shot', [500]), ...at('tick', [2875, 3975])] : at('shot', [570, 820]);
+    case 'noscope': return [...at('shot', [500]), ...at('tick', [2875, 4438])];
     case 'knife': return at('shot', [60, 200, 340]);
     case 'flawless': return at('tick', Array.from({ length: 13 }, (_, i) => 100 + i * 45));
     case 'miracle': return at('tick', [100, 300, 500, 700, 900]);
@@ -198,6 +180,17 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   const still = reduceMotion();
   const sparks = useMemo(() => Array.from({ length: 16 }, (_, i) => ({ x: (i * 47) % 100, d: ((i * 13) % 9) / 14, s: 4 + (i % 4) * 2, t: 1.4 + ((i * 7) % 8) / 10 })), []);
   const [leaving, setLeaving] = useState(false);
+  const [mediaFailed, setMediaFailed] = useState(false);
+  const [ready, setReady] = useState(still || !hasCinematic(kind));
+  const mediaReady = useCallback(() => setReady(true), []);
+  const mediaError = useCallback(() => { setMediaFailed(true); setReady(true); }, []);
+  const playedCues = useRef(new Set<number>());
+  const mediaFrame = useCallback((t: number) => {
+    if (closing.current) return;
+    for (const [when, sound] of [[0.5, 'shot'], [2.875, 'tick'], [4.438, 'tick']] as const) {
+      if (t >= when && !playedCues.current.has(when)) { playedCues.current.add(when); play(sound); }
+    }
+  }, []);
   const closing = useRef(false);
   // however it ends (the time is up, a key, a tap) it plays the way out first, unless motion is reduced
   const close = useCallback(() => {
@@ -208,16 +201,20 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
     setTimeout(onDone, LEGEND_EXIT_MS);
   }, []);
   useEffect(() => {
-    const done = setTimeout(close, legendMs(kind));
     const key = (ev: KeyboardEvent) => { ev.preventDefault(); ev.stopPropagation(); close(); };
     window.addEventListener('keydown', key, true);
-    const stops = still ? [] : scoreFor(kind);
-    return () => { clearTimeout(done); window.removeEventListener('keydown', key, true); stops.forEach((st) => st()); };
+    return () => window.removeEventListener('keydown', key, true);
   }, []);
+  useEffect(() => {
+    if (!ready) return;
+    const done = setTimeout(close, mediaFailed ? LEGEND_MS : !still && hasCinematic(kind) ? 15000 : legendMs(kind));
+    const stops = still || mediaFailed || hasCinematic(kind) ? [] : scoreFor(kind);
+    return () => { clearTimeout(done); stops.forEach((stop) => stop()); };
+  }, [ready, mediaFailed]);
   return (
-    <div className={`legend legend--${kind} ${still ? 'is-still' : ''} ${leaving ? 'is-leaving' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={close}>
+    <div className={`legend legend--${kind} ${still || mediaFailed ? 'is-still' : ''} ${!ready && !leaving ? 'is-loading' : ''} ${leaving ? 'is-leaving' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={close}>
       <div className="legend__wash" aria-hidden="true" />
-      {!still && (can3D(kind) ? <Stage kind={kind} /> : <Scene e={e} still={still} />)}
+      {!still && !mediaFailed && (hasCinematic(kind) ? <Stage kind={kind} onReady={mediaReady} onError={mediaError} onFrame={mediaFrame} onEnded={close} /> : <Scene e={e} still={still} />)}
       <div className="legend__sparks" aria-hidden="true">{sparks.map((p, i) => <i key={i} style={{ left: `${p.x}%`, width: p.s, height: p.s, animationDelay: `${p.d + 0.5}s`, animationDuration: `${p.t}s` }} />)}</div>
       <div className="legend__sweep" aria-hidden="true" />
       <div className="legend__card">

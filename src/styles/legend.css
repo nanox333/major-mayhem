@@ -2,7 +2,7 @@
    Legendary moments (#292, #293): a short scene that is different for each kind, then a gold card. Presentation only; reduced motion
    gets the card alone. The whole thing holds for LEGEND_MS (Legend.tsx) and any key or tap ends it early.
    ===================================================================================================================== */
-.legend { --lg: #e4ae39; --lg-hi: #ffd37a; --at: .55s; position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center; padding: 16px 16px clamp(56px, 10vh, 96px); cursor: pointer; overflow: hidden; }
+.legend { --lg: #e4ae39; --lg-hi: #ffd37a; --at: .55s; position: fixed; inset: 0; z-index: 10000; display: grid; place-items: end center; padding: 16px 16px clamp(56px, 10vh, 96px); cursor: pointer; overflow: hidden; }
 .legend--clutch5 { --lg: #e2563e; --lg-hi: #ff9a7a; --at: .95s; }
 .legend--ninja { --lg: #4ade80; --lg-hi: #b6f5c8; --at: 2.25s; }
 .legend--noscope { --lg: #dfe7f2; --lg-hi: #ffffff; }
@@ -84,16 +84,6 @@
 .lg-bomb__say { position: absolute; left: 14%; bottom: -26%; font: 800 .9rem/1 var(--f-read, sans-serif); letter-spacing: .3em; text-transform: uppercase; color: #9cc4ff; }
 .lg-bomb__spare { position: absolute; right: 14%; bottom: -26%; font: 800 .9rem/1 var(--f-read, sans-serif); letter-spacing: .14em; text-transform: uppercase; color: #b6f5c8; opacity: 0; }
 .lg-stamp { position: absolute; left: 50%; top: 80%; padding: 8px 26px; background: #4ade80; color: #04180a; font: 800 2.2rem/1 var(--f-head, sans-serif); letter-spacing: .14em; text-transform: uppercase; font-style: normal; transform: translate(-50%, -50%) rotate(-7deg); opacity: 0; box-shadow: 0 0 40px rgba(74, 222, 128, .6); }
-/* no-scope: a crossed-out scope, an AWP, one shot across the screen */
-.lg-nos__sign { position: absolute; left: 30.5%; top: -12%; width: 25%; aspect-ratio: 1; border: 9px solid #ff4d4d; border-radius: 50%; box-shadow: 0 0 40px rgba(255, 77, 77, .65), inset 0 0 30px rgba(255, 77, 77, .3); opacity: 0; }
-.lg-nos__sign::after { content: ""; position: absolute; left: -4%; right: -4%; top: 50%; height: 9px; margin-top: -4.5px; background: #ff4d4d; transform: rotate(45deg); box-shadow: 0 0 24px rgba(255, 77, 77, .8); }
-.lg-nos__gun { position: absolute; left: 3%; top: 12%; width: min(74vw, 880px); opacity: 0; }
-.lg-nos__awp { display: block; width: 100%; height: auto; filter: drop-shadow(0 16px 20px rgba(0, 0, 0, .65)); }
-.lg-nos__flash { left: auto; right: -9%; top: 1%; width: 22%; opacity: 0; }
-.lg-nos__casing { left: 30%; top: 14%; width: 38px; opacity: 0; }
-.lg-nos__tracer { position: absolute; left: 100%; top: 40%; width: 16vw; height: 5px; margin-top: -2px; background: linear-gradient(90deg, #fff, rgba(255, 255, 255, .85) 70%, #fff); box-shadow: 0 0 24px #fff, 0 0 8px #fff; transform: scaleX(0); transform-origin: 0 50%; opacity: 0; }
-.lg-nos__impact { left: calc(100% + 16vw); top: 40%; }
-@media (max-width: 640px) { .lg-nos__gun { width: 64vw; left: 2%; } .lg-nos__tracer { width: 26vw; } .lg-nos__impact { left: calc(100% + 26vw); } .lg-nos__sign { border-width: 5px; } }
 /* knife: three slashes */
 /* flawless: 13–0 */
 .lg-score { position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: .12em; font: 800 clamp(8rem, 28vw, 19rem)/1 var(--f-head, sans-serif); color: rgba(255, 255, 255, .18); white-space: nowrap; }
@@ -141,7 +131,7 @@
   /* the way out */
   .legend.is-leaving:not(.is-still) { animation: legend-out .32s .12s ease-in forwards; }
   .legend.is-leaving:not(.is-still) .legend__card { animation: legend-card-out .36s ease-in forwards; }
-  .legend.is-leaving:not(.is-still) .lg { animation: lg-out .36s ease-in forwards; }
+  .legend.is-leaving:not(.is-still) .lg, .legend.is-leaving:not(.is-still) .lg3d { animation: lg-out .36s ease-in forwards; }
   .legend.is-leaving:not(.is-still) .legend__sparks { animation: legend-out .25s ease-in forwards; }
   .legend.is-leaving:not(.is-still) .legend__sweep { animation: legend-sweep .44s ease-in forwards; }
   /* clutch */
@@ -159,12 +149,6 @@
   .lg-ninja .lg-bomb__lcd { animation: lg-lcd-ok 0s 1.95s both; }
   .lg-ninja .lg-stamp { animation: lg-stamp .3s 1.95s cubic-bezier(.2, 1.5, .3, 1) both; }
   .lg-ninja .lg-bomb__spare { animation: legend-rise .3s 2.1s both; }
-  /* no-scope */
-  .lg-nos .lg-nos__sign { animation: lg-sign .26s .42s ease-out both; }
-  .lg-nos .lg-nos__gun { animation: lg-gun-in .32s .12s ease-out both, lg-kick .24s .55s ease-out both; }
-  .lg-nos .lg-nos__flash { animation: lg-muzzle .24s .55s ease-out both; }
-  .lg-nos .lg-nos__casing { animation: lg-casing .8s .57s cubic-bezier(.25, .6, .4, 1) both; }
-  .lg-nos .lg-nos__tracer { animation: lg-trace .26s .58s ease-out both; }
   /* knife */
   .legend--knife .legend__card { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%); }
   /* flawless */
@@ -275,8 +259,8 @@
 .legend-card__body em { font: 700 .68rem/1.3 var(--f-read, sans-serif); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: var(--muted, #999); }
 .legend-card--ace, .legend-card--clutch5, .legend-card--flawless, .legend-card--miracle { --legend-card: 1; }
 
-/* 3D scenes (src/ui/legend3d): the canvas fills the overlay behind the card */
-.lg3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* 3D scenes (src/ui/legend3d): the video fills the overlay behind the card */
+.lg3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: cover; }
 .legend--noscope { --at: 2.9s; }
 .dbg-scrub { position: fixed; inset: 0; z-index: 100000; background: #000; }
 .dbg-scrub .lg3d { position: absolute; inset: 0 0 56px 0; height: calc(100% - 56px); }
@@ -285,3 +269,10 @@
 .dbg-scrub__bar button { padding: 6px 10px; border: 1px solid #3a3f4b; border-radius: 6px; background: #1d212b; color: inherit; cursor: pointer; }
 .dbg-scrub__bar button[aria-pressed=true] { background: #3b5bdb; border-color: #3b5bdb; }
 .dbg-scrub__bar output { font-variant-numeric: tabular-nums; min-width: 140px; }
+
+.legend.is-loading *, .legend.is-loading *::before, .legend.is-loading *::after { animation-play-state: paused !important; }
+.dbg-scrub .lg3d { object-fit: contain; }
+@media (max-width: 640px) {
+  .dbg-scrub__bar { height: auto; min-height: 100px; flex-wrap: wrap; padding: 8px; gap: 6px; }
+  .dbg-scrub .lg3d { height: calc(100% - 116px); }
+}

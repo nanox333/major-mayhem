@@ -1642,3 +1642,7 @@ kbd { display: inline-block; min-width: 1.8em; padding: 1px 7px; border: 1px sol
   .menu__item--mode, .menu__item--game { display: flex; }
   .console__head--progress .progress { margin-left: 0; }
 }
+
+/* Game art is decorative: buttons, links and cards own pointer interaction.
+   Keeping media out of hit testing also prevents generic hover-to-zoom previews. */
+#root img, #root video, .legend img, .lg3d { pointer-events: none; -webkit-user-drag: none; }

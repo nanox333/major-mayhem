@@ -92,7 +92,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
         ace: `${nick} aces the round: five kills and nobody left to answer.`,
         clutch5: `${nick} clutches a 1v5. Five of them, one player.`,
         ninja: `${nick} ninja-defuses with a tenth of a second left: a 1v3.`,
-        noscope: `${nick} no-scopes the AWP for a collateral and the round is over.`,
+        noscope: `${nick} lands a long-range AWP no-scope to win the round.`,
         knife: `${nick} knifes the last player standing.`,
       }[legend as 'ace' | 'clutch5' | 'ninja' | 'noscope' | 'knife'];
       events.push({ round: rn, text, playerId: x.player.id, mine: true, good: true, kind: 'legend', legend });

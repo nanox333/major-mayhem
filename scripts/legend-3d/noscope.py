@@ -1,7 +1,8 @@
 """The no-scope, rendered in Blender. Four cuts: a player fires an AWP from the hip (both scope caps still on); the camera rides the bullet
 down a long alley; it reaches one head far away and the world all but stops; a wide shot from behind the rifle as the target falls.
-Usage: Blender -b -P noscope.py -- --out DIR [--frames 0-146] [--res 1280x720] [--samples 24] [--portrait]"""
+Usage: Blender -b -P noscope.py -- --out DIR [--frames 0-291] [--res 3840x2160] [--samples 128] [--fps 60] [--portrait]"""
 import sys, os, math, argparse
+sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import *
 import lib
@@ -12,10 +13,10 @@ FIRE, CUT_B, HIT, CUT_D = 0.4, 1.0, 2.3, 3.1
 CUT_C = HIT - 0.12
 FOE_Y = 46.0           # how far down the alley the target stands
 GUN_Z, HEAD_Z = 1.14, 1.65
-FPS = 30
+FPS = 60
 TOTAL = int(round(DURATION * SLOW * FPS))
 
-SAND, SAND_D, SAND_L, BLUE, CAP = 0xe6b673, 0xc98e52, 0xf2d29c, 0x2e6fb7, 0xd8322b
+SAND, SAND_D, SAND_L, BLUE, CAP = 0xd9b784, 0xb78c60, 0xe5cca3, 0x376b8d, 0xd8322b
 
 def P(x, up, z): return V(x, -z, up)   # port from the (x, up, towards-camera) layout the web version used
 
@@ -31,9 +32,9 @@ def build_world():
     nt = w.node_tree; nt.nodes.clear(); L = nt.links.new
     tc = nt.nodes.new('ShaderNodeTexCoord'); nz = nt.nodes.new('ShaderNodeVectorMath'); nz.operation = 'NORMALIZE'; L(tc.outputs['Generated'], nz.inputs[0])
     sep = nt.nodes.new('ShaderNodeSeparateXYZ'); L(nz.outputs[0], sep.inputs[0])
-    # banded sky: horizon cream up to blue
-    ramp = nt.nodes.new('ShaderNodeValToRGB'); ramp.color_ramp.interpolation = 'CONSTANT'
-    cols = [0xffd9a0, 0xf6d0a4, 0xe0c4b0, 0xc4b8c0, 0x9fb0d4, 0x7f9fe0, 0x5d8ee6, 0x3a76e8]
+    # Dusk gradient: warm horizon, cool overhead; clouds stay subdued.
+    ramp = nt.nodes.new('ShaderNodeValToRGB'); ramp.color_ramp.interpolation = 'EASE'
+    cols = [0xd2a37d, 0xb7907d, 0x897f85, 0x566779, 0x354f65, 0x243c53, 0x1c3048, 0x16253c]
     el = ramp.color_ramp.elements; el[0].position = 0; el[0].color = lin(cols[0]); el[1].position = 0.0
     el[1].color = lin(cols[0])
     for i, c in enumerate(cols[1:], 1): e = el.new(i / len(cols) * 0.62); e.color = lin(c)
@@ -45,19 +46,42 @@ def build_world():
     cr.color_ramp.elements[1].position = 0.60; cr.color_ramp.elements[1].color = (1, 1, 1, 1); L(nz3.outputs['Fac'], cr.inputs[0])
     band = nt.nodes.new('ShaderNodeMath'); band.operation = 'GREATER_THAN'; band.inputs[1].default_value = 0.12; L(sep.outputs['Z'], band.inputs[0])
     cm = nt.nodes.new('ShaderNodeMath'); cm.operation = 'MULTIPLY'; L(cr.outputs[0], cm.inputs[0]); L(band.outputs[0], cm.inputs[1])
-    mix = nt.nodes.new('ShaderNodeMix'); mix.data_type = 'RGBA'; L(cm.outputs[0], mix.inputs['Factor']); L(ramp.outputs[0], mix.inputs['A']); mix.inputs['B'].default_value = (1, 1, 1, 1)
+    mix = nt.nodes.new('ShaderNodeMix'); mix.data_type = 'RGBA'; L(cm.outputs[0], mix.inputs['Factor']); L(ramp.outputs[0], mix.inputs[6]); mix.inputs[7].default_value = lin(0x748496)
     # sun disc
     sd = nt.nodes.new('ShaderNodeVectorMath'); sd.operation = 'DOT_PRODUCT'; sd.inputs[1].default_value = Vector((-0.45, 0.8, 0.4)).normalized(); L(nz.outputs[0], sd.inputs[0])
     sg = nt.nodes.new('ShaderNodeMath'); sg.operation = 'GREATER_THAN'; sg.inputs[1].default_value = 0.992; L(sd.outputs['Value'], sg.inputs[0])
     sh = nt.nodes.new('ShaderNodeMath'); sh.operation = 'GREATER_THAN'; sh.inputs[1].default_value = 0.975; L(sd.outputs['Value'], sh.inputs[0])
-    mix2 = nt.nodes.new('ShaderNodeMix'); mix2.data_type = 'RGBA'; L(sh.outputs[0], mix2.inputs['Factor']); L(mix.outputs['Result'], mix2.inputs['A']); mix2.inputs['B'].default_value = lin(0xfff0c8)
-    mix3 = nt.nodes.new('ShaderNodeMix'); mix3.data_type = 'RGBA'; L(sg.outputs[0], mix3.inputs['Factor']); L(mix2.outputs['Result'], mix3.inputs['A']); mix3.inputs['B'].default_value = (1, 1, 1, 1)
-    bg = nt.nodes.new('ShaderNodeBackground'); bg.inputs['Strength'].default_value = 1.0; L(mix3.outputs['Result'], bg.inputs['Color'])
+    mix2 = nt.nodes.new('ShaderNodeMix'); mix2.data_type = 'RGBA'; L(sh.outputs[0], mix2.inputs['Factor']); L(mix.outputs[2], mix2.inputs[6]); mix2.inputs[7].default_value = lin(0xfff0c8)
+    mix3 = nt.nodes.new('ShaderNodeMix'); mix3.data_type = 'RGBA'; L(sg.outputs[0], mix3.inputs['Factor']); L(mix2.outputs[2], mix3.inputs[6]); mix3.inputs[7].default_value = (1, 1, 1, 1)
+    bg = nt.nodes.new('ShaderNodeBackground'); bg.inputs['Strength'].default_value = 0.6; L(mix3.outputs[2], bg.inputs['Color'])
     out = nt.nodes.new('ShaderNodeOutputWorld'); L(bg.outputs[0], out.inputs[0])
-    sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = 3.6; sun.angle = math.radians(2.5)
-    so = bpy.data.objects.new('sun', sun); link(so, ink=False); so.rotation_euler = (math.radians(52), math.radians(8), math.radians(-38))
+    sun = bpy.data.lights.new('sun', 'SUN'); sun.energy = 0.9; sun.color = hexrgb(0xffc88d); sun.angle = math.radians(5)
+    so = bpy.data.objects.new('sun', sun); link(so, ink=False); so.rotation_euler = (math.radians(72), math.radians(8), math.radians(-48))
+    def area(name, location, aim, energy, color, size):
+        light = bpy.data.lights.new(name, 'AREA'); light.energy = energy
+        light.color = hexrgb(color); light.shape = 'DISK'; light.size = size
+        obj = bpy.data.objects.new(name, light); obj.location = location
+        link(obj, ink=False); look_at(obj, V(*aim))
+    for y in (-1, FOE_Y):
+        area('warm key', (3.2, y - 2.5, 4.5), (0, y, 1.2), 260, 0xffbe82, 3.2)
+        area('cool rim', (-2.0, y + 2.8, 3.5), (0, y, 1.4), 600, 0x89c8ff, 2.0)
+    # Low-density atmospheric perspective hides distant block edges and gives light depth.
+    fog = bpy.data.materials.new('dust atmosphere'); fog.use_nodes = True
+    nodes = fog.node_tree.nodes; nodes.clear()
+    scatter = nodes.new('ShaderNodeVolumeScatter'); scatter.inputs['Color'].default_value = lin(0xbbcbd6)
+    scatter.inputs['Density'].default_value = 0.005; scatter.inputs['Anisotropy'].default_value = 0.3
+    output = nodes.new('ShaderNodeOutputMaterial'); fog.node_tree.links.new(scatter.outputs[0], output.inputs['Volume'])
+    box('atmosphere', (34, 130, 22), (0, 48, 8), fog, bevel=0)
+    bpy.context.scene.eevee.volumetric_samples = 32
+    bpy.context.scene.eevee.volumetric_tile_size = '16'
+
 
 def build_alley():
+    # A shaded background for the opening hero shot, beyond the shooter.
+    box('opening facade', (1.2, 22, 6.5), (-7, 1, 3.25), toon(SAND_D), bevel=0.08)
+    for y in (-5, 0, 5):
+        box('opening recess', (0.12, 1.3, 1.9), (-6.35, y, 3.0), toon(0x273844), bevel=0.04)
+        box('opening sill', (0.4, 1.5, 0.18), (-6.3, y, 2.0), toon(SAND_L), bevel=0.025)
     g = box('ground', (60, 260, 0.2), (0, 100, -0.1), toon(SAND), bevel=0)
     for x, w, c in ((-1.6, 1.1, SAND_D), (1.9, 0.8, SAND_D), (0, 0.5, SAND_L)):
         box('stripe', (w, 220, 0.02), (x, 100, 0.005), toon(c), bevel=0)
@@ -91,6 +115,9 @@ def build_alley():
     box('facade', (9, 3, 9), (0, 53, 4.5), toon(SAND_L), bevel=0.08)
     box('door', (3.3, 0.5, 4.1), (0, 51.4, 2.05), toon(BLUE), bevel=0.06)
     box('lintel', (4.2, 0.7, 0.5), (0, 51.2, 4.3), toon(SAND_D), bevel=0.05)
+    # Soft architectural edges; reserve the ink pass for the action silhouettes.
+    for obj in list(lib.INK_COLL.objects):
+        lib.INK_COLL.objects.unlink(obj); bpy.context.scene.collection.objects.link(obj)
 
 # ---------------------------------------------------------------- people
 def person(prefix, look):
@@ -102,22 +129,36 @@ def person(prefix, look):
     for x in (-0.14, 0.14):
         part('b', 'boot', (0.2, 0.34, 0.1), (x, 0.05, 0.05), dark); part('b', 'pad', (0.25, 0.3, 0.17), (x, 0.06, 0.5), vest)
     torso = bpy.data.objects.new(prefix + '_torso', None); torso.parent = root; link(torso, ink=False); torso.location = (0, 0, 0)
-    part('b', 'chest', (0.66, 0.36, 0.74), (0, 0, 1.17), cloth, torso, 0.03); part('b', 'plate', (0.58, 0.4, 0.56), (0, 0, 1.2), vest, torso, 0.03)
+    tapered(prefix + 'chest', (0.48, 0.32), (0.65, 0.36), 0.74, (0, 0, 1.17), toon(cloth), torso, 0.05)
+    tapered(prefix + 'plate', (0.46, 0.37), (0.56, 0.41), 0.54, (0, 0.015, 1.21), toon(vest), torso, 0.035)
+    for sx in (-1, 1):
+        part('b', 'strap', (0.085, 0.04, 0.52), (sx * 0.21, 0.23, 1.24), dark, torso, 0.01)
+        part('b', 'buckle', (0.07, 0.055, 0.05), (sx * 0.21, 0.24, 1.17), 0x8b8e82, torso, 0.008)
+    part('b', 'radio', (0.10, 0.08, 0.18), (0.27, 0.245, 1.32), dark, torso, 0.016)
+    cyl(prefix + 'antenna', 0.008, 0.008, 0.19, (0.27, 0.245, 1.5), toon(dark), torso, axis='Z')
     part('b', 'belt', (0.68, 0.38, 0.09), (0, 0, 0.84), dark, torso, 0.015)
     for px in (-0.17, 0, 0.17): part('b', 'pouch', (0.13, 0.09, 0.15), (px, 0.24, 1.0), dark, torso, 0.015)
     part('b', 'neck', (0.2, 0.2, 0.18), (0, 0, 1.55), scarf, torso)
     for sx in (-1, 1): part('b', 'shoulder', (0.2, 0.36, 0.15), (sx * 0.36, 0, 1.5), vest, torso, 0.03)
     head = bpy.data.objects.new(prefix + '_head', None); head.parent = torso; link(head, ink=False); head.location = (0, 0, HEAD_Z + 0.03)
-    sphere(prefix + 'skull', 0.22, (0, 0, 0), toon(skin), head)
+    sphere(prefix + 'skull', 0.22, (0, 0, 0), toon(skin), head, seg=48, scale=(0.88, 0.9, 1.1))
+    sphere(prefix + 'nose', 0.055, (0, 0.195, -0.005), toon(skin), head, seg=20, scale=(0.65, 0.8, 0.9))
+    part('b', 'balaclava', (0.31, 0.08, 0.12), (0, 0.16, -0.12), scarf, head, 0.025)
+    for sx in (-1, 1):
+        sphere(prefix + 'ear', 0.045, (sx * 0.19, 0, -0.015), toon(skin), head, seg=20, scale=(0.55, 0.85, 1))
     part('b', 'goggles', (0.3, 0.06, 0.1), (0, 0.19, 0.02), dark, head, 0.01)
     return dict(root=root, torso=torso, head=head)
 
 def helmet(prefix, col, stripe=0xf1ece0):
     h = bpy.data.objects.new(prefix + '_helmet', None); link(h, ink=False)
-    bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=24, v_segments=14, radius=0.27)
+    bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=48, v_segments=24, radius=0.25)
     bmesh.ops.bisect_plane(bm, geom=bm.verts[:] + bm.edges[:] + bm.faces[:], plane_co=(0, 0, -0.04), plane_no=(0, 0, 1), clear_inner=True)
     o = mesh_obj(prefix + 'dome', bm, toon(col), h); [setattr(p, 'use_smooth', True) for p in o.data.polygons]
-    box(prefix + 'brim', (0.5, 0.5, 0.05), (0, 0, -0.03), toon(0x2a2420), h, 0.01)
+    box(prefix + 'brim', (0.45, 0.47, 0.035), (0, 0, -0.03), toon(0x2a2420), h, 0.012)
+    for sx in (-1, 1):
+        box(prefix + 'rail', (0.025, 0.25, 0.05), (sx * 0.24, 0, 0.05), toon(0x20232a), h, 0.01)
+        box(prefix + 'earguard', (0.07, 0.13, 0.16), (sx * 0.21, 0, -0.075), toon(col), h, 0.025)
+    box(prefix + 'mount', (0.07, 0.04, 0.08), (0, 0.23, 0.055), toon(0x20232a), h, 0.01)
     return h
 
 def two_bone(S, T, l1, l2, pole):
@@ -128,8 +169,8 @@ def two_bone(S, T, l1, l2, pole):
 
 class Arm:
     def __init__(self, prefix, col, glove):
-        self.up = box(prefix + 'upper', (0.17, 0.17, 1.0), (0, 0, 0), toon(col), bevel=0.03)
-        self.lo = box(prefix + 'fore', (0.15, 0.15, 1.0), (0, 0, 0), toon(col), bevel=0.03)
+        self.up = tapered(prefix + 'upper', (0.21, 0.20), (0.14, 0.14), 1.0, (0, 0, 0), toon(col), bevel=0.035)
+        self.lo = tapered(prefix + 'fore', (0.17, 0.16), (0.12, 0.12), 1.0, (0, 0, 0), toon(col), bevel=0.028)
         self.hand = box(prefix + 'glove', (0.13, 0.15, 0.13), (0, 0, 0), toon(glove), bevel=0.02)
         self.elbow = sphere(prefix + 'elbow', 0.095, (0, 0, 0), toon(col))
     def set(self, S, T, pole, l1=0.42, l2=0.42):
@@ -155,6 +196,16 @@ def build_gun():
     cyl('capF', 0.058, 0.058, 0.03, (0, 0.35, 0), m(CAP), sc); cyl('capB', 0.05, 0.05, 0.03, (0, -0.33, 0), m(CAP), sc)
     box('mount1', (0.04, 0.06, 0.05), (0, 0.14, 0.09), m(ST), g, 0.01); box('mount2', (0.04, 0.06, 0.05), (0, -0.1, 0.09), m(ST), g, 0.01)
     bh = cyl('bolt', 0.01, 0.01, 0.13, (0.07, -0.12, 0.02), m(ST), g, axis='X'); sphere('knob', 0.024, (0.14, -0.12, 0.02), m(BK), g)
+    # Scope turrets, rail slots, trigger guard and receiver fasteners.
+    cyl('turretTop', 0.03, 0.03, 0.045, (0, 0.02, 0.205), m(BK), g, axis='Z', seg=32)
+    cyl('turretSide', 0.025, 0.025, 0.04, (0.06, 0.02, 0.15), m(BK), g, axis='X', seg=32)
+    for dy in (-0.17, -0.08, 0.0, 0.1, 0.2):
+        box('railSlot', (0.11, 0.018, 0.015), (0, dy, 0.065), m(BK), g, 0.003)
+    for side in (-1, 1):
+        for dy in (-0.12, 0.13):
+            cyl('receiverScrew', 0.009, 0.009, 0.008, (side * 0.055, dy, 0.008), m(ST), g, axis='X', seg=16)
+    box('triggerGuard', (0.055, 0.17, 0.02), (0, -0.20, -0.19), m(BK), g, 0.006)
+    box('trigger', (0.01, 0.025, 0.07), (0, -0.16, -0.13), m(ST), g, 0.003)
     bp = cyl('bipod', 0.008, 0.008, 0.5, (-0.03, 0.62, -0.05), m(BK), g)
     return g, sc
 
@@ -186,9 +237,9 @@ def make():
     S.bullet.scale = (1.7, 1.7, 1.7)
     S.streak = cyl('streak', 0.0, 0.05, 2.6, (0, -1.5, 0), flat(0xfff3d0, 0.8, 'streak'), S.bullet, seg=14)
     S.lines = []
-    for i in range(90):
+    for i in range(42):
         a = rnd(i) * math.tau; d = 2.3 + rnd(i + 40) * 3.4; ln = 5 + rnd(i + 80) * 12
-        o = box('wind', (0.03 + rnd(i + 5) * 0.035, ln, 0.01), (math.cos(a) * d, 2 + rnd(i + 120) * 50, HEAD_Z - 0.3 + math.sin(a) * d * 0.55), flat(0xfffaee, 0.9, f'wind{i}'), None, 0)
+        o = box('wind', (0.012 + rnd(i + 5) * 0.014, ln, 0.01), (math.cos(a) * d, 2 + rnd(i + 120) * 50, HEAD_Z - 0.3 + math.sin(a) * d * 0.55), flat(0xfffaee, 0.9, f'wind{i}'), None, 0)
         S.lines.append(o)
     # flashes and effects: each is a star on a black backing
     def badge(name, pts, outer, inner, col, edge=0.07):
@@ -212,6 +263,7 @@ def make():
     S.veil = box('veil', (14, 0.01, 14), (0, 0, 0), flat(0xffffff, 1, 'veil'), None, 0)
     cam = bpy.data.objects.new('cam', bpy.data.cameras.new('cam')); link(cam, ink=False); bpy.context.scene.camera = cam; S.cam = cam
     cam.data.clip_start = 0.1; cam.data.clip_end = 300
+    cam.data.dof.use_dof = True; cam.data.dof.aperture_blades = 7
     S.veil.parent = cam
     return S
 
@@ -226,25 +278,25 @@ def update(S, t_real, portrait=False):
     w = world_clock(t); dt = max(0.0, w - HIT); s = max(0.0, t - HIT)
     inA, inB, inC = t < CUT_B, CUT_B <= t < CUT_C, CUT_C <= t < CUT_D
     fd = max(0.0, t - FIRE); sl = fd * 0.55
-    kick = math.exp(-sl * 7) * math.sin(min(1, sl * 9) * 1.57) if fd > 0 else 0.0
+    kick = smooth(fd, 0, 0.035) * math.exp(-fd * 6.5) if fd > 0 else 0.0
     settle = smooth(t, 0, FIRE) if t < FIRE else 1.0
     cam = S.cam
     # rifle and shooter
     S.gun.location = V(0, kick * -0.2, GUN_Z + (1 - settle) * -0.05 + math.sin(t * 3.2) * 0.004)
     S.gun.rotation_euler = (kick * 0.18, 0, 0)
-    S.me['root'].location = V(-0.3, -1.0 - kick * 0.1, 0); S.me['root'].rotation_euler.x = -kick * 0.05
+    S.me['root'].location = V(-0.18, -0.55 - kick * 0.1, 0); S.me['root'].rotation_euler.x = -kick * 0.05
     S.me['torso'].rotation_euler.x = kick * 0.1 - (1 - settle) * 0.02
     bpy.context.view_layer.update()
     mw = S.gun.matrix_world
     rootp = S.me['root'].location
     S.armR.set(V(rootp.x + 0.36, rootp.y, 1.42), mw @ V(0, -0.24, -0.2), V(0.4, -0.3, -1.0))
-    S.armL.set(V(rootp.x - 0.36, rootp.y, 1.42), mw @ V(0, 0.42, -0.07), V(-0.3, -0.2, -1.0))
+    S.armL.set(V(rootp.x - 0.36, rootp.y, 1.42), mw @ V(0, 0.10, -0.07), V(-0.3, -0.2, -1.0), l1=0.46, l2=0.46)
     muzzle = mw @ V(0, 1.3, 0.01)
     # muzzle flash, shock ring, smoke, casing
     on = 0 < fd < 0.17; bk = clamp(fd / 0.17)
     for g in (S.mz1, S.mz2):
         show(g, on); g.location = muzzle
-        face_camera(g, cam, bk * 1.0 + 0.0, 0.34 + math.sin(bk * 1.6) * 0.5)
+        face_camera(g, cam, bk * 1.0 + 0.0, 0.16 + math.sin(bk * 1.6) * 0.25)
     S.mz2.location = muzzle + (cam.location - muzzle).normalized() * 0.02
     S.shock.hide_render = not (0 < fd < 0.3); S.shock.location = muzzle; face_camera(S.shock, cam, 0, 0.15 + fd * 4.2); fade(S.shock, 0.9 * (1 - fd / 0.3) if fd < 0.3 else 0)
     for p, a, d in S.puffs:
@@ -261,7 +313,7 @@ def update(S, t_real, portrait=False):
     S.streak.hide_render = not (t < HIT - 0.12) or not (FIRE + 0.06 <= t < HIT); S.streak.scale = (1, 1, lerp(1, 0.5, smooth(u, 0.8, 1)) if not inA else clamp((by - 1.5) / 3.0, 0.02, 1))
     for l in S.lines:
         l.hide_render = not inB
-        if inB: fade(l, 0.9 * (1 - smooth(u, 0.78, 1)))
+        if inB: fade(l, 0.5 * (1 - smooth(u, 0.78, 1)))
     # the target
     foe = S.foe
     snap = smooth(s, 0, 0.06) * (1 - 0.55 * smooth(s, 0.25, 0.9)) if s > 0 else 0.0
@@ -269,13 +321,12 @@ def update(S, t_real, portrait=False):
     fall = smooth(dt, 0.05, 1.0) * 1.5
     foe['root'].location = V(0, FOE_Y + fall * 0.55, math.sin(clamp(dt * 3, 0, math.pi)) * 0.1)
     foe['torso'].rotation_euler.x = 0
-    foe['root'].rotation_euler = (fall, 0, math.pi) if False else (0, 0, math.pi)
     # fall by tipping the whole figure about the feet: use a parent-less rotation about local X with the figure turned round
     foe['root'].rotation_mode = 'XYZ'; foe['root'].rotation_euler = (fall, 0, math.pi)
     bpy.context.view_layer.update()
     fm = foe['torso'].matrix_world
     S.foeArmR.set(fm @ V(0.36, 0, 1.42), fm @ V(0.1, 0.36, 1.18), V(0.4, 0, -1)); S.foeArmL.set(fm @ V(-0.36, 0, 1.42), fm @ V(0.0, 0.7, 1.28), V(-0.4, 0, -1))
-    show(S.rifle, True); S.rifle.location = fm @ V(0.05, 0.52, 1.22) if s <= 0 else V(0.1 + 0.7 * dt * 0, FOE_Y - 0.5 + 1.5 * dt, max(0.12, 1.2 + 2.2 * dt - 4.9 * dt * dt))
+    show(S.rifle, True); S.rifle.location = fm @ V(0.05, 0.52, 1.22) if s <= 0 else V(0.1, FOE_Y - 0.5 + 1.5 * dt, max(0.12, 1.2 + 2.2 * dt - 4.9 * dt * dt))
     if s <= 0: S.rifle.rotation_euler = (0, 0, math.pi)
     else:
         air = S.rifle.location.z > 0.13; S.rifle.rotation_euler = (dt * 6 if air else 1.4, dt * 3 if air else 0.5, math.pi + (dt * 4 if air else 0.2))
@@ -288,7 +339,7 @@ def update(S, t_real, portrait=False):
     on = s > 0 and hk < 1
     for g in (S.hit1, S.hit2):
         show(g, on); g.location = V(0.04, FOE_Y + 0.25, HEAD_Z + 0.05)
-        face_camera(g, cam, 0, 0.15 + smooth(hk, 0, 0.18) * 1.15 * (1 - smooth(hk, 0.35, 1)))
+        face_camera(g, cam, 0, 0.12 + smooth(hk, 0, 0.18) * 0.62 * (1 - smooth(hk, 0.35, 1)))
     S.hit2.location = S.hit1.location + (cam.location - S.hit1.location).normalized() * 0.02
     S.hring.hide_render = not (0 < s < 0.45); S.hring.location = V(0, FOE_Y - 0.1, HEAD_Z + 0.05); face_camera(S.hring, cam, 0, 0.2 + s * 5); fade(S.hring, 0.9 * (1 - s / 0.45) if s < 0.45 else 0)
     for o, v, spin in S.shards:
@@ -301,8 +352,8 @@ def update(S, t_real, portrait=False):
     roll = 0.0; vfov = 40.0
     if inA:
         push = smooth(t, 0, CUT_B)
-        cam.location = V(3.7 - push * 0.5, 0.5 - push * 0.15 * 0, 0.72) if False else P(3.7 - push * 0.5, 0.72, -0.5 + push * 0.15)
-        aim = P(-0.05, 1.22, 0.1 + kick * 0.06); vfov = 36 - push * 3; roll = -0.04
+        cam.location = P(3.05 - push * 0.28, 1.02, -0.5 + push * 0.15)
+        aim = P(-0.05, 1.30, 0.1 + kick * 0.06); vfov = 36 - push * 2; roll = -0.04
         cam.location.x += math.sin(t * 90) * kick * 0.014; cam.location.z += math.cos(t * 70) * kick * 0.014
     elif inB:
         near = smooth(u, 0.5, 1)
@@ -317,15 +368,25 @@ def update(S, t_real, portrait=False):
     else:
         k = smooth(t, CUT_D, DURATION)
         cam.location = V(0.8, -1.9, 1.28); aim = V(lerp(-0.15, 0, smooth(k, 0, 1)), FOE_Y, lerp(1.3, 1.0, k)); vfov = lerp(38, 7.5, smooth(k, 0.1, 1)); roll = 0.02
-    set_fov(cam, vfov * (1.35 if portrait else 1.0) if not portrait else vfov * 1.9)
+    set_fov(cam, vfov * (1.95 if inA else 1.65) if portrait else vfov)
     look_at(cam, aim, roll)
     cam.data.shift_y = -0.06
+    # Focus follows the storytelling subject, never the empty alley or background props.
+    focus = S.gun.location + V(0, 0.15, 0.12) if inA else S.bullet.location if inB else V(0, FOE_Y, HEAD_Z if inC else 0.75)
+    cam.data.dof.focus_distance = (focus - cam.location).length
+    cam.data.dof.aperture_fstop = 1.4 if inA else 2.0 if inB else 1.8 if inC else 3.2
     # veil flash on impact and on the last cut
     vq = max(0.85 * (1 - clamp((t - HIT) / 0.07)) if t >= HIT else 0, 0.9 * (1 - clamp((t - CUT_D) / 0.11)) if t >= CUT_D else 0)
     S.veil.hide_render = vq < 0.01
-    S.veil.location = (0, 0.6, 0) if False else V(0, 0, 0)
     S.veil.matrix_parent_inverse = Matrix.Identity(4); S.veil.location = V(0, 0, -0.6)
     S.veil.rotation_euler = (math.radians(90), 0, 0); fade(S.veil, vq)
+    # Re-orient billboards after this frame's camera has been set (including cuts).
+    for group in (S.mz1, S.mz2, S.hit1, S.hit2):
+        face_camera(group, cam, bk if group in (S.mz1, S.mz2) else 0, group.scale.x)
+    face_camera(S.shock, cam, 0, S.shock.scale.x); face_camera(S.hring, cam, 0, S.hring.scale.x)
+    for puff, _, _ in S.puffs: face_camera(puff, cam, 0, puff.scale.x)
+    S.mz2.location = muzzle + (cam.location - muzzle).normalized() * 0.02
+    S.hit2.location = S.hit1.location + (cam.location - S.hit1.location).normalized() * 0.02
     # hit marker: four ticks over the target, sized to the screen so it reads at any zoom
     show(S.mark, mk_on)
     if mk_on:
@@ -335,18 +396,33 @@ def update(S, t_real, portrait=False):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--out', required=True); ap.add_argument('--frames', default=f'0-{TOTAL - 1}'); ap.add_argument('--res', default='1280x720')
-    ap.add_argument('--list', default=''); ap.add_argument('--samples', type=int, default=24); ap.add_argument('--portrait', action='store_true')
+    ap.add_argument('--out', required=True); ap.add_argument('--frames', default=''); ap.add_argument('--res', default='3840x2160')
+    ap.add_argument('--ink', action='store_true', help='Optional comic ink pass; shaded production renders use clean bevels')
+    ap.add_argument('--fps', type=int, default=FPS)
+    ap.add_argument('--list', default=''); ap.add_argument('--samples', type=int, default=128); ap.add_argument('--portrait', action='store_true')
     a = ap.parse_args(sys.argv[sys.argv.index('--') + 1:])
     w, h = [int(x) for x in a.res.split('x')]
     lib.clear_scene(); setup_render((w, h), a.samples)
+    bpy.context.scene.render.use_freestyle = a.ink
     S = make()
-    f0, f1 = [int(x) for x in a.frames.split('-')]
+    f0, f1 = [int(x) for x in a.frames.split('-')] if a.frames else (0, round(DURATION * SLOW * a.fps) - 1)
     os.makedirs(a.out, exist_ok=True)
-    for f in ([int(x) for x in a.list.split(',')] if a.list else range(f0, f1 + 1)):
-        update(S, f / FPS, a.portrait)
-        bpy.context.scene.render.filepath = os.path.join(a.out, f'f{f:04d}.png')
-        bpy.ops.render.render(write_still=True)
+    scene = bpy.context.scene
+    scene.render.fps = a.fps
+    if a.list:
+        for f in [int(x) for x in a.list.split(',')]:
+            update(S, f / a.fps, a.portrait)
+            scene.render.filepath = os.path.join(a.out, f'f{f:04d}.png')
+            bpy.ops.render.render(write_still=True)
+    else:
+        # One animation render keeps the GPU engine alive between frames, avoiding
+        # hundreds of shader/scene startups. The scene is still evaluated by time.
+        def evaluate_frame(scene): update(S, scene.frame_current / a.fps, a.portrait)
+        bpy.app.handlers.frame_change_pre.append(evaluate_frame)
+        scene.frame_start, scene.frame_end = f0, f1
+        scene.render.filepath = os.path.join(a.out, 'f')
+        try: bpy.ops.render.render(animation=True)
+        finally: bpy.app.handlers.frame_change_pre.remove(evaluate_frame)
     print('RENDERED', f0, f1)
 
 main()

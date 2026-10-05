@@ -25,13 +25,13 @@ def toon(color_hex, bands=(0.16, 0.52), rim=False):
     key = (color_hex, bands, rim)
     if key in _mats: return _mats[key]
     r, g, b, _ = lin(color_hex)
-    dark = (r * 0.5, g * 0.5, min(1, b * 0.62 + 0.012), 1)
+    dark = (r * 0.22, g * 0.28, min(1, b * 0.40 + 0.008), 1)
     lit = (min(1, r * 1.12 + 0.02), min(1, g * 1.1 + 0.02), min(1, b * 1.04 + 0.01), 1)
     m = bpy.data.materials.new(f'toon{color_hex:06x}'); m.use_nodes = True
     nt = m.node_tree; nt.nodes.clear()
     d = nt.nodes.new('ShaderNodeBsdfDiffuse'); d.inputs[0].default_value = (1, 1, 1, 1)
     s = nt.nodes.new('ShaderNodeShaderToRGB')
-    ramp = nt.nodes.new('ShaderNodeValToRGB'); ramp.color_ramp.interpolation = 'CONSTANT'
+    ramp = nt.nodes.new('ShaderNodeValToRGB'); ramp.color_ramp.interpolation = 'EASE'
     el = ramp.color_ramp.elements
     el[0].position = 0.0; el[0].color = dark
     el[1].position = bands[0]; el[1].color = (r, g, b, 1)
@@ -41,7 +41,12 @@ def toon(color_hex, bands=(0.16, 0.52), rim=False):
     lk(d.outputs[0], s.inputs[0])
     # use the brightness of the lit result, not its colour
     bw = nt.nodes.new('ShaderNodeRGBToBW'); lk(s.outputs[0], bw.inputs[0]); lk(bw.outputs[0], ramp.inputs[0])
-    lk(ramp.outputs[0], em.inputs[0]); lk(em.outputs[0], o.inputs[0])
+    lk(ramp.outputs[0], em.inputs[0])
+    # Keep the illustrated palette, with physical light response on bevels and metal.
+    p = nt.nodes.new('ShaderNodeBsdfPrincipled'); p.inputs['Base Color'].default_value = (r, g, b, 1)
+    p.inputs['Roughness'].default_value = 0.58
+    mix = nt.nodes.new('ShaderNodeMixShader'); mix.inputs[0].default_value = 0.88
+    lk(em.outputs[0], mix.inputs[1]); lk(p.outputs[0], mix.inputs[2]); lk(mix.outputs[0], o.inputs[0])
     _mats[key] = m; return m
 
 _flat = {}
@@ -84,12 +89,22 @@ def mesh_obj(name, bm, mat, parent=None, loc=(0, 0, 0)):
 def _bevel(o, width, segs=2):
     if width <= 0: return
     b = o.modifiers.new('bev', 'BEVEL'); b.width = width; b.segments = segs; b.limit_method = 'ANGLE'; b.harden_normals = True
+    n = o.modifiers.new('weighted face normals', 'WEIGHTED_NORMAL'); n.keep_sharp = True; n.weight = 50
     for p in o.data.polygons: p.use_smooth = True
 
 def box(name, size, loc, mat, parent=None, bevel=0.015):
     bm = bmesh.new(); bmesh.ops.create_cube(bm, size=1.0)
     bmesh.ops.scale(bm, vec=Vector(size), verts=bm.verts)
     o = mesh_obj(name, bm, mat, parent, loc); _bevel(o, bevel); return o
+
+def tapered(name, bottom, top, height, loc, mat, parent=None, bevel=0.025):
+    """A bevelled tapered solid: shoulders and limbs have a human silhouette."""
+    bm = bmesh.new()
+    low = [bm.verts.new((x * bottom[0] / 2, y * bottom[1] / 2, -height / 2)) for x, y in ((-1,-1),(1,-1),(1,1),(-1,1))]
+    high = [bm.verts.new((x * top[0] / 2, y * top[1] / 2, height / 2)) for x, y in ((-1,-1),(1,-1),(1,1),(-1,1))]
+    bm.faces.new(tuple(reversed(low))); bm.faces.new(high)
+    for i in range(4): bm.faces.new((low[i], low[(i+1)%4], high[(i+1)%4], high[i]))
+    o = mesh_obj(name, bm, mat, parent, loc); _bevel(o, bevel, 3); return o
 
 def cyl(name, r1, r2, length, loc, mat, parent=None, axis='Y', seg=20, bevel=0.0):
     """A cone/cylinder lying along `axis` (default Y, the way barrels point), centred."""
@@ -147,7 +162,7 @@ def set_fov(cam, fov_deg_vertical):
     cam.data.sensor_fit = 'VERTICAL'; cam.data.sensor_height = 24.0
     cam.data.lens = 12.0 / math.tan(math.radians(fov_deg_vertical) / 2)
 
-def setup_render(res=(1280, 720), samples=24, ink=2.2):
+def setup_render(res=(1280, 720), samples=128, ink=1.25):
     sc = bpy.context.scene
     sc.render.engine = 'BLENDER_EEVEE'
     sc.render.resolution_x, sc.render.resolution_y = res; sc.render.resolution_percentage = 100
@@ -164,7 +179,30 @@ def setup_render(res=(1280, 720), samples=24, ink=2.2):
     global INK_COLL
     INK_COLL = bpy.data.collections.new('ink'); sc.collection.children.link(INK_COLL)
     ls.select_by_collection = True; ls.collection = INK_COLL
-    st = bpy.data.linestyles.new('ink'); st.color = INK; st.thickness = 1.0; ls.linestyle = st
+    st = bpy.data.linestyles.new('ink'); st.color = INK; st.thickness = 1.0
+    sc.render.image_settings.file_format = 'PNG'; sc.render.image_settings.color_mode = 'RGB'
+    sc.render.image_settings.compression = 15
+    sc.render.film_transparent = False
+    sc.render.compositor_device = 'GPU'
+    sc.render.compositor_denoise_device = 'GPU'; ls.linestyle = st
+    grade = bpy.data.node_groups.new('cinematic grade', 'CompositorNodeTree')
+    grade.interface.new_socket(name='Image', in_out='OUTPUT', socket_type='NodeSocketColor')
+    sc.compositing_node_group = grade
+    n, l = grade.nodes, grade.links.new
+    image = n.new('CompositorNodeRLayers')
+    denoise = n.new('CompositorNodeDenoise'); l(image.outputs['Image'], denoise.inputs['Image'])
+    mask = n.new('CompositorNodeEllipseMask')
+    mask.inputs['Position'].default_value = (0.50, 0.53)
+    mask.inputs['Size'].default_value = (0.94, 0.90)
+    blur = n.new('CompositorNodeBlur'); blur.inputs['Separable'].default_value = True; blur.inputs['Size'].default_value = (res[0] * 0.16, res[1] * 0.16)
+    l(mask.outputs['Mask'], blur.inputs['Image'])
+    level = n.new('ShaderNodeMath'); level.operation = 'MULTIPLY_ADD'
+    level.inputs[1].default_value = 0.62; level.inputs[2].default_value = 0.38
+    l(blur.outputs['Image'], level.inputs[0])
+    multiply = n.new('ShaderNodeMix'); multiply.data_type = 'RGBA'; multiply.blend_type = 'MULTIPLY'
+    multiply.inputs[0].default_value = 1.0
+    l(denoise.outputs['Image'], multiply.inputs[6]); l(level.outputs[0], multiply.inputs[7])
+    output = n.new('NodeGroupOutput'); l(multiply.outputs[2], output.inputs['Image'])
     return sc
 
 def clear_scene():
