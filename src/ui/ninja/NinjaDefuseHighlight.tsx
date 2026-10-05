@@ -117,7 +117,8 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
         <span className="ninja-bar__row"><b data-ninja-label>DEFUSING...</b><i data-ninja-pct>55%</i></span>
         <span className="ninja-bar__track"><u /></span>
       </div>
-      <div className="ninja-title"><b>NINJA</b><span>DEFUSE</span></div>
+      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><filter id="ninja-rough" x="-5%" y="-10%" width="110%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".045 .09" numOctaves="3" seed="4" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G" /></filter></svg>
+      <div className="ninja-title"><b>NINJA</b><span>DEFUSE</span><i /></div>
     </div>
   );
 }
