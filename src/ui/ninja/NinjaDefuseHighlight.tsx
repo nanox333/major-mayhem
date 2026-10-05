@@ -57,7 +57,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
       el.querySelectorAll<HTMLElement>('[data-ninja-label]').forEach((n) => { if (n.textContent !== s.label) n.textContent = s.label; });
       el.querySelectorAll<HTMLElement>('[data-ninja-pct]').forEach((n) => { const p = `${Math.round(s.progress * 100)}%`; if (n.textContent !== p) n.textContent = p; });
       if (renderer && world) {
-        world.update(t); renderer.render(world.scene, world.camera);
+        world.update(t); world.render(renderer);
         ninjaDiagnostics.last = { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, fps: seconds > 0 ? frames / (seconds * NINJA_SLOW) : 0, dpr: renderer.getPixelRatio() };
       }
       sounds(t);
