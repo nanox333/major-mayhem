@@ -37,6 +37,8 @@ export const LEGEND_TITLE = LEGEND_INFO;
 
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
 export const LEGEND_MS = 2000;
+/** The defuse takes its time: the count-down has to be read. Every other moment holds LEGEND_MS. */
+export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : LEGEND_MS);
 /** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
 export const LEGEND_EXIT_MS = 440;
 
@@ -69,7 +71,7 @@ const BEHIND = (e: G.MatchEvent) => Number(/(\d+) rounds down/.exec(e.text)?.[1]
 /** The part of the cinematic that is different for each moment. Decorative; the card under it says what happened. */
 function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
   const kind = e.legend ?? 'ace';
-  const timer = useCount(0.6, LEFT_AT, 900, 100, still, 2);
+  const timer = useCount(0.6, LEFT_AT, 1700, 200, still, 2);
   const won = useCount(0, 13, 700, 150, still);
   const rounds = useCount(24, ROUNDS_UP(e), 1100, 100, still);
   const down = BEHIND(e);
@@ -118,24 +120,20 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
         </div>
       );
     case 'noscope':
-      // An AWP fired from the hip: the rifle slides in, a "no scope" mark strikes through a scope, one shot goes through two enemies.
+      // An AWP fired without looking through the scope: a crossed-out scope sign, the rifle slides in, one shot goes across the screen and hits.
       return (
         <div className="lg lg-nos" aria-hidden="true">
-          <div className="lg-nos__row">
-            <div className="lg-nos__gun">
-              <img className="lg-nos__awp" src={awp} alt="" />
-              <img className="lg-muzzle lg-nos__flash" src={FLASHES[0]} alt="" />
-              <img className="lg-casing lg-nos__casing" src={casing} alt="" />
-              <span className="lg-nos__tag"><i /><b>No scope</b></span>
-            </div>
+          <div className="lg-nos__gun">
+            <img className="lg-nos__awp" src={awp} alt="" />
+            <span className="lg-nos__sign" />
+            <img className="lg-muzzle lg-nos__flash" src={blast} alt="" />
+            <img className="lg-casing lg-nos__casing" src={casing} alt="" />
             <span className="lg-nos__tracer" />
-            {[0, 1].map((n) => (
-              <div key={n} className="lg-nos__foe" style={{ ['--n' as string]: n }}>
-                <img src={foe} alt="" />
-                <span className="lg-nos__x" />
-                <img className="lg-muzzle lg-nos__hit" src={FLASHES[1]} alt="" />
-              </div>
-            ))}
+            <div className="lg-shot lg-nos__impact" style={{ ['--d' as string]: '0.8s', ['--r' as string]: '14deg', ['--k' as string]: 1.15 }}>
+              <img className="lg-hole" src={hole} alt="" />
+              <img className="lg-muzzle" src={blast} alt="" />
+              <img className="lg-spark lg-spark--a" src={spark} alt="" /><img className="lg-spark lg-spark--b" src={spark} alt="" />
+            </div>
           </div>
         </div>
       );
@@ -178,8 +176,8 @@ function scoreFor(kind: G.LegendKind) {
   switch (kind) {
     case 'ace': return at('shot', [0, 170, 340, 510, 680]);
     case 'clutch5': return [...at('beat', [0, 420, 840]), ...at('shot', [250, 420, 590, 760, 930])];
-    case 'ninja': return at('tick', [0, 180, 360, 540, 720, 900]);
-    case 'noscope': return at('shot', [550]);
+    case 'ninja': return [...at('tick', Array.from({ length: 9 }, (_, i) => 250 + i * 190)), ...at('shot', [1950])];
+    case 'noscope': return at('shot', [570, 820]);
     case 'knife': return at('shot', [60, 200, 340]);
     case 'flawless': return at('tick', Array.from({ length: 13 }, (_, i) => 100 + i * 45));
     case 'miracle': return at('tick', [100, 300, 500, 700, 900]);
@@ -209,7 +207,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
     setTimeout(onDone, LEGEND_EXIT_MS);
   }, []);
   useEffect(() => {
-    const done = setTimeout(close, LEGEND_MS);
+    const done = setTimeout(close, legendMs(kind));
     const key = (ev: KeyboardEvent) => { ev.preventDefault(); ev.stopPropagation(); close(); };
     window.addEventListener('keydown', key, true);
     const stops = still ? [] : scoreFor(kind);
@@ -231,7 +229,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
             {who && <span className="legend__who"><TeamBadge roster={who.roster} size={22} /><b>{who.player.nick}</b><i>{who.roster.org} {who.roster.year}</i></span>}
           </div>
         </div>
-        <span className="legend__bar" aria-hidden="true"><i style={{ animationDuration: `${LEGEND_MS}ms` }} /></span>
+        <span className="legend__bar" aria-hidden="true"><i style={{ animationDuration: `${legendMs(kind)}ms` }} /></span>
       </div>
       <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
     </div>
