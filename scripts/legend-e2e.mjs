@@ -25,6 +25,7 @@ try {
     await page.getByRole('button', { name: 'No-scope', exact: true }).nth(1).click();
     await page.waitForFunction(() => document.querySelector('.lg3d')?.cinematicVideo?.readyState >= 2);
     assert.ok((await page.locator('.lg3d').evaluate(c => c.cinematicVideo.src)).endsWith(asset));
+    assert.deepEqual(await page.locator('.lg3d').evaluate(c => [c.cinematicVideo.videoWidth, c.cinematicVideo.videoHeight]), name === 'desktop' ? [3840, 2160] : [1440, 2560]);
     assert.equal(await page.locator('video').count(), 0);
     assert.equal(await page.locator('.lg3d').evaluate(c => c.cinematicVideo.isConnected), false);
     await page.getByRole('slider', { name: 'Time' }).fill('2.5');
