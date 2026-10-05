@@ -5,7 +5,7 @@
 .legend { --lg: #e4ae39; --lg-hi: #ffd37a; --at: .55s; position: fixed; inset: 0; z-index: 60; display: grid; place-items: end center; padding: 16px 16px clamp(56px, 10vh, 96px); cursor: pointer; overflow: hidden; }
 .legend--clutch5 { --lg: #e2563e; --lg-hi: #ff9a7a; --at: .95s; }
 .legend--ninja { --lg: #4ade80; --lg-hi: #b6f5c8; --at: 2.25s; }
-.legend--noscope { --lg: #dfe7f2; --lg-hi: #ffffff; --at: 1.2s; }
+.legend--noscope { --lg: #dfe7f2; --lg-hi: #ffffff; }
 .legend--knife { --lg: #ff4d4d; --lg-hi: #ffd0d0; --at: .6s; }
 .legend--flawless { --lg: #f5f1e4; --lg-hi: #ffffff; --at: .8s; }
 .legend--miracle { --lg: #e4ae39; --lg-hi: #ffd37a; --at: 1.05s; }
@@ -274,3 +274,14 @@
 .legend-card__body span { font-size: .84rem; line-height: 1.35; color: var(--text-2, #bbb); }
 .legend-card__body em { font: 700 .68rem/1.3 var(--f-read, sans-serif); font-style: normal; letter-spacing: .1em; text-transform: uppercase; color: var(--muted, #999); }
 .legend-card--ace, .legend-card--clutch5, .legend-card--flawless, .legend-card--miracle { --legend-card: 1; }
+
+/* 3D scenes (src/ui/legend3d): the canvas fills the overlay behind the card */
+.lg3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.legend--noscope { --at: 2.3s; }
+.dbg-scrub { position: fixed; inset: 0; z-index: 100000; background: #000; }
+.dbg-scrub .lg3d { position: absolute; inset: 0 0 56px 0; height: calc(100% - 56px); }
+.dbg-scrub__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #12141a; color: #e8eaf0; font: 12px/1 system-ui, sans-serif; }
+.dbg-scrub__bar input[type=range] { flex: 1; min-width: 80px; }
+.dbg-scrub__bar button { padding: 6px 10px; border: 1px solid #3a3f4b; border-radius: 6px; background: #1d212b; color: inherit; cursor: pointer; }
+.dbg-scrub__bar button[aria-pressed=true] { background: #3b5bdb; border-color: #3b5bdb; }
+.dbg-scrub__bar output { font-variant-numeric: tabular-nums; min-width: 140px; }

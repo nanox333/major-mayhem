@@ -6,6 +6,8 @@ import { debugHooks } from '../../game/debugHooks';
 import { clockOffset, nowDate, setClockOffset } from '../../game/clock';
 import { Run, today } from '../../game/state';
 import { LEGEND_INFO, LegendOverlay } from '../Legend';
+import { HAS_3D, webglOk } from '../legend3d/Stage';
+import { Scrub } from './Scrub';
 import { debugForceLite, debugForceReducedMotion, setDebugForceLite, setDebugForceReducedMotion } from '../debugFlags';
 import { SCENARIOS, SCENARIO_GROUPS, Built, draftedRun, scenarioById } from './scenarios';
 import { Finding, bugReport, clearScan, dropSnapshot, restoreSnapshot, scanPage, snapshotInfo, snapshotOnce } from './tools';
@@ -58,6 +60,7 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
   const [demo, setDemo] = useState<{ kind: LegendKind; mine: G.Lineup[] } | null>(null);
   const [rate, setRate] = useState(1);
   const [paused, setPaused] = useState(false);
+  const [scrub, setScrub] = useState<LegendKind | null>(null);
   const [armed, setArmed] = useState<LegendKind | null>(debugHooks.legend);
   // Slow motion and pause apply to every running CSS animation and transition on the page; new ones are picked up as they start.
   useEffect(() => {
@@ -81,6 +84,11 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
         {LEGENDS.map((k) => <button key={k} type="button" onClick={() => open(k)}>{LEGEND_INFO[k].title}</button>)}
       </div>
       <p className="dbg__hint">Plays the real card with a random lineup. Any key or a tap closes it.</p>
+      <h4>3D scenes: frame scrubber</h4>
+      <div className="dbg__grid">
+        {(Object.keys(HAS_3D) as LegendKind[]).map((k) => <button key={k} type="button" disabled={!webglOk()} onClick={() => setScrub(k)}>{LEGEND_INFO[k].title}</button>)}
+      </div>
+      <p className="dbg__hint">Drag to any moment, or use ◀ ▶ (or the arrow keys) to step one frame. Space plays and pauses, Esc closes.</p>
       <h4>Arm a real one</h4>
       <div className="dbg__grid">
         <button type="button" aria-pressed={armed === 'ace'} onClick={() => arm(armed === 'ace' ? null : 'ace')}>Next map: an ace</button>
@@ -107,6 +115,7 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
           ['Champion, W/L blocks', 'results-champion', ''],
         ].map(([label, id, how]) => <li key={id}><button type="button" onClick={() => { const b = scenarioById.get(id)?.build(); if (b) { snapshotOnce(); jump(b); say(`${label}${how ? `: ${how}` : ''}`); } }}>{label}</button>{how && <small>{how}</small>}</li>)}
       </ul>
+      {scrub && <Scrub kind={scrub} onClose={() => setScrub(null)} />}
       {demo && createPortal(<LegendOverlay e={fakeEvent(demo.kind, demo.mine[0]?.player.id)} mine={demo.mine} map="Mirage" onDone={() => setDemo(null)} />, document.body)}
     </div>
   );

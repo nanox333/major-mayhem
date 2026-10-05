@@ -3,6 +3,7 @@ import type * as G from '../game/logic';
 import { Avatar, TeamBadge } from './art';
 import { play } from './sound';
 import { reduceMotion } from './util';
+import { Stage, can3D } from './legend3d/Stage';
 import hole from '../assets/legend/hole.webp';
 import blast from '../assets/legend/blast.webp';
 import flash2 from '../assets/legend/flash-2.webp';
@@ -38,7 +39,7 @@ export const LEGEND_TITLE = LEGEND_INFO;
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
 export const LEGEND_MS = 2000;
 /** The defuse takes its time: the count-down has to be read. Every other moment holds LEGEND_MS. */
-export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : LEGEND_MS);
+export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && can3D(kind) ? 3500 : LEGEND_MS);
 /** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
 export const LEGEND_EXIT_MS = 440;
 
@@ -177,7 +178,7 @@ function scoreFor(kind: G.LegendKind) {
     case 'ace': return at('shot', [0, 170, 340, 510, 680]);
     case 'clutch5': return [...at('beat', [0, 420, 840]), ...at('shot', [250, 420, 590, 760, 930])];
     case 'ninja': return [...at('tick', Array.from({ length: 9 }, (_, i) => 250 + i * 190)), ...at('shot', [1950])];
-    case 'noscope': return at('shot', [570, 820]);
+    case 'noscope': return can3D(kind) ? [...at('shot', [0]), ...at('tick', [1230, 2300])] : at('shot', [570, 820]);
     case 'knife': return at('shot', [60, 200, 340]);
     case 'flawless': return at('tick', Array.from({ length: 13 }, (_, i) => 100 + i * 45));
     case 'miracle': return at('tick', [100, 300, 500, 700, 900]);
@@ -216,7 +217,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   return (
     <div className={`legend legend--${kind} ${still ? 'is-still' : ''} ${leaving ? 'is-leaving' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={close}>
       <div className="legend__wash" aria-hidden="true" />
-      {!still && <Scene e={e} still={still} />}
+      {!still && (can3D(kind) ? <Stage kind={kind} /> : <Scene e={e} still={still} />)}
       <div className="legend__sparks" aria-hidden="true">{sparks.map((p, i) => <i key={i} style={{ left: `${p.x}%`, width: p.s, height: p.s, animationDelay: `${p.d + 0.5}s`, animationDuration: `${p.t}s` }} />)}</div>
       <div className="legend__sweep" aria-hidden="true" />
       <div className="legend__card">
