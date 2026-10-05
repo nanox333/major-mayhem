@@ -401,6 +401,9 @@ def update(S, t_real, portrait=False):
         push = smooth(t, 0, CUT_B)
         cam.location = P(3.05 - push * 0.28, 1.02, -0.5 + push * 0.15)
         aim = P(-0.05, 1.30, 0.1 + kick * 0.06); vfov = 36 - push * 2; roll = -0.04
+        if portrait:
+            cam.location = V(3.05 - push * .25, 2.45 - push * .15, 1.2)
+            aim = V(.02, .32, 1.20)  # Three-quarter view fits both the shooter and muzzle on a phone.
         cam.location.x += math.sin(t * 90) * kick * 0.014; cam.location.z += math.cos(t * 70) * kick * 0.014
     elif inB:
         near = smooth(u, 0.5, 1)

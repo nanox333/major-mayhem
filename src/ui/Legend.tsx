@@ -210,7 +210,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   }, []);
   useEffect(() => {
     if (!ready) return;
-    const done = setTimeout(close, mediaFailed ? LEGEND_MS : !still && hasCinematic(kind) ? 15000 : legendMs(kind));
+    const done = setTimeout(close, still || mediaFailed ? LEGEND_MS : hasCinematic(kind) ? 15000 : legendMs(kind));
     const stops = still || mediaFailed || hasCinematic(kind) ? [] : scoreFor(kind);
     return () => { clearTimeout(done); stops.forEach((stop) => stop()); };
   }, [ready, mediaFailed]);
