@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as T from 'three';
 import { play } from '../sound';
+import { Avatar, TeamBadge } from '../art';
+import type { Lineup } from '../../game/logic';
 import { createNinjaScene } from './scene';
 import { NINJA_DURATION, NINJA_SLOW, ninjaCues, ninjaLayout, ninjaTime } from './timeline';
 
@@ -13,7 +15,7 @@ if (typeof location !== 'undefined' && location.search.includes('debug')) Object
  * Elapsed seconds drive everything (timeline.ts), so the scrubber can show any frame. If WebGL or the assets fail, the same clock runs an HTML fallback.
  * `start` is the hundredths the display opens on (a very late defuse 11, an extremely late one lower).
  */
-export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11 }: { onComplete?: () => void; at?: number | null; still?: boolean; start?: number }) {
+export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11, who, map, round }: { onComplete?: () => void; at?: number | null; still?: boolean; start?: number; who?: Lineup; map?: string; round?: number }) {
   const root = useRef<HTMLDivElement>(null), canvas = useRef<HTMLCanvasElement>(null);
   const [fallback, setFallback] = useState(false);
   const done = useRef(onComplete); done.current = onComplete;
@@ -52,7 +54,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
       const set = (k: string, v: number | string) => el.style.setProperty(k, String(v));
       set('--ninja-fade', s.fade); set('--ninja-dim', s.dim); set('--ninja-vignette', s.vignette); set('--ninja-progress', s.progress);
       set('--ninja-critical', s.critical); set('--ninja-green', s.green > 0 ? 1 : 0);
-      set('--ninja-title', s.ninja); set('--ninja-sub', s.defuse); set('--ninja-snap', 1.12 - .12 * s.ninja); set('--ninja-snap2', 1.12 - .12 * s.defuse);
+      set('--ninja-person', s.person); set('--ninja-person-y', `${(1 - s.person) * 16}px`); set('--ninja-title', s.ninja); set('--ninja-sub', s.defuse); set('--ninja-snap', 1.12 - .12 * s.ninja); set('--ninja-snap2', 1.12 - .12 * s.defuse);
       el.querySelectorAll<HTMLElement>('[data-ninja-text]').forEach((n) => { if (n.textContent !== s.text) n.textContent = s.text; });
       el.querySelectorAll<HTMLElement>('[data-ninja-label]').forEach((n) => { if (n.textContent !== s.label) n.textContent = s.label; });
       el.querySelectorAll<HTMLElement>('[data-ninja-pct]').forEach((n) => { const p = `${Math.round(s.progress * 100)}%`; if (n.textContent !== p) n.textContent = p; });
@@ -119,6 +121,14 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
       </div>
       <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><filter id="ninja-rough" x="-5%" y="-10%" width="110%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".045 .09" numOctaves="3" seed="4" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G" /></filter></svg>
       <div className="ninja-title"><b>NINJA</b><span>DEFUSE</span><i /></div>
+      {who && <div className="ninja-person">
+        <div className="ninja-person__portrait"><Avatar player={who.player} roster={who.roster} /></div>
+        <div className="ninja-person__info"><span className="ninja-person__kicker">A tenth of a second to spare.</span><strong>{who.player.nick}</strong>
+          <span className="ninja-person__team"><TeamBadge roster={who.roster} size={20} />{who.roster.org} · {who.roster.year}</span>
+          {map && <span className="ninja-person__round">{map}{round != null ? ` · Round ${round}` : ''}</span>}
+        </div>
+        <span className="ninja-person__kills" aria-hidden="true"><i /><i /><i /></span>
+      </div>}
     </div>
   );
 }
