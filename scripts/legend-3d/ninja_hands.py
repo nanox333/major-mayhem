@@ -11,6 +11,12 @@ GLOVE = flat_mat('glove_flat', 0x1b1c1f, .82); GUARD = flat_mat('guard', 0x14151
 def rounded(name, size, loc, mat, parent, frac=.42, seg=2):
     return box(name, size, loc, mat, parent, bevel=min(size) * frac, seg=seg)
 
+def pod(name, w, length, h, mat, parent, grow=1.5):
+    """A rounded finger segment: an ellipsoid from y = 0 to `length`, a little longer than the joint spacing so neighbours overlap and bending never shows a gap."""
+    bm = bmesh.new(); bmesh.ops.create_uvsphere(bm, u_segments=14, v_segments=10, radius=1.0)
+    for v in bm.verts: v.co.x *= w / 2; v.co.y = v.co.y * length * grow / 2 + length / 2 - .003; v.co.z *= h / 2
+    return obj(name, bm, mat, parent, (0, 0, 0))
+
 def empty(name, parent, loc=(0, 0, 0)):
     e = bpy.data.objects.new(name, None); sc.collection.objects.link(e); e.parent = parent; e.location = loc; return e
 
@@ -28,30 +34,28 @@ def hand(side, size):
     sl = obj(f'sleeve_{side}', sleeve_mesh(side), SLEEVE_F, root, (0, -.52, 0), (math.pi / 2, 0, 0)); static.append(sl)
     static.append(box('cuff', (.25, .12, .17), (0, -.2, 0), GLOVE, root, .035, seg=3))
     static.append(box('strap', (.262, .06, .185), (0, -.2, 0), GLOVE, root, .02, seg=2))
-    static.append(rounded('palm', (.22, .25, .085), (0, -.01, -.005), GLOVE, root, .38))
-    static.append(rounded('back', (.20, .19, .045), (0, .0, .045), GLOVE, root, .45))
+    static.append(rounded('palm', (.2, .25, .08), (0, -.01, -.005), GLOVE, root, .46, 4))
+    static.append(rounded('back', (.19, .19, .04), (0, .0, .04), GLOVE, root, .5, 3))
     guards = []
-    guards.append(rounded('guard_plate', (.17, .15, .03), (0, .015, .075), GUARD, root, .4))
-    for i in range(4): guards.append(rounded('guard_rib', (.036, .15, .022), (-.058 + i * .039, .015, .094), GUARD, root, .45))
-    for i, x in enumerate((-.07, -.025, .02, .065)): guards.append(rounded('knuckle', (.04, .035, .04), (x, .115, .045), GUARD, root, .4))
-    # fingers: pivot empties at each joint so the runtime can bend them
-    lengths = {0: (.10, .075, .062), 1: (.108, .082, .066), 2: (.1, .075, .06), 3: (.082, .06, .05)}
-    width = {0: .046, 1: .048, 2: .045, 3: .04}
-    for f, x in enumerate((-.07, -.025, .02, .065)):
-        ax = x * sx * -1 if False else x * (1)  # same layout for both hands: the thumb decides the side
+    guards.append(rounded('guard_plate', (.16, .14, .024), (0, .02, .066), GUARD, root, .5, 3))
+    for i in range(3): guards.append(rounded('guard_rib', (.034, .12, .016), (-.04 + i * .04, .02, .082), GUARD, root, .5, 2))
+    
+    # fingers: pivot empties at each joint so the runtime can bend them (slightly spread, longer and slimmer than before)
+    lengths = {0: (.112, .08, .066), 1: (.12, .088, .07), 2: (.112, .08, .064), 3: (.092, .064, .052)}
+    width = {0: .048, 1: .05, 2: .047, 3: .041}
+    for f, x in enumerate((-.072, -.026, .02, .066)):
         px = x * sx * -1 if side == 'L' else x
-        p1 = empty(f'{side}_f{f}_1', root, (px, .125, .0)); a, b, c = lengths[f]; w = width[f]
-        rounded(f'seg1', (w, a, w * .95), (0, a / 2 - .004, 0), GLOVE if False else flat_mat(f'g{f}a', 0x1b1c1f + f * 0x010101, .82), p1, .42)
-        p2 = empty(f'{side}_f{f}_2', p1, (0, a, 0)); rounded('seg2', (w * .97, b, w * .92), (0, b / 2 - .003, 0), flat_mat(f'g{f}b', 0x1b1c1f + f * 0x010101, .82), p2, .42)
-        p3 = empty(f'{side}_f{f}_3', p2, (0, b, 0)); rounded('seg3', (w * .94, c, w * .88), (0, c / 2 - .002, 0), flat_mat(f'g{f}c', 0x1b1c1f + f * 0x010101, .82), p3, .46)
-        ball_ = bmesh.new(); bmesh.ops.create_uvsphere(ball_, u_segments=12, v_segments=8, radius=w * .46); obj('tip', ball_, flat_mat(f'g{f}d', 0x1b1c1f, .82), p3, (0, c - .002, 0))
-    # thumb on the inner side
-    tx = -.115 if side == 'R' else .115
-    t1 = empty(f'{side}_t_1', root, (tx, -.06, -.005)); t1.rotation_euler = (0, 0, math.radians(32) * (1 if side == 'R' else -1))
-    rounded('thumb1', (.05, .1, .05), (0, .05, 0), flat_mat('gt1', 0x1d1e21, .82), t1, .42)
-    t2 = empty(f'{side}_t_2', t1, (0, .1, 0)); rounded('thumb2', (.046, .085, .046), (0, .042, 0), flat_mat('gt2', 0x1d1e21, .82), t2, .44)
-    tb = bmesh.new(); bmesh.ops.create_uvsphere(tb, u_segments=12, v_segments=8, radius=.021); obj('thumb_tip', tb, flat_mat('gt3', 0x1d1e21, .82), t2, (0, .085, 0))
-    for o in static: o.data.materials[0] = GLOVE if 'sleeve' not in o.name else SLEEVE_F
+        fm = flat_mat(f'gf{f}', 0x1b1c1f + f * 0x010101, .84)
+        p1 = empty(f'{side}_f{f}_1', root, (px + (f - 1.5) * .003, .125, .0)); a, b2, c = lengths[f]; w = width[f]
+        pod('seg1', w, a, w * .98, fm, p1)
+        p2 = empty(f'{side}_f{f}_2', p1, (0, a, 0)); pod('seg2', w * .96, b2, w * .93, fm, p2)
+        p3 = empty(f'{side}_f{f}_3', p2, (0, b2, 0)); pod('seg3', w * .94, c, w * .9, fm, p3, 1.4)
+    tx = -.118 if side == 'R' else .118
+    t1 = empty(f'{side}_t_1', root, (tx, -.05, -.008)); t1.rotation_euler = (0, 0, math.radians(34) * (1 if side == 'R' else -1))
+    tm = flat_mat('gt', 0x1d1e21, .84)
+    pod('thumb1', .058, .1, .056, tm, t1); t2 = empty(f'{side}_t_2', t1, (0, .1, 0)); pod('thumb2', .05, .082, .048, tm, t2, 1.4)
+    bake_class('glove', static, size, 0.0, .86)
+    for o in guards: o.data.materials[0] = GUARD
     return root
 
 size = lib.SIZE if lib.SIZE <= 1024 else 1024

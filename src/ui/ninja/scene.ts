@@ -113,7 +113,7 @@ export async function createNinjaScene(start = 11) {
 
   let aspect = 1, low = false;
   const homeA = new T.Vector3(.55, 1.5, 1.55), homeB = new T.Vector3(.18, 1.16, 1.02), look = new T.Vector3(), pull = new T.Vector3();
-  const keyTarget = new T.Vector3();
+  const keyTarget = new T.Vector3(), keyNext = new T.Vector3();
   const update = (t: number) => {
     const s = ninjaTime(t, start), sh = ninjaShake(t, s.shake), work = 1 - s.relax;
     display.draw(s.defused ? 'DEFUSED' : s.text, s.defused);
@@ -126,17 +126,22 @@ export async function createNinjaScene(start = 11) {
     (lcdGreen.material as T.SpriteMaterial).opacity = s.green * .32;
     key.intensity = 4.2 + s.critical * 1.4; rim.intensity = 3.2 + s.critical * .8 - s.relax * .3;
     if (bloom) bloom.strength = .5 + .35 * s.critical + .2 * s.green;
-    // right hand: taps keys, faster as the display falls; the pressed key goes down with the finger
-    const rate = 5 + 7 * s.progress, ph = t * rate, idx = Math.floor(ph) % KEYS.length, local = ph - Math.floor(ph), press = work * Math.max(0, Math.sin(local * Math.PI) ** 2);
-    keys[idx].getWorldPosition(keyTarget);
+    // right hand: it glides from key to key on a smooth path (never jumping), dips to press each one, and eases off after the click
+    const rate = 2.4 + 2.6 * s.progress, ph = t * rate, i0 = Math.floor(ph), local = ph - i0, idx = i0 % KEYS.length, next = (i0 + 1) % KEYS.length;
+    const glide = local < .45 ? 0 : (() => { const k = (local - .45) / .55; return k * k * (3 - 2 * k); })();
+    const press = work * Math.sin(clamp(local / .45) * Math.PI) ** 2 * (local < .45 ? 1 : 0);
+    keys[idx].getWorldPosition(keyTarget); keys[next].getWorldPosition(keyNext); keyTarget.lerp(keyNext, glide);
     keys.forEach((k, i) => { k.position.y = keyY[i] - (i === idx ? press * .02 : 0); });
-    handR.position.set(keyTarget.x + .1 + s.relax * .1, .5 + (1 - press) * .06 + s.relax * .2, keyTarget.z + .4 + s.relax * .1);
-    handR.rotation.set(-.4 - press * .08, .28 + Math.sin(t * 9) * .02 * work, 0); handR.scale.setScalar(.82);
-    fingers.R.forEach((c, f) => (f === 0 ? curl(c, .22 + press * .5, .5 + press * .55, .35 + press * .3) : curl(c, 1.15, 1.2, .9)));
+    const sway = Math.sin(t * 2.3) * .004 * work;
+    handR.position.set(keyTarget.x + .1 + s.relax * .1 + sway, .53 + (1 - press) * .04 + s.relax * .2, keyTarget.z + .4 + s.relax * .1);
+    handR.rotation.set(-.4 - press * .07, .28 + (keyTarget.x - .27) * .5 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.82);
+    const idxCurl = .22 + press * .45, pose = work * .12 * Math.sin(t * 3.1);
+    fingers.R.forEach((c, f) => (f === 0 ? curl(c, idxCurl, idxCurl * 1.7, idxCurl * 1.1) : curl(c, 1.05 + pose * (f * .5), 1.1 + pose, .85)));
     curl(thumb.R, .5, .5);
-    // left hand: holds the case steady, with a tremor that grows with the tension
-    handL.position.set(-.42 + sh.x * 4 - s.relax * .05, .5 + s.relax * .18 + Math.sin(t * 47) * .002 * s.shake, .56 + s.relax * .12);
-    handL.rotation.set(-.42, -.22, 0); handL.scale.setScalar(.82); fingers.L.forEach((c) => curl(c, .5 - s.relax * .2, .55, .4)); curl(thumb.L, .4, .4);
+    // left hand: holds the case steady, with a soft tremor that grows with the tension
+    const trem = s.shake * work;
+    handL.position.set(-.42 + Math.sin(t * 5.3) * .003 * trem - s.relax * .05, .5 + s.relax * .18 + Math.sin(t * 7.1) * .0025 * trem, .56 + s.relax * .12);
+    handL.rotation.set(-.42, -.22 + Math.sin(t * 4.1) * .01 * trem, 0); fingers.L.forEach((c, f) => curl(c, .55 - s.relax * .2 + Math.sin(t * 2 + f) * .02 * work, .6, .45)); curl(thumb.L, .4, .4);
     // camera: a slow orbit and push-in (real parallax), a handheld tremor that grows with the tension, dead still at the click, easing back after it
     const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .55 : 1;
     camera.position.lerpVectors(homeA, homeB, k); camera.position.x += Math.sin(t * .9) * .05 * (1 - s.relax);
