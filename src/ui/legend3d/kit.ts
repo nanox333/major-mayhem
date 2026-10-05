@@ -16,7 +16,7 @@ export function makeRenderer(canvas: HTMLCanvasElement) {
   const r = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   r.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   r.outputColorSpace = T.SRGBColorSpace;
-  r.toneMapping = T.ACESFilmicToneMapping;
+  r.toneMapping = T.NoToneMapping;
   return r;
 }
 
@@ -51,23 +51,44 @@ export const speckTex = () => canvasTex(64, 64, (g) => {
   g.fillStyle = k; g.fillRect(0, 0, 64, 64);
 });
 
-export type Fig = { root: T.Group; headPos: () => T.Vector3 };
-const mat = (c: number, rough = .85, metal = 0) => new T.MeshStandardMaterial({ color: c, roughness: rough, metalness: metal, flatShading: true });
-
-/** A low-poly soldier standing at the origin facing +z, about 1.8 tall. Built from boxes so it reads as a stylised target, not a person. */
-export function soldier(team: 'ct' | 't') {
-  const ct = team === 'ct';
-  const cloth = mat(ct ? 0x33496e : 0x8a7650), vest = mat(ct ? 0x1b2640 : 0x4c4332), skin = mat(0xd2a07a, .7), dark = mat(0x15171c, .6, .3), helm = mat(ct ? 0x232d44 : 0x2a2a26, .5, .2);
-  const root = new T.Group();
-  const box = (w: number, h: number, d: number, m: T.Material, x: number, y: number, z: number, p: T.Object3D = root) => { const b = new T.Mesh(new T.BoxGeometry(w, h, d), m); b.position.set(x, y, z); p.add(b); return b; };
-  box(.21, .86, .26, cloth, -.14, .43, 0); box(.21, .86, .26, cloth, .14, .43, 0);
-  box(.17, .09, .34, dark, -.14, .045, .05); box(.17, .09, .34, dark, .14, .045, .05);
-  box(.56, .64, .3, cloth, 0, 1.18, 0); box(.5, .5, .34, vest, 0, 1.2, 0); box(.48, .12, .33, dark, 0, .93, 0);
-  box(.15, .55, .17, cloth, -.36, 1.12, .1).rotation.x = -.7; box(.15, .5, .17, cloth, .33, 1.1, .22).rotation.x = -1.2;
-  box(.09, .13, .95, dark, .1, 1.22, .45);
-  box(.1, .1, .1, skin, 0, 1.52, 0);
-  const head = new T.Mesh(new T.SphereGeometry(.14, 12, 10), skin); head.position.set(0, 1.67, 0); root.add(head);
-  const helmet = new T.Mesh(new T.SphereGeometry(.175, 12, 8, 0, Math.PI * 2, 0, Math.PI * .55), helm); helmet.position.set(0, 1.69, -.005); root.add(helmet);
-  const shadow = new T.Mesh(new T.CircleGeometry(.7, 20), new T.MeshBasicMaterial({ color: 0, transparent: true, opacity: .42, depthWrite: false })); shadow.rotation.x = -Math.PI / 2; shadow.position.y = .01; root.add(shadow);
-  return { root, head, helmet, shadow };
+/** Three flat bands of light instead of a smooth gradient: the cel-shaded look every 3D scene shares. */
+const ramp = (() => { const t = new T.DataTexture(new Uint8Array([88, 88, 100, 255, 178, 176, 182, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat); t.minFilter = t.magFilter = T.NearestFilter; t.needsUpdate = true; return t; })();
+export const toon = (c: number) => new T.MeshToonMaterial({ color: c, gradientMap: ramp });
+export const flat = (c: number, o = 1) => new T.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, fog: false, depthWrite: o === 1 });
+const ink = new T.MeshBasicMaterial({ color: 0x14110f, side: T.BackSide, fog: false });
+/** A toon-shaded mesh with a black ink outline (a slightly larger copy drawn from the inside), added to `parent` at x, y, z. */
+export function part(g: T.BufferGeometry, color: number | T.Material, parent: T.Object3D, x = 0, y = 0, z = 0, edge = .014) {
+  const m = new T.Mesh(g, typeof color === 'number' ? toon(color) : color); m.position.set(x, y, z);
+  if (edge > 0) {
+    g.computeBoundingBox(); const sz = g.boundingBox!.getSize(new T.Vector3());
+    const o = new T.Mesh(g, ink); o.scale.set(...(['x', 'y', 'z'] as const).map((a) => (sz[a] > 1e-4 ? (sz[a] + edge * 2) / sz[a] : 1)) as [number, number, number]);
+    const c = g.boundingBox!.getCenter(new T.Vector3()); o.position.copy(c).multiply(new T.Vector3(1, 1, 1)).sub(c.clone().multiply(o.scale));
+    m.add(o);
+  }
+  parent.add(m); return m;
+}
+export const box = (w: number, h: number, d: number) => new T.BoxGeometry(w, h, d);
+/** A cylinder lying along z, which is how every barrel and tube here points. */
+export const tube = (r1: number, r2: number, len: number, seg = 14) => { const g = new T.CylinderGeometry(r1, r2, len, seg); g.rotateX(Math.PI / 2); return g; };
+/** A flat spiky star, the comic-book burst that marks a hit or a shot. */
+export function starShape(points: number, outer: number, inner: number) {
+  const sh = new T.Shape();
+  for (let i = 0; i < points * 2; i++) { const a = (i / (points * 2)) * Math.PI * 2, r = i % 2 ? inner : outer; i ? sh.lineTo(Math.cos(a) * r, Math.sin(a) * r) : sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+  return new T.ShapeGeometry(sh);
+}
+/** A flat badge made of a coloured shape on a black one, always turned to face the camera. */
+export function badge(g: T.BufferGeometry, color: number, edge = .06) {
+  const grp = new T.Group();
+  const back = new T.Mesh(g, flat(0x14110f)); back.scale.setScalar(1 + edge); back.position.z = -.002; grp.add(back);
+  grp.add(new T.Mesh(g, flat(color)));
+  return grp;
+}
+export function skyDome(top: number, low: number, bands = 6) {
+  const a = new T.Color(low), b = new T.Color(top);
+  return new T.Mesh(new T.SphereGeometry(200, 24, 14), new T.ShaderMaterial({
+    side: T.BackSide, depthWrite: false, fog: false,
+    uniforms: { a: { value: a }, b: { value: b } },
+    vertexShader: 'varying float h; void main(){ h = normalize(position).y; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+    fragmentShader: `uniform vec3 a; uniform vec3 b; varying float h; void main(){ float k = floor(smoothstep(0., .5, h) * ${bands}.) / ${bands}.; gl_FragColor = vec4(mix(a, b, k), 1.);\n#include <colorspace_fragment>\n}`,
+  }));
 }
