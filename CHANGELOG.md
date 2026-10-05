@@ -4,6 +4,9 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 
 ## [Unreleased]
 
+### Added
+- **Legendary moments (rules v6, from 6 October):** very rare rounds that take the screen. An ace, a 1v5 clutch, a flawless 13–0 victory against a side that was not far weaker, or a miracle comeback from eight rounds down. On average about one map in 18 has one. A gold card with the player's photo pauses the match for a few seconds (any key or a tap skips it; reduced motion gets a still card), and the round is marked in the round log (with "Watch again"), on the rounds strip, in key moments, in the match report and on the Results page and share image. They never change who wins a round; older runs and dailies play exactly as before. Four new achievements (Witness, Ace in the hole, One versus five, Collector) and a collection on the Stats page. (#292–#295)
+
 ### Fixed
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 

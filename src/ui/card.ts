@@ -4,6 +4,7 @@
 import { ROLE_LABEL, Roster, Player } from '../data/rosters';
 import * as G from '../game/logic';
 import { Run, dailyDate, dailyNumber, squadOf } from '../game/state';
+import { legendsOf } from '../game/achievements';
 
 const W = 1080, H = 1350;
 // Flat charcoal, chalk and orange match the editorial page; no generated assets.
@@ -150,6 +151,14 @@ export async function drawResultCard(run: Run, host: string, practice = false): 
   const foot = [`MVP ${star.player.nick}${mvpRating !== undefined ? ` ${mvpRating.toFixed(2)}` : ''}`, grade !== null ? `DRAFT ${Math.round(grade * 100)}%` : ''].filter(Boolean).join('   ·   ');
   ctx.fillStyle = C.accent; spaced(ctx, 3); fit(ctx, foot, 700, 36, F.head, 960);
   ctx.fillText(foot, W / 2, 1210);
+  // A legendary moment (#294) gets its own gold line under the footer.
+  const legends = legendsOf(run);
+  if (legends.length) {
+    const first = legends[0], nick = mine.find((l) => l.player.id === first.playerId)?.player.nick;
+    const line = `✦ LEGENDARY: ${first.legend === 'ace' ? 'ACE' : first.legend === 'clutch5' ? '1V5 CLUTCH' : first.legend === 'flawless' ? 'FLAWLESS VICTORY' : 'MIRACLE COMEBACK'}${nick ? ` · ${nick.toUpperCase()}` : ''}${legends.length > 1 ? ` · +${legends.length - 1}` : ''}`;
+    ctx.fillStyle = '#e4ae39'; spaced(ctx, 2); fit(ctx, line, 700, 28, F.head, 960);
+    ctx.fillText(line, W / 2, 1244);
+  }
   ctx.fillStyle = C.muted; spaced(ctx, 1); ctx.font = `700 30px ${F.body}`;
   ctx.fillText(host, W / 2, 1268);
   ctx.fillStyle = C.accent; ctx.fillRect(0, H - 10, W, 10);

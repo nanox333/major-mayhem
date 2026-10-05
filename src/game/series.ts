@@ -5,9 +5,10 @@ import { hasRule } from './rulesState';
 import { Lineup, naturalLineup, rosterById, rosterPower, teamPower } from './lineup';
 import { MAPS, Team, Veto, VETO_ORDER, comfort, vetoChoice, vetoTurn } from './veto';
 import { CT_BIAS, Side, bestSide, otherSide, sideAt, sideEdge, sideLean } from './sides';
-import { BEST_OF, Call, Calls, Knife, MapGame, Match, MatchEvent, OPP_HANDICAP, STAGE_BOOST, StageKey, halfOf, noCalls } from './match';
+import { BEST_OF, Call, Calls, Knife, LegendKind, MapGame, Match, MatchEvent, OPP_HANDICAP, STAGE_BOOST, StageKey, halfOf, noCalls } from './match';
+import { debugHooks } from './debugHooks';
 import { Buy, EVENT_TEXT, OPP_TEXT, fill, fitting } from './narration';
-import { matchRating, tallyRound, tallyRoundV1 } from './tally';
+import { matchRating, tallyAce, tallyRound, tallyRoundV1 } from './tally';
 
 function winTarget(a: number, b: number) {
   // MR12, overtime MR3 (first to 16, 19, ...)
@@ -68,7 +69,20 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     if (ecoLeft > 0) ecoLeft--;
     if (ecoLeft === 0) forced = false;
     let star: number | undefined, clutch: { who: number; vs: number } | undefined;
-    if (won && random() < 0.05) {
+    // A legendary round (v6): very rare, and only ever one your team wins. It stands in for the usual clutch or highlight roll.
+    let legend: LegendKind | undefined;
+    if (won && hasRule('legendaryMoments')) {
+      const forced = debugHooks.legend;
+      if (forced === 'ace' || forced === 'clutch5') { legend = forced; debugHooks.legend = null; }
+      else if (random() < LEGEND_P) legend = random() < LEGEND_ACE ? 'ace' : 'clutch5';
+    }
+    if (legend) {
+      star = rand(5);
+      const x = mine[star];
+      impact[x.player.id] += 8;
+      if (legend === 'clutch5') clutch = { who: star, vs: 5 };
+      events.push({ round: rn, text: legend === 'ace' ? `${x.player.nick} aces the round: five kills and nobody left to answer.` : `${x.player.nick} clutches a 1v5. Five of them, one player.`, playerId: x.player.id, mine: true, good: true, kind: 'legend', legend });
+    } else if (won && random() < 0.05) {
       star = rand(5);
       clutch = { who: star, vs: 2 + rand(3) };
       const x = mine[star];
@@ -87,7 +101,7 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
         events.push({ round: rn, text: fill(lines[rand(lines.length)], y.player.nick, oppOrg, map), playerId: mine[rand(5)].player.id, mine: false, good: false });
       }
     }
-    const t = hasRule('oneDeathPerRound') ? tallyRound(won, kwM, dwM, kwO, dwO, star, clutch) : tallyRoundV1(won, kwM, dwM, kwO, dwO, star);
+    const t = legend === 'ace' ? tallyAce(star!, dwM, kwO, rand(3)) : hasRule('oneDeathPerRound') ? tallyRound(won, kwM, dwM, kwO, dwO, star, clutch) : tallyRoundV1(won, kwM, dwM, kwO, dwO, star);
     for (let j = 0; j < 5; j++) { K[j] += t.ourKills[j]; D[j] += t.ourDeaths[j]; OK[j] += t.theirKills[j]; OD[j] += t.theirDeaths[j]; }
     if (rn === 1 || rn === 13) {
       econ = won ? 1 : -1; ecoLeft = 2; forced = false;
@@ -96,10 +110,18 @@ function playMap(map: string, start: Side, mine: Lineup[], oppL: Lineup[], oppOr
     }
     if (rn === 12) halfLead = a - b;
     if (rn === 12) events.push({ round: rn, text: `Halftime ${a}–${b}. You switch to ${otherSide(start)}.`, mine: true, good: a >= b, kind: 'half' });
+    // A flawless victory (v6): the map is won 13–0. Read off the results, so it needs no roll.
+    if (hasRule('legendaryMoments') && a === 13 && b === 0 && A - B <= FLAWLESS_EDGE) events.push({ round: rn, text: 'Flawless victory: 13–0 and not one round dropped.', mine: true, good: true, kind: 'legend', legend: 'flawless' });
     if (a === 12 && b === 12) events.push({ round: rn, text: 'Overtime! First to 16, sides swap every three rounds.', mine: true, good: true, kind: 'ot' });
     else if (rn > 24 && (rn - 24) % 3 === 0 && a < winTarget(a, b) && b < winTarget(a, b)) events.push({ round: rn, text: `Overtime ${a}–${b}. You switch to ${sideAt(rn, start)}.`, mine: true, good: a >= b, kind: 'half' });
   }
   const r = rounds.length;
+  // A miracle comeback (v6): the map is won after trailing by eight or more rounds at some point.
+  if (hasRule('legendaryMoments') && a > b) {
+    let lead = 0, low = 0;
+    for (const w of rounds) { lead += w ? 1 : -1; low = Math.min(low, lead); }
+    if (low <= -8) events.push({ round: r, text: `Miracle comeback: ${-low} rounds down and still won the map.`, mine: true, good: true, kind: 'legend', legend: 'miracle' });
+  }
   mine.forEach((x, i) => (impact[x.player.id] += K[i] * 0.6 - D[i] * 0.2));
   const stat = (l: Lineup[], k: number[], d: number[]) => l.map((x, i) => ({ id: x.player.id, nick: x.player.nick, k: k[i], d: d[i], rating: Math.round(matchRating(k[i], d[i], r) * 100) / 100 }));
   return { map, start, rounds, events, score: [a, b], won: a > b, stats: { mine: stat(mine, K, D), opp: stat(oppL, OK, OD) }, calls, impact };
@@ -116,6 +138,10 @@ export function seriesRatings(maps: MapGame[], side: 'mine' | 'opp' | 'both' = '
 }
 
 const MOMENTUM = 0.7, MOMENTUM_CAP = 3, COMFORT = 1, ROLL = 0.4, ROLL_CAP = 1.2, TIMEOUT = 1.2, TIMEOUT_V4 = 2.4;
+/** Legendary rounds (v6): the chance on each round your team wins, and the share of them that are aces (the rest are 1v5 clutches). About one per 18 maps. */
+const LEGEND_P = 0.0045, LEGEND_ACE = 0.6;
+/** A 13–0 only counts as flawless when your team was not far the stronger one: beating a weak side 13–0 is a stomp, not a legend. */
+const FLAWLESS_EDGE = 1;
 
 /** Side choice before map `i`: the non-picker chooses on a picked map, a knife round decides the decider and Bo1s. */
 function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL: Lineup[], veto: Veto): Knife {

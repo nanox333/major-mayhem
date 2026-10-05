@@ -2,7 +2,7 @@
 import * as G from './logic';
 import { Run, dailyDate, dailyNumber, squadOf, today } from './state';
 import { shareText } from './share';
-import { newAchievements } from './achievements';
+import { legendsOf, newAchievements } from './achievements';
 import { isRealDate } from './dates';
 import { readKey, safeSet } from './persist';
 
@@ -34,6 +34,8 @@ export interface Stats {
   byMode?: { since: string; daily: ModeTally; free: Record<string, ModeTally> };
   /** The most recent attempts already counted, so a result is never counted twice across a reload or a second tab (#163). */
   attempts?: string[];
+  /** How many legendary moments (#292) your teams have had, by kind. Counted for scored runs only, like the rest of the record. */
+  legends?: Partial<Record<G.LegendKind, number>>;
 }
 const MAX_ATTEMPTS = 200;
 export interface ModeTally { runs: number; titles: number }
@@ -75,6 +77,7 @@ export function sanitizeStats(raw: unknown): Stats {
     if (isObj(raw.byMode.free)) for (const [k, v] of Object.entries(raw.byMode.free)) { const tl = tally(v); if (tl) free[k] = tl; }
     s.byMode = { since: raw.byMode.since, daily: tally(raw.byMode.daily)!, free };
   }
+  if (isObj(raw.legends)) { const lg: Partial<Record<G.LegendKind, number>> = {}; for (const k of G.LEGENDS) if (count(raw.legends[k]) > 0) lg[k] = count(raw.legends[k]); if (Object.keys(lg).length) s.legends = lg; }
   if (Array.isArray(raw.attempts)) s.attempts = raw.attempts.filter((x: unknown): x is string => typeof x === 'string').slice(-MAX_ATTEMPTS);
   return s;
 }
@@ -138,7 +141,9 @@ export function addRun(st: Stats, run: Run): Stats {
     ? { ...bm, daily: bump(bm.daily) }
     : { ...bm, free: { ...bm.free, [optsKey(run.opts)]: bump(bm.free[optsKey(run.opts)]) } };
   if (date && !next.daily[date]) next.daily[date] = { placement: pl.label, reached: pl.reached, mvp: G.mvp(run.t, mine).player.nick, grade: G.draftReview(run.picks, !!run.opts?.hard).grade, share: shareText(run), ...(run.attempt ? { attempt: run.attempt } : {}) };
-  const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0 }, st.ach ?? {});
+  const seen = legendsOf(run);
+  if (seen.length) { next.legends = { ...(st.legends ?? {}) }; for (const e of seen) next.legends[e.legend!] = (next.legends[e.legend!] ?? 0) + 1; }
+  const earned = newAchievements(run, { streak: next.streak, dailyStreak: date ? dailyStreak(next.daily, date).current : 0, legends: next.legends ?? {} }, st.ach ?? {});
   // The same local date the daily uses (#26), not UTC, so both agree around midnight.
   const day = date ?? today();
   next.ach = { ...(st.ach ?? {}), ...Object.fromEntries(earned.map((id) => [id, day])) };

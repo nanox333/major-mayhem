@@ -12,6 +12,7 @@ import { Tip } from '../ui/tips';
 import { PauseIcon, PlayIcon } from '../ui/icons';
 import { getPrefs } from '../ui/prefs';
 import { keyMoments, Moment } from '../game/highlights';
+import { LegendOverlay } from '../ui/Legend';
 import { BUY_LABEL, BUY_MARK, Buy, economyFor, momentumAt, momentumText } from '../game/momentum';
 
 export function StageTrack({ t, current }: { t: G.Tournament; current?: G.StageKey }) {
@@ -136,7 +137,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
   );
 }
 
-const MOMENT_MARK: Record<Moment['kind'], string> = { mvp: '★', pistol: '◆', clutch: '⚡', run: '»', half: '‖', comeback: '↗', ot: '+' };
+const MOMENT_MARK: Record<Moment['kind'], string> = { mvp: '★', legend: '✦', pistol: '◆', clutch: '⚡', run: '»', half: '‖', comeback: '↗', ot: '+' };
 /** The moments that decided a finished map: the MVP up front, then pistols, clutches, runs and the half in round order. */
 function Moments({ game, theirTag, mine }: { game: G.MapGame; theirTag: string; mine: G.Lineup[] }) {
   const all = keyMoments(game, theirTag);
@@ -204,6 +205,7 @@ const BUY_NOTE: Record<Buy, string> = {
 const sideCls = (side: G.Side) => (side === 'T' ? 't' : 'ct');
 const KF_CLASS = (e: G.MatchEvent) =>
   e.kind === 'half' || e.kind === 'ot' || e.kind === 'call' ? 'kf--half'
+    : e.kind === 'legend' ? 'kf--legend'
     : e.kind === 'clutch' ? 'kf--clutch'
       : `${e.good ? 'kf--us' : 'kf--them'}${e.kind === 'pistol' ? ' kf--pistol' : ''}`;
 
@@ -236,6 +238,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
   const [paused, setPaused] = useState(() => loadPlayback(seenKey(t, m, Math.max(0, m.maps.length - 1))).paused);
   const covered = usePlaybackCovered();
   const [allRounds, setAllRounds] = useState(false);
+  /** The legendary moment on screen, if one is playing: playback waits for it (#293). */
+  const [legend, setLegend] = useState<G.MatchEvent | null>(null);
   const game: G.MapGame | undefined = m.maps[mapIdx];
   const total = game?.rounds.length ?? 0;
   const mapDone = !!game && n >= total;
@@ -249,10 +253,10 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
     && G.canCall(m, { kind: 'force', round: n });
 
   useEffect(() => {
-    if (!game || mapDone || buyQuestion || paused || covered) return;
+    if (!game || mapDone || buyQuestion || paused || covered || legend) return;
     const tm = setTimeout(() => setN((x) => x + 1), n === 0 ? 650 : reduceMotion() ? 40 : 230 / speed);
     return () => clearTimeout(tm);
-  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion, paused, covered]);
+  }, [n, mapDone, mapIdx, !!game, speed, buyQuestion, paused, covered, legend]);
   // Space pauses and resumes, T calls a timeout, the right arrow steps one round while paused (desktop and streamers).
   const callTimeout = useRef<(() => void) | null>(null);
   useEffect(() => {
@@ -302,6 +306,9 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
     prevN.current = n;
     if (!game || n !== from + 1 || n > total) return;
     const evs = game.events.filter((e) => e.round === n);
+    // A legendary round takes the screen (only when you watch it arrive, never when a saved map resumes or is skipped).
+    const legendary = evs.find((e) => e.kind === 'legend');
+    if (legendary) { setLegend(legendary); play('legend'); return; }
     play(evs.some((e) => e.kind === 'clutch' && e.good) ? 'clutch' : game.rounds[n - 1] ? 'roundWin' : 'roundLoss');
     if (evs.some((e) => e.kind === 'half' || e.kind === 'ot')) play('half', { delay: 250 });
   }, [n]);
@@ -335,7 +342,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
   const playbackState = vetoing ? 'Map veto' : !game ? 'Ready' : mapDone ? 'Map complete' : buyQuestion ? 'Buy decision' : covered ? 'Playback covered' : paused ? 'Paused' : 'Playing';
 
   return (
-    <div ref={liveRoot} data-play={paused || buyQuestion ? 'paused' : 'playing'} className={`stack match-live ${vetoing || !game || mapDone ? 'match-live--decision' : ''}`}>
+    <div ref={liveRoot} data-play={paused || buyQuestion || legend ? 'paused' : 'playing'} className={`stack match-live ${vetoing || !game || mapDone ? 'match-live--decision' : ''}`}>
       <div className={`hud ${vetoing ? 'hud--veto' : ''}`}>
         <div className="hud__meta">{G.STAGE_NAME[m.stage]} · Bo{m.bestOf}{vetoing ? ' · Map veto' : `${m.bestOf === 3 ? ` · Map ${mapIdx + 1}` : ''} · ${mapName}${game ? ` · Round ${Math.min(n, total)}` : ''}${ot ? ' · OT' : ''}`}</div>
         <p className="match-state">{playbackState}</p>
@@ -360,7 +367,8 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
             // Coloured by the side that won the round, like the in-game round history; your losses are dimmed.
             const ours = G.sideAt(i, game.start);
             const clutch = game.events.some((e) => e.kind === 'clutch' && e.round === i + 1) ? ' clutch' : '';
-            return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}${i === n - 1 ? ' new' : ''}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}`} />;
+            const legendary = game.events.some((e) => e.kind === 'legend' && e.round === i + 1) ? ' is-legend' : '';
+            return <i key={i} className={`${game.rounds[i] ? sideCls(ours) : `${sideCls(G.otherSide(ours))} lost`}${pistol}${clutch}${legendary}${i === n - 1 ? ' new' : ''}`} title={`Round ${i + 1}${pistol ? ' · pistol' : ''}${clutch ? ' · clutch' : ''}${legendary ? ' · legendary' : ''}`} />;
           })}
         </div>
         {m.bestOf === 3 && !vetoing && (
@@ -443,7 +451,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
           <section className="match-feed" aria-label="Round log">
           <div className="feed-heading"><h3>Round log</h3><button className="ghost-btn" onClick={() => setAllRounds((v) => !v)} aria-pressed={allRounds}>{allRounds ? 'Latest only' : 'All rounds'}</button></div>
           <p className="sr" role="status">Round {n}. You {a}, {opp.tag} {b}.{nudge ? ' Timeout available.' : ''}</p>
-          <RoundLog game={game} n={n} all={allRounds} theirTag={opp.tag} run={nudge ? { who: opp.tag, rounds: theirRun } : null} />
+          <RoundLog game={game} n={n} all={allRounds} theirTag={opp.tag} run={nudge ? { who: opp.tag, rounds: theirRun } : null} onLegend={setLegend} />
           <Momentum rounds={game.rounds} n={n} total={total} forced={game.calls?.force ?? []} theirTag={opp.tag} />
           <TimeoutAftermath game={game} n={n} theirTag={opp.tag} />
           <BuyAftermath game={game} n={n} theirTag={opp.tag} />
@@ -469,6 +477,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
           </div>
         </>
       )}
+      {legend && <LegendOverlay e={legend} mine={mine} map={game?.map ?? mapName} onDone={() => setLegend(null)} />}
     </div>
   );
 }
@@ -696,7 +705,7 @@ function VetoPanel({ m, opp, mine, dispatch, latest }: { m: G.Match; opp: Roster
  * The round log: one row per round played, newest first. Each row says which side you were on, who won it, the score after it, what each team was buying when that
  * mattered (the rounds after a pistol), and anything notable that happened. It only reads the game's own rounds and events.
  */
-function RoundLog({ game, n, all, theirTag, run }: { game: G.MapGame; n: number; all: boolean; theirTag: string; run: { who: string; rounds: number } | null }) {
+function RoundLog({ game, n, all, theirTag, run, onLegend }: { game: G.MapGame; n: number; all: boolean; theirTag: string; run: { who: string; rounds: number } | null; onLegend: (e: G.MatchEvent) => void }) {
   const played = Math.min(n, game.rounds.length);
   const rows: { i: number; won: boolean; a: number; b: number; side: G.Side; notes: G.MatchEvent[] }[] = [];
   let a = 0, b = 0;
@@ -720,7 +729,7 @@ function RoundLog({ game, n, all, theirTag, run }: { game: G.MapGame; n: number;
           const eco = economyFor(game.rounds, r.i, forced);
           const odd = eco.mine !== 'full' || eco.theirs !== 'full';
           return (
-            <li key={`${r.i}`} className={`rl ${r.won ? 'is-won' : 'is-lost'} ${r.i === 0 || r.i === 12 ? 'is-pistol' : ''}`}>
+            <li key={`${r.i}`} className={`rl ${r.won ? 'is-won' : 'is-lost'} ${r.i === 0 || r.i === 12 ? 'is-pistol' : ''} ${r.notes.some((e) => e.kind === 'legend') ? 'is-legend' : ''}`}>
               <span className="rl__n">R{r.i + 1}{(r.i === 0 || r.i === 12) && <small>Pistol</small>}</span>
               <i className={`side-chip rl__side rl__side--${sideCls(r.side)}`}>{r.side}</i>
               <span className="rl__score"><b>{r.a}</b>–<b>{r.b}</b></span>
@@ -728,6 +737,7 @@ function RoundLog({ game, n, all, theirTag, run }: { game: G.MapGame; n: number;
               <span className="rl__notes">
                 {r.notes.length ? r.notes.map((e) => <span key={e.text} className={`rl__note ${KF_CLASS(e)}`}>{e.text}</span>) : <span className="rl__note rl__note--plain">{r.won ? 'You take the round.' : `${theirTag} take the round.`}</span>}
                 {boosted(r.i) && <em className="rl__buy rl__buy--timeout">Timeout boost</em>}
+                {r.notes.filter((e) => e.kind === 'legend').map((e) => <button key={e.text} type="button" className="rl__watch" onClick={() => onLegend(e)}>★ Watch again</button>)}
                 {odd && <em className="rl__buy">You {BUY_LABEL[eco.mine].toLowerCase()} · {theirTag} {BUY_LABEL[eco.theirs].toLowerCase()}</em>}
               </span>
             </li>

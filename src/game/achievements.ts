@@ -8,9 +8,13 @@ export interface AchievementCtx {
   streak: number;
   /** Dailies finished in a row, including this run. */
   dailyStreak: number;
+  /** Legendary moments seen so far, by kind, including this run. */
+  legends?: Partial<Record<G.LegendKind, number>>;
 }
 export interface Achievement { id: string; name: string; desc: string; test: (run: Run, ctx: AchievementCtx) => boolean }
 
+/** The legendary moments your team had in a run (#292). */
+export const legendsOf = (r: Run) => r.t.matches.flatMap((m) => m.maps).flatMap((g) => g.events.filter((e) => e.kind === 'legend' && !!e.legend));
 const champ = (r: Run) => G.placement(r.t).key === 'CHAMP';
 const maps = (r: Run) => r.t.matches.flatMap((m) => m.maps);
 const starters = (r: Run) => G.lineupFromPicks(r.picks);
@@ -18,6 +22,10 @@ const starters = (r: Run) => G.lineupFromPicks(r.picks);
 const leadAt = (g: G.MapGame, i: number) => g.rounds.slice(0, i).reduce((s, w) => s + (w ? 1 : -1), 0);
 
 export const ACHIEVEMENTS: Achievement[] = [
+  { id: 'witness', name: 'Witness', desc: 'See a legendary moment.', test: (_, c) => Object.keys(c.legends ?? {}).length > 0 },
+  { id: 'ace', name: 'Ace in the hole', desc: 'One of your players aces a round.', test: (_, c) => (c.legends?.ace ?? 0) > 0 },
+  { id: 'one-v-five', name: 'One versus five', desc: 'One of your players wins a 1v5 clutch.', test: (_, c) => (c.legends?.clutch5 ?? 0) > 0 },
+  { id: 'collector', name: 'Collector', desc: 'See all four legendary moments: an ace, a 1v5, a flawless victory and a miracle comeback.', test: (_, c) => G.LEGENDS.every((k) => (c.legends?.[k] ?? 0) > 0) },
   { id: 'champion', name: 'Major Champions', desc: 'Win a Major.', test: champ },
   { id: 'flawless', name: 'Flawless', desc: 'Win a Major without dropping a map.', test: (r) => champ(r) && maps(r).every((g) => g.won) },
   { id: 'swiss-30', name: '3–0', desc: 'Go through the Swiss stage unbeaten.', test: (r) => r.t.qual.need === 3 && r.t.qual.w === 3 && r.t.qual.l === 0 },

@@ -144,11 +144,13 @@ export const rostersOn = (date: string) => ROSTERS.filter((r) => (!r.since || r.
  * - v4 (from 2026-10-04): a timeout lifts the next three rounds about twice as much.
  * - v5 (from 2026-10-05): a draft duel is an equal-conditions comparison (#172): the friend is dealt the same cases, and the showmatch has no
  *   match-day form, substitutions or tactical calls, with both teams choosing maps and sides by the same rule. Only duels change; every other run plays as v4.
+ * - v6 (from 2026-10-06): legendary moments (#292): very rare special rounds (an ace, a 1v5 clutch, a flawless 13–0, a miracle comeback). Only runs on v6 can have
+ *   them; every earlier version plays exactly as before.
  * To add a version: append it here with tomorrow's date, name each behaviour it changes in `RULE_SINCE` below and read it
  * with `hasRule('name')` (never compare the version number in the code), put any changed roles in `rolesV1`-style fields,
  * and pin the previous version's fingerprints in `rules.test.ts`, which fails until you do.
  */
-export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }, { v: 4, from: '2026-10-04' }, { v: 5, from: '2026-10-05' }] as const;
+export const RULES = [{ v: 1, from: '2026-09-28' }, { v: 2, from: '2026-09-30' }, { v: 3, from: '2026-10-01' }, { v: 4, from: '2026-10-04' }, { v: 5, from: '2026-10-05' }, { v: 6, from: '2026-10-06' }] as const;
 export const LATEST_RULES: number = RULES[RULES.length - 1].v;
 export const rulesOn = (date: string): number => [...RULES].reverse().find((r) => r.from <= date)?.v ?? 1;
 /** Each behaviour that differs between rules versions, and the first version it applies in. Code reads these with `hasRule`, not with version numbers. */
@@ -167,6 +169,8 @@ export const RULE_SINCE = {
   strongerTimeout: 4,
   /** A draft duel is played on equal terms: recorded cases, neutral form, no subs or calls, automatic veto and sides for both teams (#172). */
   equalDuel: 5,
+  /** Very rare legendary rounds (an ace, a 1v5 clutch, a flawless 13–0 victory, a miracle comeback) with their own event and effect (#292). */
+  legendaryMoments: 6,
 } as const;
 export type RuleSwitch = keyof typeof RULE_SINCE;
 /** Whether rules version `v` includes the behaviour `f`. */

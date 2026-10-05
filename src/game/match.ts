@@ -8,7 +8,10 @@ export const STAGE_NAME: Record<StageKey, string> = { QUAL: 'Swiss Stage', QF: '
 /** Swiss matches are Bo1 unless they decide advancement or elimination (see bestOfFor); every playoff match is a Bo3. */
 export const BEST_OF: Record<StageKey, 1 | 3> = { QUAL: 1, QF: 3, SF: 3, F: 3, DUEL: 3 };
 
-export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' | 'pistol' | 'clutch' | 'call' }
+/** The kinds of legendary moment (#292): the first two are rolled on a won round, the other two are read off the map's own results. */
+export const LEGENDS = ['ace', 'clutch5', 'flawless', 'miracle'] as const;
+export type LegendKind = (typeof LEGENDS)[number];
+export interface MatchEvent { round: number; text: string; playerId?: string; mine: boolean; good: boolean; kind?: 'half' | 'ot' | 'pistol' | 'clutch' | 'call' | 'legend'; /** Which legendary moment, when `kind` is 'legend'. */ legend?: LegendKind }
 export interface PlayerStat { id: string; nick: string; k: number; d: number; rating: number }
 export interface MapGame {
   map: string;

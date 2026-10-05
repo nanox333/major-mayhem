@@ -19,6 +19,7 @@ import './styles/setup-page.css';
 import './styles/lobby-page.css';
 import './styles/match-page.css';
 import './styles/results-page.css';
+import './styles/legend.css';
 import './styles/shell.css';
 import './styles/help-chemistry.css';
 import './styles/roster-sheet.css';

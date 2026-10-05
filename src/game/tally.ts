@@ -69,5 +69,17 @@ export function tallyRound(won: boolean, kw: number[], dw: number[], okw: number
   return { ourKills, ourDeaths, theirKills, theirDeaths };
 }
 
+/**
+ * An ace: one player takes all five kills in a round their team wins. A teammate or two may still fall (the round was not a walk),
+ * and the other side's kills are spread among them as usual. (#292)
+ */
+export function tallyAce(who: number, dw: number[], okw: number[], fallen = 0): RoundTally {
+  const ourKills = [0, 0, 0, 0, 0], theirKills = [0, 0, 0, 0, 0], ourDeaths = [0, 0, 0, 0, 0], theirDeaths = [1, 1, 1, 1, 1];
+  ourKills[who] = 5;
+  for (const i of dead(Math.min(3, fallen), dw, who)) ourDeaths[i] = 1;
+  spread(ourDeaths.reduce((a, b) => a + b, 0), okw, theirKills);
+  return { ourKills, ourDeaths, theirKills, theirDeaths };
+}
+
 /** A made-up but consistent match rating: ~1.00 is average, 1.30+ is a big game. */
 export const matchRating = (k: number, d: number, r: number) => Math.max(0.2, Math.min(2.6, 0.26 + (k / r) * 0.95 + ((r - d) / r) * 0.5));

@@ -5,6 +5,8 @@ import { ArrowRightIcon, FlameIcon, StarIcon, StatsIcon, TrophyIcon } from '../u
 import { FINISH_SHORT, Stats, dailyStreak, recentDailies, statsSections, DayBar } from '../game/stats';
 import { dailyNumber, today } from '../game/state';
 import { ACHIEVEMENTS } from '../game/achievements';
+import { LEGENDS } from '../game/match';
+import { LEGEND_INFO } from '../ui/Legend';
 
 export const REACHED = ['Out in the Swiss stage', 'Quarterfinal', 'Semifinal', 'Runner-up', 'Champions'];
 const MODE_WORD: Record<string, string> = { all: 'all teams', csgo: 'CS:GO', cs2: 'CS2', champions: 'champions', underdogs: 'underdogs', hard: 'hard' };
@@ -113,6 +115,15 @@ export function StatsPage({ stats, next }: { stats: Stats; /** What to do next, 
           </section>
         )}
       </div>
+      <section className="sp-leg" aria-labelledby="sp-leg">
+        <div className="sp-leg__head"><h4 id="sp-leg">Legendary moments</h4><span>{LEGENDS.filter((k) => (stats.legends?.[k] ?? 0) > 0).length} of {LEGENDS.length} seen</span></div>
+        <ul className="sp-leg__grid">
+          {LEGENDS.map((k) => {
+            const n = stats.legends?.[k] ?? 0;
+            return <li key={k} className={n ? 'is-seen' : ''}><span className="sp-leg__mark" aria-hidden="true">{n ? '✦' : '?'}</span><b>{n ? LEGEND_INFO[k].title : 'Not seen yet'}</b><small>{LEGEND_INFO[k].how}</small><em>{n ? `Seen ${n} time${n === 1 ? '' : 's'}` : 'Very rare'}</em></li>;
+          })}
+        </ul>
+      </section>
       <section className="sp-ach" aria-labelledby="sp-ach">
         <div className="sp-ach__head"><h4 id="sp-ach">Achievements</h4><span>{earned} of {ACHIEVEMENTS.length}</span><i aria-hidden="true"><u style={{ width: `${(earned / ACHIEVEMENTS.length) * 100}%` }} /></i></div>
         <ul className="sp-ach__grid">

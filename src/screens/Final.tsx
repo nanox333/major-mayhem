@@ -7,6 +7,7 @@ import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
 import { Avatar, MapArt, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { keyMoments } from '../game/highlights';
+import { LEGEND_INFO } from '../ui/Legend';
 import { fmt, useMedia } from '../ui/util';
 import { play } from '../ui/sound';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
@@ -77,6 +78,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
           {stats.lastNew.map((id) => <span key={id} title={achievementById.get(id)?.desc}>★ {achievementById.get(id)?.name ?? id}</span>)}
         </div>
       )}
+      <LegendStrip s={s} mine={mine} />
       {date && (
         <p className="daily-meta">
           {streak > 1 && <span>🔥 {streak}-day daily streak</span>}
@@ -232,6 +234,28 @@ const canShareLink = () => { try { return matchMedia('(pointer: coarse)').matche
  * A finished match, read from the saved record (#66): nothing is re-simulated, so reopening it can't change a result.
  * Older saves without some details just show less.
  */
+/** The legendary moments of the run (#292, #294): the rarest things your team did, kept on the results page. */
+function LegendStrip({ s, mine }: { s: Run; mine: G.Lineup[] }) {
+  const items = s.t.matches.flatMap((m) => m.maps.flatMap((g) => g.events.filter((e) => e.kind === 'legend' && e.legend).map((e) => ({ e, map: g.map, opp: G.rosterById.get(m.opponentId) }))));
+  if (!items.length) return null;
+  return (
+    <section className="result-legends" aria-label="Legendary moments">
+      <h3 className="moments__head">Legendary moments<small>{items.length}</small></h3>
+      <ul className="legend-cards">
+        {items.map(({ e, map, opp }, i) => {
+          const who = mine.find((l) => l.player.id === e.playerId);
+          return (
+            <li key={`${map}${e.round}${i}`} className={`legend-card legend-card--${e.legend}`}>
+              <span className="legend-card__pic" aria-hidden="true">{who ? <Avatar player={who.player} roster={who.roster} /> : <i>✦</i>}</span>
+              <span className="legend-card__body"><small>{LEGEND_INFO[e.legend!].title}</small><b>{who?.player.nick ?? 'Your team'}</b><span>{e.text}</span><em>{map} · round {e.round}{opp ? ` · vs ${opp.org} ${opp.year}` : ''}</em></span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
   const opp = G.rosterById.get(m.opponentId)!;
   const [i, setI] = useState(0);
@@ -241,6 +265,7 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
     if (r === 0 || r === 12) out.push('pistol');
     if (g.calls?.timeouts.includes(r)) out.push('timeout');
     if (g.calls?.force.includes(r)) out.push('force buy');
+    if (g.events.some((e) => e.kind === 'legend' && e.round === r + 1)) out.push('legendary');
     if (g.events.some((e) => e.kind === 'clutch' && e.round === r + 1)) out.push('clutch');
     return out;
   };
@@ -289,7 +314,7 @@ function MatchReport({ m, onClose }: { m: G.Match; onClose: () => void }) {
                   <li key={r} className={`${won ? 'w' : 'l'}${r === 12 || (r >= 24 && (r - 24) % 3 === 0) ? ' swap' : ''}`} title={`Round ${r + 1}: ${won ? 'won' : 'lost'}${tags.length ? ` · ${tags.join(', ')}` : ''}`}>
                     <span className="sr">Round {r + 1} {won ? 'won' : 'lost'}{tags.length ? `, ${tags.join(', ')}` : ''}</span>
                     <small aria-hidden="true">{r + 1}</small>
-                    <b aria-hidden="true">{tags.includes('timeout') ? 'T' : tags.includes('force buy') ? 'F' : tags.includes('clutch') ? '★' : r === 0 || r === 12 ? '◆' : ''}</b>
+                    <b aria-hidden="true">{tags.includes('timeout') ? 'T' : tags.includes('force buy') ? 'F' : tags.includes('legendary') ? '✦' : tags.includes('clutch') ? '★' : r === 0 || r === 12 ? '◆' : ''}</b>
                   </li>
                 );
               })}
