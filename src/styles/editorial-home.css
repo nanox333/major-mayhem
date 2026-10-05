@@ -39,6 +39,9 @@
 .home-mode-art img { display: block; width: 100%; height: auto; }
 .home-case-mark { --accent: #ff7a26; --panel-2: #111; position: absolute; left: 39%; top: 46%; transform: translate(-50%,-50%) rotate(7deg); }
 .home-case-mark .logomark { display: block; }
+.editorial-home .home-secondary-modes .home-mode-card--duo { grid-column: 1 / -1; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); min-height: 230px; }
+.home-mode-art--duo { grid-row: 1 / 6; align-self: center; }
+.editorial-home .home-mode-card--duo .mcard__foot { align-self: end; max-width: 360px; }
 .home-mode-art--guess { grid-row: 1 / 6; align-self: end; margin-bottom: -24px; }
 .home-pro-question { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); color: #ff7a26; font-family: var(--f-head); font-size: clamp(3rem,5vw,5.5rem); font-weight: 800; line-height: 1; }
 .home-mode-label { margin: 0 0 8px; grid-column: 1; color: var(--accent); text-transform: uppercase; font-family: var(--f-head); font-weight: 800; letter-spacing: .09em; font-size: .85rem; }

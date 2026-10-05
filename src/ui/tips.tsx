@@ -5,8 +5,8 @@ import { TipIcon } from './icons';
 // Which tips have been dismissed is kept in this browser. Someone who has already finished a run, a daily or a duel has seen
 // the game and isn't shown any of them.
 
-export type TipId = 'intro' | 'fit' | 'chem' | 'form' | 'knife' | 'calls' | 'rating' | 'guess';
-export const TIP_IDS: TipId[] = ['intro', 'fit', 'chem', 'form', 'knife', 'calls', 'rating', 'guess'];
+export type TipId = 'intro' | 'fit' | 'chem' | 'form' | 'knife' | 'calls' | 'rating' | 'guess' | 'duo';
+export const TIP_IDS: TipId[] = ['intro', 'fit', 'chem', 'form', 'knife', 'calls', 'rating', 'guess', 'duo'];
 
 const KEY = 'mm-tips';
 const STATS_KEY = 'major-mayhem-stats-v1';

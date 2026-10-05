@@ -1,0 +1,371 @@
+import React, { useMemo, useRef, useState } from 'react';
+import { dailyNumber } from '../game/state';
+import { DuoDay, DuoMode, DuoPuzzle, MAX_TRIES, MODE_LABEL, addPick, candidates, cardsFor, duoFor, duoPros, duoShare, duoStreak, emptyDay, hintLineups, linksFor, loadDuo, recentDates, normalizeDuoDay, saveDuo, sharedLineups } from '../game/duo';
+import { Pro, searchState } from '../game/guess';
+import { Roster } from '../data/rosters';
+import { usePrefs } from '../ui/prefs';
+import { useShortcuts } from '../ui/shortcuts';
+import { pageUrl } from '../game/share';
+import { Avatar, TeamBadge } from '../ui/art';
+import { Flag } from '../ui/flags';
+import { ArrowRightIcon, FlameIcon, HelpIcon, SearchIcon } from '../ui/icons';
+import radars from '../data/radars.json';
+import { Tip } from '../ui/tips';
+import { Modal } from '../ui/Modal';
+import { play } from '../ui/sound';
+import { useCountdown } from '../ui/useCountdown';
+import { ShareBar } from './Final';
+import { track } from '../analytics';
+
+const photoOf = (p: Pro) => ({ id: p.id, nick: p.nick, roles: p.roles, rating: 80, country: p.country, portrait: p.portrait });
+const lastRoster = (p: Pro) => p.rosters[p.rosters.length - 1];
+const badgeRoster = (p: Pro, org: string) => [...p.rosters].reverse().find((r) => r.org === org)!;
+
+/** One end of the chain: photo, nick, nation and the teams they played for (never roles or ratings). */
+function Who({ p, hint }: { p: Pro; hint?: Roster }) {
+  return (
+    <div className="duo__who">
+      <span className="duo__photo"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
+      <strong>{p.nick}</strong>
+      <span className="duo__sub"><Flag code={p.country} size={16} decorative /><b>{p.country}</b></span>
+      <span className="duo__orgs" aria-label={`Teams: ${p.orgs.join(', ')}`}>{p.orgs.slice(-3).map((org) => <span key={org} title={org}><TeamBadge roster={badgeRoster(p, org)} size={24} /></span>)}</span>
+      {/* A clue, drawn: the lineup the answer shared with this pro. It appears after a wrong try in Normal mode. */}
+      {hint && <span className="duo__hint" role="img" aria-label={`Clue: the answer played with ${p.nick} at ${hint.org} in ${hint.year}`}><TeamBadge roster={hint} size={22} /><b>{hint.year}</b></span>}
+    </div>
+  );
+}
+
+interface BoardProps {
+  date: string;
+  puzzle: DuoPuzzle;
+  day: DuoDay;
+  setDay: (d: DuoDay) => void;
+  /** Seeds the Normal-mode cards: the date's for the daily, a random one for practice. */
+  seed: string;
+  practice: boolean;
+  daily: number;
+}
+
+/** The puzzle and the way to answer it, for a daily or for a practice round. */
+function Board({ date, puzzle, day, setDay, seed, practice, daily }: BoardProps) {
+  const all = useMemo(() => duoPros(date), [date]);
+  const links = useMemo(() => linksFor(date), [date]);
+  const a = all.get(puzzle.a)!, b = all.get(puzzle.b)!;
+  const cards = useMemo(() => (day.mode === 'normal' ? cardsFor(date, puzzle, seed) : null), [day.mode, date, puzzle, seed]);
+  const options = cards?.options ?? [];
+  const hints = useMemo(() => (cards ? hintLineups(date, puzzle, cards.right) : null), [cards, date, puzzle]);
+  const wrong = day.won ? day.picks.length - 1 : day.picks.length;
+  const chain = useRef<HTMLDivElement>(null);
+  const [text, setText] = useState('');
+  const [active, setActive] = useState(0);
+  const [shake, setShake] = useState(false);
+  const [announce, setAnnounce] = useState('');
+  /** The player picked in this visit, so only a new answer animates, not one restored from a reload. */
+  const [fresh, setFresh] = useState<string | null>(null);
+  const left = MAX_TRIES - day.picks.length;
+  const exclude = [...day.picks, puzzle.a, puzzle.b];
+  const found = searchState(all, text, exclude);
+  const choices = found.kind === 'results' ? found.options : [];
+  const endNick = found.kind === 'guessed' && [a.nick, b.nick].includes(found.nick) ? found.nick : null;
+  const spoken = found.kind === 'results' ? `${choices.length} player${choices.length === 1 ? '' : 's'} found` : found.kind === 'none' ? 'No players found' : '';
+
+  const choose = (mode: DuoMode) => { setDay({ ...day, mode }); if (!practice) track('duo_mode', { daily, mode }); };
+  const pick = (id: string) => {
+    const next = addPick(day, id, puzzle);
+    if (next === day) return;
+    setDay(next); setText(''); setActive(0); setFresh(id);
+    const right = puzzle.connectors.includes(id);
+    const nick = all.get(id)!.nick;
+    play(right ? 'hit' : 'miss');
+    if (next.done) play(next.won ? 'mapWin' : 'mapLose', { delay: 300 });
+    setAnnounce(right ? `${nick}: correct. They played with both.` : `${nick}: not a connector.${next.done ? '' : ` ${MAX_TRIES - next.picks.length} ${MAX_TRIES - next.picks.length === 1 ? 'try' : 'tries'} left.`}`);
+    if (!practice) {
+      if (day.picks.length === 0) track('duo_start', { daily, mode: day.mode ?? 'normal' });
+      if (next.done) track('duo_finish', { daily, mode: day.mode ?? 'normal', won: next.won, tries: next.picks.length });
+    }
+  };
+  const submit = () => {
+    if (choices[active]) return pick(choices[active].id);
+    if (text.trim()) { setShake(true); setTimeout(() => setShake(false), 420); }
+  };
+
+  const prefs = usePrefs();
+  const live = day.mode === 'normal' && !day.done;
+  useShortcuts(prefs.shortcuts, live ? Object.fromEntries(options.map((id, i) => [String(i + 1), () => { if (!day.picks.includes(id)) pick(id); }])) : {}, false);
+  /** The photos lean a little towards the pointer. Only with a mouse, and never with reduced motion (the CSS ignores the variables then). */
+  const tilt = (e: React.PointerEvent) => {
+    if (e.pointerType !== 'mouse' || !chain.current) return;
+    const r = chain.current.getBoundingClientRect();
+    chain.current.style.setProperty('--px', String(Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width - .5) * 2)).toFixed(3)));
+    chain.current.style.setProperty('--py', String(Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height - .5) * 2)).toFixed(3)));
+  };
+  const untilt = () => { chain.current?.style.setProperty('--px', '0'); chain.current?.style.setProperty('--py', '0'); };
+
+  const rightIds = puzzle.connectors;
+  const shown = day.done ? all.get(day.won ? day.picks[day.picks.length - 1] : rightIds[0]) : null;
+  return (
+    <>
+      <div ref={chain} onPointerMove={tilt} onPointerLeave={untilt} className={`duo__chain ${day.won ? 'is-won' : day.done ? 'is-lost' : ''}`} role="group" aria-label={`${a.nick} and ${b.nick}: name a pro who played with both`}>
+        <Who p={a} hint={!day.done && wrong >= 1 ? hints?.a : undefined} />
+        <span className="duo__link" aria-hidden="true" />
+        <span className={`duo__mid ${shown ? 'is-open' : ''}`} aria-hidden="true">
+          {shown ? <span className="duo__mid-photo"><Avatar player={photoOf(shown)} roster={lastRoster(shown)} /></span> : <b>?</b>}
+          <small>{day.won ? 'Linked' : day.done ? 'Missed' : 'Link'}</small>
+          {fresh && day.won && <span className="duo__burst">{Array.from({ length: 16 }, (_, i) => <i key={i} style={{ ['--a' as string]: `${(i * 360) / 16}deg`, ['--r' as string]: `${70 + (i % 3) * 18}px` }} />)}</span>}
+        </span>
+        <span className="duo__link" aria-hidden="true" />
+        <Who p={b} hint={!day.done && wrong >= 2 ? hints?.b : undefined} />
+      </div>
+
+      {day.mode === null && !day.done && (
+        <div className="duo__modes">
+          <p className="duo__modes-t"><span>Choose your way in</span><small><LockGlyph /> Locked once you pick</small></p>
+          <div className="duo__modes-row">
+            <button type="button" className="dbtn duo__mode" data-sfx="none" onClick={() => choose('normal')}><i className="duo__mini duo__mini--cards" aria-hidden="true"><s /><s /><s /><s /></i><span><b>Normal</b><small>Four cards</small></span><ArrowRightIcon size={22} /></button>
+            <button type="button" className="dbtn dbtn--dark duo__mode" data-sfx="none" onClick={() => choose('hard')}><i className="duo__mini duo__mini--type" aria-hidden="true"><s /></i><span><b>Hard 💀</b><small>Type it yourself</small></span><ArrowRightIcon size={22} /></button>
+          </div>
+        </div>
+      )}
+
+      {day.mode && !day.done && (
+        <>
+          <p className="duo__state"><span className="duo__badge">{MODE_LABEL[day.mode]}{day.mode === 'hard' ? ' 💀' : ''}</span>
+            <span className="guess__pips" aria-hidden="true">{Array.from({ length: MAX_TRIES }, (_, i) => <i key={i} className={i < left ? 'on' : ''} />)}</span>
+            <span>{left} {left === 1 ? 'try' : 'tries'} left</span></p>
+
+          {day.mode === 'normal' && (
+            <div className="duo__cards" role="group" aria-label="Who played with both?">
+              {options.map((id, i) => {
+                const p = all.get(id)!;
+                const struck = day.picks.includes(id);
+                return (
+                  <button key={id} type="button" className={`duo__card ${struck ? 'is-struck' : ''} ${struck && fresh === id ? 'is-new' : ''}`} style={{ ['--i' as string]: i }} disabled={struck} data-sfx="none" onClick={() => pick(id)}
+                    aria-label={struck ? `${p.nick}, ${p.country}. Not a connector.` : `${p.nick}, ${p.country}`}>
+                    <kbd className="duo__key" aria-hidden="true">{i + 1}</kbd>
+                    <span className="duo__cphoto"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span>
+                    <span className="duo__ctext"><strong>{p.nick}</strong><span className="duo__sub"><Flag code={p.country} size={14} decorative /><b>{p.country}</b></span></span>
+                    {struck && <span className="duo__x" aria-hidden="true">✗<small>Not a connector</small></span>}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {day.mode === 'hard' && (
+            <div className={`guess__bar ${shake ? 'is-shake' : ''}`}>
+              <div className="guess__entry">
+                <div className="guess__box">
+                  <SearchIcon size={20} />
+                  <input value={text} onChange={(e) => { setText(e.target.value); setActive(0); }} placeholder="Who played with both?"
+                    aria-label={`Try ${day.picks.length + 1} of ${MAX_TRIES}: type a player's name`} autoComplete="off" spellCheck={false}
+                    role="combobox" aria-autocomplete="list" aria-expanded={choices.length > 0} aria-controls="duo-options"
+                    aria-activedescendant={choices.length ? `duo-option-${active}` : undefined}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowDown') { e.preventDefault(); setActive((x) => Math.min(x + 1, choices.length - 1)); }
+                      if (e.key === 'ArrowUp') { e.preventDefault(); setActive((x) => Math.max(x - 1, 0)); }
+                      if (e.key === 'Enter') { e.preventDefault(); submit(); }
+                      if (e.key === 'Escape' && text) { e.preventDefault(); setText(''); setActive(0); }
+                    }} />
+                  {choices.length > 0 && (
+                    <ul className="guess__suggest" id="duo-options" role="listbox" aria-label="Matching players">
+                      {choices.map((p, i) => (
+                        <li key={p.id} role="presentation">
+                          <button role="option" id={`duo-option-${i}`} aria-selected={i === active} tabIndex={-1} className={i === active ? 'is-on' : ''} data-sfx="none" onClick={() => pick(p.id)}>
+                            <b>{p.nick}</b><small>{p.country} · {p.orgs.slice(-1)[0]}</small>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <button type="button" className="dbtn dbtn--try" data-sfx="none" disabled={!choices[active]} onClick={submit}><span>Try</span><ArrowRightIcon size={22} /></button>
+              </div>
+              <div className="sr" role="status" aria-live="polite">{spoken}</div>
+              {found.kind === 'none' && <p className="guess__empty">No players found for “{text.trim()}”. Check the spelling, or try part of a nickname.</p>}
+              {found.kind === 'guessed' && <p className="guess__empty">{endNick ? `${endNick} is one of the two ends. Name someone in between.` : `You've already tried ${found.nick}.`}</p>}
+            </div>
+          )}
+
+          {day.mode === 'hard' && day.picks.length > 0 && (
+            <ul className="duo__misses" aria-label="Your tries so far">
+              {day.picks.map((id) => <li key={id}><i aria-hidden="true">✗</i><b>{all.get(id)!.nick}</b><span>Not linked to both in this game's data</span></li>)}
+            </ul>
+          )}
+        </>
+      )}
+      <div className="sr" role="status" aria-live="polite">{announce}</div>
+
+      {day.done && (
+        <div className={`duo__reveal ${day.won ? 'is-won' : ''}`}>
+          <small className="guess__verdict">{day.won ? `Linked in ${day.picks.length} ${day.picks.length === 1 ? 'try' : 'tries'}` : 'Nobody you named played with both. These did:'}</small>
+          <ul className="duo__answers">
+            {rightIds.map((id, i) => {
+              const p = all.get(id)!;
+              const chosen = day.picks.includes(id);
+              return (
+                <li key={id} className={chosen ? 'is-chosen' : ''} style={{ ['--i' as string]: i }}>
+                  <div className="duo__trio">
+                    <span className="duo__t-end"><span className="duo__tphoto"><Avatar player={photoOf(a)} roster={lastRoster(a)} /></span><b>{a.nick}</b></span>
+                    <Pills rosters={sharedLineups(links, id, a.id)} />
+                    <span className="duo__t-mid"><span className="duo__tphoto duo__tphoto--big"><Avatar player={photoOf(p)} roster={lastRoster(p)} /></span><strong><Flag code={p.country} size={16} decorative />{p.nick}{chosen && <i aria-hidden="true"> ✓</i>}</strong></span>
+                    <Pills rosters={sharedLineups(links, id, b.id)} />
+                    <span className="duo__t-end"><span className="duo__tphoto"><Avatar player={photoOf(b)} roster={lastRoster(b)} /></span><b>{b.nick}</b></span>
+                  </div>
+                  <span className="sr">{p.nick} played with {a.nick}: {sharedLineups(links, id, a.id).map((r) => `${r.org} ${r.year}`).join(', ')}. And with {b.nick}: {sharedLineups(links, id, b.id).map((r) => `${r.org} ${r.year}`).join(', ')}.</span>
+                </li>
+              );
+            })}
+          </ul>
+          {rightIds.length > 1 && !day.won && <p className="duo__note">Any of them counts.</p>}
+        </div>
+      )}
+    </>
+  );
+}
+
+/** The lineups two pros shared, as badges with a year: the proof of a link, drawn on the wire between them. */
+function Pills({ rosters }: { rosters: Roster[] }) {
+  return <span className="duo__pills" aria-hidden="true">{rosters.slice(-2).map((r) => <span key={r.id} className="duo__pill" title={`${r.org} ${r.year}`}><TeamBadge roster={r} size={22} /><b>{r.year}</b></span>)}</span>;
+}
+
+const LockGlyph = () => <svg className="duo__lock" width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 11V8a5 5 0 0 1 10 0v3M5 11h14v10H5z" fill="none" stroke="currentColor" strokeWidth="2.4" /></svg>;
+
+/** The faceless pair over the title: two silhouettes joined through a question mark, in the same box as Guess the pro's. */
+function DuoMark() {
+  return (
+    <svg className="gp__sil duo__mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+      <circle cx="14" cy="22" r="7" fill="currentColor" /><path d="M3 50c0-9 5-13 11-13s11 4 11 13z" fill="currentColor" />
+      <circle cx="50" cy="22" r="7" fill="currentColor" /><path d="M39 50c0-9 5-13 11-13s11 4 11 13z" fill="currentColor" />
+      <rect x="23" y="16" width="18" height="26" rx="2" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
+      <text x="32" y="36" textAnchor="middle" fontSize="18" fontWeight="800" fill="var(--accent)">?</text>
+    </svg>
+  );
+}
+
+export function DuoScreen({ next }: { next: { label: string; go: () => void } }) {
+  const cd = useCountdown();
+  const date = cd.day;
+  const all = useMemo(() => duoPros(date), [date]);
+  const puzzle = useMemo(() => duoFor(date), [date]);
+  const [store, setStore] = useState(loadDuo);
+  const day = useMemo(() => normalizeDuoDay(store[date], all, puzzle), [store, date, all, puzzle]);
+  /** An unscored round: a random pair, or an earlier day's pair replayed (`replay` is that day's number). */
+  const [practice, setPractice] = useState<{ puzzle: DuoPuzzle; seed: string; day: DuoDay; date: string; replay: number | null } | null>(null);
+  const [help, setHelp] = useState(false);
+  const streak = duoStreak(store, date);
+  const n = dailyNumber(date);
+  const maps = Object.keys(radars as Record<string, string>);
+  const radar = (radars as Record<string, string>)[maps[(n + 3) % maps.length]];
+
+  const setDay = (d: DuoDay) => { const s = { ...store, [date]: d }; setStore(s); saveDuo(s); };
+  const startPractice = () => {
+    const list = candidates(date).filter((c) => c.a !== puzzle.a || c.b !== puzzle.b);
+    const c = list[Math.floor(Math.random() * list.length)];
+    setPractice({ puzzle: c, seed: `practice-${Math.random().toString(36).slice(2)}`, day: emptyDay(), date, replay: null });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  /** An earlier day's pair, with that day's data and its same four cards, played for practice: nothing is recorded. */
+  const startReplay = (d: string) => {
+    setPractice({ puzzle: duoFor(d), seed: `duo-opts-${d}`, day: emptyDay(), date: d, replay: dailyNumber(d) });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <section className="gp duo" style={{ ['--radar' as string]: `url(${radar})` }} aria-labelledby="duo-title">
+      <div className="gp__bg" aria-hidden="true" />
+      <header className="gp__head">
+        <DuoMark />
+        <div className="gp__titles">
+          <p className="gp__kicker">{practice ? (practice.replay ? `Replay · Daily #${practice.replay} · not scored` : 'Practice · not scored') : `Daily #${n}`}</p>
+          <h2 id="duo-title" className="gp__title">Duo <span>Link</span></h2>
+          <p className="gp__sub">Name a pro who played with both.</p>
+        </div>
+        <div className="duo__tools">
+          {streak > 0 && <span className="duo__streak" role="img" aria-label={`${streak}-day streak`} title={`${streak}-day streak`}><FlameIcon size={22} /><b>{streak}</b></span>}
+          <button type="button" className="gp__help" onClick={() => setHelp(true)} aria-label="How Duo Link works" data-sfx="none"><HelpIcon size={22} /></button>
+        </div>
+      </header>
+
+      <Tip id="duo" title="How Duo Link works">
+        <p className="tip-lead">Two pros never shared a Major lineup. Name someone who played with both.</p>
+        <ul className="tip-legend">
+          <li className="is-hit"><i>✓</i><b>Normal</b><span>Pick from four cards</span></li>
+          <li className="is-near"><i>💀</i><b>Hard</b><span>Type the name yourself</span></li>
+          <li className="is-miss"><i>✗</i><b>Three tries</b><span>A wrong answer is struck out</span></li>
+        </ul>
+        <p className="tip-foot">Played with = the same Major lineup in this game's data.</p>
+      </Tip>
+
+      {practice
+        ? <Board key={practice.seed} date={practice.date} puzzle={practice.puzzle} day={practice.day} setDay={(d) => setPractice({ ...practice, day: d })} seed={practice.seed} practice daily={n} />
+        : <Board key={date} date={date} puzzle={puzzle} day={day} setDay={setDay} seed={`duo-opts-${date}`} practice={false} daily={n} />}
+
+      {(practice ? practice.day.done : day.done) && (
+        <div className="guess__after">
+          {!practice && <ShareBar text={() => duoShare(date, day, pageUrl())} props={{ mode: 'duo', daily: n }} />}
+          {!practice && (
+            <p className="guess__meta">
+              {streak > 0 && <span className="guess__streak"><FlameIcon size={16} />{streak}-day streak</span>}
+              <span>Next daily in {cd.clock}</span>
+            </p>
+          )}
+          <button type="button" className="dbtn duo__next" onClick={startPractice}><span>{practice ? 'Another practice pair' : 'Practice another pair'}</span><ArrowRightIcon size={22} /></button>
+          {practice && <button type="button" className="dbtn dbtn--dark dbtn--sm" onClick={() => setPractice(null)}><span>Back to today</span><ArrowRightIcon size={18} /></button>}
+          {!practice && <button type="button" className="dbtn dbtn--dark dbtn--sm" onClick={next.go}><span>{next.label}</span><ArrowRightIcon size={18} /></button>}
+        </div>
+      )}
+
+      <History today={date} store={store} onReplay={startReplay} />
+
+      {help && <DuoHelp onClose={() => setHelp(false)} />}
+    </section>
+  );
+}
+
+/** The last fortnight at a glance: solved (with the tries it took), missed, or not played. A past day opens as an unscored replay. */
+function History({ today, store, onReplay }: { today: string; store: Record<string, DuoDay>; onReplay: (date: string) => void }) {
+  // Only days since Daily #1: the game has no earlier dailies.
+  const days = useMemo(() => recentDates(today, 14).filter((d) => dailyNumber(d) >= 1), [today]);
+  const cells = days.map((d) => {
+    const raw = store[d];
+    const day = raw?.picks.length ? normalizeDuoDay(raw, duoPros(d), duoFor(d)) : null;
+    const state = !day ? 'new' : day.won ? 'won' : day.done ? 'lost' : 'open';
+    const text = state === 'won' ? `linked in ${day!.picks.length}` : state === 'lost' ? 'not linked' : state === 'open' ? 'in progress' : 'not played';
+    return { d, n: dailyNumber(d), state, tries: day?.picks.length ?? 0, hard: day?.mode === 'hard', text };
+  });
+  return (
+    <section className="duo__history" aria-label="Your recent days" style={{ ['--n' as string]: cells.length }}>
+      <p className="duo__h-t"><span>Recent days</span><small>Tap a past day to replay it</small></p>
+      <ol className="duo__h-row">
+        {cells.map((c) => {
+          const cls = `duo__day is-${c.state} ${c.d === today ? 'is-today' : ''}`;
+          const inner = <><small>{Number(c.d.slice(8))}</small><b>{c.state === 'won' ? c.tries : c.state === 'lost' ? '✗' : c.state === 'open' ? '…' : '·'}</b>{c.hard && c.state === 'won' && <i aria-hidden="true">💀</i>}</>;
+          const label = `Daily #${c.n}, ${c.d}: ${c.text}${c.hard ? ', hard mode' : ''}`;
+          return <li key={c.d}>{c.d === today ? <span className={cls} role="img" aria-label={`Today. ${label}`}>{inner}</span> : <button type="button" className={cls} aria-label={`${label}. Replay for practice`} title={`#${c.n} · ${c.text}`} data-sfx="none" onClick={() => onReplay(c.d)}>{inner}</button>}</li>;
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function DuoHelp({ onClose }: { onClose: () => void }) {
+  return (
+    <Modal label="How Duo Link works" onClose={onClose} wide>
+      <div className="gh">
+        <header className="gh__head">
+          <span className="gh__kick">Guide</span>
+          <h3>How Duo Link works</h3>
+          <p>Two pros never shared a Major lineup. One pro played with both of them. Name that pro in {MAX_TRIES} tries. Everyone gets the same pair today.</p>
+        </header>
+        <h4 className="gh__title">Two ways to play</h4>
+        <dl className="gh__cols">
+          <div className="gh__col"><dt>Normal</dt><dd><span>Four cards: one is right and three are not. A wrong card is struck out.</span></dd></div>
+          <div className="gh__col"><dt>Hard 💀</dt><dd><span>No cards. Type the name yourself. Any pro who played with both counts.</span></dd></div>
+        </dl>
+        <p className="gh__note">Pick one before your first try. It stays for the day, because seeing the cards would give the answer away. There is one streak, and your share line says which way you played.</p>
+        <h4 className="gh__title">What counts as "played with"</h4>
+        <p className="gh__note">Being on the same Major lineup in this game's data, not whole careers. Two pros who shared a team between Majors are not linked here. A player on the lineup that went out in the quarterfinals counts too.</p>
+      </div>
+    </Modal>
+  );
+}

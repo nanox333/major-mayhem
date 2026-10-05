@@ -22,7 +22,7 @@ export function typing(e: KeyboardEvent): boolean {
 }
 
 /** The handlers a screen gives; a key with no handler is left alone. */
-export type ShortcutHandlers = Partial<Record<'1' | '2' | '3' | 'Enter' | 't' | 'm' | '?', () => void>>;
+export type ShortcutHandlers = Partial<Record<'1' | '2' | '3' | '4' | 'Enter' | 't' | 'm' | '?', () => void>>;
 
 export function useShortcuts(on: boolean, handlers: ShortcutHandlers, blocked: boolean) {
   const ref = useRef(handlers);

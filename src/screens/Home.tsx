@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_ORDER, ROSTERS, Role, Roster } from '../data/rosters';
 import { MAX_GUESSES, guessStreak, loadGuesses } from '../game/guess';
+import { MAX_TRIES, duoFor, duoPros, duoStreak, loadDuo } from '../game/duo';
+import type { DuoDay } from '../game/duo';
 import { achievementCount, bestFinish, dailyButton, dailyPanel, homeState, replaceRisk, runWhere } from '../game/home';
 import { Action, Run, dailyDate, dailyNumber } from '../game/state';
 import { Stats, dailyStreak, statsSections } from '../game/stats';
@@ -21,6 +23,7 @@ interface HomeProps {
   /** Opens the free-play setup page. */
   showSetup: () => void;
   showGuess: () => void;
+  showDuo: () => void;
   onStats: () => void;
   onBrowse?: () => void;
 }
@@ -29,7 +32,7 @@ interface HomeProps {
  * The home screen (#113): the first page, and somewhere you can come back to without touching a run in progress (#115).
  * One daily invitation, quieter secondary modes, your actual record and expandable instructions.
  */
-export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess, onStats, onBrowse }: HomeProps) {
+export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess, showDuo, onStats, onBrowse }: HomeProps) {
   const cd = useCountdown();
   const todayN = dailyNumber(cd.day);
   const home = homeState(s, stats, cd.day);
@@ -63,6 +66,8 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
 
   const g = useMemo(() => loadGuesses()[cd.day], [cd.day]);
   const gStreak = useMemo(() => guessStreak(loadGuesses(), cd.day), [cd.day]);
+  const duo = useMemo(() => loadDuo()[cd.day], [cd.day]);
+  const dStreak = useMemo(() => duoStreak(loadDuo(), cd.day), [cd.day]);
   const streak = dailyStreak(stats.daily, cd.day).current;
 
   const savedDaily = dailyDate(s);
@@ -154,12 +159,48 @@ export function HomeScreen({ s, stats, dispatch, showDraft, showSetup, showGuess
             <button type="button" className="mbtn home-mode-start" onClick={showGuess}><span>{g?.done ? "See today's answer" : g?.guesses.length ? 'Keep guessing' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
           </div>
         </article>
+
+        <article className="mcard home-mode-card home-mode-card--duo" aria-labelledby="mcard-duo-h">
+          <span className="home-mode-art home-mode-art--duo"><DuoLive date={cd.day} duo={duo} /></span>
+          <p className="home-mode-label">Duo Link</p><h2 className="mcard__title" id="mcard-duo-h">Two pros.<br />One link.</h2>
+          <div className="mcard__foot">
+            <DuoPips duo={duo} streak={dStreak} />
+            <button type="button" className="mbtn home-mode-start" onClick={showDuo}><span>{duo?.done ? "See today's link" : duo?.picks.length ? 'Keep going' : 'Play now'}</span><ArrowRightIcon size={22} /></button>
+          </div>
+        </article>
       </div>
 
       {onBrowse && <button type="button" className="home-archive" aria-label="Explore Major rosters" onClick={onBrowse}><ArchiveArt /><span><b>Roster archive</b></span><ArrowRightIcon size={20} /></button>}
       <StatsPanel stats={stats} streak={streak} onStats={onStats} />
       <HowItWorks />
     </div>
+  );
+}
+
+/** Today's actual pair with the unknown between them, which becomes the answer once solved: the card shows the puzzle instead of describing it. */
+function DuoLive({ date, duo }: { date: string; duo?: DuoDay }) {
+  const all = duoPros(date), p = duoFor(date);
+  const a = all.get(p.a)!, b = all.get(p.b)!;
+  const solved = duo?.won ? all.get(duo.picks[duo.picks.length - 1]) : null;
+  const face = (x: typeof a) => <figure className="home-duo-end"><span><Avatar player={{ id: x.id, nick: x.nick, roles: x.roles, rating: 80, country: x.country, portrait: x.portrait }} roster={x.rosters[x.rosters.length - 1]} /></span><figcaption>{x.nick}</figcaption></figure>;
+  return (
+    <span className={`home-duo-live ${solved ? 'is-won' : ''}`} aria-hidden="true">
+      {face(a)}<i className="home-duo-wire" />
+      <span className="home-duo-q">{solved ? <Avatar player={{ id: solved.id, nick: solved.nick, roles: solved.roles, rating: 80, country: solved.country, portrait: solved.portrait }} roster={solved.rosters[solved.rosters.length - 1]} /> : <b>?</b>}</span>
+      <i className="home-duo-wire" />{face(b)}
+    </span>
+  );
+}
+
+/** Tries as three pips (green for the one that linked them, red for a miss) and the streak as a flame: no sentence needed. */
+function DuoPips({ duo, streak }: { duo?: DuoDay; streak: number }) {
+  const used = duo?.picks.length ?? 0;
+  const said = duo?.done ? (duo.won ? `Linked in ${used} of ${MAX_TRIES}` : 'Not linked today') : used ? `${used} of ${MAX_TRIES} tries used` : 'Not played yet';
+  return (
+    <p className="home-duo-state" aria-label={`${said}${streak > 0 ? `, ${streak}-day streak` : ''}`}>
+      <span className="home-duo-pips" aria-hidden="true">{Array.from({ length: MAX_TRIES }, (_, i) => <i key={i} className={i < used ? (duo?.won && i === used - 1 ? 'is-win' : 'is-miss') : ''} />)}</span>
+      {streak > 0 && <span className="home-duo-streak" aria-hidden="true"><FlameIcon size={16} />{streak}</span>}
+    </p>
   );
 }
 
@@ -231,13 +272,13 @@ const SAMPLE: Roster = [...ROSTERS].filter((r) => r.result === 'Champions').sort
 function HowItWorks() {
   const shown = true;
   const steps = [
-    { title: 'Open a case', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
-    { title: 'Draft your team', art: (
+    { title: 'Open a case', text: 'Three iconic rosters from Major history.', art: <span className="how__art how__art--case"><CaseIcon size={34} /></span> },
+    { title: 'Draft your team', text: 'Pick a player at a time: five, a coach and a bench player.', art: (
       <span className="how__art how__art--roster" title={`${SAMPLE.org} ${SAMPLE.year}`}>
         {SAMPLE.players.map((p) => <span key={p.id} className="how__face"><Avatar player={p} roster={SAMPLE} /></span>)}
       </span>
     ) },
-    { title: 'Play the Major', art: (
+    { title: 'Play the Major', text: 'A Swiss stage, then the playoffs, against rosters from Major history.', art: (
       <svg className="how__art how__art--bracket" viewBox="0 0 120 64" aria-hidden="true" focusable="false">
         <g fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
           <path d="M6 8h22v10H6zM6 46h22v10H6z" /><path d="M28 13h10v19M28 51h10V32M38 32h14" />
@@ -245,7 +286,7 @@ function HowItWorks() {
         </g>
       </svg>
     ) },
-    { title: 'Share', art: (
+    { title: 'Share', text: 'See how far you got and compare with friends.', art: (
       <span className="how__art how__art--card"><FlagIcon size={20} /><b>1st place</b><ShareIcon size={16} /></span>
     ) },
   ];
@@ -257,8 +298,9 @@ function HowItWorks() {
       {shown && (
         <>
           <ol className="how__steps">
-            {steps.map((x) => <li key={x.title} className="how__step">{x.art}<b>{x.title}</b></li>)}
+            {steps.map((x) => <li key={x.title} className="how__step">{x.art}<b>{x.title}</b><span className="how__text">{x.text}</span></li>)}
           </ol>
+          <p className="how__sample muted small">The roster above is a real one: {SAMPLE.org} {SAMPLE.year}, {SAMPLE.event}.</p>
         </>
       )}
     </section>
