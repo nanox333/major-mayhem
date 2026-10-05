@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ROSTERS, ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
+import { ROSTERS, ROLE_SHORT, Roster } from '../data/rosters';
 import { COUNTRY, NATION, synergies, strength } from '../game/synergy';
 import { naturalLineup } from '../game/lineup';
 import { chemistryWord } from '../game/draftui';
