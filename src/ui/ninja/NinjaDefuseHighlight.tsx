@@ -86,7 +86,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
     else {
       try {
         renderer = new T.WebGLRenderer({ canvas: c, antialias: true, alpha: false, powerPreference: 'high-performance' }); ninjaDiagnostics.renderers++;
-        renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.3;
+        renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
         renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
         // if the assets are slow the fallback plays instead: the match must never wait for a highlight
         const slow = setTimeout(() => { if (!ready && !dead) { fail(); begin(); } }, 2500);
