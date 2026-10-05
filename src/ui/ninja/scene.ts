@@ -9,9 +9,9 @@ import { clamp, ninjaShake, ninjaTime } from './timeline';
 
 const base = `${import.meta.env.BASE_URL}assets/highlights/ninja-defuse/`;
 let files: Promise<[ArrayBuffer, ArrayBuffer]> | undefined;
-/** The two GLBs (scripts/legend-3d/ninja_bomb.py, ninja_hands.py) are fetched once and kept as bytes; each mounted highlight parses its own copy, so it owns and disposes its GPU resources. */
+/** The two GLBs (scripts/legend-3d/ninja_bomb.py, ninja_glove.py) are fetched once and kept as bytes; each mounted highlight parses its own copy, so it owns and disposes its GPU resources. */
 export function preloadNinja() {
-  return files ??= Promise.all(['bomb.glb', 'hands.glb'].map(async (name) => {
+  return files ??= Promise.all(['bomb.glb', 'glove.glb'].map(async (name) => {
     const r = await fetch(base + name, { signal: AbortSignal.timeout(6000) });
     if (!r.ok) throw new Error(`Missing ${name}`);
     return r.arrayBuffer();
@@ -89,11 +89,9 @@ export async function createNinjaScene(start = 11) {
   const sprite = (tex: T.Texture, size: number, at: T.Vector3) => { const s = new T.Sprite(own(new T.SpriteMaterial({ map: tex, transparent: true, blending: T.AdditiveBlending, depthWrite: false, depthTest: false, opacity: 0, fog: false }))); /* glows are overlays: depth-testing them cut jagged holes where they crossed the case */; s.scale.setScalar(size); s.position.copy(at); scene.add(s); return s; };
   const ledGlow = sprite(redTex, .16, ledWorld), ledGreen = sprite(greenTex, .16, ledWorld), lcdGlow = sprite(redTex, .78, lcdWorld.clone().add(new T.Vector3(0, .02, .06))), lcdGreen = sprite(greenTex, .78, lcdWorld.clone().add(new T.Vector3(0, .02, .06)));
 
-  // fingers: each is a chain of pivots (see ninja_hands.py); curl a finger by rotating its pivots about X
-  const chain = (side: 'L' | 'R', f: number) => [1, 2, 3].map((i) => byName(hands.scene, `${side}_f${f}_${i}`));
-  const fingers = { L: [0, 1, 2, 3].map((f) => chain('L', f)), R: [0, 1, 2, 3].map((f) => chain('R', f)) };
-  const thumb = { L: [byName(hands.scene, 'L_t_1'), byName(hands.scene, 'L_t_2')], R: [byName(hands.scene, 'R_t_1'), byName(hands.scene, 'R_t_2')] };
-  const curl = (c: T.Object3D[], a: number, b = a * 1.05, d = a * .8) => { c[0].rotation.x = -a; if (c[1]) c[1].rotation.x = -b; if (c[2]) c[2].rotation.x = -d; };
+  // each glove is one sculpted mesh (from a Meshy model, see ninja_glove.py); a dark sleeve runs back from the wrist
+  const sleeveMat = own(new T.MeshStandardMaterial({ color: 0x1d1f21, roughness: .92, metalness: 0 }));
+  for (const h of [handR, handL]) { const sl = new T.Mesh(own(new T.CylinderGeometry(.13, .165, .8, 24, 1, true)), sleeveMat); sl.rotation.x = Math.PI / 2; sl.position.set(0, .015, .6); sl.scale.set(.92, 1, 1.05); sl.castShadow = true; h.add(sl); }
 
   // dust motes and a few sparks at the critical beat
   const N = 40, pos = new Float32Array(N * 3), col = new Float32Array(N * 3), seeds = Array.from({ length: N }, (_, i) => [Math.sin(i * 12.9) * .5 + .5, Math.sin(i * 78.2) * .5 + .5, Math.sin(i * 37.7) * .5 + .5]);
@@ -134,14 +132,11 @@ export async function createNinjaScene(start = 11) {
     keys.forEach((k, i) => { k.position.y = keyY[i] - (i === idx ? press * .02 : 0); });
     const sway = Math.sin(t * 2.3) * .004 * work;
     handR.position.set(keyTarget.x + .1 + s.relax * .1 + sway, .53 + (1 - press) * .04 + s.relax * .2, keyTarget.z + .4 + s.relax * .1);
-    handR.rotation.set(-.4 - press * .07, .28 + (keyTarget.x - .27) * .5 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.82);
-    const idxCurl = .22 + press * .45, pose = work * .12 * Math.sin(t * 3.1);
-    fingers.R.forEach((c, f) => (f === 0 ? curl(c, idxCurl, idxCurl * 1.7, idxCurl * 1.1) : curl(c, 1.05 + pose * (f * .5), 1.1 + pose, .85)));
-    curl(thumb.R, .5, .5);
+    handR.rotation.set(-.3 - press * .12, .28 + (keyTarget.x - .27) * .5 + Math.sin(t * 2.9) * .012 * work, 0); handR.scale.setScalar(.8);
     // left hand: holds the case steady, with a soft tremor that grows with the tension
     const trem = s.shake * work;
     handL.position.set(-.42 + Math.sin(t * 5.3) * .003 * trem - s.relax * .05, .5 + s.relax * .18 + Math.sin(t * 7.1) * .0025 * trem, .56 + s.relax * .12);
-    handL.rotation.set(-.42, -.22 + Math.sin(t * 4.1) * .01 * trem, 0); fingers.L.forEach((c, f) => curl(c, .55 - s.relax * .2 + Math.sin(t * 2 + f) * .02 * work, .6, .45)); curl(thumb.L, .4, .4);
+    handL.scale.setScalar(.8); handL.rotation.set(-.2, -.22 + Math.sin(t * 4.1) * .01 * trem, 0);
     // camera: a slow orbit and push-in (real parallax), a handheld tremor that grows with the tension, dead still at the click, easing back after it
     const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .55 : 1;
     camera.position.lerpVectors(homeA, homeB, k); camera.position.x += Math.sin(t * .9) * .05 * (1 - s.relax);
