@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { SceneMaker, badge, box, clamp, flat, lerp, makeRenderer, part, rnd, skyDome, smooth, starShape, toon, tube } from './kit';
+import { SceneMaker, inkRes, badge, box, clamp, flat, lerp, makeRenderer, part, rnd, skyDome, smooth, starShape, toon, tube } from './kit';
 
 /**
  * The no-scope, in four cuts. One: a player fires an AWP from the hip, both scope caps still on. Two: the camera rides the bullet down a long
@@ -46,7 +46,7 @@ export const noscope: SceneMaker = (canvas) => {
   const r = makeRenderer(canvas);
   const scene = new T.Scene();
   scene.fog = new T.Fog(0xf3d4a0, 18, 125);
-  const cam = new T.PerspectiveCamera(40, 1, .05, 500);
+  const cam = new T.PerspectiveCamera(40, 1, .3, 260);
   const sky = skyDome(0x1f66d8, 0xffd9a0, 6); sky.renderOrder = -200; scene.add(sky);
   const sun = new T.DirectionalLight(0xfff0cf, 2.1); sun.position.set(-6, 10, 5); scene.add(sun);
   scene.add(new T.HemisphereLight(0xcfe0ff, 0xc89a5e, 1.15));
@@ -68,7 +68,7 @@ export const noscope: SceneMaker = (canvas) => {
   // ---- the alley ----
   const level = new T.Group(); scene.add(level);
   part(new T.PlaneGeometry(60, 260).rotateX(-Math.PI / 2), SAND, level, 0, 0, -100, 0);
-  for (const [x, w, c] of [[-1.6, 1.1, SAND_D], [1.9, .8, SAND_D], [0, .5, SAND_L]] as const) { const s = new T.Mesh(new T.PlaneGeometry(w, 220).rotateX(-Math.PI / 2), toon(c)); s.position.set(x, .01, -100); level.add(s); }
+  for (const [x, w, c] of [[-1.6, 1.1, SAND_D], [1.9, .8, SAND_D], [0, .5, SAND_L]] as const) { const st = toon(c); st.polygonOffset = true; st.polygonOffsetFactor = -2; st.polygonOffsetUnits = -2; const s = new T.Mesh(new T.PlaneGeometry(w, 220).rotateX(-Math.PI / 2), st); s.position.set(x, .02, -100); level.add(s); }
   const wall = (x: number, z0: number, z1: number, h: number, c: number) => part(box(1.2, h, Math.abs(z1 - z0)), c, level, x, h / 2, (z0 + z1) / 2, .06);
   wall(-5.2, -16, -120, 8, SAND_D); wall(5.4, 6, -22, 6.5, SAND_D); wall(5.4, -28, -120, 7.5, SAND_D);
   for (let i = 0; i < 5; i++) { const z = -18 - i * 4.6; part(box(.2, 1.6, 1.2), 0x2b3f63, level, -4.52, 4.4, z, .05); part(box(.9, .22, 1.4), SAND_L, level, -4.5, 3.5, z, .04); }
@@ -119,7 +119,7 @@ export const noscope: SceneMaker = (canvas) => {
   const rifle = new T.Group(); part(box(.11, .14, 1.0), 0x3a2e22, rifle, 0, 0, 0, .015); part(box(.08, .2, .3), 0x3a2e22, rifle, 0, -.06, .35, .012); foe.torso.add(rifle); rifle.position.set(.1, 1.2, .5);
   const helmet = helmetOf(0xb3322b); scene.add(helmet);
   const thrown = new T.Group(); part(box(.11, .14, 1.0), 0x3a2e22, thrown, 0, 0, 0, .015); part(box(.08, .2, .3), 0x3a2e22, thrown, 0, -.06, .35, .012); thrown.visible = false; scene.add(thrown);
-  const shadow = new T.Mesh(new T.CircleGeometry(.8, 24), flat(0x6e4a22, .35)); shadow.rotation.x = -Math.PI / 2; shadow.position.set(0, .02, FOE_Z); scene.add(shadow);
+  const shadow = new T.Mesh(new T.CircleGeometry(.8, 24), flat(0x6e4a22, .35)); (shadow.material as T.MeshBasicMaterial).polygonOffset = true; (shadow.material as T.MeshBasicMaterial).polygonOffsetFactor = -4; (shadow.material as T.MeshBasicMaterial).polygonOffsetUnits = -4; shadow.rotation.x = -Math.PI / 2; shadow.position.set(0, .04, FOE_Z); scene.add(shadow);
 
   // ---- the bullet and its wind ----
   const bullet = new T.Group(); bullet.scale.setScalar(1.7); scene.add(bullet);
@@ -135,7 +135,7 @@ export const noscope: SceneMaker = (canvas) => {
 
   const mark = new T.Group(); scene.add(mark);
   for (const a of [.785, -.785]) for (const sg of [1, -1]) { const b = badge(new T.PlaneGeometry(.34, .09), 0xffffff, .22); b.position.set(Math.cos(a) * sg * .27, Math.sin(a) * sg * .27, 0); b.rotation.z = a; mark.add(b); }
-  const veil = new T.Mesh(new T.PlaneGeometry(6, 6), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthTest: false, depthWrite: false, fog: false })); veil.position.z = -.3; veil.renderOrder = 1000; cam.add(veil); scene.add(cam);
+  const veil = new T.Mesh(new T.PlaneGeometry(14, 14), new T.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthTest: false, depthWrite: false, fog: false })); veil.position.z = -.6; veil.renderOrder = 1000; cam.add(veil); scene.add(cam);
   const shock = new T.Mesh(new T.RingGeometry(.9, 1, 40), flat(0xffffff, .9)); scene.add(shock);
   const aim = new T.Vector3(), tmp = new T.Vector3(), hip = new T.Vector3(), hand = new T.Vector3();
   const render = (t: number) => {
@@ -208,7 +208,7 @@ export const noscope: SceneMaker = (canvas) => {
     veil.visible = vq > .01; (veil.material as T.MeshBasicMaterial).opacity = vq;
     r.render(scene, cam);
   };
-  const resize = (w: number, h: number) => { r.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.setViewOffset(w, h, 0, h * .08, w, h); /* the result card covers the bottom of the screen, so the picture sits higher */ };
+  const resize = (w: number, h: number) => { r.setSize(w, h, false); inkRes.value.set(w, h); cam.aspect = w / Math.max(1, h); cam.setViewOffset(w, h, 0, h * .08, w, h); /* the result card covers the bottom of the screen, so the picture sits higher */ };
   const dispose = () => { scene.traverse((o) => { const m = o as T.Mesh; m.geometry?.dispose?.(); const mt = m.material as T.Material | T.Material[] | undefined; (Array.isArray(mt) ? mt : mt ? [mt] : []).forEach((x) => x.dispose()); }); r.dispose(); };
   return { duration: DURATION * SLOW, render, resize, dispose };
 };

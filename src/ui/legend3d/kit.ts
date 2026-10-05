@@ -55,16 +55,41 @@ export const speckTex = () => canvasTex(64, 64, (g) => {
 const ramp = (() => { const t = new T.DataTexture(new Uint8Array([88, 88, 100, 255, 178, 176, 182, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat); t.minFilter = t.magFilter = T.NearestFilter; t.needsUpdate = true; return t; })();
 export const toon = (c: number) => new T.MeshToonMaterial({ color: c, gradientMap: ramp });
 export const flat = (c: number, o = 1) => new T.MeshBasicMaterial({ color: c, transparent: o < 1, opacity: o, fog: false, depthWrite: o === 1 });
-const ink = new T.MeshBasicMaterial({ color: 0x14110f, side: T.BackSide, fog: false });
-/** A toon-shaded mesh with a black ink outline (a slightly larger copy drawn from the inside), added to `parent` at x, y, z. */
+/** The ink line is drawn a fixed number of pixels thick whatever the distance: the hull is pushed out along a smoothed normal in screen space, then pushed back in depth so it never fights the surface it outlines. */
+export const inkRes = { value: new T.Vector2(800, 600) };
+const inkMats = new Map<number, T.ShaderMaterial>();
+const inkMat = (px: number) => {
+  let m = inkMats.get(px);
+  if (!m) {
+    m = new T.ShaderMaterial({
+      side: T.BackSide, fog: false, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 2,
+      uniforms: { uRes: inkRes, uW: { value: px } },
+      vertexShader: `uniform vec2 uRes; uniform float uW;
+        void main() {
+          vec4 clip = projectionMatrix * modelViewMatrix * vec4(position, 1.);
+          vec3 n = normalize(normalMatrix * normal);
+          vec2 d = normalize((projectionMatrix * vec4(n, 0.)).xy + vec2(1e-5));
+          clip.xy += d * (uW * uRes.y / 600.) * 2. / uRes * clip.w;
+          gl_Position = clip;
+        }`,
+      fragmentShader: 'void main() { gl_FragColor = vec4(.078, .067, .059, 1.); }',
+    });
+    inkMats.set(px, m);
+  }
+  return m;
+};
+/** The same geometry with each corner's normal averaged over every face that meets there, so an extruded hull has no cracks at the edges. */
+function smoothNormals(g: T.BufferGeometry) {
+  const c = g.clone(), pos = c.attributes.position, nor = c.attributes.normal, sum = new Map<string, T.Vector3>();
+  const key = (k: number) => `${Math.round(pos.getX(k) * 1e3)},${Math.round(pos.getY(k) * 1e3)},${Math.round(pos.getZ(k) * 1e3)}`;
+  for (let k = 0; k < pos.count; k++) { const q = key(k); (sum.get(q) ?? sum.set(q, new T.Vector3()).get(q)!).add(new T.Vector3(nor.getX(k), nor.getY(k), nor.getZ(k))); }
+  for (let k = 0; k < pos.count; k++) { const v = sum.get(key(k))!.clone().normalize(); nor.setXYZ(k, v.x, v.y, v.z); }
+  return c;
+}
+/** A toon-shaded mesh with a black ink outline, added to `parent` at x, y, z. `edge` is how bold the line is (about .01 fine, .06 heavy). */
 export function part(g: T.BufferGeometry, color: number | T.Material, parent: T.Object3D, x = 0, y = 0, z = 0, edge = .014) {
   const m = new T.Mesh(g, typeof color === 'number' ? toon(color) : color); m.position.set(x, y, z);
-  if (edge > 0) {
-    g.computeBoundingBox(); const sz = g.boundingBox!.getSize(new T.Vector3());
-    const o = new T.Mesh(g, ink); o.scale.set(...(['x', 'y', 'z'] as const).map((a) => (sz[a] > 1e-4 ? (sz[a] + edge * 2) / sz[a] : 1)) as [number, number, number]);
-    const c = g.boundingBox!.getCenter(new T.Vector3()); o.position.copy(c).multiply(new T.Vector3(1, 1, 1)).sub(c.clone().multiply(o.scale));
-    m.add(o);
-  }
+  if (edge > 0) m.add(new T.Mesh(smoothNormals(g), inkMat(Math.round((1.6 + edge * 55) * 10) / 10)));
   parent.add(m); return m;
 }
 export const box = (w: number, h: number, d: number) => new T.BoxGeometry(w, h, d);
@@ -79,8 +104,9 @@ export function starShape(points: number, outer: number, inner: number) {
 /** A flat badge made of a coloured shape on a black one, always turned to face the camera. */
 export function badge(g: T.BufferGeometry, color: number, edge = .06) {
   const grp = new T.Group();
-  const back = new T.Mesh(g, flat(0x14110f)); back.scale.setScalar(1 + edge); back.position.z = -.002; grp.add(back);
-  grp.add(new T.Mesh(g, flat(color)));
+  const back = new T.Mesh(g, flat(0x14110f)); back.scale.setScalar(1 + edge); back.position.z = -.004; grp.add(back);
+  const top = new T.Mesh(g, flat(color)); top.position.z = .004; (top.material as T.MeshBasicMaterial).polygonOffset = true; (top.material as T.MeshBasicMaterial).polygonOffsetFactor = -2; (top.material as T.MeshBasicMaterial).polygonOffsetUnits = -2;
+  grp.add(top);
   return grp;
 }
 export function skyDome(top: number, low: number, bands = 6) {
