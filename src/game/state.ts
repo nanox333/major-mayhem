@@ -1,6 +1,7 @@
 // Run state: the draft, the tournament, and the reducer that moves between them.
 // Every random step runs under a seed derived from the run seed, so the daily challenge deals
 // everyone the same cases and a reloaded run can't be rerolled by refreshing the page.
+import { nowDate } from './clock';
 import { LATEST_RULES, Player, ROLE_ORDER, Role, Roster, activeRosters, isCoach, rostersOn, rulesOn } from '../data/rosters';
 import * as G from './logic';
 import { DUEL_ID, Duel, duelRosters, registerDuel, validDuel } from './duel';
@@ -121,7 +122,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
  * zones stay on the same challenge through duel links, which carry the date, and rules follow the date too (#24).
  * Every "what day is it" in the game uses this, never UTC.
  */
-export const today = (d = new Date()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+export const today = (d: Date = nowDate()) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 /** Daily #1 is the day the game shipped. */
 export const dailyNumber = (date: string) => Math.round((Date.parse(date + 'T00:00:00Z') - Date.parse('2026-09-28T00:00:00Z')) / 86400000) + 1;
 export const dailyDate = (s: Run) => (s.mode === 'daily' ? s.seed.replace('daily-', '') : null);

@@ -5,6 +5,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 ## [Unreleased]
 
 ### Added
+- **Debug workbench:** the hidden debug menu is now tabs of Scenarios (about 40 real states, from a sealed case to a champion, each built by playing the real game), Effects (replay, freeze and slow-motion animations, the legendary cinematic, arm a real one), Environment (the game in a phone-sized frame, a forced lite reel, a fake clock), Tools (a page scan for overflow, small tap targets and small text, a bug report, restore your data) and Data. A state can be opened from `?debug&scenario=<id>`. See `docs/debug-menu.md`. (#296)
 - **Legendary moments (rules v6, from 6 October):** very rare rounds that take the screen. An ace, a 1v5 clutch, a flawless 13–0 victory against a side that was not far weaker, or a miracle comeback from eight rounds down. On average about one map in 18 has one. A gold card with the player's photo pauses the match for a few seconds (any key or a tap skips it; reduced motion gets a still card), and the round is marked in the round log (with "Watch again"), on the rounds strip, in key moments, in the match report and on the Results page and share image. They never change who wins a round; older runs and dailies play exactly as before. Four new achievements (Witness, Ace in the hole, One versus five, Collector) and a collection on the Stats page. (#292–#295)
 
 ### Fixed

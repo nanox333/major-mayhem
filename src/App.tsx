@@ -29,7 +29,7 @@ import { DraftScreen } from './screens/Draft';
 import { Preview } from './game/draftui';
 import { homeState } from './game/home';
 import { ReadyScreen } from './screens/Lobby';
-import { LiveScreen, PreviewScreen } from './screens/Match';
+import { LiveScreen, PreviewScreen, setPlaybackFor } from './screens/Match';
 import { FinalScreen } from './screens/Final';
 import { HelpModal, HelpTab } from './screens/Help';
 import { StatsPage } from './screens/Stats';
@@ -217,7 +217,12 @@ function Game() {
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
       {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
-      <DebugMenu jump={(run) => { setReelFor(null); setPreview(null); setBegan(true); dispatch({ type: 'adopt', run }); setView('draft'); }} />
+      <DebugMenu run={s} jump={(b) => {
+        // The match page reads where it was left when it opens, so write that first, and leave the page and come back so it opens fresh.
+        setReelFor(null); setPreview(null); setBegan(false); setView('home');
+        if (b.seen) setPlaybackFor(b.run, b.seen);
+        setTimeout(() => { dispatch({ type: 'adopt', run: b.run }); setBegan(true); setView('draft'); }, 0);
+      }} />
     </div>
     </>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { debugForceLite } from '../ui/debugFlags';
 import { ROLE_LABEL, ROLE_SHORT, Player, Role, Roster, ROSTERS, playerLiquipedia } from '../data/rosters';
 import * as G from '../game/logic';
 import { ChemPreview, Preview, chemPreview, defaultSlot, majorsOf, placementLabel, playerState, sameCandidate } from '../game/draftui';
@@ -157,7 +158,7 @@ function CaseReveal({ offer, hard, coach, picks, total, onDone }: { offer: strin
   const phone = useMedia('(max-width: 860px)');
   const step = phone ? 76 : 92;
   // Phones and low-power devices get a lighter reel: no motion-blur filters, fewer styled rows, every other frame.
-  const lite = useMemo(() => phone || (navigator.hardwareConcurrency ?? 8) <= 4 || ((navigator as { deviceMemory?: number }).deviceMemory ?? 8) <= 4, [phone]);
+  const lite = useMemo(() => phone || debugForceLite() || (navigator.hardwareConcurrency ?? 8) <= 4 || ((navigator as { deviceMemory?: number }).deviceMemory ?? 8) <= 4, [phone]);
   const lanes = useMemo(() => offer.map((id) => {
     const pool = G.shuffle(ROSTERS.filter((r) => r.id !== id));
     const arr = Array.from({ length: LANE_LAND + LANE_EXTRA }, (_, i) => pool[i % pool.length]);

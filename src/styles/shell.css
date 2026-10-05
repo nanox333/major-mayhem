@@ -311,3 +311,45 @@
 .page .progress .pstep--finish .pstep__label::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 20px; opacity: .55; background: conic-gradient(rgba(255, 255, 255, .85) 25%, transparent 0 50%, rgba(255, 255, 255, .85) 0 75%, transparent 0) 0 0 / 8px 8px; }
 .page .progress .pstep--finish.is-on .pstep__label::after { opacity: .35; background-image: conic-gradient(#170c03 25%, transparent 0 50%, #170c03 0 75%, transparent 0); }
 .page .progress .pstep--finish.is-on .pstep__label { color: #170c03; background: var(--accent); }
+
+/* ---- debug workbench (#296): tabs, scenario lists, effects, environment and tools ---- */
+.dbg__panel { width: min(460px, calc(100vw - 24px)); max-height: min(78vh, 680px); }
+.dbg__tabs { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+.dbg__tabs button { min-height: 30px; padding: 0 12px; font: 800 .7rem/1 var(--f-read); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.dbg__tabs button[aria-selected="true"] { background: var(--accent); color: #170c03; }
+.dbg__hint { margin: 6px 0; color: var(--muted); font-size: .74rem; line-height: 1.4; }
+.dbg__hint code { font-size: .72rem; word-break: break-all; }
+.dbg__scen details { margin: 0 0 6px; border: 1px solid rgba(255, 255, 255, .08); }
+.dbg__scen summary { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; cursor: pointer; font: 800 .74rem/1 var(--f-read); letter-spacing: .1em; text-transform: uppercase; color: var(--strong); background: rgba(255, 255, 255, .04); }
+.dbg__scen summary small { color: var(--muted); }
+.dbg__scen ul { list-style: none; margin: 0; padding: 6px; display: grid; gap: 4px; }
+.dbg__scen li button { width: 100%; justify-content: flex-start; text-align: left; height: auto; min-height: 32px; padding: 6px 10px; line-height: 1.25; }
+.dbg__scen li button:disabled { opacity: .5; }
+.dbg__grid--3 { grid-template-columns: repeat(3, 1fr); }
+.dbg__grid--3 button { display: grid; gap: 2px; height: auto; padding: 6px 4px; }
+.dbg__grid--3 b { font: 800 1rem/1 var(--f-head); }
+.dbg__grid--3 small { color: var(--muted); font-size: .64rem; }
+.dbg__panel button[aria-pressed="true"] { background: var(--accent); color: #170c03; }
+.dbg__seg { display: flex; gap: 4px; margin-top: 6px; }
+.dbg__seg button { flex: 1; }
+.dbg__row { display: flex; gap: 6px; margin-bottom: 6px; }
+.dbg__row input { flex: 1; min-height: 32px; padding: 0 8px; border: 0; background: rgba(255, 255, 255, .08); color: var(--strong); font: inherit; }
+.dbg__where { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.dbg__where li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.dbg__where small { color: var(--muted); font-size: .68rem; }
+.dbg__found { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; max-height: 180px; overflow: auto; }
+.dbg__found li { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; gap: 8px; padding: 3px 6px; background: rgba(255, 255, 255, .04); font-size: .7rem; }
+.dbg__found b { text-transform: uppercase; letter-spacing: .06em; }
+.dbg__found li[data-kind="overflow"] b { color: #ff6b6b; } .dbg__found li[data-kind="tap"] b { color: #ffa94d; } .dbg__found li[data-kind="text"] b { color: #ffe066; }
+.dbg__found span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-dbg-flag="overflow"] { outline: 2px solid #ff3b3b !important; outline-offset: -2px; }
+[data-dbg-flag="tap"] { outline: 2px solid #ffa94d !important; outline-offset: -2px; }
+[data-dbg-flag="text"] { outline: 2px dotted #ffe066 !important; outline-offset: -2px; }
+.dbg-preview { position: fixed; inset: 0; z-index: 95; display: grid; grid-template-rows: auto minmax(0, 1fr); background: rgba(0, 0, 0, .88); }
+.dbg-preview header { display: flex; align-items: center; gap: 14px; padding: 8px 14px; background: #0c0c0d; }
+.dbg-preview header b { font: 800 1.1rem/1 var(--f-head); color: var(--accent-hi); letter-spacing: .06em; }
+.dbg-preview header span { flex: 1; color: var(--muted); font-size: .76rem; }
+.dbg-preview header button { width: 34px; height: 34px; border: 0; background: rgba(255, 255, 255, .1); color: #fff; font-size: 1.2rem; cursor: pointer; }
+.dbg-preview__stage { overflow: auto; display: flex; justify-content: center; padding: 12px; }
+.dbg-preview iframe { flex: none; height: 100%; min-height: 560px; max-width: 100%; border: 2px solid rgba(255, 255, 255, .25); background: #111; }
+.dbg__fx, .dbg__env, .dbg__tools { display: block; }

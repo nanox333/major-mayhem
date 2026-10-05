@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { clockText, msUntilMidnight, spokenLeft } from '../game/home';
 import { today } from '../game/state';
+import { nowDate } from '../game/clock';
 
 export interface Countdown {
   /** "23:14:27": the time to the next local midnight, for the eye. */
@@ -16,10 +17,10 @@ export interface Countdown {
  * the tab is visible again (a hidden tab's timers can run late). It counts to local midnight, never UTC (#26).
  */
 export function useCountdown(): Countdown {
-  const [now, setNow] = useState(() => new Date());
+  const [now, setNow] = useState(nowDate);
   useEffect(() => {
     let id: ReturnType<typeof setInterval> | undefined;
-    const tick = () => setNow(new Date());
+    const tick = () => setNow(nowDate());
     const start = () => { if (id === undefined) id = setInterval(tick, 1000); };
     const stop = () => { if (id !== undefined) { clearInterval(id); id = undefined; } };
     const onVisible = () => { if (document.hidden) stop(); else { tick(); start(); } };

@@ -219,6 +219,12 @@ const kfMark = (e: G.MatchEvent) => (e.kind === 'half' || e.kind === 'ot' || e.k
  */
 const SEEN_KEY = 'mm-seen';
 const seenKey = (t: G.Tournament, m: G.Match, mapIdx: number) => `${t.matches.length}:${mapIdx}:${m.form}`;
+/** Debug (#296): opens the live match for this run at round `n`, paused, the way the page remembers it between visits. */
+export function setPlaybackFor(run: Run, seen: { n: number; paused?: boolean; bought?: number[] }) {
+  const m = run.current;
+  if (!m) return;
+  try { localStorage.setItem(SEEN_KEY, JSON.stringify({ key: seenKey(run.t, m, Math.max(0, m.maps.length - 1)), n: seen.n, paused: seen.paused ?? false, bought: seen.bought ?? [] })); } catch { /* session playback still works */ }
+}
 const loadPlayback = (key: string): { n: number; paused: boolean; bought: number[] } => {
   try {
     const v = JSON.parse(localStorage.getItem(SEEN_KEY) ?? 'null');

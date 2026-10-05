@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { ROSTERS } from '../data/rosters';
 import { ACHIEVEMENTS } from '../game/achievements';
 import { Run, today } from '../game/state';
-import { DebugStop, randomRun } from './debugRuns';
+import { Built, scenarioById } from './debug/scenarios';
+import { EffectsTab, EnvironmentTab, ScenariosTab, ToolsTab } from './debug/Workbench';
+import { snapshotOnce } from './debug/tools';
 import { DEBUG_FLAG, debugEnabled as enabled, debugInUrl, setDebugRatings, useDebugRatings } from './debugFlags';
 
 /** Debug tools: hidden unless ?debug is in the address or Ctrl+Shift+D was pressed (remembered in this browser), in every build. Nothing here is part of the game. */
@@ -20,13 +22,18 @@ const baseStats = () => readStats() ?? { v: 1, runs: 0, titles: 0, reached: [0, 
 const dailyEntry = (i: number) => { const [placement, reached] = PLACES[i % PLACES.length]; return { placement, reached, mvp: NICKS[i % NICKS.length], grade: 0.7 + ((i * 7) % 30) / 100, abandoned: false, share: `Major Mayhem Daily (dummy ${i})` }; };
 const write = (st: unknown) => { try { localStorage.setItem(STATS_KEY, JSON.stringify(st)); } catch { /* ignore */ } };
 
-export function DebugMenu({ jump }: { /** Replaces the run on screen and opens the draft page. */ jump?: (run: Run) => void }) {
+const TABS = [['scenarios', 'Scenarios'], ['effects', 'Effects'], ['env', 'Environment'], ['tools', 'Tools'], ['data', 'Data']] as const;
+type Tab = (typeof TABS)[number][0];
+
+export function DebugMenu({ jump, run }: { /** Replaces the run on screen and opens it on the right page (and, for a match, at the right round). */ jump?: (built: Built) => void; /** The run on screen, for the tools. */ run: Run }) {
   // Asking for it in the address turns it on for this browser, since a page address can lose the `?debug` as you move about (until "Hide debug").
   const [on, setOn] = useState(() => { if (debugInUrl()) { try { localStorage.setItem(FLAG, '1'); } catch { /* storage unavailable */ } } return enabled(); });
   const [open, setOpen] = useState(false);
   const [keys, setKeys] = useState(read);
   const [note, setNote] = useState('');
   const [days, setDays] = useState(5);
+  const [tab, setTab] = useState<Tab>('scenarios');
+  const [scenario, setScenario] = useState<string | null>(null);
   const ratings = useDebugRatings();
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
@@ -36,10 +43,20 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
     return () => removeEventListener('keydown', key);
   }, []);
   useEffect(() => { if (open) setKeys(read()); }, [open]);
+  // ?debug&scenario=<id> opens that scenario once when the page loads, so a state can be linked in an issue or used by a test.
+  useEffect(() => {
+    if (!on || !jump) return;
+    const id = new URLSearchParams(location.search + (location.hash.includes('?') ? location.hash.slice(location.hash.indexOf('?')) : '')).get('scenario');
+    const sc = id ? scenarioById.get(id) : null;
+    if (!sc) return;
+    try { history.replaceState(null, '', location.pathname + location.hash.replace(/\?.*$/, '')); } catch { /* ignore */ }
+    const b = sc.build();
+    if (b) { snapshotOnce(); setScenario(sc.id); jump(b); }
+  }, []);
   if (!on) return null;
   const refresh = (msg: string) => { setKeys(read()); setNote(msg); };
   const drop = (...ks: string[]) => { ks.forEach((k) => { try { localStorage.removeItem(k); } catch { /* ignore */ } }); };
-  const dropAndReload = (msg: string, ...ks: string[]) => { drop(...ks); setNote(`${msg} Reloading…`); setTimeout(() => location.reload(), 250); };
+  const dropAndReload = (msg: string, ...ks: string[]) => { snapshotOnce(); drop(...ks); setNote(`${msg} Reloading…`); setTimeout(() => location.reload(), 250); };
   const fakeDaily = () => {
     try {
       const st = JSON.parse(localStorage.getItem('major-mayhem-stats-v1') ?? 'null') ?? { v: 1, runs: 1, titles: 0, reached: [0, 0, 0, 1, 0], streak: 1, bestStreak: 1 };
@@ -85,6 +102,14 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
       {open && (
         <section className="dbg__panel" aria-label="Debug menu">
           <header><b>Debug</b><button type="button" onClick={() => setOpen(false)} aria-label="Close debug menu">×</button></header>
+          <div className="dbg__tabs" role="tablist" aria-label="Debug sections">
+            {TABS.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)}>{label}</button>)}
+          </div>
+          {tab === 'scenarios' && jump && <ScenariosTab jump={(b) => { jump(b); setOpen(false); }} say={setNote} onRan={setScenario} />}
+          {tab === 'effects' && jump && <EffectsTab jump={(b) => { jump(b); setOpen(false); }} say={setNote} />}
+          {tab === 'env' && <EnvironmentTab say={setNote} />}
+          {tab === 'tools' && <ToolsTab run={run} scenario={scenario} say={setNote} />}
+          {tab === 'data' && <>
           <div className="dbg__grid">
             <button type="button" className="is-danger" onClick={() => dropAndReload('Everything cleared.', ...all)}>Clear all data</button>
             <button type="button" onClick={() => dropAndReload('Run cleared.', 'major-mayhem-run-v2')}>Clear current run</button>
@@ -95,16 +120,6 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
             <button type="button" onClick={fakeDaily}>Mark today's daily done</button>
             <button type="button" onClick={clearToday}>Clear today's daily</button>
           </div>
-          {jump && (
-            <>
-              <h4>Jump to (random team)</h4>
-              <div className="dbg__grid">
-                {([['draft', 'Draft page'], ['lobby', 'Lobby page'], ['match', 'Match page'], ['results', 'Results page']] as [DebugStop, string][]).map(([stop, label]) => (
-                  <button key={stop} type="button" onClick={() => { jump(randomRun(stop)); setOpen(false); }}>{label}</button>
-                ))}
-              </div>
-            </>
-          )}
           <h4>Test data</h4>
           <div className="dbg__grid">
             <button type="button" onClick={loadDummy}>Load dummy stats</button>
@@ -126,6 +141,7 @@ export function DebugMenu({ jump }: { /** Replaces the run on screen and opens t
             <button type="button" onClick={() => location.reload()}>Reload</button>
             <button type="button" onClick={() => { try { localStorage.removeItem(FLAG); } catch { /* ignore */ } setOn(enabled()); setOpen(false); }}>Hide debug</button>
           </div>
+          </>}
           {note && <p role="status" className="dbg__note">{note}</p>}
         </section>
       )}

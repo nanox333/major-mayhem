@@ -18,3 +18,13 @@ export function setDebugRatings(on: boolean) {
   listeners.forEach((fn) => fn());
 }
 export const useDebugRatings = (): boolean => useSyncExternalStore((fn) => { listeners.add(fn); return () => { listeners.delete(fn); }; }, ratingsOn, () => false);
+
+// More switches for the debug workbench (#296). Each is a plain flag in the browser, read only while the debug tools are on.
+const flag = (key: string) => { try { return debugEnabled() && localStorage.getItem(key) === '1'; } catch { return false; } };
+const setFlag = (key: string, on: boolean) => { try { on ? localStorage.setItem(key, '1') : localStorage.removeItem(key); } catch { /* storage unavailable */ } };
+/** Forces the case reel's lighter mode on, as on a slow device. */
+export const debugForceLite = () => flag('mm-debug-lite');
+export const setDebugForceLite = (on: boolean) => setFlag('mm-debug-lite', on);
+/** Makes the parts of the app that ask "is reduced motion on?" in code answer yes (the stylesheet's own media query is the browser's to decide). */
+export const debugForceReducedMotion = () => flag('mm-debug-rm');
+export const setDebugForceReducedMotion = (on: boolean) => setFlag('mm-debug-rm', on);

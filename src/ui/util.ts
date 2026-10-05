@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { debugForceReducedMotion } from './debugFlags';
 import { Roster } from '../data/rosters';
 
 /** Whether a media query matches now, and again when it changes (a phone turned sideways, a window resized). */
@@ -26,7 +27,7 @@ export function focusIfAdrift(el: HTMLElement | null) {
   if (el && keyboard && (!document.activeElement || document.activeElement === document.body)) el.focus();
 }
 
-export const reduceMotion = () => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+export const reduceMotion = () => typeof window !== 'undefined' && (debugForceReducedMotion() || !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
 export const fmt = (r: number) => r.toFixed(2);
 const RARITY: Record<string, string> = { Champions: 'gold', 'Runner-up': 'covert', Semifinalist: 'classified', Quarterfinalist: 'restricted' };
 export const rarity = (r: Roster) => RARITY[r.result] ?? 'milspec';
