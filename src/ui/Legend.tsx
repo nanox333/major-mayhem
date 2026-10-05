@@ -1,8 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as G from '../game/logic';
 import { Avatar, TeamBadge } from './art';
 import { play } from './sound';
 import { reduceMotion } from './util';
+import hole1 from '../assets/legend/hole-1.webp';
+import hole2 from '../assets/legend/hole-2.webp';
+import hole3 from '../assets/legend/hole-3.webp';
+import flash1 from '../assets/legend/flash-1.webp';
+import flash2 from '../assets/legend/flash-2.webp';
+import smoke1 from '../assets/legend/smoke-1.webp';
+import casing from '../assets/legend/casing.webp';
+import spark from '../assets/legend/spark.webp';
+import slash1 from '../assets/legend/slash-1.webp';
+import slash2 from '../assets/legend/slash-2.webp';
+
+// Generated art for the scenes (scripts/legend-assets/generate.html): bullet holes in glass, muzzle flashes, smoke, a casing, a spark and knife slashes.
+const HOLES = [hole1, hole2, hole3];
+const FLASHES = [flash1, flash2];
+const SLASHES = [slash1, slash2];
 
 type Info = { title: string; tag: string; how: string };
 /** What each legendary moment is called on screen, the line under it, and how it happens (for the collection). */
@@ -19,7 +34,9 @@ export const LEGEND_INFO: Record<G.LegendKind, Info> = {
 export const LEGEND_TITLE = LEGEND_INFO;
 
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
-export const LEGEND_MS = 2400;
+export const LEGEND_MS = 2000;
+/** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
+export const LEGEND_EXIT_MS = 440;
 
 /** A number that runs from `from` to `to` over `ms` after `delay` (all at once when motion is reduced). */
 function useCount(from: number, to: number, ms: number, delay: number, still: boolean, digits = 0) {
@@ -39,7 +56,9 @@ function useCount(from: number, to: number, ms: number, delay: number, still: bo
   return digits ? v.toFixed(digits) : String(Math.round(v));
 }
 
-const HOLES = [[22, 30], [70, 22], [46, 54], [80, 64], [28, 72]];
+/** Where the five shots of an ace land (percent of the screen), which art each uses, and how it is turned and scaled. */
+const SHOTS = [{ x: 24, y: 30, h: 0, f: 0, r: -12, s: 1 }, { x: 72, y: 24, h: 1, f: 1, r: 20, s: 1.1 }, { x: 47, y: 52, h: 2, f: 0, r: 70, s: .95 }, { x: 80, y: 62, h: 0, f: 1, r: -40, s: 1.15 }, { x: 30, y: 70, h: 1, f: 0, r: 8, s: 1 }];
+const SHOT_GAP = 0.17;
 const ROUNDS_UP = (e: G.MatchEvent) => Number(/after (\d+) rounds/.exec(e.text)?.[1] ?? 36);
 const BEHIND = (e: G.MatchEvent) => Number(/(\d+) rounds down/.exec(e.text)?.[1] ?? 9);
 
@@ -55,9 +74,16 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
     case 'ace':
       return (
         <div className="lg lg-ace" aria-hidden="true">
-          {HOLES.map(([x, y], i) => <i key={`f${i}`} className="lg-flash" style={{ animationDelay: `${i * 0.17}s` }} />)}
-          {HOLES.map(([x, y], i) => <b key={`h${i}`} className="lg-hole" style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.17}s` }} />)}
-          <div className="lg-count">{[1, 2, 3, 4, 5].map((n) => <span key={n} style={{ animationDelay: `${(n - 1) * 0.17}s` }}>{n}</span>)}</div>
+          {SHOTS.map((p, i) => (
+            <div key={i} className="lg-shot" style={{ left: `${p.x}%`, top: `${p.y}%`, ['--d' as string]: `${i * SHOT_GAP}s`, ['--r' as string]: `${p.r}deg`, ['--k' as string]: p.s }}>
+              <img className="lg-smoke" src={smoke1} alt="" />
+              <img className="lg-hole" src={HOLES[p.h]} alt="" />
+              <img className="lg-muzzle" src={FLASHES[p.f]} alt="" />
+              <img className="lg-casing" src={casing} alt="" />
+              <img className="lg-spark lg-spark--a" src={spark} alt="" /><img className="lg-spark lg-spark--b" src={spark} alt="" />
+            </div>
+          ))}
+          <div className="lg-count">{[1, 2, 3, 4, 5].map((n) => <span key={n} style={{ animationDelay: `${(n - 1) * SHOT_GAP}s` }}>{n}</span>)}</div>
           <span className="lg-cross" />
         </div>
       );
@@ -67,9 +93,8 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
           <span className="lg-vignette" />
           <div className="lg-pips">
             <i className="lg-one" />
-            <span>{[0, 1, 2, 3, 4].map((n) => <em key={n} style={{ animationDelay: `${0.25 + n * 0.17}s` }} />)}</span>
+            <span>{[0, 1, 2, 3, 4].map((n) => <em key={n} style={{ animationDelay: `${0.25 + n * 0.17}s`, ['--d' as string]: `${0.25 + n * 0.17}s` }}><img className="lg-muzzle lg-muzzle--pip" src={FLASHES[n % 2]} alt="" /></em>)}</span>
           </div>
-          {[0, 1, 2, 3, 4].map((n) => <i key={n} className="lg-flash" style={{ animationDelay: `${0.25 + n * 0.17}s` }} />)}
         </div>
       );
     case 'ninja':
@@ -88,16 +113,20 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
         <div className="lg lg-scope" aria-hidden="true">
           <span className="lg-ring" />
           <span className="lg-trail" />
-          <span className="lg-hit lg-hit--a" />
-          <span className="lg-hit lg-hit--b" />
-          <i className="lg-flash" style={{ animationDelay: '.55s' }} />
+          {[{ x: 38, h: 0 }, { x: 62, h: 1 }].map((p, i) => (
+            <div key={i} className="lg-shot lg-shot--late" style={{ left: `${p.x}%`, top: '40%', ['--d' as string]: `${0.6 + i * 0.06}s`, ['--r' as string]: `${i * 40 - 20}deg`, ['--k' as string]: 0.9 }}>
+              <img className="lg-hole" src={HOLES[p.h]} alt="" />
+              <img className="lg-muzzle" src={FLASHES[i]} alt="" />
+              <img className="lg-spark lg-spark--a" src={spark} alt="" /><img className="lg-spark lg-spark--b" src={spark} alt="" />
+            </div>
+          ))}
         </div>
       );
     case 'knife':
       return (
         <div className="lg lg-knife" aria-hidden="true">
-          <span className="lg-slash lg-slash--a" /><span className="lg-slash lg-slash--b" /><span className="lg-slash lg-slash--c" />
-          <i className="lg-flash" style={{ animationDelay: '.3s' }} />
+          <img className="lg-slash lg-slash--a" src={SLASHES[0]} alt="" /><img className="lg-slash lg-slash--b" src={SLASHES[1]} alt="" /><img className="lg-slash lg-slash--c" src={SLASHES[0]} alt="" />
+          <img className="lg-spark lg-spark--k1" src={spark} alt="" /><img className="lg-spark lg-spark--k2" src={spark} alt="" /><img className="lg-spark lg-spark--k3" src={spark} alt="" />
         </div>
       );
     case 'flawless':
@@ -152,15 +181,25 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   const who = mine.find((l) => l.player.id === e.playerId);
   const still = reduceMotion();
   const sparks = useMemo(() => Array.from({ length: 16 }, (_, i) => ({ x: (i * 47) % 100, d: ((i * 13) % 9) / 14, s: 4 + (i % 4) * 2, t: 1.4 + ((i * 7) % 8) / 10 })), []);
+  const [leaving, setLeaving] = useState(false);
+  const closing = useRef(false);
+  // however it ends (the time is up, a key, a tap) it plays the way out first, unless motion is reduced
+  const close = useCallback(() => {
+    if (closing.current) return;
+    closing.current = true;
+    if (still) return onDone();
+    setLeaving(true);
+    setTimeout(onDone, LEGEND_EXIT_MS);
+  }, []);
   useEffect(() => {
-    const done = setTimeout(onDone, LEGEND_MS);
-    const key = (ev: KeyboardEvent) => { ev.preventDefault(); ev.stopPropagation(); onDone(); };
+    const done = setTimeout(close, LEGEND_MS);
+    const key = (ev: KeyboardEvent) => { ev.preventDefault(); ev.stopPropagation(); close(); };
     window.addEventListener('keydown', key, true);
     const stops = still ? [] : scoreFor(kind);
-    return () => { clearTimeout(done); window.removeEventListener('keydown', key, true); stops.forEach((s) => s()); };
+    return () => { clearTimeout(done); window.removeEventListener('keydown', key, true); stops.forEach((st) => st()); };
   }, []);
   return (
-    <div className={`legend legend--${kind} ${still ? 'is-still' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={onDone}>
+    <div className={`legend legend--${kind} ${still ? 'is-still' : ''} ${leaving ? 'is-leaving' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={close}>
       <div className="legend__wash" aria-hidden="true" />
       {!still && <Scene e={e} still={still} />}
       <div className="legend__sparks" aria-hidden="true">{sparks.map((p, i) => <i key={i} style={{ left: `${p.x}%`, width: p.s, height: p.s, animationDelay: `${p.d + 0.5}s`, animationDuration: `${p.t}s` }} />)}</div>
@@ -177,7 +216,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
         </div>
         <span className="legend__bar" aria-hidden="true"><i style={{ animationDuration: `${LEGEND_MS}ms` }} /></span>
       </div>
-      <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); onDone(); }}>Continue</button>
+      <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
     </div>
   );
 }

@@ -1,0 +1,150 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Legend asset generator</title>
+<style>body{background:#222;color:#eee;font:14px sans-serif;padding:20px} canvas{background:repeating-conic-gradient(#555 0 25%,#333 0 50%) 0 0/24px 24px;margin:6px;border:1px solid #666} button{padding:8px 16px}</style>
+<button id="go">Generate</button> <span id="log"></span><div id="out"></div>
+<script>
+// Procedural art for the legendary-moment scenes (#293): bullet holes, muzzle flashes, smoke, a shell casing, sparks and slash scratches.
+// Everything is drawn with the 2D canvas from a seeded random generator, so the files can be rebuilt. See save-server.mjs.
+const rng = (seed) => () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return [c, c.getContext('2d')]; };
+
+// A bullet hole in glass: a crushed white pit, a dark centre, jagged radial cracks and rings that join them.
+function hole(seed, S = 384) {
+  const r = rng(seed), [c, g] = mk(S, S), cx = S / 2, cy = S / 2;
+  // soft dent in the glass
+  let grad = g.createRadialGradient(cx, cy, 6, cx, cy, S * 0.46);
+  grad.addColorStop(0, 'rgba(0,0,0,.55)'); grad.addColorStop(.35, 'rgba(10,12,20,.28)'); grad.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, S, S);
+  const n = 11 + Math.floor(r() * 6), spokes = [];
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2 + (r() - .5) * .35, len = S * (0.2 + r() * 0.26);
+    const pts = [[cx, cy]]; let x = cx, y = cy, ang = a;
+    for (let d = 14; d < len; d += 10 + r() * 16) { ang += (r() - .5) * .2; x = cx + Math.cos(ang) * d; y = cy + Math.sin(ang) * d; pts.push([x, y]); }
+    spokes.push(pts);
+  }
+  const stroke = (pts, w, col, blur) => { g.save(); g.lineJoin = 'round'; g.lineCap = 'round'; g.shadowColor = 'rgba(160,200,255,.9)'; g.shadowBlur = blur; g.strokeStyle = col; g.lineWidth = w; g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); g.stroke(); g.restore(); };
+  // rings: arcs between neighbouring spokes at a few radii, slightly broken
+  for (const rad of [S * .06, S * .095, S * .135, S * .18, S * .23]) {
+    for (let i = 0; i < n; i++) {
+      if (r() < .14) continue;
+      const a0 = (i / n) * Math.PI * 2 + (r() - .5) * .2, a1 = ((i + 1) / n) * Math.PI * 2 + (r() - .5) * .2;
+      const pts = []; for (let k = 0; k <= 4; k++) { const a = a0 + (a1 - a0) * (k / 4), rr = rad * (1 + (r() - .5) * .18); pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); }
+      stroke(pts, .8 + r() * .8, `rgba(235,244,255,${.35 + r() * .35})`, 3);
+    }
+  }
+  // spokes: a wide faint line under a thin bright one, and a few forks
+  for (const pts of spokes) {
+    stroke(pts, 2.4, 'rgba(220,235,255,.35)', 6);
+    stroke(pts, 1.1 + r() * .7, 'rgba(255,255,255,.95)', 4);
+    const k = 2 + Math.floor(r() * (pts.length - 3)); if (pts[k]) {
+      const [fx, fy] = pts[k], a = Math.atan2(pts[k][1] - pts[k - 1][1], pts[k][0] - pts[k - 1][0]) + (r() < .5 ? -1 : 1) * (.5 + r() * .5), L = 24 + r() * 60;
+      stroke([[fx, fy], [fx + Math.cos(a) * L * .5, fy + Math.sin(a) * L * .5 + (r() - .5) * 6], [fx + Math.cos(a) * L, fy + Math.sin(a) * L]], .9, 'rgba(255,255,255,.8)', 3);
+    }
+  }
+  // crushed zone: lots of small glassy shards, brighter near the middle
+  for (let i = 0; i < 90; i++) {
+    const a = r() * Math.PI * 2, d = Math.pow(r(), 1.6) * S * .075, x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, s = 2 + r() * 7 * (1 - d / (S * .08) * .5);
+    g.save(); g.translate(x, y); g.rotate(r() * 6.28); g.fillStyle = `rgba(${220 + r() * 35},${232 + r() * 23},255,${.35 + r() * .5})`;
+    g.beginPath(); g.moveTo(0, -s); g.lineTo(s * .7, s * .5); g.lineTo(-s * .8, s * .6); g.closePath(); g.fill(); g.restore();
+  }
+  // the pit: dark with a hot rim
+  grad = g.createRadialGradient(cx, cy, 2, cx, cy, S * .04);
+  grad.addColorStop(0, '#000'); grad.addColorStop(.7, 'rgba(0,0,0,.95)'); grad.addColorStop(1, 'rgba(255,255,255,.0)');
+  g.fillStyle = grad; g.beginPath(); g.arc(cx, cy, S * .045, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 2.2; g.beginPath(); g.arc(cx, cy, S * .038 + r() * 3, 0, 7); g.stroke();
+  return c;
+}
+
+// A muzzle flash: a white-hot core, a ragged star of spikes and an orange bloom.
+function flash(seed, S = 320) {
+  const r = rng(seed), [c, g] = mk(S, S), cx = S / 2, cy = S / 2;
+  g.globalCompositeOperation = 'lighter';
+  let grad = g.createRadialGradient(cx, cy, 0, cx, cy, S * .5);
+  grad.addColorStop(0, 'rgba(255,240,200,.9)'); grad.addColorStop(.25, 'rgba(255,170,60,.5)'); grad.addColorStop(.6, 'rgba(255,100,20,.16)'); grad.addColorStop(1, 'rgba(255,80,0,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, S, S);
+  const spikes = 9 + Math.floor(r() * 5);
+  for (let i = 0; i < spikes; i++) {
+    const a = (i / spikes) * Math.PI * 2 + (r() - .5) * .5, L = S * (0.18 + r() * 0.3) * (i % 2 ? .75 : 1), w = S * (0.012 + r() * 0.02);
+    g.save(); g.translate(cx, cy); g.rotate(a);
+    const sg = g.createLinearGradient(0, 0, L, 0); sg.addColorStop(0, 'rgba(255,255,235,.95)'); sg.addColorStop(.5, 'rgba(255,190,90,.7)'); sg.addColorStop(1, 'rgba(255,110,30,0)');
+    g.fillStyle = sg; g.beginPath(); g.moveTo(0, -w); g.lineTo(L, 0); g.lineTo(0, w); g.closePath(); g.fill(); g.restore();
+  }
+  // a few thin streaks
+  for (let i = 0; i < 7; i++) {
+    const a = r() * 6.28, L = S * (.2 + r() * .26); g.strokeStyle = `rgba(255,${200 + r() * 40},120,${.35 + r() * .35})`; g.lineWidth = 1 + r() * 1.6;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * 14, cy + Math.sin(a) * 14); g.lineTo(cx + Math.cos(a) * L, cy + Math.sin(a) * L); g.stroke();
+  }
+  grad = g.createRadialGradient(cx, cy, 0, cx, cy, S * .09); grad.addColorStop(0, 'rgba(255,255,255,1)'); grad.addColorStop(1, 'rgba(255,230,160,0)');
+  g.fillStyle = grad; g.beginPath(); g.arc(cx, cy, S * .09, 0, 7); g.fill();
+  return c;
+}
+
+// A soft wisp of smoke.
+function smoke(seed, S = 192) {
+  const r = rng(seed), [c, g] = mk(S, S);
+  g.filter = 'blur(14px)';
+  for (let i = 0; i < 26; i++) {
+    const a = r() * 6.28, d = r() * S * .22, x = S / 2 + Math.cos(a) * d, y = S / 2 + Math.sin(a) * d * .8, rad = S * (.08 + r() * .13);
+    const gg = g.createRadialGradient(x, y, 0, x, y, rad); gg.addColorStop(0, `rgba(190,196,210,${.18 + r() * .22})`); gg.addColorStop(1, 'rgba(190,196,210,0)');
+    g.fillStyle = gg; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill();
+  }
+  return c;
+}
+
+// A brass shell casing, seen from the side.
+function casing() {
+  const [c, g] = mk(96, 40);
+  g.translate(8, 8); g.fillStyle = '#c9923a';
+  g.beginPath(); g.roundRect(0, 4, 62, 20, 4); g.fill();
+  g.fillStyle = '#e8bb62'; g.fillRect(2, 6, 58, 5);
+  g.fillStyle = '#8a5f1e'; g.fillRect(2, 18, 58, 4);
+  g.fillStyle = '#b3812f'; g.beginPath(); g.roundRect(62, 8, 16, 12, 3); g.fill();
+  g.fillStyle = '#6f4a14'; g.beginPath(); g.arc(78, 14, 4, 0, 7); g.fill();
+  g.strokeStyle = '#6f4a14'; g.lineWidth = 1.5; g.beginPath(); g.roundRect(0, 4, 62, 20, 4); g.stroke();
+  return c;
+}
+
+// A hot spark: a short bright streak with a glow.
+function spark() {
+  const [c, g] = mk(96, 24);
+  g.globalCompositeOperation = 'lighter';
+  const gg = g.createLinearGradient(0, 12, 96, 12); gg.addColorStop(0, 'rgba(255,120,20,0)'); gg.addColorStop(.7, 'rgba(255,200,110,.9)'); gg.addColorStop(1, 'rgba(255,255,240,1)');
+  g.fillStyle = gg; g.beginPath(); g.moveTo(0, 12); g.lineTo(88, 8); g.lineTo(96, 12); g.lineTo(88, 16); g.closePath(); g.fill();
+  const rg = g.createRadialGradient(88, 12, 0, 88, 12, 12); rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(255,180,60,0)'); g.fillStyle = rg; g.fillRect(70, 0, 26, 24);
+  return c;
+}
+
+// A knife slash: a thin, tapered, slightly ragged white streak with a red edge and a glow.
+function slash(seed, W = 960, H = 96) {
+  const r = rng(seed), [c, g] = mk(W, H), mid = H / 2;
+  const top = [], bot = [];
+  for (let x = 0; x <= W; x += 20) {
+    const t = x / W, wdt = Math.sin(Math.PI * Math.pow(t, .8)) * (H * .16) * (.75 + r() * .5);
+    top.push([x, mid - wdt]); bot.push([x, mid + wdt * (.7 + r() * .6)]);
+  }
+  const path = () => { g.beginPath(); top.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y)); [...bot].reverse().forEach(([x, y]) => g.lineTo(x, y)); g.closePath(); };
+  g.save(); g.shadowColor = 'rgba(255,40,40,.95)'; g.shadowBlur = 36; g.fillStyle = 'rgba(255,70,70,.9)'; path(); g.fill(); g.restore();
+  g.save(); g.shadowColor = 'rgba(255,255,255,.9)'; g.shadowBlur = 10; g.fillStyle = '#fff'; g.transform(1, 0, 0, .55, 0, mid * .45); path(); g.fill(); g.restore();
+  g.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 26; i++) { const x = r() * W, y = mid + (r() - .5) * H * .8; g.fillRect(x, y, 2 + r() * 8, 1.4); }
+  return c;
+}
+
+const JOBS = [
+  ...[1, 2, 3, 4].map((i) => [`hole-${i}.webp`, () => hole(i * 977)]),
+  ...[1, 2, 3].map((i) => [`flash-${i}.webp`, () => flash(i * 313)]),
+  ...[1, 2].map((i) => [`smoke-${i}.webp`, () => smoke(i * 71)]),
+  ['casing.webp', casing], ['spark.webp', spark],
+  ...[1, 2, 3].map((i) => [`slash-${i}.webp`, () => slash(i * 53)]),
+];
+document.getElementById('go').onclick = async () => {
+  const out = document.getElementById('out'), log = document.getElementById('log');
+  for (const [name, draw] of JOBS) {
+    const c = draw(); out.appendChild(c); c.title = name; c.style.maxWidth = '220px';
+    const url = c.toDataURL('image/webp', name.startsWith('hole') ? .72 : name.startsWith('flash') ? .7 : .75);
+    await fetch(`http://localhost:4999/?name=${name}`, { method: 'POST', body: url });
+    log.textContent = `saved ${name}`;
+  }
+  log.textContent = 'done';
+};
+</script>

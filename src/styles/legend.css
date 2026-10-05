@@ -39,13 +39,29 @@
 
 /* ---- the scenes ---- */
 .lg { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-.lg-flash { position: absolute; inset: 0; background: rgba(255, 244, 214, .6); opacity: 0; }
-/* ace: five shots, five holes, a counter */
-.lg-hole { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; border-radius: 50%; opacity: 0; background: radial-gradient(circle, #000 0 15%, rgba(0, 0, 0, .8) 16% 24%, transparent 25%), conic-gradient(from 10deg, transparent 0 8%, rgba(255, 255, 255, .7) 9% 10%, transparent 11% 27%, rgba(255, 255, 255, .6) 28% 29%, transparent 30% 52%, rgba(255, 255, 255, .7) 53% 54%, transparent 55% 77%, rgba(255, 255, 255, .6) 78% 79%, transparent 80%); box-shadow: 0 0 0 2px rgba(255, 255, 255, .35) inset, 0 0 24px rgba(255, 214, 120, .6); }
+.lg-shot--late { --late: 1; }
+/* ace: five shots, each with a muzzle flash, a bullet hole, smoke, a casing and sparks (generated art), and a counter */
 .lg-count { position: absolute; left: 7%; top: 38%; width: 1em; height: 1em; transform: translateY(-50%); font: 800 clamp(8rem, 26vw, 17rem)/1 var(--f-head, sans-serif); color: color-mix(in srgb, var(--lg) 70%, transparent); }
 .lg-count span { position: absolute; inset: 0; opacity: 0; }
 .lg-count span:last-child { opacity: 0; }
 .lg-cross { position: absolute; left: 50%; top: 50%; width: 120px; height: 120px; margin: -60px 0 0 -60px; opacity: 0; background: linear-gradient(var(--lg-hi), var(--lg-hi)) 50% 0 / 2px 36% no-repeat, linear-gradient(var(--lg-hi), var(--lg-hi)) 50% 100% / 2px 36% no-repeat, linear-gradient(var(--lg-hi), var(--lg-hi)) 0 50% / 36% 2px no-repeat, linear-gradient(var(--lg-hi), var(--lg-hi)) 100% 50% / 36% 2px no-repeat; }
+
+/* the generated sprites: every shot is a small group centred on its point */
+.lg-shot { position: absolute; width: 0; height: 0; --k: 1; --r: 0deg; --d: 0s; }
+.lg-shot img { position: absolute; opacity: 0; pointer-events: none; user-select: none; }
+.lg-hole { width: calc(240px * var(--k)); left: calc(-120px * var(--k)); top: calc(-120px * var(--k)); transform: rotate(var(--r)); filter: drop-shadow(0 6px 10px rgba(0, 0, 0, .6)); }
+.lg-muzzle { width: calc(400px * var(--k)); left: calc(-200px * var(--k)); top: calc(-200px * var(--k)); mix-blend-mode: screen; }
+.lg-smoke { width: calc(220px * var(--k)); left: calc(-110px * var(--k)); top: calc(-110px * var(--k)); }
+.lg-casing { width: 44px; left: 0; top: 0; }
+.lg-spark { width: 90px; left: 0; top: -12px; transform-origin: 0 50%; mix-blend-mode: screen; }
+.lg-spark--a { --a: -28deg; } .lg-spark--b { --a: 36deg; }
+.lg-muzzle--pip { width: 150px; left: -75px; top: -75px; }
+.lg-pips em img { z-index: 2; }
+.lg-slash { position: absolute; left: -6%; width: 112%; height: auto; transform-origin: 0 50%; opacity: 0; mix-blend-mode: screen; }
+.lg-slash--a { top: 22%; --a: -21deg; } .lg-slash--b { top: 48%; --a: 17deg; } .lg-slash--c { top: 70%; --a: -13deg; }
+.lg-spark--k1 { left: 76%; top: 31%; --a: -40deg; } .lg-spark--k2 { left: 84%; top: 58%; --a: 25deg; } .lg-spark--k3 { left: 70%; top: 76%; --a: -20deg; }
+.lg-knife .lg-spark { opacity: 0; }
+.legend.is-leaving, .legend.is-leaving * { pointer-events: none; }
 /* 1v5: the room closes in, five marks fall one by one */
 .lg-vignette { position: absolute; inset: -20%; background: radial-gradient(circle at 50% 50%, transparent 0 28%, rgba(0, 0, 0, .92) 62%); }
 .lg-pips { position: absolute; left: 0; right: 0; top: 36%; display: flex; align-items: center; justify-content: center; gap: 8vw; transform: translateY(-50%); }
@@ -65,11 +81,7 @@
 /* no-scope: a scope that is ignored, a shot across the screen, two hits */
 .lg-ring { position: absolute; left: 50%; top: 40%; width: min(70vmin, 600px); aspect-ratio: 1; margin: calc(min(70vmin, 600px) / -2) 0 0 calc(min(70vmin, 600px) / -2); border-radius: 50%; border: 3px solid rgba(255, 255, 255, .8); box-shadow: 0 0 0 100vmax rgba(0, 0, 0, .86); background: linear-gradient(#fff, #fff) 50% 0 / 2px 100% no-repeat, linear-gradient(#fff, #fff) 0 50% / 100% 2px no-repeat; opacity: 0; }
 .lg-trail { position: absolute; left: -10%; top: 46%; width: 120%; height: 4px; background: linear-gradient(90deg, transparent, #fff 40%, #fff 60%, transparent); box-shadow: 0 0 22px #fff; transform: scaleX(0); transform-origin: 0 50%; opacity: 0; }
-.lg-hit { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; border: 4px solid #fff; opacity: 0; }
-.lg-hit--a { left: 38%; top: 46%; } .lg-hit--b { left: 62%; top: 46%; }
 /* knife: three slashes */
-.lg-slash { position: absolute; left: -10%; width: 120%; height: 8px; background: linear-gradient(90deg, transparent, #fff 20%, #ff4d4d 70%, transparent); box-shadow: 0 0 26px #ff4d4d; transform-origin: 0 50%; transform: rotate(-22deg) scaleX(0); opacity: 0; }
-.lg-slash--a { top: 30%; } .lg-slash--b { top: 52%; transform: rotate(18deg) scaleX(0); } .lg-slash--c { top: 70%; transform: rotate(-14deg) scaleX(0); }
 /* flawless: 13–0 */
 .lg-score { position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: .12em; font: 800 clamp(8rem, 28vw, 19rem)/1 var(--f-head, sans-serif); color: rgba(255, 255, 255, .18); white-space: nowrap; }
 .lg-score i { font-style: normal; }
@@ -99,18 +111,31 @@
   /* hide the card until its scene has played */
   .legend:not(.is-still) .legend__kicker, .legend:not(.is-still) .legend__bar { animation: legend-rise .3s var(--at) ease-out both; }
   /* ace */
-  .lg-ace .lg-flash { animation: lg-flash .14s ease-out both; }
-  .lg-ace .lg-hole { animation: lg-hole .12s ease-out both; }
   .lg-ace .lg-count span { animation: lg-num .17s ease-out both; }
   .lg-ace .lg-count span:last-child { animation: lg-num-last .5s ease-out both; animation-delay: .68s !important; }
   .lg-ace .lg-cross { animation: lg-cross .6s ease-out both; }
-  .legend--ace .legend__wash { animation: lg-shake .8s linear both; }
+  /* ace and the other shots */
+  .lg-ace { animation: lg-recoil .9s linear both; }
+  .lg-shot img.lg-hole { animation: lg-hole .14s var(--d) cubic-bezier(.2, .9, .3, 1) both; }
+  .lg-shot img.lg-muzzle { animation: lg-muzzle .2s var(--d) ease-out both; }
+  .lg-shot img.lg-smoke { animation: lg-smoke 1.1s calc(var(--d) + .06s) ease-out both; }
+  .lg-shot img.lg-casing { animation: lg-casing .9s calc(var(--d) + .02s) cubic-bezier(.25, .6, .4, 1) both; }
+  .lg-shot img.lg-spark { animation: lg-spark .34s var(--d) ease-out both; }
+  .lg-clutch .lg-pips em img.lg-muzzle { animation: lg-muzzle .2s var(--d) ease-out both; }
+  .lg-knife .lg-slash { animation: lg-slash .26s ease-out both; }
+  .lg-knife .lg-slash--a { animation-delay: 0s; } .lg-knife .lg-slash--b { animation-delay: .13s; } .lg-knife .lg-slash--c { animation-delay: .26s; }
+  .lg-knife .lg-spark--k1 { animation: lg-spark .34s .18s ease-out both; } .lg-knife .lg-spark--k2 { animation: lg-spark .34s .31s ease-out both; } .lg-knife .lg-spark--k3 { animation: lg-spark .34s .44s ease-out both; }
+  /* the way out */
+  .legend.is-leaving:not(.is-still) { animation: legend-out .32s .12s ease-in forwards; }
+  .legend.is-leaving:not(.is-still) .legend__card { animation: legend-card-out .36s ease-in forwards; }
+  .legend.is-leaving:not(.is-still) .lg { animation: lg-out .36s ease-in forwards; }
+  .legend.is-leaving:not(.is-still) .legend__sparks { animation: legend-out .25s ease-in forwards; }
+  .legend.is-leaving:not(.is-still) .legend__sweep { animation: legend-sweep .44s ease-in forwards; }
   /* clutch */
   .lg-clutch .lg-vignette { animation: lg-close 1.1s ease-in both; }
   .lg-clutch .lg-one { animation: lg-beat .42s ease-in-out 3 both; }
   .lg-clutch .lg-pips em { animation: lg-fall .17s ease-out both; }
   .lg-clutch .lg-pips em::before, .lg-clutch .lg-pips em::after { animation: lg-x .17s ease-out both; animation-delay: inherit; }
-  .lg-clutch .lg-flash { animation: lg-flash .12s ease-out both; background: rgba(255, 150, 120, .55); }
   /* ninja */
   .lg-ninja .lg-bomb { animation: lg-bomb 1.2s ease-out both; }
   .lg-ninja .lg-stamp { animation: lg-stamp .3s 1.0s cubic-bezier(.2, 1.5, .3, 1) both; }
@@ -118,13 +143,7 @@
   /* no-scope */
   .lg-scope .lg-ring { animation: lg-scope 1s ease-out both; }
   .lg-scope .lg-trail { animation: lg-trail .35s .45s ease-out both; }
-  .lg-scope .lg-hit { animation: lg-hit .5s .62s ease-out both; }
-  .lg-scope .lg-flash { animation: lg-flash .14s ease-out both; }
   /* knife */
-  .lg-knife .lg-slash--a { animation: lg-slash-a .22s .0s ease-out both; }
-  .lg-knife .lg-slash--b { animation: lg-slash-b .22s .12s ease-out both; }
-  .lg-knife .lg-slash--c { animation: lg-slash-c .22s .24s ease-out both; }
-  .lg-knife .lg-flash { animation: lg-flash .14s ease-out both; background: rgba(255, 90, 90, .5); }
   .legend--knife .legend__card { clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 0 100%); }
   /* flawless */
   .lg-flawless .lg-ticks u { animation: lg-tick .12s ease-out both; }
@@ -146,12 +165,19 @@
 @keyframes legend-sweep { to { transform: translateX(120%); } }
 @keyframes legend-spark { 0% { transform: translateY(0) skewX(-20deg); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-110vh) skewX(-20deg); opacity: 0; } }
 @keyframes legend-bar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-@keyframes lg-flash { 0% { opacity: .9; } 100% { opacity: 0; } }
-@keyframes lg-hole { from { transform: scale(2.2); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes lg-num { 0% { opacity: 0; transform: scale(1.4); } 25% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 @keyframes lg-num-last { 0% { opacity: 0; transform: scale(1.5); } 30%, 100% { opacity: 1; transform: none; } }
 @keyframes lg-cross { 0% { opacity: 0; transform: scale(2); } 30% { opacity: 1; transform: none; } 100% { opacity: 0; transform: scale(.7); } }
-@keyframes lg-shake { 0%, 100% { transform: none; } 12% { transform: translate(-7px, 4px); } 30% { transform: translate(6px, -5px); } 48% { transform: translate(-5px, 6px); } 66% { transform: translate(7px, -3px); } 84% { transform: translate(-3px, 3px); } }
+@keyframes lg-recoil { 0%, 100% { transform: none; } 3% { transform: translate(-6px, 4px); } 20% { transform: translate(5px, -4px); } 37% { transform: translate(-5px, 5px); } 54% { transform: translate(6px, -3px); } 71% { transform: translate(-4px, 3px); } 90% { transform: translate(2px, -1px); } }
+@keyframes lg-hole { from { transform: rotate(var(--r)) scale(1.9); opacity: 0; } to { transform: rotate(var(--r)) scale(1); opacity: 1; } }
+@keyframes lg-muzzle { 0% { transform: scale(.45); opacity: 1; } 55% { transform: scale(1.1); opacity: .95; } 100% { transform: scale(1.3); opacity: 0; } }
+@keyframes lg-smoke { 0% { opacity: 0; transform: translateY(0) scale(.5); } 25% { opacity: .55; } 100% { opacity: 0; transform: translateY(-110px) scale(1.7); } }
+@keyframes lg-casing { 0% { opacity: 1; transform: translate(0, 0) rotate(0); } 60% { opacity: 1; } 100% { opacity: 0; transform: translate(150px, 220px) rotate(560deg); } }
+@keyframes lg-spark { 0% { opacity: 1; transform: rotate(var(--a)) scaleX(.1); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(60px) scaleX(1.1); } }
+@keyframes lg-slash { 0% { opacity: 1; transform: rotate(var(--a)) scaleX(0); } 55% { opacity: 1; transform: rotate(var(--a)) scaleX(1); } 100% { opacity: .5; transform: rotate(var(--a)) scaleX(1); } }
+@keyframes legend-out { to { opacity: 0; } }
+@keyframes legend-card-out { to { opacity: 0; transform: translateY(34px) scale(.95); } }
+@keyframes lg-out { to { opacity: 0; transform: scale(1.1); } }
 @keyframes lg-close { from { transform: scale(1.7); } to { transform: scale(.78); } }
 @keyframes lg-beat { 0%, 100% { transform: skewX(-18deg) scale(1); } 50% { transform: skewX(-18deg) scale(1.35); } }
 @keyframes lg-fall { to { opacity: .25; transform: skewX(-18deg) translateY(6px); } }
@@ -161,10 +187,6 @@
 @keyframes lg-cut { to { transform: translateY(8px) rotate(5deg); opacity: .3; } }
 @keyframes lg-scope { 0% { opacity: 0; transform: scale(.55); } 25% { opacity: 1; transform: scale(1); } 70% { opacity: 1; transform: scale(1.08); } 100% { opacity: 0; transform: scale(1.5); } }
 @keyframes lg-trail { 0% { opacity: 1; transform: scaleX(0); } 70% { opacity: 1; transform: scaleX(1); } 100% { opacity: 0; transform: scaleX(1); } }
-@keyframes lg-hit { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(1.6); } }
-@keyframes lg-slash-a { 0% { opacity: 1; transform: rotate(-22deg) scaleX(0); } 100% { opacity: .0; transform: rotate(-22deg) scaleX(1); } }
-@keyframes lg-slash-b { 0% { opacity: 1; transform: rotate(18deg) scaleX(0); } 100% { opacity: 0; transform: rotate(18deg) scaleX(1); } }
-@keyframes lg-slash-c { 0% { opacity: 1; transform: rotate(-14deg) scaleX(0); } 100% { opacity: 0; transform: rotate(-14deg) scaleX(1); } }
 @keyframes lg-tick { to { transform: skewX(-18deg) scaleY(1); } }
 @keyframes lg-slam { from { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } to { transform: translate(-50%, -50%); opacity: 1; } }
 @keyframes lg-draw { to { stroke-dashoffset: 0; } }
