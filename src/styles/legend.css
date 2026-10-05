@@ -277,7 +277,7 @@
 
 /* 3D scenes (src/ui/legend3d): the canvas fills the overlay behind the card */
 .lg3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.legend--noscope { --at: 2.3s; }
+.legend--noscope { --at: 2.9s; }
 .dbg-scrub { position: fixed; inset: 0; z-index: 100000; background: #000; }
 .dbg-scrub .lg3d { position: absolute; inset: 0 0 56px 0; height: calc(100% - 56px); }
 .dbg-scrub__bar { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #12141a; color: #e8eaf0; font: 12px/1 system-ui, sans-serif; }

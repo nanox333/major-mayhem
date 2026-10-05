@@ -8,6 +8,8 @@ import { SceneMaker, badge, box, clamp, flat, lerp, makeRenderer, part, rnd, sky
  * as drawn, not rendered. Time is the only input.
  */
 export const DURATION = 3.9;
+/** The whole scene plays this many times slower than it is written: every time below is in scene seconds. */
+export const SLOW = 1.25;
 const FIRE = .4, CUT_B = 1.0, HIT = 2.3, CUT_C = HIT - .12, CUT_D = 3.1;
 const FOE_Z = -46, GUN_Y = 1.14, HEAD_Y = 1.65;
 const CAP = 0xd8322b, SAND = 0xe6b673, SAND_D = 0xc98e52, SAND_L = 0xf2d29c, BLUE = 0x2e6fb7;
@@ -137,7 +139,7 @@ export const noscope: SceneMaker = (canvas) => {
   const shock = new T.Mesh(new T.RingGeometry(.9, 1, 40), flat(0xffffff, .9)); scene.add(shock);
   const aim = new T.Vector3(), tmp = new T.Vector3(), hip = new T.Vector3(), hand = new T.Vector3();
   const render = (t: number) => {
-    t = clamp(t, 0, DURATION);
+    t = clamp(t / SLOW, 0, DURATION);
     const w = world(t), dt = Math.max(0, w - HIT), s = Math.max(0, t - HIT);
     const inA = t < CUT_B, inB = t >= CUT_B && t < CUT_C, inC = t >= CUT_C && t < CUT_D;
     const fd = Math.max(0, t - FIRE), sl = fd * .55;
@@ -208,5 +210,5 @@ export const noscope: SceneMaker = (canvas) => {
   };
   const resize = (w: number, h: number) => { r.setSize(w, h, false); cam.aspect = w / Math.max(1, h); cam.setViewOffset(w, h, 0, h * .08, w, h); /* the result card covers the bottom of the screen, so the picture sits higher */ };
   const dispose = () => { scene.traverse((o) => { const m = o as T.Mesh; m.geometry?.dispose?.(); const mt = m.material as T.Material | T.Material[] | undefined; (Array.isArray(mt) ? mt : mt ? [mt] : []).forEach((x) => x.dispose()); }); r.dispose(); };
-  return { duration: DURATION, render, resize, dispose };
+  return { duration: DURATION * SLOW, render, resize, dispose };
 };
