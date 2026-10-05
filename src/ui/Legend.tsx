@@ -38,7 +38,7 @@ export const LEGEND_TITLE = LEGEND_INFO;
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
 export const LEGEND_MS = 2000;
 /** The defuse and rendered no-scope run longer; the other scenes hold for LEGEND_MS. */
-export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && hasCinematic(kind) ? 4900 : LEGEND_MS);
+export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && hasCinematic(kind) ? 5800 : LEGEND_MS);
 /** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
 export const LEGEND_EXIT_MS = 440;
 
@@ -192,10 +192,13 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
     }
   }, []);
   const closing = useRef(false);
+  const finishTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(finishTimer.current), []);
   // however it ends (the time is up, a key, a tap) it plays the way out first, unless motion is reduced
   const close = useCallback(() => {
     if (closing.current) return;
     closing.current = true;
+    clearTimeout(finishTimer.current);
     if (still) return onDone();
     setLeaving(true);
     setTimeout(onDone, LEGEND_EXIT_MS);
@@ -214,7 +217,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   return (
     <div className={`legend legend--${kind} ${still || mediaFailed ? 'is-still' : ''} ${!ready && !leaving ? 'is-loading' : ''} ${leaving ? 'is-leaving' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={close}>
       <div className="legend__wash" aria-hidden="true" />
-      {!still && !mediaFailed && (hasCinematic(kind) ? <Stage kind={kind} onReady={mediaReady} onError={mediaError} onFrame={mediaFrame} onEnded={close} /> : <Scene e={e} still={still} />)}
+      {!still && !mediaFailed && (hasCinematic(kind) ? <Stage kind={kind} onReady={mediaReady} onError={mediaError} onFrame={mediaFrame} onEnded={() => { finishTimer.current = setTimeout(close, 900); }} /> : <Scene e={e} still={still} />)}
       <div className="legend__sparks" aria-hidden="true">{sparks.map((p, i) => <i key={i} style={{ left: `${p.x}%`, width: p.s, height: p.s, animationDelay: `${p.d + 0.5}s`, animationDuration: `${p.t}s` }} />)}</div>
       <div className="legend__sweep" aria-hidden="true" />
       <div className="legend__card">

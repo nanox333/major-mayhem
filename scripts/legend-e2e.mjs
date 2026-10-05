@@ -35,7 +35,7 @@ try {
     await page.getByRole('button', { name: 'Close', exact: true }).last().click();
     await page.getByRole('button', { name: 'No-scope', exact: true }).first().click();
     await page.waitForFunction(() => { const v = document.querySelector('.legend .lg3d')?.cinematicVideo; return v && !v.paused && v.currentTime > .1; });
-    await page.waitForFunction(() => document.querySelector('.legend .lg3d')?.cinematicVideo?.currentTime > 3.4);
+    await page.waitForFunction(() => document.querySelector('.legend .lg3d')?.cinematicVideo?.currentTime > 4.2);
     await page.screenshot({ path: `shots/legend/${name}-card.png` });
     assert.equal(await page.locator('.legend__pic img').evaluate(img => getComputedStyle(img).pointerEvents), 'none');
     assert.equal(await page.locator('.legend__pic img').evaluate(img => { const r = img.getBoundingClientRect(); return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === img; }), false);

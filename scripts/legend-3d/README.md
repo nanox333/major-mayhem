@@ -16,7 +16,7 @@ Set `BLENDER` to override the executable path. The script writes 146 frames per 
 
 For individual frames, run Blender with `--list 0,20,65,90,115,140`; use `--portrait --res 720x1280` for a quick portrait framing check. `noscope.py` builds the scene once and evaluates each requested time independently. Production and previews use 30 fps.
 
-Timing is stretched by `SLOW = 1.25`: shot at 0.5s, impact at 2.875s, final cut at 3.875s, marker at 4.438s. The video lasts 146/30 seconds. The overlay waits for actual playback before starting card animation; sounds follow decoded video time and completion follows the end of the clip. A failed load (including a twelve-second timeout) shows the card alone. Reduced motion never loads the video.
+Timing is stretched by `SLOW = 1.25`: shot at 0.5s, impact at 2.875s, final cut at 3.875s, marker at 4.438s. The video lasts 146/30 seconds. The overlay waits for actual playback before starting card animation; sounds follow decoded video time and the card appears at 3.6s so the impact remains visible, and completion follows a 0.9s hold after the end of the clip. A failed load (including a twelve-second timeout) shows the card alone. Reduced motion never loads the video.
 
 Run `npm run e2e:legend` after building to check desktop/phone playback, frame seeking, delayed/failed loading, reduced motion, and media hit testing. Screenshots are saved in `shots/legend/`.
 
