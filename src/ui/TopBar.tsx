@@ -57,9 +57,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
           <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label="Guess the pro" onClick={toggleGame}>
             <span>Guess the pro</span>
           </button>
-          <button type="button" className="gamelink" aria-current={inDuo ? 'page' : undefined} aria-label="Duo Link" onClick={() => setView('duo')}>
-            <span>Duo Link</span>
-          </button>
+          <button type="button" className="shell-link" aria-current={inDuo ? 'page' : undefined} onClick={() => setView('duo')}>Duo Link</button>
           {onBrowse && <button type="button" className="shell-link" aria-current={inArchive ? 'page' : undefined} onClick={onBrowse}>Roster archive</button>}
         </nav>
 
@@ -120,7 +118,7 @@ function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwi
           <button type="button" className="menu__item menu__item--mode" onClick={pick(onPlay)}><I.CaseIcon /><span>Play</span></button>
           {onBrowse && <button type="button" className="menu__item menu__item--mode" onClick={pick(onBrowse)}><I.RosterIcon /><span>Roster archive</span></button>}
           <button type="button" className="menu__item menu__item--game" onClick={pick(onGame)} aria-label={game}><I.CrosshairIcon /><span>{game}</span></button>
-          <button type="button" className="menu__item menu__item--game" onClick={pick(onDuo)} aria-label="Duo Link"><I.RosterIcon /><span>Duo Link</span></button>
+          <button type="button" className="menu__item menu__item--mode" onClick={pick(onDuo)} aria-label="Duo Link"><I.RosterIcon /><span>Duo Link</span></button>
           {showTwitch && <TwitchButton variant="menu" onClick={pick(onTwitch)} />}
           <button type="button" className="menu__item" onClick={pick(onHelp)} aria-label="How to play and data sources"><I.HelpIcon /><span>How to play</span></button>
           <button type="button" className="menu__item menu__item--settings" onClick={pick(onSettings)} aria-label="Settings"><I.SettingsIcon /><span>Settings</span></button>
