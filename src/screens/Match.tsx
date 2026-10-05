@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
 import * as G from '../game/logic';
 import { Action, Pending, Run, benchLineup, equalDuel, lineupFor } from '../game/state';
-import { Avatar, MapArt, MapShot, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
+import { Avatar, MapShot, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { track } from '../analytics';
 import { useChatVote } from '../ui/ChatVote';
 import { announceMap, announceSide, fmt, pulse, ratingClass, reduceMotion } from '../ui/util';
@@ -209,9 +209,6 @@ const KF_CLASS = (e: G.MatchEvent) =>
     : e.kind === 'clutch' ? 'kf--clutch'
       : `${e.good ? 'kf--us' : 'kf--them'}${e.kind === 'pistol' ? ' kf--pistol' : ''}`;
 
-/** Who a killfeed line favours, as a mark and in words, so the green or red border isn't the only signal (#22). Neutral lines get none. */
-const kfMark = (e: G.MatchEvent) => (e.kind === 'half' || e.kind === 'ot' || e.kind === 'call' ? null : e.good
-  ? <><i aria-hidden="true"> ▲</i><Sr> for you</Sr></> : <><i aria-hidden="true"> ▼</i><Sr> against you</Sr></>);
 
 /**
  * Where playback of the current map had got to, kept apart from the (much bigger) run save so it can be written every
@@ -299,7 +296,6 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
   const nudge = theirRun >= 3 && canTimeout;
 
   // pulse the map token of whoever made the highlight this round
-  const shown = game ? game.events.filter((e) => e.round <= n) : [];
   useEffect(() => {
     const e = game?.events.find((x) => x.round === n && x.playerId);
     if (e?.playerId) pulse(e.playerId, e.good);

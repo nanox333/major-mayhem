@@ -42,7 +42,10 @@ for (const [id, nick] of people) {
   let from = 'bo3.gg (saved)';
   if (!name) {
     await sleep(1200);
-    const h = await curl(`https://bo3.gg/players/${PLAYER_SLUG[nick] || slug(nick)}`);
+    // The address segment comes from a nick in rosters.json: only plain slugs are requested, and it is encoded anyway.
+    const page = PLAYER_SLUG[nick] || slug(nick);
+    if (!/^[a-z0-9_-]+$/.test(page)) { review.push({ id, nick, why: 'the nick does not make a plain bo3.gg address' }); continue; }
+    const h = await curl(`https://bo3.gg/players/${encodeURIComponent(page)}`);
     if (!h) { review.push({ id, nick, why: 'no page' }); continue; }
     const title = titleOf(h);
     name = nameFrom(title, nick);

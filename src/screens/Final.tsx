@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, benchLineup, dailyDate, dailyNumber, squadOf } from '../game/state';
+import { Action, Run, dailyDate, dailyNumber, squadOf } from '../game/state';
 import { copyText, pageUrl, shareText } from '../game/share';
 import { Stats, dailyStreak, isPractice } from '../game/stats';
 import { NextDaily } from '../ui/Countdown';
