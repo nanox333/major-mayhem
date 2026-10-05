@@ -25,8 +25,6 @@ function veto(s: Run) {
 }
 const start = { ...fresh('free'), seed: 'ui-followups' };
 const opened = reducer(start, { type: 'spin' });
-let live = veto(reducer(reducer(draft(start), { type: 'play' }), { type: 'start' }));
-live = reducer(live, { type: 'side', side: G.autoSide(live.current!.next!) });
 let final = reducer(draft(start), { type: 'play' });
 while (final.phase !== 'final') {
   final = veto(reducer(final, { type: 'start' }));
