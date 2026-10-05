@@ -1,6 +1,9 @@
 /** The NINJA DEFUSE clock. Elapsed seconds are the only animation state: every phase below is a pure function of `t`, so playback, scrubbing,
  *  the HTML fallback and the tests all agree, at 30, 60 or 120 fps. The timer is a cinematic one: it does not run in real time. */
 export const NINJA_DURATION = 1.55;
+/** The whole thing plays this many times slower than the keyframes below are written: tension needs time to be felt. Real length is NINJA_REAL. */
+export const NINJA_SLOW = 2.15;
+export const NINJA_REAL = NINJA_DURATION * NINJA_SLOW;
 /** The moment the defuse completes; everything before is tension, everything after is release. */
 export const NINJA_CLICK = 1.0;
 export const NINJA_DEFUSED = 1.02;

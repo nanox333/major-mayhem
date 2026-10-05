@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as T from 'three';
 import { play } from '../sound';
-import bombArt from '../../assets/legend/bomb.webp';
 import { createNinjaScene } from './scene';
-import { NINJA_DURATION, ninjaCues, ninjaLayout, ninjaTime } from './timeline';
+import { NINJA_DURATION, NINJA_SLOW, ninjaCues, ninjaLayout, ninjaTime } from './timeline';
 
 export const ninjaDiagnostics = { renderers: 0, loops: 0, observers: 0, last: { calls: 0, triangles: 0, geometries: 0, textures: 0, fps: 0, dpr: 0 } };
 if (typeof location !== 'undefined' && location.search.includes('debug')) Object.assign(window, { __mmNinja: ninjaDiagnostics });
@@ -24,7 +23,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
     const el = root.current, c = canvas.current; if (!el || !c) return;
     let renderer: T.WebGLRenderer | undefined, world: Awaited<ReturnType<typeof createNinjaScene>> | undefined;
     let dead = false, finished = false, raf = 0, loop = false, frames = 0, lastTime = 0, observer: ResizeObserver | undefined, ready = false;
-    const t0 = performance.now(), played = new Set<string>(), stops: (() => void)[] = [], cues = ninjaCues();
+    let t0 = performance.now(); const played = new Set<string>(), stops: (() => void)[] = [], cues = ninjaCues();
     const stopLoop = () => { cancelAnimationFrame(raf); if (loop) { loop = false; ninjaDiagnostics.loops--; } };
     const release = () => {
       world?.dispose(); world = undefined;
@@ -48,7 +47,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
     };
     const draw = (seconds: number) => {
       if (dead) return;
-      const t = still ? 1.3 : seconds, s = ninjaTime(t, start); lastTime = t;
+      const t = still ? 1.3 : seconds, s = ninjaTime(t, start); lastTime = t * NINJA_SLOW;
       el.dataset.time = t.toFixed(4); el.dataset.timer = s.text; el.dataset.state = s.defused ? 'defused' : s.success ? 'click' : 'defusing'; el.dataset.title = String(s.ninja > 0);
       const set = (k: string, v: number | string) => el.style.setProperty(k, String(v));
       set('--ninja-fade', s.fade); set('--ninja-dim', s.dim); set('--ninja-vignette', s.vignette); set('--ninja-progress', s.progress);
@@ -59,21 +58,21 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
       el.querySelectorAll<HTMLElement>('[data-ninja-pct]').forEach((n) => { const p = `${Math.round(s.progress * 100)}%`; if (n.textContent !== p) n.textContent = p; });
       if (renderer && world) {
         world.update(t); renderer.render(world.scene, world.camera);
-        ninjaDiagnostics.last = { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, fps: seconds > 0 ? frames / seconds : 0, dpr: renderer.getPixelRatio() };
+        ninjaDiagnostics.last = { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, fps: seconds > 0 ? frames / (seconds * NINJA_SLOW) : 0, dpr: renderer.getPixelRatio() };
       }
       sounds(t);
     };
     const tick = (now: number) => {
       if (dead) return; frames++;
-      const t = Math.min((now - t0) / 1000, NINJA_DURATION);
+      const t = Math.min((now - t0) / 1000 / NINJA_SLOW, NINJA_DURATION);
       try { draw(t); } catch { fail(); }
       if (t >= NINJA_DURATION) { stopLoop(); if (!finished) { finished = true; done.current?.(); } } else raf = requestAnimationFrame(tick);
     };
     const begin = () => {
-      ready = true; fit(); redraw.current = () => { try { draw(time.current ?? lastTime); } catch { fail(); } };
+      /* the clock starts when the picture is ready, not when the highlight mounted */ ready = true; t0 = performance.now(); fit(); redraw.current = () => { try { draw(time.current != null ? time.current / NINJA_SLOW : lastTime / NINJA_SLOW); } catch { fail(); } };
       if (time.current == null) { loop = true; ninjaDiagnostics.loops++; raf = requestAnimationFrame(tick); } else redraw.current();
     };
-    redraw.current = () => draw(time.current ?? 0);
+    redraw.current = () => draw((time.current ?? 0) / NINJA_SLOW);
     observer = new ResizeObserver(() => { fit(); if (ready) redraw.current?.(); }); observer.observe(el); ninjaDiagnostics.observers++;
     fit();
     if (still) { setFallback(true); draw(1.3); }
@@ -103,7 +102,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
       <div className="ninja-dim" />
       <canvas ref={canvas} className="ninja-canvas" style={{ display: fallback ? 'none' : undefined }} />
       <div className="ninja-fallback" style={{ display: fallback ? 'block' : 'none' }}>
-        <img src={bombArt} alt="" /><b className="ninja-fallback__lcd" data-ninja-text>0:00.11</b><i className="ninja-fallback__led" />
+        <img src={`${import.meta.env.BASE_URL}assets/highlights/ninja-defuse/plate.webp`} alt="" /><b className="ninja-fallback__lcd" data-ninja-text>0:00.11</b><i className="ninja-fallback__led" />
       </div>
       <div className="ninja-vignette" />
       <div className="ninja-frame" />
