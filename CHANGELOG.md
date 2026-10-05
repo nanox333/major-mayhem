@@ -8,6 +8,7 @@ All notable changes to Major Mayhem. The format follows [Keep a Changelog](https
 - **Home from Guess the pro goes to the Home:** with a draft under way it used to land on the draft (`#/play`). The Home tab and the menu's Play entry now always open the Home, where Continue is one press away.
 
 ### Changed
+- **Quieter sound:** the constant small sounds (button clicks, reel ticks, round blips, Guess the pro clues, spin again) are now barely there, and the common reveal and the pick are softer, so the big moments (case opening, rare reveals, match found, ban, clutch, final, achievement) carry the audio.
 - **Map screenshots instead of radars in the map veto, the knife round and the series list:** each map now shows an in-game screenshot with a dark foot for its name, in place of a radar sitting in a black box. The radar stays on the live board, where positions matter. Six of the seven are 1920x1080 Counter-Strike 2 screenshots (from the public repository neustcs/cs2mapsthumbnails); Train is still the small bo3.gg picture, and `assets-src/maps/README.md` says how to drop in a larger one (the build uses the largest file for each map).
 
 ### Added
