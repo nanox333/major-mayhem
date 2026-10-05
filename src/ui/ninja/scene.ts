@@ -6,7 +6,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { NINJA_DEFUSED, clamp, ledPhase, ninjaShake, ninjaTime } from './timeline';
+import { NINJA_CLICK, NINJA_DEFUSED, clamp, ledPhase, ninjaShake, ninjaTime } from './timeline';
 
 const base = `${import.meta.env.BASE_URL}assets/highlights/ninja-defuse/`;
 let file: Promise<ArrayBuffer> | undefined;
@@ -46,26 +46,37 @@ function ringTexture(rgb: string) {
   g.fillStyle = k; g.fillRect(0, 0, 256, 256); return new T.CanvasTexture(c);
 }
 
-/** The finishing pass: a heat shimmer and chromatic fringe that grow with the tension, crushed blacks with cold shadows, a heavy vignette that bleeds red at the critical beat (green after the click), film grain and faint scan lines. */
+/** The finishing pass, harsh on purpose: a radial zoom smear, RGB split and horizontal glitch tearing that spike on every beat and run wild at the critical beat, a hard contrast curve with cold crushed blacks, a heavy vignette that bleeds red (green after the click), strobing, coarse grain and scan lines, and a white slam on the click. */
 const FINISH = {
-  uniforms: { tDiffuse: { value: null as T.Texture | null }, uTime: { value: 0 }, uCA: { value: .002 }, uGrain: { value: .035 }, uVig: { value: .85 }, uCrit: { value: 0 }, uGreen: { value: 0 }, uAspect: { value: 1 } },
+  uniforms: { tDiffuse: { value: null as T.Texture | null }, uTime: { value: 0 }, uCA: { value: .004 }, uGrain: { value: .075 }, uVig: { value: .95 }, uCrit: { value: 0 }, uGreen: { value: 0 }, uAspect: { value: 1 }, uBeat: { value: 0 }, uGlitch: { value: 0 }, uFlash: { value: 0 }, uStrobe: { value: 0 } },
   vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime, uCA, uGrain, uVig, uCrit, uGreen, uAspect; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uTime, uCA, uGrain, uVig, uCrit, uGreen, uAspect, uBeat, uGlitch, uFlash, uStrobe; varying vec2 vUv;
     float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    vec3 tap(vec2 uv, vec2 off) { return vec3(texture2D(tDiffuse, uv + off).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - off).b); }
     void main() {
       vec2 uv = vUv, c = uv - .5; c.x *= uAspect;
-      uv += vec2(sin(uv.y * 46. + uTime * 31.), cos(uv.x * 38. + uTime * 27.)) * .0018 * uCrit;
+      // glitch: bands of the picture slide sideways in steps of time
+      float band = floor(uv.y * 38.), g = step(.84, hash(vec2(band, floor(uTime * 22.)))) * uGlitch;
+      uv.x += g * (hash(vec2(band, 7.)) - .5) * .09;
+      uv += vec2(sin(uv.y * 46. + uTime * 31.), cos(uv.x * 38. + uTime * 27.)) * (.0018 * uCrit + .002 * uBeat);
       float r2 = dot(c, c);
-      vec2 off = (vUv - .5) * uCA * (.5 + r2 * 4.);
-      vec3 col = vec3(texture2D(tDiffuse, uv + off).r, texture2D(tDiffuse, uv).g, texture2D(tDiffuse, uv - off).b);
+      vec2 off = (vUv - .5) * (uCA + .012 * uBeat + .012 * uCrit) * (.5 + r2 * 4.);
+      // radial smear towards the centre, harder on the beat
+      vec2 dir = (vUv - .5) * (.012 * uBeat + .02 * uCrit);
+      vec3 col = vec3(0.);
+      for (int i = 0; i < 6; i++) { float k = float(i) / 5.; col += tap(uv - dir * k, off * (1. + k)); }
+      col /= 6.;
       float l = dot(col, vec3(.299, .587, .114));
-      col = mix(col, col * vec3(.78, .92, 1.15), (1. - smoothstep(0., .22, l)) * .55);
-      col = max(col - .012, 0.) * 1.08;
-      col *= 1. - smoothstep(.12, .62, r2) * uVig;
-      col += uCrit * vec3(.2, .02, .01) * smoothstep(.1, .6, r2);
-      col += uGreen * vec3(.0, .09, .03) * smoothstep(.1, .6, r2);
-      col += (hash(vUv * vec2(1920., 1080.) + uTime) - .5) * uGrain;
-      col *= 1. - .035 * sin(vUv.y * 1000.);
+      col = mix(col, col * vec3(.7, .9, 1.25), (1. - smoothstep(0., .25, l)) * .6);
+      col = (col - .04) * 1.28; col = max(col, 0.); col = pow(col, vec3(1.08));
+      col *= 1. + .55 * uBeat;
+      col *= 1. - smoothstep(.08, .55, r2) * uVig;
+      col += uCrit * vec3(.34, .02, .01) * smoothstep(.06, .5, r2);
+      col += uGreen * vec3(.0, .12, .04) * smoothstep(.1, .6, r2);
+      col *= 1. - uStrobe * .55;
+      col += vec3(1.) * uFlash;
+      col += (hash(vUv * vec2(1920., 1080.) + uTime) - .5) * uGrain * (1. + uCrit);
+      col *= 1. - (.06 + .05 * uCrit) * sin(vUv.y * 1100.);
       gl_FragColor = vec4(max(col, 0.), 1.);
     }`,
 };
@@ -127,7 +138,7 @@ export async function createNinjaScene(start = 11) {
     if (composer && rendererRef === r) return composer;
     rendererRef = r; composer?.dispose();
     composer = new EffectComposer(r); composer.addPass(new RenderPass(scene, camera));
-    bloom = new UnrealBloomPass(new T.Vector2(256, 256), .6, .5, .72); composer.addPass(bloom);
+    bloom = new UnrealBloomPass(new T.Vector2(256, 256), .9, .65, .6); composer.addPass(bloom);
     finish = new ShaderPass(FINISH); composer.addPass(finish); composer.addPass(new OutputPass());
     const s = r.getSize(new T.Vector2()); composer.setPixelRatio(r.getPixelRatio()); composer.setSize(s.x, s.y); return composer;
   };
@@ -135,13 +146,14 @@ export async function createNinjaScene(start = 11) {
   let aspect = 1, low = false;
   const homeA = new T.Vector3(.8, 1.0, 1.55), homeB = new T.Vector3(-.1, .8, .95), look = new T.Vector3(), pull = new T.Vector3();
   const update = (t: number) => {
-    const s = ninjaTime(t, start), sh = ninjaShake(t, s.shake);
+    const s = ninjaTime(t, start), sh = ninjaShake(t, s.shake + .7 * s.critical);
+    const bp = ledPhase(t), beat = s.defused ? 0 : Math.exp(-(bp % 1) * 8) * (.5 + .5 * s.progress);   // a sharp spike at the start of every LED beat
     display.draw(s.defused ? 'DEFUSED' : s.text, s.defused);
     const flicker = s.critical > 0 ? 1 - .12 * (Math.sin(t * 190) > .6 ? 1 : 0) * s.critical : 1;
-    lcdMat!.color.setScalar((s.defused ? 1.15 : 1.2 + .4 * s.critical) * flicker);
+    lcdMat!.color.setScalar((s.defused ? 1.15 : 1.2 + .4 * s.critical + .6 * beat) * flicker);
     ledMat!.emissiveIntensity = s.led * 6; led.visible = !s.defused; ledG.visible = s.green > 0; ledGMat!.emissiveIntensity = s.green * 6;
     // the red light breathes with the LED and swells at the critical beat; it is what lights the ground
-    redLight.intensity = (s.led * 1.1 + s.critical * 4.5) * (s.defused ? 0 : 1); greenLight.intensity = s.green * 2.2;
+    redLight.intensity = (s.led * 1.1 + beat * 5 + s.critical * 7) * (s.defused ? 0 : 1); greenLight.intensity = s.green * 2.2;
     const m = (sp: T.Sprite) => sp.material as T.SpriteMaterial;
     m(ledGlow).opacity = s.led; ledGlow.scale.setScalar(.14 + s.led * .1 + s.critical * .12);
     m(ledGreen).opacity = Math.min(1, s.green * 1.2);
@@ -151,19 +163,22 @@ export async function createNinjaScene(start = 11) {
     mat(pool).opacity = s.defused ? 0 : .1 + .1 * s.led + .3 * s.critical; mat(poolGreen).opacity = s.green * .22;
     // a ring leaves the bomb on every beat, two staggered; a green one spreads out at the click
     const phase = ledPhase(t), live = s.defused ? 0 : 1;
-    rings.forEach((r, i) => { const f = (phase + i * .5) % 1; r.scale.setScalar(.7 + f * 3.6); mat(r).opacity = live * (1 - f) * (.1 + .25 * s.critical); });
+    rings.forEach((r, i) => { const f = (phase + i * .5) % 1; r.scale.setScalar(.7 + f * 3.6); mat(r).opacity = live * (1 - f) * (.16 + .4 * s.critical); });
     const ga = clamp((t - NINJA_DEFUSED) / .55); ringGreen.scale.setScalar(.6 + ga * 4.4); mat(ringGreen).opacity = t >= NINJA_DEFUSED ? (1 - ga) * .4 : 0;
     key.intensity = 1.8 + s.critical * .8; rim.intensity = 6 + s.critical * 3 - s.relax * 1.5;
-    if (bloom) bloom.strength = .5 + .45 * s.critical + .2 * s.green + .1 * s.led;
+    if (bloom) bloom.strength = .8 + .7 * s.critical + .6 * beat + .3 * s.green;
     if (finish) {
-      const u = finish.uniforms; u.uTime.value = t; u.uCA.value = .0018 + .006 * s.critical + .0025 * s.shake; u.uVig.value = .72 + .12 * s.critical; u.uCrit.value = s.critical; u.uGreen.value = s.green * .8; u.uAspect.value = aspect;
+      const u = finish.uniforms, flash = t >= NINJA_CLICK && t < NINJA_CLICK + .06 ? 1 - (t - NINJA_CLICK) / .06 : 0;
+      u.uTime.value = t; u.uCA.value = .004 + .004 * s.shake; u.uVig.value = .9 + .1 * s.critical; u.uCrit.value = s.critical; u.uGreen.value = s.green * .9; u.uAspect.value = aspect;
+      u.uBeat.value = beat; u.uGlitch.value = Math.min(1, .25 * beat + 1.2 * s.critical); u.uFlash.value = flash * .85;
+      u.uStrobe.value = s.critical > 0 && Math.sin(t * 260) > .2 ? s.critical * .6 : 0;
     }
     // camera: low and close, a slow drift round the bomb, a tilt that tightens, a tremor that grows with the tension and dies at the click
     const k = s.push, back = aspect < 1 ? 1 + (1 / aspect - 1) * .65 : 1;
     camera.position.lerpVectors(homeA, homeB, k); camera.position.x += Math.sin(t * .8) * .09 * (1 - s.relax * .5); camera.position.y += Math.sin(t * .55) * .02;
     look.set(lcdWorld.x * (.3 + .6 * k), .3 + .12 * k, .08); pull.copy(camera.position).sub(look).multiplyScalar(back - 1); camera.position.add(pull);
-    camera.position.x += sh.x * 2.5; camera.position.y += sh.y * 2.5; camera.up.set(0, 1, 0); camera.lookAt(look); camera.rotateZ(.05 * (1 - k * .6) + sh.roll);
-    camera.fov = (40 - 4 * s.critical - 4 * k) * (aspect < 1 ? 1.2 : 1); camera.updateProjectionMatrix();
+    camera.position.x += sh.x * 2.5 + (beat > .3 ? Math.sin(t * 140) * .012 * beat : 0); camera.position.y += sh.y * 2.5 + (beat > .3 ? Math.cos(t * 160) * .009 * beat : 0); camera.up.set(0, 1, 0); camera.lookAt(look); camera.rotateZ(.05 * (1 - k * .6) + sh.roll);
+    camera.fov = (40 - 4 * s.critical - 4 * k - 3.5 * beat) * (aspect < 1 ? 1.2 : 1); camera.updateProjectionMatrix();
     for (let i = 0; i < N; i++) {
       const [a, b, c, d] = seeds[i], spark = i >= 100, up = (t * (.05 + .08 * d) + b) % 1;
       if (!spark) {
