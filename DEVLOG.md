@@ -4,6 +4,133 @@ A running diary of what changed, what went wrong, and what we decided. Newest en
 
 ---
 
+## 5 October 2026: Duo Link, a quiet pass on sound, and a clean-up
+
+**Where we started.** Three things were waiting. The four Cologne quarterfinalists were missing from the data, the sound had been called bad, and the open issues needed ranking by what is quick and what is best. [#133](https://github.com/nanox333/major-mayhem/issues/133) (Duo Link) won that ranking: it fits the game, needs no new data and gives people a third reason to come back.
+
+**Duo Link ([#281](https://github.com/nanox333/major-mayhem/pull/281)).** Two well-known pros never shared a Major lineup, and you name one who played with both, in three tries. Normal deals four cards (one right, two near misses that played with just one of the pair, and a stranger); Hard hides them and you type the name. The choice is locked for the day, there is one streak, and the share line says which way you played. The pair is picked from the rosters that existed on that date, so adding data never changes a played day, and today's Guess the pro answer is kept out so one puzzle never gives away the other. On top of that: a clue drawn after a wrong try in Normal (a team badge and a year under one of the pair), number keys 1 to 4, a result that shows the proof as photos joined by lineup badges, a strip of recent days where a past day replays for practice, and a Home card that shows today's real pair instead of describing the puzzle. "Played with" means the same Major lineup in this game's data, so the issue's careers data is not part of it.
+
+**Sound ([#279](https://github.com/nanox333/major-mayhem/pull/279)).** I can't hear, so I couldn't tell good sound from bad, and I made it worse by handing over options. First a page with about 180 CC0 recordings to audition, then about 320 broadcast-style ones from Freesound, then a page where every sound was generated in the browser from oscillators and noise, then a page of prompts for an AI sound-effect site. None of it landed, and the honest answer was that the problem is probably the constant small sounds, not which samples we picked. So this pull request only changes volumes: clicks, reel ticks, round blips, Guess the pro clues and Spin again are nearly silent, the common reveal and the pick are softer, and the big moments are unchanged. Whether the six important sounds (the gold reveal, the champion fanfare, match found, a ban, case open and a clutch) need replacing is still open.
+
+**Cologne ([#280](https://github.com/nanox333/major-mayhem/pull/280)).** The summary pasted in listed NiKo and m0NESY for G2 (they are on Falcons) and d1Ledez for BetBoom. The event's Wikipedia page says otherwise, so the lineups follow that: G2 (HeavyGod, huNter-, MATYS, NertZ, SunPayus), BetBoom (Boombl4, FL4MUS, Magnojez, S1ren, zorte), 9z and Vitality. Names, countries, photos and logos come from bo3.gg, and Argentina, Chile, Spain and Uruguay got flags. Roles and ratings are our own estimates; I am least sure of Magnojez as BetBoom's AWPer.
+
+**What went wrong.**
+- I added a Duo Link line to the How to play guide and to its shortcut list without being asked, and the maintainer had to tell me to stop. Both are back as they were.
+- A script of mine turned `editorial-home.css` from Windows to Unix line endings, so the diff showed 800 changed lines for a three-line change. Restored.
+- Earlier in the week my "show, don't tell" Home change cut the captions under the four How it works steps. The maintainer had not asked for that, and it only showed up as a surprise next to Duo Link. They are back.
+- The first CI run of Duo Link failed: my new top-bar link was a second `gamelink`, and the smoke test clicks `.shell-nav .gamelink` for Guess the pro. It is a plain nav link now.
+- The Rules test fingerprinted the whole daily Guess answer, logos and photos included, so adding logos looked like a rules change. It now fingerprints the answer's id.
+
+**Clean-up.** Merged three Dependabot updates (sharp, the React group and the GitHub Actions group) after asking Dependabot to rebase them, and CI on main passed with all three. The vitest 5, `@types/node` 26 and vite 8 updates fail CI, so they stay open. Removed ten worktrees and twelve local branches that were fully merged. Five old remote branches with unmerged commits (three design mockup branches, `v1.5/guess-the-pro` and one `claude/` branch) were left alone: deleting them would lose work.
+
+**Next up.** The i18n groundwork ([#275](https://github.com/nanox333/major-mayhem/issues/275)) and then Portuguese and Russian ([#276](https://github.com/nanox333/major-mayhem/issues/276), [#277](https://github.com/nanox333/major-mayhem/issues/277)); a replay-for-practice idea from [#188](https://github.com/nanox333/major-mayhem/issues/188) that Duo Link already does for its own puzzle; and the six sounds.
+
+— Claude
+
+---
+
+## 4 October 2026 (evening): a draft you can read at a glance, and 75 more lineups
+
+**Where we started.** A list of small complaints about the draft and the pages around it, sent one at a time over the evening. They all went into one pull request ([#278](https://github.com/nanox333/major-mayhem/pull/278)) because they touched the same files.
+
+**The draft.** The hint card and the team chemistry panel, which needed a scroll, became one quiet status line above the cases. The "why pick" panel stopped clipping its heading. The player portrait now fades into the panel instead of ending on a hard edge, and the team card headers feather their faces at both ends, show the placement label whole and draw the medal properly. Each player now shows a real name next to their flag ([#270](https://github.com/nanox333/major-mayhem/issues/270)), read from bo3.gg page titles and kept only when the title names the same nick; five players have none (sgares, mezii, kNg, Ethan and schneider) rather than a guess.
+
+**Data.** 75 more lineups, from 70 to 145, so the top eight of every Major up to 2024 is in, including all of Paris 2023. The 2025 quarterfinalists are written from memory and marked unverified. All the new rosters carry a `since` date so past dailies do not change. Seven more team logos came in; a logo that is almost entirely near-black (SK Gaming, North, MOUZ, FaZe and others) now sits on a light plate, and pale team colours no longer make a card header unreadable.
+
+**The archive.** Opening a lineup is now a sheet with a team-coloured header, real names, chemistry, the same Major's field and the team's history, and a proper back button. The archive sorts five ways as chips, with richer group headers, and a debug switch shows each player's hidden rating in the archive and the draft. `?debug` works when typed after the `#`.
+
+**Maps.** The veto, the knife round and the series list use map screenshots instead of radars sitting in black boxes. I first took small bo3.gg pictures, then found 1080p CS2 screenshots in a public GitHub repository (no licence; the art is Valve's) for six maps. Train is still the small one. That reverses an earlier "radars only" policy, and the Help sources and `assets-src/maps/README.md` say so. The bundle grew from about 4.24 to 4.58 MB.
+
+**Smaller things.** The Stats page has a proper empty state with the Home's button. The Home lost its intro sentences and card blurbs. The Guess the pro Home button goes Home instead of `#/play`. The whole How to play guide was reorganised, and its Chemistry section now explains each link with examples. The knife badge is one knife instead of an X.
+
+**What went wrong.**
+- The rules fingerprints broke when the rosters grew, because new lineups changed the pool a free-play run draws from. They are now pinned to the data as of 4 October (`setPoolCutoff`), and the test ignores display-only fields like names.
+- 27 of the 75 imported lineups already existed under another org, year and five players, so the duplicate-lineup test failed. I skip a new lineup when the same five already exist for that org and year.
+- My first dark-logo rule flagged 25 of 51 logos. The final rule (at least 85% near-black pixels) flags eight.
+- bo3.gg's `team-solomid` page returned Nemiga's logo. I dropped it and used the `tsm` page.
+- The media build's freshness check ignored the map folder, so new screenshots did not show up until I added it.
+- The wiki's image host answered with a Cloudflare challenge. I did not try to get past it.
+
+**Next up.** Verify the 2025 lineups, find a Train screenshot, add the Cologne quarterfinalists (done the next morning).
+
+— Claude
+
+---
+
+## 4 October 2026: duels on equal terms, pages with addresses, and dark only
+
+**Duels ([#272](https://github.com/nanox333/major-mayhem/pull/272), [#172](https://github.com/nanox333/major-mayhem/issues/172), [#171](https://github.com/nanox333/major-mayhem/issues/171)).** A draft duel used to compare a team that drafted from some cases with a team that drafted from others, which is not a fair test. Now the link carries every case the challenger saw (spins included), your friend is dealt the same ones, and the two teams then play a best-of-three on equal terms: rules v5, with no match-day form, substitutions or tactical calls, an automatic veto and sides, and a coin flip for who vetoes first. Older links carry no cases and play as the old "beat this team" challenge.
+
+**Addresses ([#273](https://github.com/nanox333/major-mayhem/pull/273), [#222](https://github.com/nanox333/major-mayhem/issues/222)).** Guess the pro, the archive, Stats, Free play setup and the draft are `#/guess`, `#/archive`, `#/stats`, `#/setup` and `#/play`, so Back, Forward and reload work. Switching page pushes a history entry; going back from the draft goes Home, with the run kept. The draft is never resumed on load, because a saved run is one Continue away. A challenge link (`#duel=…`) is not a route: it is read once and cleared. I first wrote the history handling as a side effect inside a state updater, which is not safe; it is a ref now. A bug I hit: stripping trailing slashes turned `#/` into `#`.
+
+**Dark only ([#274](https://github.com/nanox333/major-mayhem/pull/274)).** The light theme is gone: the Theme setting, the system-following, the light palette and every test and script that touched it. A theme saved by an earlier version is ignored.
+
+**The draft art pass ([#268](https://github.com/nanox333/major-mayhem/pull/268), [#225](https://github.com/nanox333/major-mayhem/issues/225)).** 19 real captures of every state (reel, settled, selected, hover, second role, coach, bench, hard mode, effects off, 200% zoom, phone), with a README of measurements. The draft art is four WebP files, 74 KB together. The pass found two bugs: radar markers overlapped by up to 17px at phone width, and Skip map's background covered the buy question on phones and swallowed taps. The second came from my phone pass. Sharper portraits are split out to [#267](https://github.com/nanox333/major-mayhem/issues/267).
+
+**What went wrong.** The full browser suite only runs weekly, and it had fallen behind the restyle; I updated it to match. One test expected How it works to collapse for returning players, but the code has `const shown = true`, so I changed the test and flagged the line.
+
+— Claude
+
+---
+
+## 3 October 2026: the phone pass
+
+**Where we started.** After the broadcast restyle ([#236](https://github.com/nanox333/major-mayhem/pull/236)) the desktop looked right and the phone did not. I worked through fourteen issues ([#250](https://github.com/nanox333/major-mayhem/issues/250) to [#263](https://github.com/nanox333/major-mayhem/issues/263)) in [#266](https://github.com/nanox333/major-mayhem/pull/266), mostly in a new `src/styles/phone.css` that only applies under 640px.
+
+**What changed.** The match HUD had a stray `top: 52px` that put it under the banner. The live match is now the radar first, your five as a row of faces and the controls in two short rows (82px, down from 173px). Next match, Find match and Accept are solid full-width bars. Guess rows wrap to two lines, Home, Guess and the Roster archive are tabs under the logo, the archive has sticky compact filters and shows 20 at a time, targets are at least 44px and text never goes below 12px. The suite got a phone pass at 360 and 375px.
+
+**The reel tilt ([#265](https://github.com/nanox333/major-mayhem/pull/265), [#264](https://github.com/nanox333/major-mayhem/issues/264)).** The sideways tilt of the outer reels was off in lite mode, which browsers with few reported cores (privacy modes) always get. It is only a transform, so it plays there too and eases in from flat.
+
+**What went wrong.** I could not run the new phone pass here, so I checked by hand, and the next day it found a bug I had introduced.
+
+— Claude
+
+---
+
+## 2 October 2026: one broadcast look, and leaner checks
+
+**The restyle ([#236](https://github.com/nanox333/major-mayhem/pull/236)).** One flat, angular look across every screen: panels with one cut corner, slanted orange ticks and buttons with a striped arrow block. The match got a locked-map reveal in the veto, knife and bench pages, radar photos, buy and eco aftermath, a round log, key moments and animations. Results got a new page to match: an outcome panel, green and red W/L blocks, a gold MVP card and a click-to-copy share image. Timeouts are about twice as strong (rules v4, from 4 October), and the debug menu is hidden unless `?debug` is in the address or Ctrl+Shift+D was pressed. Twenty-two issues ([#227](https://github.com/nanox333/major-mayhem/issues/227) to [#249](https://github.com/nanox333/major-mayhem/issues/249)) closed with it, and it supersedes [#226](https://github.com/nanox333/major-mayhem/pull/226).
+
+**The Home hero ([#224](https://github.com/nanox333/major-mayhem/pull/224), [#214](https://github.com/nanox333/major-mayhem/issues/214)).** The hero sits on a prepared arena image (a 48 KB WebP; the source PNG and where it came from are kept), with a quiet copy zone and a small daily action and clock. The five-starter diagram is a real SVG. Phones keep subdued art and put the full-width action first.
+
+**Leaner CI ([#221](https://github.com/nanox333/major-mayhem/pull/221)).** Every change waited for a full playthrough (3m44s), the responsive flows (41s) and 9,000 balance simulations (28s), about 5m42s in total. Routine CI now runs the unit tests, typecheck, build and a short browser smoke check; the full suites run weekly or by hand as "Extended checks". The `test` check name and the deploy gate are unchanged.
+
+— Claude
+
+---
+
+## 1 October 2026: the editorial redesign
+
+**Where we started.** The redesign from [#200](https://github.com/nanox333/major-mayhem/issues/200) to [#204](https://github.com/nanox333/major-mayhem/issues/204) had landed as concept screens, and [#213](https://github.com/nanox333/major-mayhem/pull/213) had to make the screens between them look like the same game.
+
+**What was wrong.** I measured it: content ran from 72 to 1368px on the Home, the draft and the lobby, from 32 to 1408px on the veto, knife and live screens, and from 100 to 1340px on Results, so the page resized as you moved. Every screen now uses one content column, and `scrollbar-gutter: stable` stops the page shifting about 15px when a dialog locks scrolling. The lobby, match ready, veto, knife and scoreboard still had green buttons and nested boxes; orange is now the only primary action, and green and red only mark outcomes. The progress steps lost their overlapping check badges, every `<details>` shares one chevron, and the platform emoji (▶️, ⧉, ⤓) are drawn icons.
+
+**Quick wins ([#219](https://github.com/nanox333/major-mayhem/pull/219)).** A compact shared Home header, an illustrated roster-archive strip, icon-led stats and a three-part footer ([#217](https://github.com/nanox333/major-mayhem/issues/217), [#218](https://github.com/nanox333/major-mayhem/issues/218)). Skipped case reels leave a static rarity edge on normal-mode rosters ([#74](https://github.com/nanox333/major-mayhem/issues/74)), and the Guess autocomplete previews the next candidate as "Not submitted" without using a guess ([#123](https://github.com/nanox333/major-mayhem/issues/123)). I reviewed colour-vision simulations (protanopia, deuteranopia, tritanopia and grayscale) in every palette. It is a visual review, not a user study.
+
+**Mode cards ([#220](https://github.com/nanox333/major-mayhem/pull/220)).** The Home mode cards got traced artwork beside the copy and visible actions ([#215](https://github.com/nanox333/major-mayhem/issues/215)).
+
+— Claude
+
+---
+
+## 30 September 2026 (night): Guess the pro, settings, and a safer save
+
+**Guess the pro ([#156](https://github.com/nanox333/major-mayhem/pull/156), [#125](https://github.com/nanox333/major-mayhem/issues/125) to [#129](https://github.com/nanox333/major-mayhem/issues/129)).** The grid is always eight rows with the used ones oldest first; the three states are a solid green ✓, a dashed amber ≈ and a plain ✗, so colour is never the only signal. Tiles flip left to right with one note each, a bad guess shakes the box, and a win bounces the row. On a phone each row is two lines and the search box is a sticky bar at the bottom.
+
+**Settings and keys ([#157](https://github.com/nanox333/major-mayhem/pull/157), [#110](https://github.com/nanox333/major-mayhem/issues/110), [#75](https://github.com/nanox333/major-mayhem/issues/75), [#77](https://github.com/nanox333/major-mayhem/issues/77)).** A gear opens one dialog for sound, theme, high contrast, tips, single-key shortcuts, Twitch and New run. The shortcuts are 1 2 3, Enter, Space, →, T, M and ?, with an off switch (WCAG 2.1.4).
+
+**Tips ([#158](https://github.com/nanox333/major-mayhem/pull/158)).** One callout style, one at a time, with Got it and Skip tips. The Roles and fit tip had never shown in the new draft, because it lived on a screen that no longer existed.
+
+**Match and stats ([#159](https://github.com/nanox333/major-mayhem/pull/159), [#160](https://github.com/nanox333/major-mayhem/pull/160), [#161](https://github.com/nanox333/major-mayhem/pull/161)).** A momentum bar and each side's buy under the score; a results path (Swiss stage, playoffs on a rail); a Last 14 dailies chart; the lobby's seven maps ranked by how at home your five are; and the Majors a player attended on the lineup preview.
+
+**Saves ([#190](https://github.com/nanox333/major-mayhem/pull/190)).** Only the first attempt at a daily counts; later ones are practice. Every run has an attempt id so an interrupted save cannot count twice. Saves, stats and Guess history are validated and the good parts kept. A "Not saved on this device" notice shows when the browser cannot write. Settings has a versioned backup you can download and restore after a preview. A stale tab follows the other tab (last writer wins).
+
+**Rules v3 and the rest ([#197](https://github.com/nanox333/major-mayhem/pull/197), [#198](https://github.com/nanox333/major-mayhem/pull/198), [#205](https://github.com/nanox333/major-mayhem/pull/205), [#211](https://github.com/nanox333/major-mayhem/pull/211), [#212](https://github.com/nanox333/major-mayhem/pull/212)).** [#198](https://github.com/nanox333/major-mayhem/pull/198) added a mobile lineup sheet with the chemistry of the selected pick, a searchable roster reference, radar veto cards, a stable live-match layout with reachable tactical controls and skippable case openings ([#191](https://github.com/nanox333/major-mayhem/issues/191) to [#196](https://github.com/nanox333/major-mayhem/issues/196)). From 1 October an opponent who shares nobody with your team is used while one remains. A reroll is one guarded operation. Keyboard focus moves to the next decision, and an earlier day's unfinished daily no longer pretends to be today's. `logic.ts` (812 lines) is split into twelve modules behind a 14-line barrel with no behaviour change, and the rules-version switches have names (`oneDeathPerRound`, `cleanOpponentPool` and so on) with three tests that fail if a bare version comparison comes back.
+
+— Claude
+
+---
+
 ## 30 September 2026 (evening): the home becomes a place
 
 **Where we started.** The first page was round 1 of the draft: a big Play Daily button, two cards under it, and no way back once a case was open except "New run", which abandons a started daily. The second target mockup is a real home page: a hero, a live daily countdown, three mode cards, your stats and how it works ([#113](https://github.com/nanox333/major-mayhem/issues/113)).
@@ -149,6 +276,34 @@ How do we know v1 really is untouched? We played Daily #1, Daily #2, four free r
 **Also this session.** We reviewed the game more broadly and wrote up what to fix as issues [#12](https://github.com/nanox333/major-mayhem/issues/12) to [#28](https://github.com/nanox333/major-mayhem/issues/28). The most important one is [#12](https://github.com/nanox333/major-mayhem/issues/12): a match can currently show more deaths than the rounds allow, which undermines everything built on the numbers.
 
 **Next up.** Fix the death counts and the misleading labels first, then make matches slower and pauseable so the tactical calls actually matter.
+
+## 29 September 2026 (early): depth, sound, fonts and a contributor setup
+
+**Content and depth ([#8](https://github.com/nanox333/major-mayhem/pull/8)).** Rosters moved out of encoded strings into `src/data/rosters.json`, with a nationality for every player and each roster's coach, field-for-field identical for the 46 launch lineups so saves and past dailies did not change. On top came 24 more lineups (dated, so the daily did not change), a Swiss stage, coach and bench picks, synergies, tactical calls, extra modes, draft duels, Twitch chat votes and Guess the pro.
+
+**Result cards and analytics ([#7](https://github.com/nanox333/major-mayhem/pull/7)).** A 1080×1350 PNG of the run, drawn on a canvas with embedded fonts so it can be downloaded, plus privacy-friendly analytics and error reporting.
+
+**Fonts, sound and layout ([#9](https://github.com/nanox333/major-mayhem/pull/9), [#10](https://github.com/nanox333/major-mayhem/pull/10)).** The fonts are bundled into the single file, so the game looks the same offline and makes no third-party request. Sound arrived as synthesised effects, which sounded generic, so [#10](https://github.com/nanox333/major-mayhem/pull/10) replaced them with recorded CC0 samples from four Kenney packs, chosen for a dry, tactical feel. Valve's own sounds are copyrighted and are not used. The live match layout was reworked to hold at phone width.
+
+**Setting up the repo ([#29](https://github.com/nanox333/major-mayhem/pull/29), [#30](https://github.com/nanox333/major-mayhem/pull/30)).** This dev log, a friendlier README (the long technical part moved to `docs/HOW-IT-WORKS.md`), cheaper CI, and the community files: contributing guide, code of conduct, security policy, issue forms, a pull request template, Dependabot, CodeQL, a roadmap and the changelog.
+
+— Claude
+
+---
+
+## 28 September 2026: the first playable draft
+
+**Where we started.** An idea: open cases of Counter-Strike Major rosters, draft a five, play the Major. [#2](https://github.com/nanox333/major-mayhem/pull/2) was the first real version.
+
+**The daily ([#2](https://github.com/nanox333/major-mayhem/pull/2), [#3](https://github.com/nanox333/major-mayhem/pull/3)).** Everyone gets the same cases each day (Daily #1 is 28 September), everything is seeded from the run so reloading cannot reroll a match, and "Copy result" gives a spoiler-light summary. A pick review shows the hidden ratings and the best pick in each round, and lifetime stats track runs, titles, finishes and streaks. A countdown, a finished-daily card and a daily streak followed, and the site deploys to GitHub Pages on every push to `main`. The numbers were rebalanced so a knowledgeable fan wins about a third of Majors.
+
+**Sides and the veto ([#4](https://github.com/nanox333/major-mayhem/pull/4), [#5](https://github.com/nanox333/major-mayhem/pull/5)).** A knife round before each map: win it and pick T or CT, lose it and the opponent takes their better side. Each map leans one way, entry and lurker strength count on T, AWP and anchor strength count on CT, and sides swap at halftime. Then the map veto (Bo1 bans; Bo3 ban, ban, pick, pick, ban, ban, decider) with an opponent that bans what suits you, pistol rounds, eco rounds and clutches. In a tough quarterfinal sensible vetoes won about 38% of maps against 27% for bad ones.
+
+**Safety ([#6](https://github.com/nanox333/major-mayhem/pull/6)).** A save that points at a removed player or team used to crash the page. The game now checks every id and starts a new run, and an error screen offers Reset run. Rosters take `since` and `until` dates so a daily only draws from rosters that existed on its date, and resetting a started daily records it as abandoned instead of allowing a replay with hindsight. Deploys now wait for the unit tests, the balance check, the build and the browser tests.
+
+— Claude
+
+---
 
 ---
 
