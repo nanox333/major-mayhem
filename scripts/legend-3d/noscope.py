@@ -261,7 +261,17 @@ def make():
         material.node_tree.nodes.get('Emission').inputs['Strength'].default_value = 4
         spark = cyl(f'spark{i}', 0.008, 0.004, 1, (0, 0, 0), material, axis='Z', seg=8)
         S.sparks.append((spark, direction, 3 + rnd(i + 400) * 5))
-    S.impact_dust = [sphere(f'impactDust{i}', .12, (0,0,0), flat(0xe6c39a, .22, f'impactDust{i}'), seg=16) for i in range(8)]
+    S.impact_dust = []
+    for i in range(8):
+        material = flat(0xe6c39a, .22, f'impactDust{i}')
+        nodes, links = material.node_tree.nodes, material.node_tree.links
+        facing = nodes.new('ShaderNodeLayerWeight'); facing.inputs['Blend'].default_value = .35
+        soft = nodes.new('ShaderNodeMixShader')
+        links.new(facing.outputs['Facing'], soft.inputs[0])
+        links.new(nodes.get('Emission').outputs[0], soft.inputs[1])
+        links.new(nodes.get('Transparent BSDF').outputs[0], soft.inputs[2])
+        links.new(soft.outputs[0], nodes.get('fade').inputs[1])
+        S.impact_dust.append(sphere(f'impactDust{i}', .12, (0,0,0), material, seg=48))
     light = bpy.data.lights.new('impact light', 'POINT'); light.color = hexrgb(0xffc66d); light.shadow_soft_size = .6
     S.impact_light = bpy.data.objects.new('impact light', light); link(S.impact_light, ink=False)
     S.impact_light.location = (0, FOE_Y - .5, HEAD_Z)
