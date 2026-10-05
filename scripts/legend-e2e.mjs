@@ -30,7 +30,7 @@ try {
     await page.getByRole('slider', { name: 'Time' }).fill('2.5');
     await page.waitForFunction(() => { const v = document.querySelector('.lg3d')?.cinematicVideo; return !v.seeking && Math.abs(v.currentTime - 2.5) < .002; });
     await page.getByRole('button', { name: 'Forward one frame' }).click();
-    await page.waitForFunction(() => { const v = document.querySelector('.lg3d')?.cinematicVideo; return !v.seeking && Math.abs(v.currentTime - (2.5 + 1 / 60)) < .002; });
+    await page.waitForFunction(() => { const v = document.querySelector('.lg3d')?.cinematicVideo; return !v.seeking && Math.abs(v.currentTime - (2.5 + 1 / 30)) < .002; });
     await page.screenshot({ path: `shots/legend/${name}-scrub.png` });
     await page.getByRole('button', { name: 'Close', exact: true }).last().click();
     await page.getByRole('button', { name: 'No-scope', exact: true }).first().click();

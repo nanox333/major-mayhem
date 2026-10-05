@@ -201,7 +201,11 @@ def setup_render(res=(1280, 720), samples=128, ink=1.25):
     l(blur.outputs['Image'], level.inputs[0])
     multiply = n.new('ShaderNodeMix'); multiply.data_type = 'RGBA'; multiply.blend_type = 'MULTIPLY'
     multiply.inputs[0].default_value = 1.0
-    l(denoise.outputs['Image'], multiply.inputs[6]); l(level.outputs[0], multiply.inputs[7])
+    glow = n.new('CompositorNodeGlare')
+    glow.inputs['Type'].default_value = 'Fog Glow'; glow.inputs['Quality'].default_value = 'High'
+    glow.inputs['Threshold'].default_value = 1.5; glow.inputs['Strength'].default_value = 0.35; glow.inputs['Size'].default_value = 0.25
+    l(denoise.outputs['Image'], glow.inputs['Image'])
+    l(glow.outputs['Image'], multiply.inputs[6]); l(level.outputs[0], multiply.inputs[7])
     output = n.new('NodeGroupOutput'); l(multiply.outputs[2], output.inputs['Image'])
     return sc
 

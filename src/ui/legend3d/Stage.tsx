@@ -3,10 +3,10 @@ import type { LegendKind } from '../../game/match';
 
 /** Native Blender renders, downloaded only when their moment is shown. */
 export const CINEMATICS: Partial<Record<LegendKind, { landscape: string; portrait: string; duration: number }>> = {
-  noscope: { landscape: 'legend/noscope.mp4', portrait: 'legend/noscope-portrait.mp4', duration: 292 / 60 },
+  noscope: { landscape: 'legend/noscope.mp4', portrait: 'legend/noscope-portrait.mp4', duration: 146 / 30 },
 };
 export const hasCinematic = (kind: LegendKind) => !!CINEMATICS[kind];
-export const CINEMATIC_FPS = 60;
+export const CINEMATIC_FPS = 30;
 
 type CinematicCanvas = HTMLCanvasElement & { cinematicVideo?: HTMLVideoElement };
 

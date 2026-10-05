@@ -1,6 +1,6 @@
 """The no-scope, rendered in Blender. Four cuts: a player fires an AWP from the hip (both scope caps still on); the camera rides the bullet
 down a long alley; it reaches one head far away and the world all but stops; a wide shot from behind the rifle as the target falls.
-Usage: Blender -b -P noscope.py -- --out DIR [--frames 0-291] [--res 3840x2160] [--samples 128] [--fps 60] [--portrait]"""
+Usage: Blender -b -P noscope.py -- --out DIR [--frames 0-145] [--res 3840x2160] [--samples 128] [--fps 30] [--portrait]"""
 import sys, os, math, argparse
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -13,7 +13,7 @@ FIRE, CUT_B, HIT, CUT_D = 0.4, 1.0, 2.3, 3.1
 CUT_C = HIT - 0.12
 FOE_Y = 46.0           # how far down the alley the target stands
 GUN_Z, HEAD_Z = 1.14, 1.65
-FPS = 60
+FPS = 30
 TOTAL = int(round(DURATION * SLOW * FPS))
 
 SAND, SAND_D, SAND_L, BLUE, CAP = 0xd9b784, 0xb78c60, 0xe5cca3, 0x376b8d, 0xd8322b
@@ -244,12 +244,27 @@ def make():
     # flashes and effects: each is a star on a black backing
     def badge(name, pts, outer, inner, col, edge=0.07):
         grp = bpy.data.objects.new(name, None); link(grp, ink=False)
-        b = star(name + 'k', pts, outer * (1 + edge), inner * (1 + edge), flat(0x14110f, 1, name + 'kk'), grp); b.location.y = 0.004
-        f = star(name + 'f', pts, outer, inner, flat(col, 1, name + 'ff'), grp)
+        # Pure luminous silhouettes avoid transparent black backing artifacts.
+        material = flat(col, 1, name + 'ff')
+        material.node_tree.nodes.get('Emission').inputs['Strength'].default_value = 3.0
+        f = star(name + 'f', pts, outer, inner, material, grp)
         return grp
     S.mz1 = badge('mz1', 9, 1, 0.42, 0xffd24a); S.mz2 = badge('mz2', 7, 0.62, 0.3, 0xffffff, 0)
     S.hit1 = badge('hit1', 12, 1, 0.5, 0xffffff); S.hit2 = badge('hit2', 8, 0.66, 0.32, 0xffd24a, 0)
     S.shock = ring('shock', 0.9, flat(0xffffff, 0.9, 'shock')); S.hring = ring('hring', 0.9, flat(0xffffff, 0.9, 'hring'))
+    S.impact_rings = [ring(f'impactRing{i}', 0.955, flat(0xffd78c if i else 0xffffff, 1, f'impactRing{i}')) for i in range(2)]
+    S.sparks = []
+    for i in range(32):
+        angle = rnd(i + 300) * math.tau
+        direction = V(math.cos(angle), -0.5 - rnd(i + 350), math.sin(angle)).normalized()
+        material = flat(0xffd16e if i % 3 else 0xffffff, 1, f'spark{i}')
+        material.node_tree.nodes.get('Emission').inputs['Strength'].default_value = 4
+        spark = cyl(f'spark{i}', 0.008, 0.004, 1, (0, 0, 0), material, axis='Z', seg=8)
+        S.sparks.append((spark, direction, 3 + rnd(i + 400) * 5))
+    S.impact_dust = [sphere(f'impactDust{i}', .12, (0,0,0), flat(0xe6c39a, .22, f'impactDust{i}'), seg=16) for i in range(8)]
+    light = bpy.data.lights.new('impact light', 'POINT'); light.color = hexrgb(0xffc66d); light.shadow_soft_size = .6
+    S.impact_light = bpy.data.objects.new('impact light', light); link(S.impact_light, ink=False)
+    S.impact_light.location = (0, FOE_Y - .5, HEAD_Z)
     S.puffs = []
     for i in range(6):
         p = sphere(f'puff{i}', 0.2, (0, 0, 0), flat(0xf6ead4, 1, f'puff{i}'), None, 12, (1, 0.1, 1)); S.puffs.append((p, rnd(i + 3) * 6.28, 0.35 + rnd(i + 11) * 0.5))
@@ -282,15 +297,15 @@ def update(S, t_real, portrait=False):
     settle = smooth(t, 0, FIRE) if t < FIRE else 1.0
     cam = S.cam
     # rifle and shooter
-    S.gun.location = V(0, kick * -0.2, GUN_Z + (1 - settle) * -0.05 + math.sin(t * 3.2) * 0.004)
+    S.gun.location = V(0.22, kick * -0.2, GUN_Z + (1 - settle) * -0.05 + math.sin(t * 3.2) * 0.004)
     S.gun.rotation_euler = (kick * 0.18, 0, 0)
     S.me['root'].location = V(-0.18, -0.55 - kick * 0.1, 0); S.me['root'].rotation_euler.x = -kick * 0.05
     S.me['torso'].rotation_euler.x = kick * 0.1 - (1 - settle) * 0.02
     bpy.context.view_layer.update()
     mw = S.gun.matrix_world
-    rootp = S.me['root'].location
-    S.armR.set(V(rootp.x + 0.36, rootp.y, 1.42), mw @ V(0, -0.24, -0.2), V(0.4, -0.3, -1.0))
-    S.armL.set(V(rootp.x - 0.36, rootp.y, 1.42), mw @ V(0, 0.10, -0.07), V(-0.3, -0.2, -1.0), l1=0.46, l2=0.46)
+    shoulders = S.me['torso'].matrix_world
+    S.armR.set(shoulders @ V(0.36, 0, 1.42), mw @ V(0, -0.24, -0.2), V(0.4, -0.3, -1.0))
+    S.armL.set(shoulders @ V(-0.36, 0, 1.42), mw @ V(-0.04, 0, -0.07), V(-0.3, 0.4, -1.0), l1=0.50, l2=0.50)
     muzzle = mw @ V(0, 1.3, 0.01)
     # muzzle flash, shock ring, smoke, casing
     on = 0 < fd < 0.17; bk = clamp(fd / 0.17)
@@ -304,12 +319,12 @@ def update(S, t_real, portrait=False):
         p.location = muzzle + V(math.cos(a) * k * 0.5 * d, k * 0.55 * d + 0.1, math.sin(a) * k * 0.4 * d + k * 0.15)
         face_camera(p, cam, 0, 0.4 + k * 1.8); fade(p, (1 - k) * 0.95)
     S.casing.hide_render = not (0 < fd < 1.6)
-    S.casing.location = V(0.14 + sl * 0.9, kick * -0.2 + 0.1 + sl * 0.3, GUN_Z + 0.12 + sl * 1.1 - sl * sl * 2.6)
+    S.casing.location = V(S.gun.location.x + 0.14 + sl * 0.9, kick * -0.2 + 0.1 + sl * 0.3, GUN_Z + 0.12 + sl * 1.1 - sl * sl * 2.6)
     S.casing.rotation_euler = (sl * 11, sl * 7, sl * 5)
     # bullet and wind
     u = clamp((t - CUT_B) / (HIT - CUT_B))
     by = (1.34 + max(0.0, t - FIRE - 0.06) * 26) if inA else bullet_y(min(t, HIT)); bz = lerp(GUN_Z + 0.01, HEAD_Z + 0.03, smooth(u, 0.05, 1))
-    S.bullet.location = V(0, by, bz); show(S.bullet, FIRE + 0.06 <= t < HIT)
+    S.bullet.location = V(lerp(S.gun.location.x, 0, u), by, bz); show(S.bullet, FIRE + 0.06 <= t < HIT)
     S.streak.hide_render = not (t < HIT - 0.12) or not (FIRE + 0.06 <= t < HIT); S.streak.scale = (1, 1, lerp(1, 0.5, smooth(u, 0.8, 1)) if not inA else clamp((by - 1.5) / 3.0, 0.02, 1))
     for l in S.lines:
         l.hide_render = not inB
@@ -335,11 +350,33 @@ def update(S, t_real, portrait=False):
     S.foehelm.rotation_euler = (dt * 7, dt * 4, dt * 6) if dt > 0 else (fall, 0, math.pi)
     S.shadow.location = V(0, FOE_Y + fall * 0.3, 0.03); S.shadow.hide_render = False
     # hit star, ring, shards
-    hk = clamp(s / 0.5)
+    impact = V(0, FOE_Y - .08, HEAD_Z + .03)
+    # Effects run in presentation time while the body falls in slowed world time.
+    S.impact_light.data.energy = 500 * (1 - smooth(s, 0, .20)) if s > 0 else 0
+    for i, ring_obj in enumerate(S.impact_rings):
+        age = s - i * .045
+        ring_obj.hide_render = not (0 < age < .42)
+        ring_obj.location = impact + V(0, -.08 - i * .04, 0)
+        face_camera(ring_obj, cam, i * .3, .12 + max(0, age) * (4.8 - i))
+        fade(ring_obj, .9 * (1 - smooth(age, .06, .42)) if age > 0 else 0)
+    for i, (spark, direction, speed) in enumerate(S.sparks):
+        age = max(0, s - rnd(i + 500) * .035)
+        spark.hide_render = not (0 < s < .52)
+        center = impact + direction * speed * age + V(0,0,-1.8 * age * age)
+        length = (.045 + age * .65) * (1 - smooth(age, .25, .52))
+        place_between(spark, center - direction * length / 2, center + direction * length / 2)
+        fade(spark, 1 - smooth(age, .18, .52))
+    for i, dust in enumerate(S.impact_dust):
+        dust.hide_render = not (0 < s < .7)
+        angle = i * math.tau / 8
+        dust.location = impact + V(math.cos(angle), -.25, math.sin(angle)) * max(0,s) * 1.1
+        dust.scale = (1 + max(0,s) * 4,) * 3
+        fade(dust, .18 * smooth(s, 0, .05) * (1 - smooth(s, .1, .7)))
+    hk = clamp(s / 0.32)
     on = s > 0 and hk < 1
     for g in (S.hit1, S.hit2):
         show(g, on); g.location = V(0.04, FOE_Y + 0.25, HEAD_Z + 0.05)
-        face_camera(g, cam, 0, 0.12 + smooth(hk, 0, 0.18) * 0.62 * (1 - smooth(hk, 0.35, 1)))
+        face_camera(g, cam, 0, 0.08 + (1 - smooth(hk, 0.10, 1)) * 0.52)
     S.hit2.location = S.hit1.location + (cam.location - S.hit1.location).normalized() * 0.02
     S.hring.hide_render = not (0 < s < 0.45); S.hring.location = V(0, FOE_Y - 0.1, HEAD_Z + 0.05); face_camera(S.hring, cam, 0, 0.2 + s * 5); fade(S.hring, 0.9 * (1 - s / 0.45) if s < 0.45 else 0)
     for o, v, spin in S.shards:
@@ -363,8 +400,11 @@ def update(S, t_real, portrait=False):
     elif inC:
         k = smooth(s, 0, 0.8)
         cam.location = V(lerp(3.7, 3.4, k), FOE_Y + lerp(0.05, -2.6, smooth(k, 0.15, 1)), lerp(1.7, 1.4, k))
-        aim = V(0, FOE_Y + lerp(0.0, 0.5, k), lerp(1.85, 1.3, k)); vfov = lerp(30, 38, k); roll = -0.03
-        if s > 0: cam.location.x += math.sin(t * 80) * 0.03 * (1 - smooth(s, 0, 0.3))
+        aim = V(0, FOE_Y + lerp(0.0, 0.5, k), lerp(1.85, 1.3, k)); vfov = lerp(30, 38, k); punch = math.exp(-s * 14) if s > 0 else 0
+        vfov -= 3.5 * punch; roll = -0.03 + math.sin(s * 55) * .035 * punch
+        if s > 0:
+            cam.location.x += math.sin(s * 85) * .07 * punch
+            cam.location.z += math.cos(s * 65) * .045 * punch
     else:
         k = smooth(t, CUT_D, DURATION)
         cam.location = V(0.8, -1.9, 1.28); aim = V(lerp(-0.15, 0, smooth(k, 0, 1)), FOE_Y, lerp(1.3, 1.0, k)); vfov = lerp(38, 7.5, smooth(k, 0.1, 1)); roll = 0.02
@@ -385,6 +425,7 @@ def update(S, t_real, portrait=False):
         face_camera(group, cam, bk if group in (S.mz1, S.mz2) else 0, group.scale.x)
     face_camera(S.shock, cam, 0, S.shock.scale.x); face_camera(S.hring, cam, 0, S.hring.scale.x)
     for puff, _, _ in S.puffs: face_camera(puff, cam, 0, puff.scale.x)
+    for ring_obj in S.impact_rings: face_camera(ring_obj, cam, 0, ring_obj.scale.x)
     S.mz2.location = muzzle + (cam.location - muzzle).normalized() * 0.02
     S.hit2.location = S.hit1.location + (cam.location - S.hit1.location).normalized() * 0.02
     # hit marker: four ticks over the target, sized to the screen so it reads at any zoom
@@ -425,4 +466,5 @@ def main():
         finally: bpy.app.handlers.frame_change_pre.remove(evaluate_frame)
     print('RENDERED', f0, f1)
 
-main()
+if __name__ == "__main__":
+    main()

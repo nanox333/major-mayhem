@@ -12,10 +12,12 @@ Rebuild both orientations from the repository root:
 sh scripts/legend-3d/render.sh /tmp/major-mayhem-render
 ```
 
-Set `BLENDER` to override the executable path. The script writes 292 frames per orientation at 60 fps. Landscape is native 3840×2160 with 32 samples; portrait is native 1440×2560 with 32 samples. H.264 is encoded at CRF 16 with yuv420p, fast-start metadata and a keyframe every quarter second for responsive seeking. GPU denoising removes sampling grain before the vignette; GPU compositing uses a separable blur. Scratch frames are not committed.
+Set `BLENDER` to override the executable path. The script writes 146 frames per orientation at 30 fps. Landscape is native 3840×2160 with 32 samples; portrait is native 1440×2560 with 32 samples. H.264 is encoded at CRF 16 with yuv420p, fast-start metadata and a keyframe every eight frames for responsive seeking. GPU denoising removes sampling grain before the vignette; GPU compositing uses a separable blur. Scratch frames are not committed.
 
-For individual frames, run Blender with `--list 0,40,130,180,230,280`; use `--portrait --res 720x1280` for a quick portrait framing check. `noscope.py` builds the scene once and evaluates each requested time independently. `--fps 30` is available for cheaper preview renders; production uses 60 fps.
+For individual frames, run Blender with `--list 0,20,65,90,115,140`; use `--portrait --res 720x1280` for a quick portrait framing check. `noscope.py` builds the scene once and evaluates each requested time independently. Production and previews use 30 fps.
 
-Timing is stretched by `SLOW = 1.25`: shot at 0.5s, impact at 2.875s, final cut at 3.875s, marker at 4.438s. The video lasts 292/60 seconds. The overlay waits for actual playback before starting card animation; sounds follow decoded video time and completion follows the end of the clip. A failed load (including a twelve-second timeout) shows the card alone. Reduced motion never loads the video.
+Timing is stretched by `SLOW = 1.25`: shot at 0.5s, impact at 2.875s, final cut at 3.875s, marker at 4.438s. The video lasts 146/30 seconds. The overlay waits for actual playback before starting card animation; sounds follow decoded video time and completion follows the end of the clip. A failed load (including a twelve-second timeout) shows the card alone. Reduced motion never loads the video.
 
 Run `npm run e2e:legend` after building to check desktop/phone playback, frame seeking, delayed/failed loading, reduced motion, and media hit testing. Screenshots are saved in `shots/legend/`.
+
+The rifle sits outside the shooter’s right hip; `Blender -b -P scripts/legend-3d/verify-pose.py` checks evaluated weapon meshes against the body and verifies reachable grips across all 146 frames. The impact combines a luminous burst, two delayed expanding rings, 32 sparks, dust, a short warm light pulse, bloom and a decaying camera punch. Effects use presentation time while the falling body uses slowed world time.

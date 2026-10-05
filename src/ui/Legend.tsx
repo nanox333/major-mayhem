@@ -160,7 +160,7 @@ function scoreFor(kind: G.LegendKind) {
     case 'ace': return at('shot', [0, 170, 340, 510, 680]);
     case 'clutch5': return [...at('beat', [0, 420, 840]), ...at('shot', [250, 420, 590, 760, 930])];
     case 'ninja': return [...at('tick', Array.from({ length: 9 }, (_, i) => 250 + i * 190)), ...at('shot', [1950])];
-    case 'noscope': return [...at('shot', [500]), ...at('tick', [2875, 4438])];
+    case 'noscope': return [...at('shot', [500]), ...at('clutch', [2875]), ...at('tick', [4438])];
     case 'knife': return at('shot', [60, 200, 340]);
     case 'flawless': return at('tick', Array.from({ length: 13 }, (_, i) => 100 + i * 45));
     case 'miracle': return at('tick', [100, 300, 500, 700, 900]);
@@ -187,7 +187,7 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   const playedCues = useRef(new Set<number>());
   const mediaFrame = useCallback((t: number) => {
     if (closing.current) return;
-    for (const [when, sound] of [[0.5, 'shot'], [2.875, 'tick'], [4.438, 'tick']] as const) {
+    for (const [when, sound] of [[0.5, 'shot'], [2.875, 'clutch'], [4.438, 'tick']] as const) {
       if (t >= when && !playedCues.current.has(when)) { playedCues.current.add(when); play(sound); }
     }
   }, []);
