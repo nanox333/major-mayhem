@@ -78,7 +78,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
     const tick = (now: number) => {
       if (dead) return; frames++;
       if (legendHold.on) t0 = now;
-      const t = Math.max(0, Math.min((now - t0) / 1000 / NINJA_SLOW, NINJA_DURATION));
+      const t = Math.min((now - t0) / 1000 / NINJA_SLOW, NINJA_DURATION);
       try { draw(t); } catch { fail(); }
       if (t >= NINJA_DURATION) { stopLoop(); if (!finished) { finished = true; done.current?.(); } } else raf = requestAnimationFrame(tick);
     };

@@ -62,7 +62,7 @@ export function Stage({ kind, at, who, map, round, onReady, onError, onFrame, on
     const tick = (n: number) => {
       if (dead || failed) return;
       if (legendHold.on) start = n;
-      const t = (n-start)/1000; frames++; total = t;
+      const t = Math.max(0,(n-start)/1000); frames++; total = t;
       if (frames > 20 && !low && n-previous > 30 && frames/Math.max(t,.01) < 45) { low = true; fit(); }
       previous=n; draw(Math.min(t,NOSCOPE_DURATION));
       if (noscopeTime(t).done) { stopLoop(); callbacks.current.onEnded?.(); }

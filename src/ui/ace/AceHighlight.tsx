@@ -81,7 +81,7 @@ export function AceHighlight({onComplete,at,still=false,who,map,round}: {onCompl
     redraw.current=()=>{try{draw(time.current??0);}catch{fail();draw(time.current??0);}};
     const tick=(now:number)=>{
       if(dead)return;frames++;if(legendHold.on)start=now;
-      const t=Math.min((now-start)/1000,ACE_DURATION);
+      const t=Math.max(0,Math.min((now-start)/1000,ACE_DURATION));
       try{draw(t);}catch{fail();}
       if(t>=ACE_DURATION){stop();if(!finished){finished=true;callbacks.current?.();}}
       else raf=requestAnimationFrame(tick);

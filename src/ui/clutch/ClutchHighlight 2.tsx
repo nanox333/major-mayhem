@@ -84,7 +84,7 @@ export function ClutchHighlight({ onComplete, at, still = false, who, map, round
     const tick = (now: number) => {
       if (dead) return; frames++;
       if (legendHold.on) t0 = now;
-      const t = Math.max(0, Math.min((now - t0) / 1000, CLUTCH_DURATION));
+      const t = Math.min((now - t0) / 1000, CLUTCH_DURATION);
       try { draw(t); } catch { fail(); draw(t); }
       if (t >= CLUTCH_DURATION) { stopLoop(); if (!finished) { finished = true; done.current?.(); } } else raf = requestAnimationFrame(tick);
     };

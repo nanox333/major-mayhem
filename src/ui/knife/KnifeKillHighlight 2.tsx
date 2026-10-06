@@ -116,7 +116,7 @@ export function KnifeKillHighlight({ onComplete, at, still = false, who, map, ro
       if (++frames > 8 && frames <= 48) { probe += now - prev; seen++; if (seen === 40 && probe / seen > 26) setLite(true); }
       prev = now;
       if (legendHold.on) t0 = now;
-      const t = Math.max(0, Math.min((now - t0) / 1000, KNIFE_DURATION));
+      const t = Math.min((now - t0) / 1000, KNIFE_DURATION);
       draw(t);
       if (t >= KNIFE_DURATION) { stop(); if (!finished) { finished = true; done.current?.(); } } else raf = requestAnimationFrame(tick);
     };

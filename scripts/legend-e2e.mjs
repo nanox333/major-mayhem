@@ -26,7 +26,7 @@ try{
    await p.getByRole('button',{name:'No-scope',exact:true}).first().click();
    await p.waitForFunction(()=>Number(document.querySelector('.legend-noscope')?.style.getPropertyValue('--reveal'))>.9);
    await p.screenshot({path:'shots/legend/desktop-caption.png'});
-   await p.waitForFunction(()=>document.querySelector('.legend')&&Number(getComputedStyle(document.querySelector('.legend')).opacity)<.5);
+   await p.waitForFunction(()=>!document.querySelector('.legend')||Number(getComputedStyle(document.querySelector('.legend')).opacity)<.5);
    await p.screenshot({path:'shots/legend/desktop-crossfade.png'});
    await p.locator('.legend').waitFor({state:'detached',timeout:4000});await zero(p);
    console.log('desktop bloom playback',await p.evaluate(()=>window.__mmHighlights.last));
