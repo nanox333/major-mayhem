@@ -33,7 +33,8 @@ export function Stage({ kind, at, who, map, round, onReady, onError, onFrame, on
     let warming = false, dead = false, failed = false, raf = 0, start = 0, previous = 0, total = 0, frames = 0, low = false, activeLoop = false;
     const stopLoop = () => { cancelAnimationFrame(raf); if (activeLoop) { activeLoop = false; highlightDiagnostics.loops--; } };
     const fail = () => { if (dead || failed) return; failed = true; clearTimeout(loadingTimeout); stopLoop(); callbacks.current.onError?.(); };
-    const loadingTimeout = setTimeout(fail, 4500);
+    // 4.5 s for the assets to arrive; once they have, building and compiling the scene gets a much longer leash (slow or software GPUs take a while)
+    let loadingTimeout = setTimeout(fail, 4500);
     const lost = (event: Event) => { event.preventDefault(); fail(); };
     canvas.addEventListener('webglcontextlost', lost);
     const fit = () => {
@@ -75,12 +76,14 @@ export function Stage({ kind, at, who, map, round, onReady, onError, onFrame, on
       renderer.shadowMap.enabled=true; renderer.shadowMap.type=T.PCFShadowMap;
       instantiateNoscope().then(async kit => {
         if (dead || failed) { disposeKit(kit); return; }
+        clearTimeout(loadingTimeout); loadingTimeout = setTimeout(fail, 30000);
         world=createNoscope(kit); reflections=highlightReflections(renderer!); world.scene.environment=reflections.texture; world.scene.environmentIntensity=.65; post=highlightPost(renderer!,world.scene,world.camera); fit(); world.update(time.current??0);
         observer=new ResizeObserver(()=>{fit(); if(time.current!=null)draw(time.current);}); observer.observe(canvas); highlightDiagnostics.observers++;
         await renderer!.compileAsync(world.scene,world.camera);
         if(dead || failed)return; clearTimeout(loadingTimeout);
         // draw the beats once (shot, flight, impact, fall) so every effect's shader is compiled and uploaded before the clock starts; the sound cues are skipped
-        warming=true; try { for (const w of [1.4, 2.5, NOSCOPE_HIT + .05, NOSCOPE_HIT + .5, NOSCOPE_DURATION - .3]) draw(w); } finally { warming=false; }
+        // (on slow hardware, software rendering for one, the warm-up cannot help and would only block the page, so it stops after about 400 ms)
+        warming=true; try { const began=performance.now(); for (const w of [1.4, 2.5, NOSCOPE_HIT + .05, NOSCOPE_HIT + .5, NOSCOPE_DURATION - .3]) { draw(w); if (performance.now()-began>400) break; } } finally { warming=false; }
         draw(time.current??0); callbacks.current.onReady?.(NOSCOPE_DURATION);
         if(time.current==null) {start=previous=performance.now(); activeLoop=true; highlightDiagnostics.loops++; raf=requestAnimationFrame(tick);}
       }).catch(fail);

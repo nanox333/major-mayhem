@@ -29,7 +29,9 @@ export function Title3D({ name, fallback }: { name: TitleName; fallback: React.R
         t.update(age); renderer!.render(t.scene, t.camera);
       };
       // compile every material and upload every texture now (three skips what is hidden, and most of the title is hidden at age 0), so the first landing does not stutter
-      for (const warm of [.3, .8, 1.4, 2.4, -1]) { t.update(warm); renderer.render(t.scene, t.camera); }
+      const began = performance.now();
+      for (const warm of [.3, .8, 1.4, 2.4, -1]) { t.update(warm); renderer.render(t.scene, t.camera); if (performance.now() - began > 300) break; }
+      t.update(-1);
       tick();
     }).catch(() => { if (!dead) setFailed(true); });
     canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); setFailed(true); });

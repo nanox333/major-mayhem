@@ -109,7 +109,10 @@ export function ClutchHighlight({ onComplete, at, still = false, who, map, round
           world = w; fit();
           // compile every material and draw each beat once (shot, hit, hero) before the clock starts, so nothing compiles in the middle of the animation
           await renderer.compileAsync(world.scene, world.camera);
-          for (const warm of [.5, 2.0, 2.75, 3.9, 6.2, 7.6, 0]) { world.update(warm); renderer.render(world.scene, world.camera); }
+          // (stops after about 400 ms: on slow hardware the warm-up cannot help and would only block the page)
+          const began = performance.now();
+          for (const warm of [.5, 2.0, 2.75, 3.9, 6.2, 7.6, 0]) { world.update(warm); renderer.render(world.scene, world.camera); if (performance.now() - began > 400) break; }
+          world.update(0);
           if (dead) return; clearTimeout(slow); begin();
         }).catch(() => { clearTimeout(slow); if (!dead) { fail(); begin(); } });
       } catch { fail(); begin(); }
