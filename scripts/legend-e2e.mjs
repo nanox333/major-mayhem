@@ -32,7 +32,7 @@ try{
    console.log('desktop bloom playback',await p.evaluate(()=>window.__mmHighlights.last));
    await p.getByRole('button',{name:'No-scope',exact:true}).nth(1).click();await p.waitForFunction(()=>document.querySelector('.lg3d')?.dataset.time);
   }
-  await p.setViewportSize({width:320,height:700});await p.waitForFunction(()=>document.querySelector('.lg3d').width===320);await p.getByRole('slider',{name:'Time'}).fill('0.5');
+  await p.setViewportSize({width:320,height:700});await p.waitForFunction(()=>document.querySelector('.lg3d').width===document.documentElement.clientWidth&&document.documentElement.clientWidth<=320);await p.getByRole('slider',{name:'Time'}).fill('0.5');
   await p.getByRole('button',{name:'Close',exact:true}).last().click();await zero(p);
   for(let i=0;i<3;i++){
    await p.getByRole('button',{name:'No-scope',exact:true}).first().click();await p.waitForFunction(()=>Number(document.querySelector('.legend .lg3d')?.dataset.time)>.1);
