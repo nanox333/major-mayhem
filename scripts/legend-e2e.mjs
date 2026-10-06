@@ -32,7 +32,7 @@ try{
    console.log('desktop bloom playback',await p.evaluate(()=>window.__mmHighlights.last));
    await p.getByRole('button',{name:'No-scope',exact:true}).nth(1).click();await p.waitForFunction(()=>document.querySelector('.lg3d')?.dataset.time);
   }
-  await p.setViewportSize({width:320,height:700});await p.waitForFunction(()=>document.querySelector('.lg3d').width===document.documentElement.clientWidth&&document.documentElement.clientWidth<=320);await p.getByRole('slider',{name:'Time'}).fill('0.5');
+  await p.setViewportSize({width:320,height:700});await p.waitForFunction(()=>{const c=document.querySelector('.lg3d');return c.width<=320&&Math.abs(c.width-c.getBoundingClientRect().width*devicePixelRatio)<=1;});await p.getByRole('slider',{name:'Time'}).fill('0.5');
   await p.getByRole('button',{name:'Close',exact:true}).last().click();await zero(p);
   for(let i=0;i<3;i++){
    await p.getByRole('button',{name:'No-scope',exact:true}).first().click();await p.waitForFunction(()=>Number(document.querySelector('.legend .lg3d')?.dataset.time)>.1);
@@ -54,7 +54,7 @@ try{
  assert.deepEqual(errors,[]);console.log('Noscope scene, resize, completion, cleanup, repeat, fallback and match integration passed');
 }catch(error){
  for(const [i,page] of browser.contexts().flatMap(c=>c.pages()).entries()){
-  try{await page.screenshot({path:`shots/legend/failure-${i}.png`,timeout:10000});console.log('page',i,await page.evaluate(()=>({url:location.href,visibility:document.visibilityState,canvas:[...document.querySelectorAll('canvas')].map(c=>({cls:c.className,w:c.width,h:c.height,time:c.dataset.time})),legend:document.querySelector('.legend')?.className,diagnostics:window.__mmHighlights?{...window.__mmHighlights}:null,scrub:!!document.querySelector('.dbg-scrub')})));}catch(inner){console.log('page',i,'no diagnostics:',inner.message.split('\n')[0]);}
+  try{await page.screenshot({path:`shots/legend/failure-${i}.png`,timeout:10000});console.log('page',i,await page.evaluate(()=>({url:location.href,visibility:document.visibilityState,inner:innerWidth,client:document.documentElement.clientWidth,dpr:devicePixelRatio,scrub:document.querySelector('.dbg-scrub')?.getBoundingClientRect().width,canvas:[...document.querySelectorAll('canvas')].map(c=>({cls:c.className,w:c.width,h:c.height,css:c.getBoundingClientRect().width,time:c.dataset.time})),legend:document.querySelector('.legend')?.className,diagnostics:window.__mmHighlights?{...window.__mmHighlights}:null,})));}catch(inner){console.log('page',i,'no diagnostics:',inner.message.split('\n')[0]);}
  }
  console.log('page errors',errors);throw error;
 }finally{await browser.close();await server?.close();}
