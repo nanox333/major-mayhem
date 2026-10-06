@@ -1,14 +1,22 @@
+import { NoscopeCard } from './legend3d/NoscopeCard';
+import { legendHold } from './legend3d/hold';
+import { FULL_PAGE_LEGENDS } from './legend3d/kinds';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type * as G from '../game/logic';
 import { Avatar, TeamBadge } from './art';
 import { play } from './sound';
 import { reduceMotion } from './util';
 import { Stage, hasCinematic } from './legend3d/Stage';
-import hole from '../assets/legend/hole.webp';
+import { smooth, noscopeTime, noscopeTitleAge, NOSCOPE_DURATION, NOSCOPE_HIT, NOSCOPE_SHOT } from './legend3d/timeline';
+import { AceHighlight } from './ace/AceHighlight';
+import { ACE_DURATION } from './ace/timeline';
+import { NinjaDefuseHighlight } from './ninja/NinjaDefuseHighlight';
+import { KnifeKillHighlight } from './knife/KnifeKillHighlight';
+import { ClutchHighlight } from './clutch/ClutchHighlight';
+import { CLUTCH_DURATION } from './clutch/timeline';
+import { KNIFE_DURATION } from './knife/timeline';
 import blast from '../assets/legend/blast.webp';
 import flash2 from '../assets/legend/flash-2.webp';
-import smoke1 from '../assets/legend/smoke-1.webp';
-import casing from '../assets/legend/casing.webp';
 import spark from '../assets/legend/spark.webp';
 import slash1 from '../assets/legend/slash-1.webp';
 import slash2 from '../assets/legend/slash-2.webp';
@@ -17,7 +25,6 @@ import foe from '../assets/legend/foe.webp';
 
 // Art for the scenes. The bullet hole, the blast, the C4 bomb and the AWP were made with ChatGPT's image generation and cut out here (scripts/legend-assets/PROMPTS.md);
 // the muzzle flash, smoke, casing, spark, slashes and enemy are drawn in code (scripts/legend-assets/generate.html).
-const HOLES = [hole, hole, hole];
 const FLASHES = [blast, flash2];
 const SLASHES = [slash1, slash2];
 
@@ -38,7 +45,7 @@ export const LEGEND_TITLE = LEGEND_INFO;
 /** How long the cinematic holds before it hands the match back: quick, because there is a match waiting. A still card holds as long. */
 export const LEGEND_MS = 2000;
 /** The defuse and rendered no-scope run longer; the other scenes hold for LEGEND_MS. */
-export const legendMs = (kind: G.LegendKind) => (kind === 'ninja' ? 3600 : kind === 'noscope' && hasCinematic(kind) ? 5800 : LEGEND_MS);
+export const legendMs = (kind: G.LegendKind) => (kind === 'ace' ? ACE_DURATION * 1000 : kind === 'ninja' ? 3600 : kind === 'knife' ? KNIFE_DURATION * 1000 : kind === 'clutch5' ? CLUTCH_DURATION * 1000 : kind === 'noscope' && hasCinematic(kind) ? NOSCOPE_DURATION * 1000 : LEGEND_MS);
 /** The way out: the card drops away, the scene scales off and the screen clears, instead of cutting. */
 export const LEGEND_EXIT_MS = 440;
 
@@ -60,9 +67,6 @@ function useCount(from: number, to: number, ms: number, delay: number, still: bo
   return digits ? v.toFixed(digits) : String(Math.round(v));
 }
 
-/** Where the five shots of an ace land (percent of the screen), which art each uses, and how it is turned and scaled. */
-const SHOTS = [{ x: 24, y: 30, h: 0, f: 0, r: -12, s: 1 }, { x: 72, y: 24, h: 1, f: 1, r: 20, s: 1.1 }, { x: 47, y: 52, h: 2, f: 0, r: 70, s: .95 }, { x: 80, y: 62, h: 0, f: 1, r: -40, s: 1.15 }, { x: 30, y: 70, h: 1, f: 0, r: 8, s: 1 }];
-const SHOT_GAP = 0.17;
 /** The bomb display counts from this to this (seconds) while it is defused. */
 const LEFT_AT = 0.07;
 const ROUNDS_UP = (e: G.MatchEvent) => Number(/after (\d+) rounds/.exec(e.text)?.[1] ?? 36);
@@ -77,22 +81,7 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
   const down = BEHIND(e);
   const lead = useCount(-down, 1, 1000, 150, still);
   switch (kind) {
-    case 'ace':
-      return (
-        <div className="lg lg-ace" aria-hidden="true">
-          {SHOTS.map((p, i) => (
-            <div key={i} className="lg-shot" style={{ left: `${p.x}%`, top: `${p.y}%`, ['--d' as string]: `${i * SHOT_GAP}s`, ['--r' as string]: `${p.r}deg`, ['--k' as string]: p.s }}>
-              <img className="lg-smoke" src={smoke1} alt="" />
-              <img className="lg-hole" src={HOLES[p.h]} alt="" />
-              <img className="lg-muzzle" src={FLASHES[p.f]} alt="" />
-              <img className="lg-casing" src={casing} alt="" />
-              <img className="lg-spark lg-spark--a" src={spark} alt="" /><img className="lg-spark lg-spark--b" src={spark} alt="" />
-            </div>
-          ))}
-          <div className="lg-count">{[1, 2, 3, 4, 5].map((n) => <span key={n} style={{ animationDelay: `${(n - 1) * SHOT_GAP}s` }}>{n}</span>)}</div>
-          <span className="lg-cross" />
-        </div>
-      );
+    case 'ace': return null; // Dedicated transparent real-time overlay.
     case 'clutch5':
       return (
         <div className="lg lg-clutch" aria-hidden="true">
@@ -119,7 +108,7 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
           </div>
         </div>
       );
-    case 'noscope': return null; // Rendered video, or the static card if it cannot load.
+    case 'noscope': return null; // Real-time scene, or the static highlight if WebGL is unavailable.
     case 'knife':
       return (
         <div className="lg lg-knife" aria-hidden="true">
@@ -157,10 +146,10 @@ function Scene({ e, still }: { e: G.MatchEvent; still: boolean }) {
 function scoreFor(kind: G.LegendKind) {
   const at = (name: Parameters<typeof play>[0], ms: number[]) => ms.map((m) => play(name, { delay: m }));
   switch (kind) {
-    case 'ace': return at('shot', [0, 170, 340, 510, 680]);
+    case 'ace': return []; // The ACE clock owns its audio cues.
     case 'clutch5': return [...at('beat', [0, 420, 840]), ...at('shot', [250, 420, 590, 760, 930])];
     case 'ninja': return [...at('tick', Array.from({ length: 9 }, (_, i) => 250 + i * 190)), ...at('shot', [1950])];
-    case 'noscope': return [...at('shot', [500]), ...at('clutch', [2875]), ...at('tick', [4438])];
+    case 'noscope': return [...at('shot', [NOSCOPE_SHOT * 1000]), ...at('clutch', [NOSCOPE_HIT * 1000])];
     case 'knife': return at('shot', [60, 200, 340]);
     case 'flawless': return at('tick', Array.from({ length: 13 }, (_, i) => 100 + i * 45));
     case 'miracle': return at('tick', [100, 300, 500, 700, 900]);
@@ -174,7 +163,7 @@ function scoreFor(kind: G.LegendKind) {
  * line for a comeback, a dial for a marathon), then the card. It never changes a result. Any key, a tap or the button ends it early. Reduced
  * motion gets the card alone.
  */
-export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine: G.Lineup[]; map: string; onDone: () => void }) {
+function LegendBody({ e, mine, map, onDone }: { e: G.MatchEvent; mine: G.Lineup[]; map: string; onDone: () => void }) {
   const kind = e.legend ?? 'ace';
   const who = mine.find((l) => l.player.id === e.playerId);
   const still = reduceMotion();
@@ -184,22 +173,26 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
   const [ready, setReady] = useState(still || !hasCinematic(kind));
   const mediaReady = useCallback(() => setReady(true), []);
   const mediaError = useCallback(() => { setMediaFailed(true); setReady(true); }, []);
+  const reveal = useRef<HTMLDivElement>(null);
   const playedCues = useRef(new Set<number>());
   const mediaFrame = useCallback((t: number) => {
     if (closing.current) return;
-    for (const [when, sound] of [[0.5, 'shot'], [2.875, 'clutch'], [4.438, 'tick']] as const) {
+    const state=noscopeTime(t);
+    reveal.current?.style.setProperty('--reveal', String(state.reveal));
+    reveal.current?.style.setProperty('--endcard-age', String(noscopeTitleAge(t)));
+    reveal.current?.style.setProperty('--title-pop', String(state.titleScale));
+    reveal.current?.parentElement?.style.setProperty('--noscope-fade',String(state.opacity));
+    reveal.current?.style.setProperty('--dim', String(state.reveal * .45));
+    for (const [when, sound] of [[NOSCOPE_SHOT, 'shot'], [NOSCOPE_HIT, 'clutch']] as const) {
       if (t >= when && !playedCues.current.has(when)) { playedCues.current.add(when); play(sound); }
     }
   }, []);
   const closing = useRef(false);
-  const finishTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => () => clearTimeout(finishTimer.current), []);
   // however it ends (the time is up, a key, a tap) it plays the way out first, unless motion is reduced
   const close = useCallback(() => {
     if (closing.current) return;
     closing.current = true;
-    clearTimeout(finishTimer.current);
-    if (still) return onDone();
+    if (still || kind === 'noscope' || kind === 'ace' || kind === 'ninja' || kind === 'knife' || kind === 'clutch5') return onDone();
     setLeaving(true);
     setTimeout(onDone, LEGEND_EXIT_MS);
   }, []);
@@ -209,16 +202,40 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
     return () => window.removeEventListener('keydown', key, true);
   }, []);
   useEffect(() => {
-    if (!ready) return;
-    const done = setTimeout(close, still || mediaFailed ? LEGEND_MS : hasCinematic(kind) ? 15000 : legendMs(kind));
+    if (!ready || kind === 'ace' || kind === 'ninja' || kind === 'knife' || kind === 'clutch5') return;
+    const done = setTimeout(close, still || mediaFailed ? LEGEND_MS : hasCinematic(kind) ? 9000 + LEGEND_LEAD_MS : legendMs(kind));
     const stops = still || mediaFailed || hasCinematic(kind) ? [] : scoreFor(kind);
     return () => { clearTimeout(done); stops.forEach((stop) => stop()); };
   }, [ready, mediaFailed]);
+  if (kind === 'ninja') return (
+    <div className="legend legend--ninja" role="status" aria-live="assertive" aria-label={`Legendary moment: Ninja defuse. ${e.text}`} onClick={close}>
+      <NinjaDefuseHighlight onComplete={close} still={still} who={who} map={map} round={e.round} />
+      <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
+    </div>
+  );
+  if (kind === 'knife') return (
+    <div className="legend legend--knife" role="status" aria-live="assertive" aria-label={`Legendary moment: Knife kill. ${e.text}`} onClick={close}>
+      <KnifeKillHighlight onComplete={close} still={still} who={who} map={map} round={e.round} />
+      <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
+    </div>
+  );
+  if (kind === 'clutch5') return (
+    <div className="legend legend--clutch5" role="status" aria-live="assertive" aria-label={`Legendary moment: 1v5 clutch. ${e.text}`} onClick={close}>
+      <ClutchHighlight onComplete={close} still={still} who={who} map={map} round={e.round} />
+      <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
+    </div>
+  );
+  if (kind === 'ace') return (
+    <div className="legend legend--ace" role="status" aria-live="assertive" aria-label={`Legendary moment: Ace. ${e.text}`} onClick={close}>
+      <AceHighlight onComplete={close} still={still} who={who} map={map} round={e.round} />
+      <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
+    </div>
+  );
   return (
     <div className={`legend legend--${kind} ${still || mediaFailed ? 'is-still' : ''} ${!ready && !leaving ? 'is-loading' : ''} ${leaving ? 'is-leaving' : ''}`} role="status" aria-live="assertive" aria-label={`Legendary moment: ${LEGEND_INFO[kind].title}. ${e.text}`} onClick={close}>
       <div className="legend__wash" aria-hidden="true" />
-      {!still && !mediaFailed && (hasCinematic(kind) ? <Stage kind={kind} onReady={mediaReady} onError={mediaError} onFrame={mediaFrame} onEnded={() => { finishTimer.current = setTimeout(close, 900); }} /> : <Scene e={e} still={still} />)}
-      <div className="legend__sparks" aria-hidden="true">{sparks.map((p, i) => <i key={i} style={{ left: `${p.x}%`, width: p.s, height: p.s, animationDelay: `${p.d + 0.5}s`, animationDuration: `${p.t}s` }} />)}</div>
+      {!still && !mediaFailed && (hasCinematic(kind) ? <Stage kind={kind} onReady={mediaReady} onError={mediaError} onFrame={mediaFrame} onEnded={close} /> : <Scene e={e} still={still} />)}
+      {kind === 'noscope' ? <div ref={reveal} className="legend-noscope"><NoscopeCard who={who} map={map} round={e.round} /></div> : <><div className="legend__sparks" aria-hidden="true">{sparks.map((p, i) => <i key={i} style={{ left: `${p.x}%`, width: p.s, height: p.s, animationDelay: `${p.d + 0.5}s`, animationDuration: `${p.t}s` }} />)}</div>
       <div className="legend__sweep" aria-hidden="true" />
       <div className="legend__card">
         <p className="legend__kicker"><b>Legendary moment</b><span>{map} · Round {e.round}</span></p>
@@ -232,7 +249,36 @@ export function LegendOverlay({ e, mine, map, onDone }: { e: G.MatchEvent; mine:
         </div>
         <span className="legend__bar" aria-hidden="true"><i style={{ animationDuration: `${legendMs(kind)}ms` }} /></span>
       </div>
+      </>}
       <button type="button" className="legend__skip" onClick={(ev) => { ev.stopPropagation(); close(); }}>Continue</button>
     </div>
+  );
+}
+
+const CINEMATIC = new Set<string>(FULL_PAGE_LEGENDS);
+/** The full-page cinematics do not cut in over the match. The scene is mounted straight away underneath a lead-in (the match dims, letterbox bars close
+ *  in) with its clock held at zero (legendHold), so its renderers are made and its shaders compiled while the bars move; then the lead-in lifts and the
+ *  animation starts from its first frame, warm. LEGEND_LEAD_MS is when the clocks start; the cover is gone LEGEND_LIFT_MS later. */
+export const LEGEND_LEAD_MS = 650, LEGEND_LIFT_MS = 400;
+export function LegendOverlay(props: { e: G.MatchEvent; mine: G.Lineup[]; map: string; onDone: () => void }) {
+  const kind = props.e.legend ?? 'ace';
+  const lead = CINEMATIC.has(kind) && !reduceMotion();
+  const [phase, setPhase] = useState<'hold' | 'lift' | 'gone'>(lead ? 'hold' : 'gone');
+  legendHold.on = phase === 'hold';
+  useEffect(() => {
+    if (phase === 'gone') return;
+    const id = setTimeout(() => setPhase(phase === 'hold' ? 'lift' : 'gone'), phase === 'hold' ? LEGEND_LEAD_MS : LEGEND_LIFT_MS);
+    return () => clearTimeout(id);
+  }, [phase]);
+  useEffect(() => () => { legendHold.on = false; }, []);
+  return (
+    <>
+      <LegendBody {...props} />
+      {phase !== 'gone' && (
+        <div className={`legend-lead legend-lead--${phase}`} aria-hidden="true" onClick={() => setPhase('gone')}>
+          <i className="legend-lead__dim" /><i className="legend-lead__bar legend-lead__bar--top" /><i className="legend-lead__bar legend-lead__bar--bottom" />
+        </div>
+      )}
+    </>
   );
 }

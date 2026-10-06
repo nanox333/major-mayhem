@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as T from 'three';
 import { play } from '../sound';
 import { Avatar, TeamBadge } from '../art';
+import { endcard } from '../endcard';
+import { BrushMark } from '../BrushMark';
+import { Title3D } from '../endcard/Title3D';
+import { legendHold } from '../legend3d/hold';
 import type { Lineup } from '../../game/logic';
 import { createNinjaScene } from './scene';
 import { NINJA_DURATION, NINJA_SLOW, ninjaCues, ninjaLayout, ninjaTime } from './timeline';
@@ -54,7 +58,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
       const set = (k: string, v: number | string) => el.style.setProperty(k, String(v));
       set('--ninja-fade', s.fade); set('--ninja-dim', s.dim); set('--ninja-vignette', s.vignette); set('--ninja-progress', s.progress);
       set('--ninja-critical', s.critical); set('--ninja-green', s.green > 0 ? 1 : 0);
-      set('--ninja-person', s.person); set('--ninja-person-y', `${(1 - s.person) * 16}px`); set('--ninja-title', s.ninja); set('--ninja-sub', s.defuse); set('--ninja-snap', 1.12 - .12 * s.ninja); set('--ninja-snap2', 1.12 - .12 * s.defuse);
+      set('--ace-person', s.person); set('--ace-person-y', `${(1 - s.person) * 16}px`); set('--ninja-title', s.ninja); set('--endcard-age', (t - 1.15) * NINJA_SLOW); set('--ninja-sub', s.defuse); set('--ninja-snap', 1.12 - .12 * s.ninja); set('--ninja-snap2', 1.12 - .12 * s.defuse);
       el.querySelectorAll<HTMLElement>('[data-ninja-text]').forEach((n) => { if (n.textContent !== s.text) n.textContent = s.text; });
       el.querySelectorAll<HTMLElement>('[data-ninja-label]').forEach((n) => { if (n.textContent !== s.label) n.textContent = s.label; });
       el.querySelectorAll<HTMLElement>('[data-ninja-pct]').forEach((n) => { const p = `${Math.round(s.progress * 100)}%`; if (n.textContent !== p) n.textContent = p; });
@@ -73,6 +77,7 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
     };
     const tick = (now: number) => {
       if (dead) return; frames++;
+      if (legendHold.on) t0 = now;
       const t = Math.min((now - t0) / 1000 / NINJA_SLOW, NINJA_DURATION);
       try { draw(t); } catch { fail(); }
       if (t >= NINJA_DURATION) { stopLoop(); if (!finished) { finished = true; done.current?.(); } } else raf = requestAnimationFrame(tick);
@@ -119,15 +124,15 @@ export function NinjaDefuseHighlight({ onComplete, at, still = false, start = 11
         <span className="ninja-bar__row"><b data-ninja-label>DEFUSING...</b><i data-ninja-pct>55%</i></span>
         <span className="ninja-bar__track"><u /></span>
       </div>
-      <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true"><filter id="ninja-rough" x="-5%" y="-10%" width="110%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".045 .09" numOctaves="3" seed="4" result="n" /><feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G" /></filter></svg>
-      <div className="ninja-title"><b>NINJA</b><span>DEFUSE</span><i /></div>
-      {who && <div className="ninja-person">
-        <div className="ninja-person__portrait"><Avatar player={who.player} roster={who.roster} /></div>
-        <div className="ninja-person__info"><span className="ninja-person__kicker">A tenth of a second to spare.</span><strong>{who.player.nick}</strong>
-          <span className="ninja-person__team"><TeamBadge roster={who.roster} size={20} />{who.roster.org} · {who.roster.year}</span>
-          {map && <span className="ninja-person__round">{map}{round != null ? ` · Round ${round}` : ''}</span>}
+      <img className="endcard-hud endcard-hud--green" src={endcard('hud-orange')} alt="" />
+      <Title3D name="ninja" fallback={<div className="ninja-title"><BrushMark label="Ninja defuse" lines={[{ text: 'NINJA', size: 170, width: 440 }, { text: 'DEFUSE', size: 150, width: 480 }]} /></div>} />
+      {who && <div className="ace-person">
+        <div className="ace-person__portrait"><Avatar player={who.player} roster={who.roster} /></div>
+        <div className="ace-person__info"><span className="ace-person__kicker">A tenth of a second to spare.</span><strong>{who.player.nick}</strong>
+          <span className="ace-person__team"><TeamBadge roster={who.roster} size={20} />{who.roster.org} · {who.roster.year}</span>
+          {map && <span className="ace-person__round">{map}{round != null ? ` · Round ${round}` : ''}</span>}
         </div>
-        <span className="ninja-person__kills" aria-hidden="true"><i /><i /><i /></span>
+        <span className="ace-person__kills" aria-hidden="true"><i /><i /><i /></span>
       </div>}
     </div>
   );

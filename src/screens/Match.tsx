@@ -1,3 +1,5 @@
+import { preloadAce } from '../ui/ace/scene';
+import { preloadLegends } from '../ui/legend3d/preload';
 import { usePlaybackCovered } from '../ui/usePlaybackCovered';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ROLE_LABEL, ROLE_SHORT, Roster } from '../data/rosters';
@@ -217,7 +219,10 @@ const KF_CLASS = (e: G.MatchEvent) =>
 const SEEN_KEY = 'mm-seen';
 const seenKey = (t: G.Tournament, m: G.Match, mapIdx: number) => `${t.matches.length}:${mapIdx}:${m.form}`;
 /** Debug (#296): opens the live match for this run at round `n`, paused, the way the page remembers it between visits. */
-export function setPlaybackFor(run: Run, seen: { n: number; paused?: boolean; bought?: number[] }) {
+export function setPlaybackFor(run: Run, seen: { n: number; paused?: boolean; bought?: number[] } | null) {
+  // The remembered spot is keyed by the match's position, which every debug scenario of one drafted run shares, so a scenario with no spot of its own
+  // must clear what the last one left, or it opens part-way through the previous scenario's map.
+  if (!seen) { try { localStorage.removeItem(SEEN_KEY); } catch { /* nothing to clear */ } return; }
   const m = run.current;
   if (!m) return;
   try { localStorage.setItem(SEEN_KEY, JSON.stringify({ key: seenKey(run.t, m, Math.max(0, m.maps.length - 1)), n: seen.n, paused: seen.paused ?? false, bought: seen.bought ?? [] })); } catch { /* session playback still works */ }
@@ -231,6 +236,7 @@ const loadPlayback = (key: string): { n: number; paused: boolean; bought: number
 };
 
 export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lineup[]; m: G.Match; t: G.Tournament; coach?: string | null; dispatch: React.Dispatch<Action>; board?: React.ReactNode }) {
+  useEffect(() => { void preloadAce(); preloadLegends(); }, []);
   const opp = G.rosterById.get(m.opponentId)!;
   const [mapIdx, setMapIdx] = useState(() => Math.max(0, m.maps.length - 1));
   const [n, setN] = useState(() => loadPlayback(seenKey(t, m, Math.max(0, m.maps.length - 1))).n);

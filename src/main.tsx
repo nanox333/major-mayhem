@@ -31,3 +31,8 @@ initAnalytics();
 initSound();
 
 createRoot(document.getElementById('root')!).render(<ErrorBoundary><App /></ErrorBoundary>);
+
+// Warm the CPU asset cache after the initial interface paints; no renderer is created.
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(() => {
+  import('./ui/legend3d/assets').then(m => m.preloadNoscope()).catch(() => {});
+}, 800);

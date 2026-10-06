@@ -114,6 +114,8 @@ function Game() {
   // Whenever no run is under way (a new run, "Play again", a reset) the draft view is the home; a duel starts in its own screen.
   // A draft you have just started waits on its sealed case until you open it; `began` is that wait, and it ends as soon as a case is open.
   const [began, setBegan] = useState(false);
+  // Debug scenarios swap the whole run in place; counting them lets the live page start over instead of carrying the last scenario's round and effects into the next.
+  const [adopted, setAdopted] = useState(0);
   useEffect(() => { if (began && !atStart) setBegan(false); }, [began, atStart]);
   const beginDraft = () => { setBegan(true); setView('draft'); };
   const backView: View = atStart && !began && s.mode !== 'duel' ? 'home' : 'draft';
@@ -199,7 +201,7 @@ function Game() {
             {s.phase === 'draft' && <DraftScreen s={s} dispatch={dispatch} reelFor={reelFor} setReelFor={setReelFor} stats={stats} onPreview={setPreview} toSetup={() => setView('setup')} />}
             {s.phase === 'ready' && mine && <ReadyScreen mine={mine} s={s} dispatch={dispatch} />}
             {s.phase === 'preview' && mine && s.pending && <PreviewScreen mine={mine} s={s} pending={s.pending} t={s.t} dispatch={dispatch} />}
-            {s.phase === 'live' && playing && s.current && <LiveScreen key={s.t.matches.length} board={<BoardHost s={s} mine={playing} />} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
+            {s.phase === 'live' && playing && s.current && <LiveScreen key={`${s.t.matches.length}:${adopted}`} board={<BoardHost s={s} mine={playing} />} mine={playing} m={s.current} t={s.t} coach={s.coach} dispatch={dispatch} />}
             {s.phase === 'final' && mine && <FinalScreen mine={mine} s={s} stats={stats} dispatch={dispatch} />}
           </section>
           {showBoard && <BoardHost s={s} mine={playing} />}
@@ -218,10 +220,10 @@ function Game() {
       {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
       <DebugMenu run={s} jump={(b) => {
-        // The match page reads where it was left when it opens, so write that first, and leave the page and come back so it opens fresh.
+        // The match page reads where it was left when it opens, so leave the page and come back so it opens fresh.
         setReelFor(null); setPreview(null); setBegan(false); setView('home');
-        if (b.seen) setPlaybackFor(b.run, b.seen);
-        setTimeout(() => { dispatch({ type: 'adopt', run: b.run }); setBegan(true); setView('draft'); }, 0);
+        // Written only once the old match page is gone: while it is still mounted its own effect keeps saving where it was, over this.
+        setTimeout(() => { setPlaybackFor(b.run, b.seen ?? null); setAdopted((n) => n + 1); dispatch({ type: 'adopt', run: b.run }); setBegan(true); setView('draft'); }, 0);
       }} />
     </div>
     </>

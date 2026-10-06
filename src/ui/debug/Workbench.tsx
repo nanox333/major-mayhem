@@ -86,7 +86,7 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
       <p className="dbg__hint">Plays the real card with a random lineup. Any key or a tap closes it.</p>
       <h4>Cinematics: frame scrubber</h4>
       <div className="dbg__grid">
-        {(Object.keys(CINEMATICS) as LegendKind[]).map((k) => <button key={k} type="button" onClick={() => setScrub(k)}>{LEGEND_INFO[k].title}</button>)}
+        {(['ace', 'ninja', 'knife', 'clutch5', ...Object.keys(CINEMATICS)] as LegendKind[]).map((k) => <button key={k} type="button" onClick={() => setScrub(k)}>{LEGEND_INFO[k].title}</button>)}
       </div>
       <p className="dbg__hint">Drag to any moment, or use ◀ ▶ (or the arrow keys) to step one frame. Space plays and pauses, Esc closes.</p>
       <h4>Arm a real one</h4>
@@ -115,7 +115,7 @@ export function EffectsTab({ say, jump }: { say: Say; jump: (b: Built) => void }
           ['Champion, W/L blocks', 'results-champion', ''],
         ].map(([label, id, how]) => <li key={id}><button type="button" onClick={() => { const b = scenarioById.get(id)?.build(); if (b) { snapshotOnce(); jump(b); say(`${label}${how ? `: ${how}` : ''}`); } }}>{label}</button>{how && <small>{how}</small>}</li>)}
       </ul>
-      {scrub && <Scrub kind={scrub} onClose={() => setScrub(null)} />}
+      {scrub && <Scrub kind={scrub} who={scrub==='ace'||scrub==='clutch5'||scrub==='knife'||scrub==='noscope'||scrub==='ninja'?G.lineupFromPicks(draftedRun(7).picks)[0]:undefined} onClose={() => setScrub(null)} />}
       {demo && createPortal(<LegendOverlay e={fakeEvent(demo.kind, demo.mine[0]?.player.id)} mine={demo.mine} map="Mirage" onDone={() => setDemo(null)} />, document.body)}
     </div>
   );

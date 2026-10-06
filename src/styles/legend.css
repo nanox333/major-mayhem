@@ -276,3 +276,178 @@
   .dbg-scrub__bar { height: auto; min-height: 100px; flex-wrap: wrap; padding: 8px; gap: 6px; }
   .dbg-scrub .lg3d { height: calc(100% - 116px); }
 }
+
+/* Real-time noscope: a restrained notification over the settled scene. */
+.legend--noscope .legend__wash { display: none; }
+.legend-noscope { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 10px; background: rgb(12 13 15 / var(--dim, 0)); pointer-events: none; }
+.legend-noscope > * { opacity: var(--reveal, 0); transform: translateY(calc((1 - var(--reveal, 0)) * 8px)); }
+.legend-noscope strong { font: 900 clamp(28px, 5vw, 64px)/1 var(--f-display, sans-serif); letter-spacing: .08em; color: #f37a30; text-shadow: 0 2px 18px #111; }
+.legend-noscope span, .legend-noscope small { font: 700 11px/1.4 var(--f-read, sans-serif); letter-spacing: .06em; color: #e9dfd2; text-align: center; padding: 0 20px; }
+.legend--noscope.is-still { background: #17191c; }
+.legend--noscope.is-still .legend-noscope { --reveal: 1; --dim: .4; }
+.legend--noscope.is-still::before { content: ''; position: absolute; width: 65vw; height: 3px; transform: rotate(-18deg); background: linear-gradient(90deg, transparent, #f37a30, #ffe0a7, transparent); box-shadow: 0 0 36px #f37a3055; }
+
+/* ACE: a transparent 1.55s screen-space impact sequence, with no result panel. */
+.legend.legend--ace { padding: 0; animation: none; }
+.legend--ace .legend__wash { display: none; }
+.ace-highlight { --ace-fade: 1; --ace-dim: 0; --ace-reveal: 0; --ace-lines: 0; --ace-blur: 5px; --ace-scale: 1.15; --ace-x: 0px; --ace-y: 0px; position: absolute; inset: 0; pointer-events: none; opacity: var(--ace-fade); }
+.ace-dim { position: absolute; inset: 0; background: #080909; opacity: var(--ace-dim); }
+.ace-surface { position: absolute; inset: 0; }
+.ace-canvas, .ace-fallback { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ace-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) scale(var(--ace-scale)); opacity: var(--ace-reveal); filter: blur(var(--ace-blur)); text-align: center; }
+.ace-title span { display: block; color: #f37a30; font: italic 900 clamp(70px,12vw,148px)/.9 var(--f-head,sans-serif); letter-spacing: .035em; text-shadow: 2px 3px 0 #080909; }
+.ace-title__ticks { display: flex; justify-content: center; gap: 6px; margin-top: 15px; }
+.ace-title__ticks i { width: 14px; height: 3px; transform: skewX(-18deg); background: #f37a30; opacity: .6; }
+.ace-fallback__hit { position: absolute; width: calc(var(--ace-radius)*4.5); height: calc(var(--ace-radius)*4.5); transform: translate(-50%,-50%) scale(var(--hit-scale,1)); opacity: 0; }
+.ace-fallback__hit img { width: 100%; height: 100%; object-fit: contain; }
+.ace-fallback__hit i { position: absolute; inset: 24%; background: #ffdab0; clip-path: polygon(50% 0,58% 40%,100% 30%,65% 53%,90% 100%,52% 65%,15% 90%,39% 53%,0 20%,43% 39%); opacity: var(--hit-flash,0); }
+.ace-fallback__hit--4 { width: calc(var(--ace-radius)*5.5); height: calc(var(--ace-radius)*5.5); }
+.dbg-scrub:has(.ace-highlight) { background: transparent; }
+.dbg-scrub .ace-highlight { bottom: 56px; }
+@media(max-width:599px) { .ace-title span { font-size: clamp(66px,20vw,104px); } .dbg-scrub .ace-highlight { bottom: 116px; } }
+
+/* Reference direction: broken glass, ember dust and a rough orange brush mark. */
+.ace-mark { display: block; width: clamp(260px,36vw,530px); height: auto; color: #ff791c; filter: drop-shadow(0 3px 0 rgba(8,9,9,.65)); }
+.ace-frame { position: absolute; inset: 6% 3.3%; opacity: calc(var(--ace-lines)*.45); background: linear-gradient(#f37a30,#f37a30) left top/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) left top/1px 28px no-repeat,linear-gradient(#f37a30,#f37a30) right top/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) right top/1px 28px no-repeat,linear-gradient(#f37a30,#f37a30) left bottom/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) left bottom/1px 28px no-repeat,linear-gradient(#f37a30,#f37a30) right bottom/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) right bottom/1px 28px no-repeat; }
+.ace-dim { background: radial-gradient(ellipse at 12% 12%,rgba(129,53,12,.32),transparent 47%),radial-gradient(ellipse at 80% 80%,rgba(111,62,29,.2),transparent 46%),#080909; }
+@media(max-width:599px) { .ace-mark { width: min(72vw,350px); } }
+
+/* NINJA DEFUSE (src/ui/ninja): a real-time close-up of the bomb. The bar and the title are HTML over the canvas. */
+.ninja-highlight { --ninja-fade: 1; --ninja-dim: 0; --ninja-vignette: .1; --ninja-progress: .55; --ninja-critical: 0; --ninja-green: 0; --ninja-title: 0; --ninja-sub: 0; --ninja-snap: 1.12; --ninja-snap2: 1.12; --ninja-bar: .46; position: absolute; inset: 0; pointer-events: none; opacity: var(--ninja-fade); font-family: var(--f-head, sans-serif); }
+.ninja-dim { position: absolute; inset: 0; background: #050606; opacity: calc(var(--ninja-dim) * .9); }
+.ninja-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: calc(var(--ninja-dim) / .88); }
+.ninja-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 46%, transparent 52%, rgba(150, 14, 8, calc(var(--ninja-critical) * .4)) 100%), radial-gradient(ellipse at 50% 46%, transparent 48%, rgba(0, 0, 0, var(--ninja-vignette)) 100%); }
+.ninja-frame { position: absolute; inset: 5% 3.3%; opacity: .42; background: linear-gradient(#f37a30, #f37a30) left top/32px 1px no-repeat, linear-gradient(#f37a30, #f37a30) left top/1px 28px no-repeat, linear-gradient(#f37a30, #f37a30) right top/32px 1px no-repeat, linear-gradient(#f37a30, #f37a30) right top/1px 28px no-repeat, linear-gradient(#f37a30, #f37a30) left bottom/32px 1px no-repeat, linear-gradient(#f37a30, #f37a30) left bottom/1px 28px no-repeat, linear-gradient(#f37a30, #f37a30) right bottom/32px 1px no-repeat, linear-gradient(#f37a30, #f37a30) right bottom/1px 28px no-repeat; }
+.ninja-bar { position: absolute; left: 50%; bottom: 11%; width: min(calc(var(--ninja-bar) * 100%), 640px); transform: translateX(-50%); padding: 10px 14px 12px; background: linear-gradient(#f37a30, #f37a30) left top/18px 1px no-repeat, linear-gradient(#f37a30, #f37a30) left top/1px 14px no-repeat, linear-gradient(#f37a30, #f37a30) right bottom/18px 1px no-repeat, linear-gradient(#f37a30, #f37a30) right bottom/1px 14px no-repeat; }
+.ninja-bar__row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 7px; font: 800 .8rem/1 var(--f-read, sans-serif); letter-spacing: .24em; text-transform: uppercase; color: #ece6dc; }
+.ninja-bar__row i { font-style: normal; color: #f37a30; letter-spacing: .08em; }
+.ninja-bar__track { display: block; height: 7px; background: rgba(8, 9, 9, .85); border: 1px solid rgba(236, 230, 220, .28); }
+.ninja-bar__track u { display: block; height: 100%; width: calc(var(--ninja-progress) * 100%); background: #ece6dc; }
+.ninja-highlight[data-state="click"] .ninja-bar__track u, .ninja-highlight[data-state="defused"] .ninja-bar__track u { background: #43ff86; box-shadow: 0 0 12px rgba(67, 255, 134, .55); }
+.ninja-highlight[data-state="defused"] .ninja-bar__row b, .ninja-highlight[data-state="defused"] .ninja-bar__row i { color: #43ff86; }
+.ninja-fallback { position: absolute; inset: 0; overflow: hidden; }
+.ninja-fallback img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ninja-fallback__lcd { position: absolute; left: 50%; top: 50%; margin: -4.5vmin 0 0 -13vmin; width: 26vmin; height: 9vmin; display: grid; place-items: center; white-space: nowrap; font: 800 5.4vmin/1 'Courier New', monospace; color: #e84737; text-shadow: 0 0 1.4vmin currentColor; transform: rotate(-17deg) skewX(-10deg); }
+.ninja-highlight[data-state="defused"] .ninja-fallback__lcd { color: #43ff86; }
+.ninja-fallback__led { position: absolute; left: 62%; top: 44%; width: 1.6vmin; aspect-ratio: 1; border-radius: 50%; background: #ff2a1a; box-shadow: 0 0 14px #ff2a1a; animation: ninja-led .26s steps(2) infinite; }
+.ninja-highlight[data-state="defused"] .ninja-fallback__led { animation: none; background: #43ff86; box-shadow: 0 0 14px #43ff86; }
+@keyframes ninja-led { 50% { opacity: .2; } }
+.dbg-scrub:has(.ninja-highlight) { background: #000; }
+.dbg-scrub .ninja-highlight { bottom: 56px; }
+@media (max-width: 599px) {
+  .ninja-bar { bottom: 8%; } .dbg-scrub .ninja-highlight { bottom: 116px; }
+}
+@media (prefers-reduced-motion: reduce) { .ninja-fallback__led { animation: none; } }
+
+/* The burst dominates briefly: harder contrast, a larger brush hit and a smoky orange edge. */
+.ace-dim { background: radial-gradient(ellipse at 6% 8%,rgba(190,63,8,.55),transparent 43%),radial-gradient(ellipse at 87% 78%,rgba(161,78,24,.32),transparent 50%),#050606; }
+.ace-mark { width: clamp(290px,40vw,585px); color: #ff781c; filter: drop-shadow(3px 5px 0 rgba(0,0,0,.65)); }
+@media(max-width:599px) { .ace-mark { width: min(80vw,370px); } }
+
+/* Screen treatment, composited around the live UI and shallow 3D glass. */
+.ace-grade { position: absolute; inset: 0; backdrop-filter: saturate(.42) brightness(.65) contrast(1.12); opacity: var(--ace-dim); }
+.ace-screen-flash { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%,rgba(255,221,174,.20),rgba(226,92,19,.16)); opacity: var(--ace-flash,0); }
+.ace-vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%,transparent 25%,rgba(0,0,0,.58) 95%); opacity: var(--ace-dim); }
+.ace-grain { position: absolute; inset: 0; background-image: var(--ace-grain); opacity: .17; mix-blend-mode: soft-light; }
+
+/* Cheap photographic framing around the live scene; no GPU post-processing. */
+.lg3d-vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 52% 44%,transparent 36%,rgba(14,18,22,.28) 100%),linear-gradient(rgba(13,20,27,.16),transparent 20%,transparent 80%,rgba(13,20,27,.20)); }
+.dbg-scrub .lg3d-vignette { bottom: 56px; }
+@media(max-width:599px) { .dbg-scrub .lg3d-vignette { bottom: 116px; } }
+
+/* Player reveal follows the fifth impact; fixed glass remains behind it. */
+.ace-highlight--person .ace-title { top: 42%; }
+/* The player plate on the end cards (ace, ninja defuse, no-scope): a slim cut-corner card, the portrait left, the name large, team and map on one
+   quiet line, and the tagline above it between two slanted ticks. Colour comes from --plate (orange by default). */
+.ace-person { --plate:#ff781c; position:absolute; top:69%; left:50%; width:min(470px,86vw); display:grid; grid-template-columns:auto 1fr; align-items:center; gap:16px; padding:12px 24px 12px 12px; transform:translate(-50%,var(--ace-person-y,18px)); opacity:var(--ace-person,0); isolation:isolate; }
+.ace-person::before { content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(100deg,rgba(7,8,8,.93),rgba(7,8,8,.78)); clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px)); box-shadow:inset 3px 0 0 var(--plate); }
+.ace-person::after { content:''; position:absolute; inset:0; z-index:-1; background:linear-gradient(110deg,transparent 35%,rgba(255,190,115,.13) 49%,transparent 63%); transform:translateX(calc(-160% + var(--ace-person,0) * 280%)); clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px)); pointer-events:none; }
+.ace-person__portrait { width:76px; height:76px; overflow:hidden; background:radial-gradient(ellipse at 50% 100%,#88401c,#121313 75%); clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px)); }
+.ace-person__portrait .photo { width:100%; height:100%; object-fit:cover; object-position:50% 12%; filter:contrast(1.06); }
+.ace-person__info { min-width:0; display:flex; flex-wrap:wrap; align-items:center; column-gap:14px; row-gap:5px; }
+.ace-person__info strong { flex:0 0 100%; color:#f8f2e9; font:800 clamp(28px,3vw,38px)/1 var(--f-head,sans-serif); letter-spacing:.01em; overflow-wrap:anywhere; }
+.ace-person__team { display:inline-flex; align-items:center; gap:6px; color:#dacbb8; font:600 13px/1 var(--f-read,sans-serif); letter-spacing:.02em; }
+.ace-person__round { color:#a99a86; font:500 12px/1 var(--f-read,sans-serif); letter-spacing:.04em; padding-left:14px; border-left:1px solid rgba(255,255,255,.16); }
+.ace-person__kicker { position:absolute; left:0; right:0; bottom:calc(100% + 16px); display:flex; justify-content:center; align-items:center; gap:12px; color:var(--plate); text-transform:uppercase; font:700 11px/1 var(--f-read,sans-serif); letter-spacing:.26em; white-space:nowrap; text-shadow:0 2px 10px #000; }
+.ace-person__kicker::before, .ace-person__kicker::after { content:''; width:34px; height:2px; transform:skewX(-30deg); background:var(--plate); opacity:.75; }
+.ace-person__kills { position:absolute; right:14px; bottom:10px; display:flex; gap:3px; }
+.ace-person__kills i { width:3px; height:10px; background:var(--plate); transform:skewX(-18deg); }
+@media(max-width:599px) { .ace-person { top:55%; width:min(330px,88vw); gap:12px; padding:10px 16px 10px 10px; } .ace-person__portrait { width:62px; height:62px; } .ace-person__info strong { font-size:26px; } .ace-person__team { font-size:12px; } .ace-person__round { font-size:11px; padding-left:10px; } .ace-person__kicker { font-size:9.5px; letter-spacing:.18em; } }
+
+/* NOSCOPE uses ACE's restrained amber corners around its dark live scene. */
+.lg3d-frame { position:absolute; inset:6% 3.3%; pointer-events:none; opacity:.35; background:linear-gradient(#f37a30,#f37a30) left top/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) left top/1px 28px no-repeat,linear-gradient(#f37a30,#f37a30) right top/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) right top/1px 28px no-repeat,linear-gradient(#f37a30,#f37a30) left bottom/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) left bottom/1px 28px no-repeat,linear-gradient(#f37a30,#f37a30) right bottom/32px 1px no-repeat,linear-gradient(#f37a30,#f37a30) right bottom/1px 28px no-repeat; }
+.dbg-scrub .lg3d-frame { bottom:calc(6% + 56px); }
+@media(max-width:599px) { .dbg-scrub .lg3d-frame { bottom:calc(6% + 116px); } }
+
+/* A distressed stencil hit, then a composed hold and crossfade back to the match. */
+.legend--noscope { opacity:var(--noscope-fade,1); }
+.noscope-mark { display:block; width:min(740px,82vw); height:auto; filter:drop-shadow(3px 5px 0 rgba(0,0,0,.75)); }
+.legend-noscope .noscope-mark { transform:translateY(calc((1 - var(--reveal,0))*14px)) scale(var(--title-pop,1)); }
+.legend-noscope small { color:#e9dfd2; letter-spacing:.13em; }
+.lg3d-title { position:absolute; inset:0 0 56px; display:grid; place-items:center; pointer-events:none; opacity:var(--reveal,0); }
+.lg3d-title .noscope-mark { transform:scale(var(--title-pop,1)); }
+@media(max-width:599px) { .lg3d-title { bottom:116px; } .noscope-mark { width:92vw; } }
+
+/* The old entrance animation's fill mode must not override the timed NOSCOPE exit. */
+.legend.legend--noscope:not(.is-still) { animation:none; opacity:var(--noscope-fade,1); }
+
+/* the player who defused, in the same plate as the ace's */
+@media (max-width: 599px) { .ninja-person { left: 50%; bottom: auto; top: 9%; width: min(312px, 86vw); gap: 12px; padding: 8px; margin-left: calc(min(312px, 86vw) / -2); } .ninja-person__portrait { flex-basis: 66px; height: 80px; } .ninja-person__info strong { font-size: 28px; } .ninja-person__team { font-size: 11px; } .ninja-person__kicker { font-size: 9px; } }
+
+/* NOSCOPE: the bare crosshair while the aim settles (no scope is ever raised). */
+.lg3d-cross { position:absolute; inset:0; pointer-events:none; opacity:var(--cross,0); }
+.lg3d-cross i { position:absolute; left:var(--cx,50%); top:var(--cy,46%); background:#ffe2b0; box-shadow:0 0 0 1px rgba(10,6,4,.75), 0 0 10px #ff7a1c; }
+.lg3d-cross i:nth-child(1), .lg3d-cross i:nth-child(2) { width:3px; height:20px; }
+.lg3d-cross i:nth-child(1) { transform:translate(-1.5px, -32px); }
+.lg3d-cross i:nth-child(2) { transform:translate(-1.5px, 12px); }
+.lg3d-cross i:nth-child(3), .lg3d-cross i:nth-child(4) { width:20px; height:3px; }
+.lg3d-cross i:nth-child(3) { transform:translate(-32px, -1.5px); }
+.lg3d-cross i:nth-child(4) { transform:translate(12px, -1.5px); }
+.dbg-scrub .lg3d-cross { bottom:56px; }
+
+/* End cards for the no-scope and the ninja defuse: generated title and HUD art (transparent WebP, see endcard.ts) over the live scene, the player's plate under the title. */
+.noscope-card { --endcard:var(--reveal,0); }
+.ninja-highlight { --endcard:var(--ninja-title,0); --ace-person:var(--ninja-person,0); --ace-person-y:var(--ninja-person-y,16px); }
+.endcard-hud { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:calc(var(--endcard,0) * .95); pointer-events:none; }
+.endcard-hud--green { filter:hue-rotate(100deg) saturate(1.15); }
+.endcard-title3d { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.noscope-card__mark, .ninja-title { position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); opacity:var(--endcard,0); }
+.ninja-highlight .ace-person { z-index:3; }
+.noscope-card { position:absolute; inset:0; pointer-events:none; --ace-person:var(--reveal,0); --ace-person-y:calc((1 - var(--reveal,0)) * 18px); opacity:1 !important; transform:none !important; }
+.lg3d-title--card { display:block; opacity:1; }
+.dbg-scrub .lg3d-title--card { bottom:56px; }
+@media(max-width:599px) { .endcard-title3d { width:96vw; top:27%; } .dbg-scrub .lg3d-title--card { bottom:116px; } }
+
+/* The ace's wordmark treatment (BrushMark), kept for the highlights that still use the vector title. */
+.brush-mark { display:block; width:clamp(300px,40vw,590px); height:auto; color:#ff781c; filter:drop-shadow(3px 5px 0 rgba(0,0,0,.65)); }
+@media(max-width:599px) { .brush-mark { width:min(80vw,370px); } }
+/* The scene darkens under the end card, as in the mockups: dark at the edges, a little lift where the title sits. */
+.noscope-card::before, .ninja-highlight::after { content:''; position:absolute; inset:0; pointer-events:none; opacity:var(--endcard,0); background:radial-gradient(ellipse at 50% 42%, rgba(6,3,2,.12) 0%, rgba(6,3,2,.36) 62%, rgba(4,2,1,.7) 100%); }
+.ninja-highlight::after { z-index:1; background:radial-gradient(ellipse at 50% 42%, rgba(2,6,3,.2) 0%, rgba(2,6,3,.5) 62%, rgba(1,4,2,.75) 100%); }
+.endcard-hud { opacity:calc(var(--endcard,0) * .6); }
+/* the plate takes the highlight's colour: green for the ninja defuse, as in the mockup */
+.ninja-highlight .ace-person { --plate:#52ff6a; top:67%; }
+.noscope-card .ace-person { top:72%; }
+.knife-highlight .ace-person { --plate:#ff4a30; }
+@media(max-width:599px) { .noscope-card .ace-person, .ninja-highlight .ace-person { top:56%; } }
+
+/* Lead-in over the full-page cinematics (Legend.tsx): the scene is already running underneath with its clock held. Only opacity and transform animate,
+   so it stays smooth even while the scene is being built. */
+.legend-lead { position: fixed; inset: 0; z-index: 10001; overflow: hidden; cursor: pointer; }
+.legend-lead__dim { position: absolute; inset: 0; background: #040406; opacity: .96; }
+.legend-lead__bar { position: absolute; left: 0; right: 0; height: 13vh; background: #000; }
+.legend-lead__bar--top { top: 0; }
+.legend-lead__bar--bottom { bottom: 0; }
+.legend-lead--hold .legend-lead__dim { animation: lead-dim-in .45s cubic-bezier(.4, 0, .6, 1) both; }
+.legend-lead--hold .legend-lead__bar--top { animation: lead-bar-top-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.legend-lead--hold .legend-lead__bar--bottom { animation: lead-bar-bottom-in .45s cubic-bezier(.2, .8, .2, 1) both; }
+.legend-lead--lift { pointer-events: none; }
+.legend-lead--lift .legend-lead__dim { animation: lead-dim-out .4s ease-out both; }
+.legend-lead--lift .legend-lead__bar--top { animation: lead-bar-top-out .4s cubic-bezier(.5, 0, .8, .4) both; }
+.legend-lead--lift .legend-lead__bar--bottom { animation: lead-bar-bottom-out .4s cubic-bezier(.5, 0, .8, .4) both; }
+@keyframes lead-dim-in { from { opacity: 0; } to { opacity: .96; } }
+@keyframes lead-dim-out { from { opacity: .96; } to { opacity: 0; } }
+@keyframes lead-bar-top-in { from { transform: translateY(-100%); } to { transform: none; } }
+@keyframes lead-bar-bottom-in { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes lead-bar-top-out { from { transform: none; } to { transform: translateY(-100%); } }
+@keyframes lead-bar-bottom-out { from { transform: none; } to { transform: translateY(100%); } }
