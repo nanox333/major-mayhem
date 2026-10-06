@@ -10,3 +10,20 @@ public/*
 
 __pycache__/
 *.pyc
+
+!public/assets/
+public/assets/*
+!public/assets/highlights/
+public/assets/highlights/*
+!public/assets/highlights/ace/
+
+!public/assets/highlights/noscope/
+
+!public/assets/highlights/ninja-defuse/
+!public/assets/highlights/endcards/
+!public/assets/highlights/clutch/
+
+output/playwright/
+
+# Blender's automatic backup of a saved .blend
+*.blend1

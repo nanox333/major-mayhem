@@ -1,3 +1,7 @@
+# Historical Blender video prototype
+
+The no-scope video pipeline below is retired. The game now uses the real-time GLB kit documented in [the highlight README](../highlights/README.md). These scripts remain historical authoring references; their videos are not shipped or played.
+
 # Blender legendary cinematics
 
 The no-scope is rendered ahead of time in Blender 5.2.2. It uses a blend of illustrated color and physical shading, warm directional/key lighting, cool rim lights, volumetric haze, per-shot depth of field, and a baked vignette. Clean bevels and physical shadows replace the former comic outline pass; `--ink` is available for illustrated variants. The model includes tapered clothing, armor straps, helmet rails, and scope/receiver details.
@@ -21,3 +25,13 @@ Timing is stretched by `SLOW = 1.25`: shot at 0.5s, impact at 2.875s, final cut 
 Run `npm run e2e:legend` after building to check desktop/phone playback, frame seeking, delayed/failed loading, reduced motion, and media hit testing. Screenshots are saved in `shots/legend/`.
 
 The rifle sits outside the shooter’s right hip; `Blender -b -P scripts/legend-3d/verify-pose.py` checks evaluated weapon meshes against the body and verifies reachable grips across all 146 frames. The impact combines a luminous burst, two delayed expanding rings, 32 sparks, dust, a short warm light pulse, bloom and a decaying camera punch. Effects use presentation time while the falling body uses slowed world time.
+
+## 1v5 CLUTCH
+
+`clutch_assets.py` builds `public/assets/highlights/clutch/arena.glb` (a floor, a back wall with an opening, two side structures; three meshes, about 250 polygons):
+
+```
+Blender -b -P scripts/legend-3d/clutch_assets.py -- public/assets/highlights/clutch
+```
+
+The survivor and the five enemies are the operator from the no-scope kit (`noscope/kit.glb`, the `Target` node only), posed on its bones and dropped with the same ragdoll, so no second character model is shipped. The 3D title is `title3d.py ... clutch` (`title-clutch.glb`). The scene is `src/ui/clutch/scene.ts`, the clock `src/ui/clutch/timeline.ts`.
