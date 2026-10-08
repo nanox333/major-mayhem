@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROUTES, landingView, viewFromHash } from './route';
+import { ROUTES, isInviteHash, landingView, viewFromHash } from './route';
 
 describe('page addresses (#222)', () => {
   it('gives every page its own address, and reads each one back', () => {
@@ -27,5 +27,12 @@ describe('page addresses (#222)', () => {
     expect(landingView('#/whatever')).toBe('home');
     // A challenge link is not a page: the invite handles it, and what is behind it is the Home.
     expect(landingView('#duel=abc')).toBe('home');
+  });
+
+  it('leaves a challenge or duel link to the invite, and reads the pages as pages', () => {
+    expect(isInviteHash('#duel=abc')).toBe(true);
+    expect(isInviteHash('#c=abc')).toBe(true);
+    expect(isInviteHash('#/guess')).toBe(false);
+    expect(isInviteHash('')).toBe(false);
   });
 });

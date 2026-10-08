@@ -1,6 +1,6 @@
 // Addresses for the game's pages (#222). The page is one file with no server, so a route is a hash: `#/guess`, `#/archive` and so on.
 // Switching page on purpose pushes a history entry, so Back and Forward move between pages; inside a draft nothing is pushed per pick, and Back from
-// the draft goes to the Home with the run kept, which is what the logo does. A challenge link (`#duel=…`) is not a route: App reads it once and clears it.
+// the draft goes to the Home with the run kept, which is what the logo does. A challenge or duel link (`#duel=…`, `#c=…`) is not a route: App reads it and clears it.
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { View } from './TopBar';
 
@@ -23,7 +23,8 @@ export function viewFromHash(hash: string): View | null {
  */
 export const landingView = (hash: string): View => { const v = viewFromHash(hash); return v === null || v === 'draft' ? 'home' : v; };
 
-const isDuelHash = (hash: string) => hash.startsWith('#duel=');
+/** A challenge or duel link: App opens its invitation, so the router leaves the page alone. */
+export const isInviteHash = (hash: string) => hash.startsWith('#duel=') || hash.startsWith('#c=');
 
 /**
  * The page you are on, kept in step with the address bar. `setView` pushes a history entry when the page changes; Back, Forward and a hand-edited address
@@ -36,12 +37,12 @@ export function useView(): [View, (v: View) => void] {
   useEffect(() => {
     try {
       const want = ROUTES[current.current];
-      if (!isDuelHash(location.hash) && location.hash !== want && !(want === ROUTES.home && location.hash === '')) history.replaceState(null, '', location.pathname + location.search + want);
+      if (!isInviteHash(location.hash) && location.hash !== want && !(want === ROUTES.home && location.hash === '')) history.replaceState(null, '', location.pathname + location.search + want);
     } catch { /* a sandboxed frame may not allow it: the pages still work without addresses */ }
   }, []);
   useEffect(() => {
     const onNav = () => {
-      if (isDuelHash(location.hash)) return;
+      if (isInviteHash(location.hash)) return;
       // Forward after Back can land on the draft: it is a page then, and shows the run. An address the game doesn't know is the Home.
       const next = viewFromHash(location.hash) ?? 'home';
       if (next === current.current) return;

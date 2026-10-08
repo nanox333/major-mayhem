@@ -42,7 +42,7 @@ import { SetupScreen } from './screens/Setup';
 import { ChatVoteBar, ChatVoteProvider, TwitchPanel } from './ui/ChatVote';
 import { GuessScreen } from './screens/Guess';
 import { DuoScreen } from './screens/DuoLink';
-import { useView } from './ui/route';
+import { isInviteHash, useView } from './ui/route';
 
 export default function App() {
   return <ChatVoteProvider><Game /></ChatVoteProvider>;
@@ -85,6 +85,26 @@ function Game() {
     return { challenge: decodeChallenge(code) };
   });
   const [challengeOpen, setChallengeOpen] = useState(false);
+  // A link opened while the game is already open (the address changes, the page does not reload) opens its invitation too, as on a first load.
+  // The address is cleared only after the router has read it: while it still holds the link, the router leaves the page where it is. Then the
+  // address goes back to the page you were on, so it still shows where you are.
+  useEffect(() => {
+    const onHash = (e: HashChangeEvent) => {
+      const hash = location.hash;
+      const duel = duelCode(hash);
+      const challenge = challengeCode(hash);
+      if (!duel && !challenge) return;
+      if (duel) setInvite({ duel: decodeDuel(duel) });
+      else setChallengeIn({ challenge: decodeChallenge(challenge!) });
+      const was = new URL(e.oldURL).hash;
+      setTimeout(() => {
+        if (location.hash !== hash) return;
+        try { history.replaceState(null, '', location.pathname + location.search + (isInviteHash(was) ? '' : was)); } catch { /* not allowed: fine */ }
+      }, 0);
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   // Opens the run in a slot. Going back to your run never disturbs a challenge: the challenge stays in its slot until you open it again.
   const openSlot = (to: Slot) => {
     const run = loadSlot(to) ?? (to === 'main' ? fresh() : null);
