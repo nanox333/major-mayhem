@@ -5,6 +5,7 @@
 import { LATEST_RULES, ROLE_ORDER, RULE_SINCE, Role, Roster, isCoach, rostersOn } from '../data/rosters';
 import * as G from './logic';
 import { isRealDate } from './dates';
+import { duelFromPayload, fromBase64Url, payloadOf, toBase64Url } from './duelCode';
 
 export interface Duel {
   /** 2: equal conditions, with the challenger's cases in `offers`. 1: the older challenge, with the same starting seed only. */
@@ -62,11 +63,8 @@ export function duelFrom(run: { seed: string; mode: string; opts?: Duel['opts'];
   };
 }
 
-// base64url of UTF-8 JSON, so names with any characters survive the trip through a URL.
-const toB64 = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-const fromB64 = (s: string) => new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0)));
-
-export const encodeDuel = (d: Duel) => toB64(JSON.stringify(d));
+/** A link's code: base64url of the compact form (src/game/duelCode.ts), or of the older JSON when the duel cannot be compacted. */
+export const encodeDuel = (d: Duel) => toBase64Url(payloadOf(d));
 
 /** A link's free-play options: only the known values, or none at all (#27). */
 const validOpts = (o: unknown) => o === undefined || (typeof o === 'object' && o !== null && !Array.isArray(o)
@@ -103,7 +101,7 @@ export function validDuel(d: any): d is Duel {
 /** Reads a duel from a link, or null if it's malformed or names teams, players or a coach this version doesn't have. */
 export function decodeDuel(code: string): Duel | null {
   try {
-    const d = JSON.parse(fromB64(code)) as Duel;
+    const d = duelFromPayload(fromBase64Url(code)) as Duel;
     return validDuel(d) ? { ...d, name: cleanName(d.name), ...(d.opts ? { opts: cleanOpts(d.opts) } : {}) } : null;
   } catch { return null; }
 }

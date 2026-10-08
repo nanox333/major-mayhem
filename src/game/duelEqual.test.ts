@@ -221,7 +221,7 @@ describe('what an older link or a bad one does (#172)', () => {
 
   it('keeps the link a reasonable size', () => {
     const d = duelOf('free-eq22', [0, 3]);
-    expect(duelLink('https://example.test/', d).length).toBeLessThan(2500);
+    expect(duelLink('https://example.test/', d).length).toBeLessThan(350);
   });
 
   it('keeps a saved duel run valid after a reload', () => {
