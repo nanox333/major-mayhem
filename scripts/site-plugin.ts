@@ -14,8 +14,8 @@ export interface SiteConfig {
   /** The ad slot is off unless enabled. With no sponsor creative it shows a "your ad here" placeholder. */
   /** contactUrl is where "Advertise here" goes on the placeholder (a mailto: or contact page). Empty shows plain text. */
   ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string; contactUrl: string };
-  /** The Contact page. A blank email leaves out the email button; bugs and advertising enquiries go to issuesUrl. */
-  contact: { email: string; issuesUrl: string };
+  /** The Contact page's two addresses. A blank address leaves out its button. */
+  contact: { bugsEmail: string; adsEmail: string };
 }
 
 export function loadSite(env = process.env): SiteConfig {

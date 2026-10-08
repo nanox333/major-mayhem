@@ -1,13 +1,12 @@
 import React from 'react';
 
 /**
- * Where to go with bugs, ideas, advertising and support. Everything here is a plain link: nothing is stored, sent or
- * tracked by the page. Bugs and advertising enquiries go to the public issue tracker unless an email is set in
- * site.config.json, which adds a direct email button.
+ * Where to go with bugs, advertising and support. Each enquiry is a mailto: link to an address from site.config.json, so
+ * the page stores and sends nothing itself.
  */
 export function ContactPage() {
   const { contact, support } = __SITE__;
-  const newIssue = (title: string) => `${contact.issuesUrl}/new?title=${encodeURIComponent(title)}`;
+  const mail = (to: string, subject: string, body = '') => `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   return (
     <main className="console sp ct">
       <header className="sp-hero">
@@ -25,19 +24,21 @@ export function ContactPage() {
           moves or pops up, and no ad appears during a draft, a veto or a match.
         </p>
         <p>Tell us what you'd like to promote, with a link to it, and we'll say whether a space is free.</p>
-        <div className="ct-actions">
-          {contact.email && <a className="ct-btn" href={`mailto:${contact.email}?subject=${encodeURIComponent('Ad space enquiry')}`}>Email about ads</a>}
-          <a className="ct-btn" href={newIssue('Advertising enquiry')} rel="noopener" target="_blank">Open a GitHub issue</a>
-        </div>
+        {contact.adsEmail && (
+          <div className="ct-actions">
+            <a className="ct-btn" href={mail(contact.adsEmail, 'Ad space enquiry', 'What would you like to promote, and what is the link?')}>Email {contact.adsEmail}</a>
+          </div>
+        )}
       </section>
 
       <section className="ct-card" aria-labelledby="ct-bugs">
         <h4 id="ct-bugs">Bugs and ideas</h4>
         <p>Something broken, or an idea for a mode or a feature? Say what you were doing and which browser you used.</p>
-        <div className="ct-actions">
-          <a className="ct-btn" href={newIssue('Bug: ')} rel="noopener" target="_blank">Report a bug</a>
-          <a className="ct-btn" href={contact.issuesUrl} rel="noopener" target="_blank">Browse open issues</a>
-        </div>
+        {contact.bugsEmail && (
+          <div className="ct-actions">
+            <a className="ct-btn" href={mail(contact.bugsEmail, 'Bug report', 'What were you doing, and which browser were you using?')}>Email {contact.bugsEmail}</a>
+          </div>
+        )}
       </section>
 
       {support.url && (

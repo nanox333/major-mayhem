@@ -24,7 +24,7 @@
     "contactUrl": ""
   },
   "contact": {
-    "email": "",
-    "issuesUrl": "https://github.com/nanox333/major-mayhem/issues"
+    "bugsEmail": "bugs@example.com",
+    "adsEmail": "ads@example.com"
   }
 }
