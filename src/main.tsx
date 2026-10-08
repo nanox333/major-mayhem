@@ -22,6 +22,7 @@ import './styles/match-page.css';
 import './styles/results-page.css';
 import './styles/legend.css';
 import './styles/shell.css';
+import './styles/duel-invite.css';
 import './styles/help-chemistry.css';
 import './styles/roster-sheet.css';
 import './styles/phone.css';

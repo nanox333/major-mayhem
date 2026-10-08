@@ -19,7 +19,7 @@ import { usePrefs } from './ui/prefs';
 import { reduceMotion } from './ui/util';
 import { useShortcuts } from './ui/shortcuts';
 import { useSoundOn } from './ui/sound';
-import { DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
+import { ArrowRightIcon, DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
 import { AdSlot } from './ui/adSlot';
 import { ContactPage } from './screens/Contact';
 import { useT, tNode } from './i18n';
@@ -237,24 +237,35 @@ function Game() {
   );
 }
 
+/** The invitation to a draft duel (a link someone sent). Built like the Settings and Help dialogs, with the home page's buttons (src/styles/duel-invite.css). */
 function DuelInvite({ duel, abandon, onAccept, onClose }: { duel: Duel | null; abandon: boolean; onAccept: (d: Duel) => void; onClose: () => void }) {
   return (
-    <Modal label="Draft duel" onClose={onClose} small>
+    <Modal label="Draft duel" onClose={onClose}>
+      <div className="dv">
         {duel ? (
           <>
-            <h3>{duel.name} challenges you</h3>
-            <p>A draft duel: you draft your own seven, then your team plays {duel.name}'s in a best-of-three showmatch.</p>
-            <p><b>{duelTerms(duel).headline}.</b></p>
-            <ul className="duel-terms">{duelTerms(duel).lines.map((l) => <li key={l}>{l}</li>)}</ul>
-            {abandon && <p className="muted small">Accepting now counts today's daily as abandoned.</p>}
-            <div className="final__actions"><button className="cta cta--orange" onClick={() => onAccept(duel)}>Accept the duel</button></div>
+            <header className="dv__head">
+              <span className="dv__kick">Draft duel</span>
+              <h3>{duel.name} <em>challenges you</em></h3>
+              <p>You draft your own seven. Then your team plays {duel.name}'s in a best-of-three showmatch.</p>
+            </header>
+            <section className="dv__sec" aria-labelledby="dv-terms">
+              <h4 id="dv-terms">{duelTerms(duel).headline}</h4>
+              <ul className="dv__terms">{duelTerms(duel).lines.map((l) => <li key={l}>{l}</li>)}</ul>
+            </section>
+            {abandon && <p className="dv__note">Accepting now counts today's daily as abandoned.</p>}
+            <div className="dv__actions">
+              <button type="button" className="mbtn mbtn--main" onClick={() => onAccept(duel)}><span>Accept the duel</span><ArrowRightIcon size={22} /></button>
+            </div>
           </>
         ) : (
-          <>
+          <header className="dv__head">
+            <span className="dv__kick">Draft duel</span>
             <h3>That challenge link doesn't work</h3>
             <p>It's incomplete, or it names teams or players this version of the game doesn't have. Ask for a fresh link.</p>
-          </>
+          </header>
         )}
+      </div>
     </Modal>
   );
 }
