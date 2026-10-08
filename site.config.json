@@ -11,5 +11,9 @@
     "siteId": "",
     "host": ""
   },
-  "sentryLoader": ""
+  "sentryLoader": "",
+  "support": {
+    "url": "",
+    "label": "Support the project"
+  }
 }

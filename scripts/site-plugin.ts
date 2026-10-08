@@ -1,7 +1,7 @@
 // Vite plugin for everything that depends on where the game is hosted: link-preview tags, icons, the web app
 // manifest, robots.txt and sitemap.xml. All of it comes from site.config.json, so moving to a custom domain is a
 // one-line change there (see DOMAIN.md). Environment variables override the file, which suits hosts like
-// Cloudflare Pages: SITE_URL, ANALYTICS_PROVIDER, ANALYTICS_SITE_ID, ANALYTICS_HOST, SENTRY_LOADER.
+// Cloudflare Pages: SITE_URL, ANALYTICS_PROVIDER, ANALYTICS_SITE_ID, ANALYTICS_HOST, SENTRY_LOADER, SUPPORT_URL.
 import fs from 'node:fs';
 import type { HtmlTagDescriptor, Plugin } from 'vite';
 
@@ -9,6 +9,8 @@ export interface SiteConfig {
   url: string; name: string; shortName: string; title: string; description: string; themeColor: string; accent: string;
   analytics: { provider: string; siteId: string; host: string };
   sentryLoader: string;
+  /** Optional "support the project" link (Ko-fi, GitHub Sponsors). Empty url hides it. */
+  support: { url: string; label: string };
 }
 
 export function loadSite(env = process.env): SiteConfig {
@@ -23,11 +25,12 @@ export function loadSite(env = process.env): SiteConfig {
       host: env.ANALYTICS_HOST ?? site.analytics.host,
     },
     sentryLoader: env.SENTRY_LOADER ?? site.sentryLoader,
+    support: { ...site.support, url: env.SUPPORT_URL ?? site.support?.url ?? '' },
   };
 }
 
-/** The part of the config the game itself reads at runtime (analytics and error reporting). */
-export const runtimeSite = (s: SiteConfig) => ({ url: s.url, analytics: s.analytics, sentryLoader: s.sentryLoader });
+/** The part of the config the game itself reads at runtime (analytics, error reporting and the support link). */
+export const runtimeSite = (s: SiteConfig) => ({ url: s.url, analytics: s.analytics, sentryLoader: s.sentryLoader, support: s.support });
 
 export function sitePlugin(site = loadSite()): Plugin {
   const meta = (attrs: Record<string, string>): HtmlTagDescriptor => ({ tag: 'meta', attrs, injectTo: 'head' });

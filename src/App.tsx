@@ -19,7 +19,7 @@ import { usePrefs } from './ui/prefs';
 import { reduceMotion } from './ui/util';
 import { useShortcuts } from './ui/shortcuts';
 import { useSoundOn } from './ui/sound';
-import { DatabaseIcon, RosterIcon, GamepadIcon } from './ui/icons';
+import { DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScene } from './ui/DraftScene';
@@ -212,6 +212,7 @@ function Game() {
         <div className="foot__group"><DatabaseIcon size={24} /><p><strong>Data and credits</strong>Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep and 4 Oct 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.</p></div>
         <div className="foot__group"><RosterIcon size={24} /><p><strong>Fan project</strong>Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated.</p></div>
         <div className="foot__group"><GamepadIcon size={24} /><p><strong>Built by fans</strong>A love letter to Counter-Strike and its Major history.</p></div>
+        {__SITE__.support.url && <div className="foot__group"><StarIcon size={24} /><p><strong>{__SITE__.support.label}</strong>Optional. Helps cover hosting and future features, and gets you nothing in-game. <a href={__SITE__.support.url} rel="noopener" target="_blank">Open the support page</a></p></div>}
       </footer>
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}

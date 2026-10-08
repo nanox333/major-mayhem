@@ -5,4 +5,5 @@ declare const __SITE__: {
   url: string;
   analytics: { provider: string; siteId: string; host: string };
   sentryLoader: string;
+  support: { url: string; label: string };
 };
