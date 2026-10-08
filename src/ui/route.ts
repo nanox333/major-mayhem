@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { View } from './TopBar';
 
 /** The hash for each page. The draft is `#/play`: it is reached from Home, so Back from it is Home. */
-export const ROUTES: Record<View, string> = { home: '#/', draft: '#/play', guess: '#/guess', duo: '#/duo', archive: '#/archive', stats: '#/stats', setup: '#/setup' };
+export const ROUTES: Record<View, string> = { home: '#/', draft: '#/play', guess: '#/guess', duo: '#/duo', archive: '#/archive', stats: '#/stats', setup: '#/setup', contact: '#/contact' };
 const BY_HASH = new Map<string, View>((Object.entries(ROUTES) as [View, string][]).map(([v, h]) => [h, v]));
 
 /** The page a hash names, or null when it names none (an empty hash is the Home; anything else unknown is not a page). */

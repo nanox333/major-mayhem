@@ -14,6 +14,8 @@ export interface SiteConfig {
   /** The ad slot is off unless enabled. With no sponsor creative it shows a "your ad here" placeholder. */
   /** contactUrl is where "Advertise here" goes on the placeholder (a mailto: or contact page). Empty shows plain text. */
   ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string; contactUrl: string };
+  /** The Contact page. A blank email leaves out the email button; bugs and advertising enquiries go to issuesUrl. */
+  contact: { email: string; issuesUrl: string };
 }
 
 export function loadSite(env = process.env): SiteConfig {
@@ -34,7 +36,7 @@ export function loadSite(env = process.env): SiteConfig {
 }
 
 /** The part of the config the game itself reads at runtime (analytics, error reporting, support link and ad slot). */
-export const runtimeSite = (s: SiteConfig) => ({ url: s.url, analytics: s.analytics, sentryLoader: s.sentryLoader, support: s.support, ads: s.ads });
+export const runtimeSite = (s: SiteConfig) => ({ url: s.url, analytics: s.analytics, sentryLoader: s.sentryLoader, support: s.support, ads: s.ads, contact: s.contact });
 
 export function sitePlugin(site = loadSite()): Plugin {
   const meta = (attrs: Record<string, string>): HtmlTagDescriptor => ({ tag: 'meta', attrs, injectTo: 'head' });

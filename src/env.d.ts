@@ -7,4 +7,5 @@ declare const __SITE__: {
   sentryLoader: string;
   support: { url: string; label: string };
   ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string; contactUrl: string };
+  contact: { email: string; issuesUrl: string };
 };

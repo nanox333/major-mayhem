@@ -47,6 +47,7 @@ export const HomeIcon = (p: P) => <Svg {...p}><path d="M4 11l8-7 8 7M6 10v9h12v-
 export const MapPinIcon = (p: P) => <Svg {...p}><path d="M12 21s6-5.5 6-10a6 6 0 1 0-12 0c0 4.5 6 10 6 10zM12 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" /></Svg>;
 export const ArrowRightIcon = (p: P) => <Svg {...p}><path d="M5 12h14M13 6l6 6-6 6" /></Svg>;
 export const ShareIcon = (p: P) => <Svg {...p}><path d="M4 12v7h16v-7M12 3v12M8 7l4-4 4 4" /></Svg>;
+export const MailIcon = (p: P) => <Svg {...p}><path d="M4 6h16v12H4zM4 7l8 6 8-6" /></Svg>;
 export const ClockIcon = (p: P) => <Svg {...p}><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2" /></Svg>;
 /** A medal: a placement below first. */
 export const MedalIcon = (p: P) => <Svg {...p}><path d="M12 21.5a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM8.6 12.2 6 3h4l2 5M15.4 12.2 18 3h-4l-2 5" /></Svg>;

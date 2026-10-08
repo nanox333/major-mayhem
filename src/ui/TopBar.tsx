@@ -7,7 +7,7 @@ import * as I from './icons';
 // The one slim bar at the top (#101): the mark and wordmark, Guess the pro, help, sound and a menu. It never carries the run's progress:
 // the four steps live in the head of the console with the run they describe (#140).
 
-export type View = 'home' | 'draft' | 'guess' | 'duo' | 'archive' | 'stats' | 'setup';
+export type View = 'home' | 'draft' | 'guess' | 'duo' | 'archive' | 'stats' | 'setup' | 'contact';
 
 const SHIELD = 'M20 2 L36 9 V22 C36 30 29 36 20 38 C11 36 4 30 4 22 V9 Z';
 
@@ -34,9 +34,11 @@ interface TopBarProps {
   abandon: boolean;
   onNewRun: () => void;
   onBrowse?: () => void;
+  /** Opens the Contact page. */
+  onContact: () => void;
 }
 
-export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse }: TopBarProps) {
+export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse, onContact }: TopBarProps) {
   const twitch = useTwitchStatus();
   const inGuess = view === 'guess';
   const inDuo = view === 'duo';
@@ -53,7 +55,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
         </h1>
 
         <nav className="shell-nav" aria-label="Game modes">
-          <button type="button" className="shell-link" aria-current={!inGuess && !inDuo && !inArchive && view !== 'stats' ? 'page' : undefined} onClick={() => setView('home')}>Home</button>
+          <button type="button" className="shell-link" aria-current={!inGuess && !inDuo && !inArchive && view !== 'stats' && view !== 'contact' ? 'page' : undefined} onClick={() => setView('home')}>Home</button>
           <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label="Guess the pro" onClick={toggleGame}>
             <span>Guess the pro</span>
           </button>
@@ -67,7 +69,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
           <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label="Settings" title="Settings" data-sfx="none"><I.SettingsIcon /></button>
           {/* Once chat votes are connected (or trying to), the button stays in view so the connection state does. Before that it's in the menu. */}
           {twitch !== 'off' && <TwitchButton onClick={onTwitch} />}
-          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} onDuo={() => setView('duo')} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView('home')} />
+          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} onDuo={() => setView('duo')} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView('home')} onContact={onContact} />
         </div>
       </div>
     </header>
@@ -85,10 +87,10 @@ function SoundButton() {
   );
 }
 
-interface MoreProps { onDuo: () => void; onBrowse?: () => void; onPlay: () => void; inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onHelp: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
+interface MoreProps { onDuo: () => void; onBrowse?: () => void; onPlay: () => void; onContact: () => void; inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onHelp: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
 
 /** How to play, Twitch chat votes and a new run: the things you use now and then (and Guess the pro and Settings, on a phone, where the gear has no room). */
-function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwitch, onSettings, abandon, onNewRun, onBrowse, onPlay }: MoreProps) {
+function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwitch, onSettings, abandon, onNewRun, onBrowse, onPlay, onContact }: MoreProps) {
   const [open, setOpen] = useState(false);
   const [ask, setAsk] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -121,6 +123,7 @@ function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwi
           <button type="button" className="menu__item menu__item--mode" onClick={pick(onDuo)} aria-label="Duo Link"><I.RosterIcon /><span>Duo Link</span></button>
           {showTwitch && <TwitchButton variant="menu" onClick={pick(onTwitch)} />}
           <button type="button" className="menu__item" onClick={pick(onHelp)} aria-label="How to play and data sources"><I.HelpIcon /><span>How to play</span></button>
+          <button type="button" className="menu__item" onClick={pick(onContact)} aria-label="Contact, advertising and bug reports"><I.MailIcon /><span>Contact</span></button>
           <button type="button" className="menu__item menu__item--settings" onClick={pick(onSettings)} aria-label="Settings"><I.SettingsIcon /><span>Settings</span></button>
           <button type="button" className={`menu__item ${ask ? 'is-ask' : ''}`} aria-label="Start a new run" title={ask && abandon ? "Today's daily will count as abandoned" : undefined}
             onClick={() => { if (ask) { setAsk(false); setOpen(false); onNewRun(); } else setAsk(true); }}>

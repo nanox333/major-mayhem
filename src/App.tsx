@@ -21,6 +21,7 @@ import { useShortcuts } from './ui/shortcuts';
 import { useSoundOn } from './ui/sound';
 import { DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
 import { AdSlot } from './ui/adSlot';
+import { ContactPage } from './screens/Contact';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScene } from './ui/DraftScene';
@@ -169,7 +170,7 @@ function Game() {
   return (
     <>
     <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setView('stats')} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
-      onBrowse={() => setView('archive')} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />
+      onBrowse={() => setView('archive')} onContact={() => setView('contact')} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />
     <UnsavedBar run={s} />
     {scene && <DraftScene />}
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
@@ -177,9 +178,10 @@ function Game() {
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view === 'duo' && <DuoScreen next={guessNext} />}
       {view === 'stats' && <StatsPage stats={stats} next={guessNext} />}
+      {view === 'contact' && <ContactPage />}
       {view === 'setup' && <SetupScreen s={s} dispatch={dispatch} onStart={beginDraft} onBack={() => setView('home')} />}
       {view === 'archive' && <RosterBrowser page hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setView('home')} />}
-      {view !== 'home' && view !== 'guess' && view !== 'duo' && view !== 'archive' && view !== 'stats' && view !== 'setup' && <main className="console">
+      {view !== 'home' && view !== 'guess' && view !== 'duo' && view !== 'archive' && view !== 'stats' && view !== 'setup' && view !== 'contact' && <main className="console">
         <div className={`console__head ${s.phase === 'live' || s.phase === 'final' ? 'console__head--progress' : ''}`}>
           {view === 'draft' && s.phase === 'draft' && s.step === 'players' && (
             <button className="back-btn" onClick={() => dispatch({ type: 'back' })} aria-label="Back to teams">‹ Teams</button>
