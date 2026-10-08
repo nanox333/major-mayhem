@@ -18,7 +18,7 @@ export function AdSlot() {
   if (mode === 'off') return null;
   if (mode === 'placeholder') {
     // The call to action names the contact route, so a visitor knows a space can be bought before they ask.
-    const cta = ads.contactUrl ? <a className="ad-slot__cta" href={ads.contactUrl}>Advertise here →</a> : <span className="ad-slot__cta">Advertise here</span>;
+    const cta = ads.contactUrl ? <a className="ad-slot__cta" href={ads.contactUrl}>Advertise here</a> : <span className="ad-slot__cta">Advertise here</span>;
     return (
       <aside className="ad-slot ad-slot--placeholder" aria-label="Advertising space">
         <span className="ad-slot__tag" aria-hidden="true">Ad</span>

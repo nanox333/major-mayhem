@@ -34,14 +34,17 @@
 .ad-slot > small { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #8a93a6); }
 .ad-slot > a { display: block; width: 100%; aspect-ratio: 728 / 90; }
 .ad-slot > a img { display: block; width: 100%; height: auto; }
-/* The placeholder: an accent tag, a headline and a call to action that says the space can be bought. */
-.ad-slot--placeholder { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; justify-items: stretch; gap: 14px; box-sizing: border-box; aspect-ratio: 728 / 90; padding: 0 18px; border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 8px; text-align: left; color: var(--text, #e9eef6); background: linear-gradient(100deg, color-mix(in srgb, var(--accent) 16%, transparent), transparent 62%), repeating-linear-gradient(135deg, rgba(255, 255, 255, .025) 0 10px, transparent 10px 20px), var(--panel-2, #172036); }
-.ad-slot__tag { display: inline-grid; place-items: center; height: 22px; min-width: 30px; padding: 0 8px; border-radius: 999px; background: var(--accent); color: #0a0f1a; font: 700 .66rem/1 var(--f-head); letter-spacing: .08em; text-transform: uppercase; }
-.ad-slot__text { display: grid; gap: 3px; min-width: 0; }
-.ad-slot__text strong { font: 700 1.05rem/1.1 var(--f-head); color: var(--strong, #fff); letter-spacing: .01em; }
-.ad-slot__text > span { overflow: hidden; color: var(--muted, #8f9bb1); font-size: .78rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
-.ad-slot__cta { justify-self: end; padding: 7px 12px; border: 1px solid var(--accent); border-radius: 999px; color: var(--accent); font: 700 .72rem/1 var(--f-head); letter-spacing: .06em; text-decoration: none; text-transform: uppercase; white-space: nowrap; }
-a.ad-slot__cta:hover, a.ad-slot__cta:focus-visible { background: var(--accent); color: #0a0f1a; }
+/* The placeholder uses the same pieces as the home page's Roster archive row: a 1px --line border, the --inset fill,
+   a small radius, the display face for the headline, and a letter-spaced caps label with an orange marker. */
+.ad-slot--placeholder { grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; justify-items: stretch; gap: 16px; box-sizing: border-box; aspect-ratio: 728 / 90; padding: 0 18px; border: 1px solid var(--line); border-radius: 3px; text-align: left; color: var(--text); background: var(--inset); }
+.ad-slot__tag { display: inline-flex; align-items: center; gap: 8px; font: 600 .66rem/1 var(--f-read); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.ad-slot__tag::before { content: ''; width: 6px; height: 6px; background: var(--accent); transform: skewX(-18deg); }
+.ad-slot__text { display: grid; gap: 2px; min-width: 0; }
+.ad-slot__text strong { font: 400 1.25rem/1.1 var(--f-head); color: var(--strong); }
+.ad-slot__text > span { overflow: hidden; color: var(--muted); font-size: .9rem; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
+.ad-slot__cta { justify-self: end; font: 700 .8rem/1 var(--f-read); letter-spacing: .08em; text-transform: uppercase; color: var(--strong); text-decoration: none; white-space: nowrap; }
+.ad-slot__cta::after { content: ' →'; color: var(--accent); }
+a.ad-slot__cta:hover, a.ad-slot__cta:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
 @media (max-width: 699px) { .ad-slot { display: none; } }
 
 /* Guesses left: a row of dots, one per guess, and a quiet line beneath. */
