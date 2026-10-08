@@ -15,5 +15,11 @@
   "support": {
     "url": "",
     "label": "Support the project"
+  },
+  "ads": {
+    "enabled": false,
+    "imageUrl": "",
+    "linkUrl": "",
+    "alt": ""
   }
 }

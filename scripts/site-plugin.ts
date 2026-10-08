@@ -1,7 +1,7 @@
 // Vite plugin for everything that depends on where the game is hosted: link-preview tags, icons, the web app
 // manifest, robots.txt and sitemap.xml. All of it comes from site.config.json, so moving to a custom domain is a
 // one-line change there (see DOMAIN.md). Environment variables override the file, which suits hosts like
-// Cloudflare Pages: SITE_URL, ANALYTICS_PROVIDER, ANALYTICS_SITE_ID, ANALYTICS_HOST, SENTRY_LOADER, SUPPORT_URL.
+// Cloudflare Pages: SITE_URL, ANALYTICS_PROVIDER, ANALYTICS_SITE_ID, ANALYTICS_HOST, SENTRY_LOADER, SUPPORT_URL, ADS_ENABLED (1 or true).
 import fs from 'node:fs';
 import type { HtmlTagDescriptor, Plugin } from 'vite';
 
@@ -11,6 +11,8 @@ export interface SiteConfig {
   sentryLoader: string;
   /** Optional "support the project" link (Ko-fi, GitHub Sponsors). Empty url hides it. */
   support: { url: string; label: string };
+  /** The ad slot is off unless enabled. With no sponsor creative it shows a "your ad here" placeholder. */
+  ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string };
 }
 
 export function loadSite(env = process.env): SiteConfig {
@@ -26,11 +28,12 @@ export function loadSite(env = process.env): SiteConfig {
     },
     sentryLoader: env.SENTRY_LOADER ?? site.sentryLoader,
     support: { ...site.support, url: env.SUPPORT_URL ?? site.support?.url ?? '' },
+    ads: { ...site.ads, enabled: env.ADS_ENABLED !== undefined ? /^(1|true)$/i.test(env.ADS_ENABLED) : site.ads.enabled },
   };
 }
 
-/** The part of the config the game itself reads at runtime (analytics, error reporting and the support link). */
-export const runtimeSite = (s: SiteConfig) => ({ url: s.url, analytics: s.analytics, sentryLoader: s.sentryLoader, support: s.support });
+/** The part of the config the game itself reads at runtime (analytics, error reporting, support link and ad slot). */
+export const runtimeSite = (s: SiteConfig) => ({ url: s.url, analytics: s.analytics, sentryLoader: s.sentryLoader, support: s.support, ads: s.ads });
 
 export function sitePlugin(site = loadSite()): Plugin {
   const meta = (attrs: Record<string, string>): HtmlTagDescriptor => ({ tag: 'meta', attrs, injectTo: 'head' });

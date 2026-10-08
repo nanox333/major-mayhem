@@ -28,6 +28,15 @@
 .page .foot:hover, .page .foot:focus-within { opacity: .85; }
 @media (prefers-reduced-motion: reduce) { .page .foot { transition: none; } }
 
+/* The ad slot (src/ui/adSlot.tsx): a fixed 728x90 box so nothing moves when it loads, centred above the footer.
+   Hidden below 700px until the mobile layout is solid (#283). */
+.ad-slot { display: grid; gap: 4px; width: min(100%, 728px); margin: 24px auto 0; justify-items: center; }
+.ad-slot > small { font-size: .62rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted, #8a93a6); }
+.ad-slot > a { display: block; width: 100%; aspect-ratio: 728 / 90; }
+.ad-slot > a img { display: block; width: 100%; height: auto; }
+.ad-slot--placeholder { align-content: center; box-sizing: border-box; aspect-ratio: 728 / 90; border: 1px dashed rgba(255, 255, 255, .18); border-radius: 6px; color: var(--muted, #8a93a6); font-size: .85rem; }
+@media (max-width: 699px) { .ad-slot { display: none; } }
+
 /* Guesses left: a row of dots, one per guess, and a quiet line beneath. */
 .guess__left { display: grid; justify-items: center; gap: 8px; margin-top: 4px; color: var(--muted); font-size: .8rem; font-weight: 500; letter-spacing: .02em; }
 .guess__pips { display: inline-flex; gap: 6px; }

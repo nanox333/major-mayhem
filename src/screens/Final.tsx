@@ -10,6 +10,7 @@ import { keyMoments } from '../game/highlights';
 import { LEGEND_INFO } from '../ui/Legend';
 import { fmt, useMedia } from '../ui/util';
 import { play } from '../ui/sound';
+import { AdSlot } from '../ui/adSlot';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
 import { cleanName, duelFrom, duelLink, duelTerms } from '../game/duel';
 import { reportError, track } from '../analytics';
@@ -122,6 +123,7 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
             Free and fan-made. If you're enjoying it, <a href={__SITE__.support.url} rel="noopener" target="_blank">{__SITE__.support.label.toLowerCase()}</a>.
           </p>
         )}
+        <AdSlot />
       </div>
     </div>
   );

@@ -6,4 +6,5 @@ declare const __SITE__: {
   analytics: { provider: string; siteId: string; host: string };
   sentryLoader: string;
   support: { url: string; label: string };
+  ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string };
 };
