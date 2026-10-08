@@ -5,14 +5,19 @@ import { SHORTCUTS } from './shortcuts';
 describe('preferences (#110, #75, #77)', () => {
   it('start with normal contrast and shortcuts on', () => {
     expect(parsePrefs(null)).toEqual(DEFAULT_PREFS);
-    expect(DEFAULT_PREFS).toEqual({ contrast: false, shortcuts: true, fastReveals: false });
+    expect(DEFAULT_PREFS).toEqual({ contrast: false, shortcuts: true, fastReveals: false, language: 'en' });
+  });
+  it('pick the language from the saved choice, then the browser, then English', () => {
+    expect(parsePrefs(JSON.stringify({ language: 'en' }), false, ['pt-BR']).language).toBe('en');
+    expect(parsePrefs(null, false, ['fr-FR', 'en-US']).language).toBe('en');
+    expect(parsePrefs(JSON.stringify({ language: 'xx' })).language).toBe('en');
   });
   it('follow the system "more contrast" setting until a choice is saved', () => {
     expect(parsePrefs(null, true).contrast).toBe(true);
     expect(parsePrefs(JSON.stringify({ contrast: false }), true).contrast).toBe(false);
   });
   it('keep a saved choice and ignore values that make no sense', () => {
-    expect(parsePrefs(JSON.stringify({ contrast: true, shortcuts: false }))).toEqual({ contrast: true, shortcuts: false, fastReveals: false });
+    expect(parsePrefs(JSON.stringify({ contrast: true, shortcuts: false }))).toEqual({ contrast: true, shortcuts: false, fastReveals: false, language: 'en' });
     expect(parsePrefs(JSON.stringify({ contrast: 'yes', shortcuts: 1 }))).toEqual(DEFAULT_PREFS);
   });
   it('keeps old settings compatible and validates the fast reveal preference', () => {

@@ -374,3 +374,6 @@ a.ad-slot__cta:hover, a.ad-slot__cta:focus-visible { text-decoration: underline;
 .dbg-preview__stage { overflow: auto; display: flex; justify-content: center; padding: 12px; }
 .dbg-preview iframe { flex: none; height: 100%; min-height: 560px; max-width: 100%; border: 2px solid rgba(255, 255, 255, .25); background: #111; }
 .dbg__fx, .dbg__env, .dbg__tools { display: block; }
+
+/* The language picker in Settings: the same field height and edge as the buttons beside it. */
+.settings__select { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 3px; background: var(--inset); color: var(--text); font: inherit; }

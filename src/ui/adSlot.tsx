@@ -1,3 +1,5 @@
+import { useT } from '../i18n';
+
 export type AdMode = 'off' | 'placeholder' | 'sponsor';
 
 /**
@@ -13,23 +15,24 @@ export const adMode = (ads: { enabled: boolean; imageUrl: string; linkUrl: strin
  * the home screen and the results screen, never during a draft, veto or match.
  */
 export function AdSlot() {
+  const t = useT();
   const ads = __SITE__.ads;
   const mode = adMode(ads);
   if (mode === 'off') return null;
   if (mode === 'placeholder') {
     // The call to action names the contact route, so a visitor knows a space can be bought before they ask.
-    const cta = ads.contactUrl ? <a className="ad-slot__cta" href={ads.contactUrl}>Advertise here</a> : <span className="ad-slot__cta">Advertise here</span>;
+    const cta = ads.contactUrl ? <a className="ad-slot__cta" href={ads.contactUrl}>{t('ad.cta')}</a> : <span className="ad-slot__cta">{t('ad.cta')}</span>;
     return (
-      <aside className="ad-slot ad-slot--placeholder" aria-label="Advertising space">
-        <span className="ad-slot__tag" aria-hidden="true">Ad</span>
-        <span className="ad-slot__text"><strong>Your ad here</strong><span>Reach Counter-Strike fans who come back every day.</span></span>
+      <aside className="ad-slot ad-slot--placeholder" aria-label={t('ad.spaceLabel')}>
+        <span className="ad-slot__tag" aria-hidden="true">{t('ad.tag')}</span>
+        <span className="ad-slot__text"><strong>{t('ad.title')}</strong><span>{t('ad.body')}</span></span>
         {cta}
       </aside>
     );
   }
   return (
-    <aside className="ad-slot" aria-label="Sponsored">
-      <small>Sponsored</small>
+    <aside className="ad-slot" aria-label={t('ad.sponsored')}>
+      <small>{t('ad.sponsored')}</small>
       <a href={ads.linkUrl} rel="sponsored noopener" target="_blank">
         <img src={ads.imageUrl} alt={ads.alt} width={728} height={90} loading="lazy" />
       </a>

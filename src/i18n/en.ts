@@ -1,0 +1,182 @@
+/**
+ * The English messages: the source of truth, and the fallback for every other language.
+ *
+ * Keys are grouped by screen ("nav.", "topbar.", "home.", …). Placeholders are written as {name}. Write each sentence as one
+ * message with its placeholders, never as pieces joined in code: word order and plural forms differ between languages, so a
+ * translator has to be able to move the whole sentence. Plural forms live in `plurals`, one entry per form.
+ *
+ * Player nicks, team names, event names and Counter-Strike terms (AWPer, IGL, entry, eco, force-buy …) are not translated.
+ */
+export const en = {
+  // Top bar and the More menu (src/ui/TopBar.tsx)
+  'nav.home': 'Home',
+  'nav.guess': 'Guess the pro',
+  'nav.duo': 'Duo Link',
+  'nav.archive': 'Roster archive',
+  'nav.play': 'Play',
+  'nav.howTo': 'How to play',
+  'nav.contact': 'Contact',
+  'nav.settings': 'Settings',
+  'nav.newRun': 'New run',
+  'nav.newRunAsk': 'New run?',
+  'nav.abandonAsk': 'Abandon daily?',
+  'nav.more': 'More',
+  'nav.gameModes': 'Game modes',
+  'nav.soundAndMore': 'Sound, stats and more',
+  'nav.homeLabel': 'Major Mayhem: home',
+  'nav.stats': 'Your stats',
+  'nav.howToAria': 'How to play and data sources',
+  'nav.contactAria': 'Contact, advertising and bug reports',
+  'nav.dailyAbandoned': "Today's daily will count as abandoned",
+  'nav.backHome': 'Back to home',
+  'nav.backDraft': 'Back to the draft',
+  'nav.soundOn': 'Sound on',
+  'nav.soundOff': 'Sound off',
+  'nav.turnSoundOn': 'Turn sound on',
+  'nav.turnSoundOff': 'Turn sound off',
+
+  // The footer (src/App.tsx)
+  'footer.dataTitle': 'Data and credits',
+  'footer.dataBody': "Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep and 4 Oct 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see {sources}. Logos are trademarks of their teams.",
+  'footer.sourcesLink': 'sources and credits',
+  'footer.fanTitle': 'Fan project',
+  'footer.fanBody': 'Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated. {privacy}.',
+  'footer.privacyLink': 'Privacy and disclaimers',
+  'footer.builtTitle': 'Built by fans',
+  'footer.builtBody': 'A love letter to Counter-Strike and its Major history.',
+  'footer.supportBody': 'Optional. Helps cover hosting and future features, and gets you nothing in-game. {open}',
+  'footer.supportOpen': 'Open the support page',
+
+  // Settings (src/ui/Settings.tsx)
+  'settings.title': 'Settings',
+  'settings.kicker': 'Preferences',
+  'settings.saved': 'Saved in this browser.',
+  'settings.sound': 'Sound',
+  'settings.soundFx': 'Sound effects',
+  'settings.soundFxHint': 'Notes, the case reel and the match.',
+  'settings.appearance': 'Appearance',
+  'settings.contrast': 'High contrast',
+  'settings.contrastHint': 'Stronger borders, brighter text and a thicker focus ring.',
+  'settings.fastReveals': 'Fast case reveals',
+  'settings.fastRevealsHint': 'Show the dealt case immediately. Reduced motion always skips the reel.',
+  'settings.tips': 'Tips',
+  'settings.tipsOn': 'First-time tips',
+  'settings.tipsHint': 'A short explanation the first time each part of the game comes up. Turning them on shows them all again.',
+  'settings.shortcuts': 'Keyboard shortcuts',
+  'settings.shortcutsOn': 'Single-key shortcuts',
+  'settings.shortcutsHint': 'They never fire while you type. Everything they do is also a button.',
+  'settings.shortcutsCaption': 'Keyboard shortcuts',
+  'settings.more': 'More',
+  'settings.twitch': 'Twitch chat votes',
+  'settings.startNewRunAsk': 'Start a new run?',
+  'settings.dataTitle': 'Your data',
+  'settings.dataBody': 'Your record, your Guess history and the run you have open are kept in this browser only. A backup is a file you keep; restoring one replaces what is saved here.',
+  'settings.download': 'Download a backup',
+  'settings.restore': 'Restore from a file…',
+  'settings.chooseBackup': 'Choose a backup file',
+  'settings.cannotRead': "That file couldn't be read.",
+  'settings.restoreAria': 'Restore this backup?',
+  'settings.language': 'Language',
+  'settings.languageHint': 'Changes every screen straight away. Your choice is kept in this browser.',
+
+  // Restoring a backup (src/ui/Settings.tsx)
+  'backup.intro': 'This backup{from} holds:',
+  'backup.from': ' (from {date})',
+  'backup.contents': '{runs}, {titles}, {dailies}, {guessDays}{open}.',
+  'backup.openRun': ', and an open run: {run}',
+  'backup.noOpenRun': ', and no open run',
+  'backup.restoreWarn': 'Restoring {replaces} what is saved here with this. Download a backup of your current data first if you want to keep it.',
+  'backup.replaces': 'replaces',
+  'backup.replace': 'Replace my data',
+  'backup.cancel': 'Cancel',
+  'backup.failed': 'The browser would not save the restored data, so nothing was changed.',
+
+  // The help dialog's tabs (src/screens/Help.tsx)
+  'help.playTitle': 'How to play',
+  'help.playLead': 'Draft five players, a coach and a bench from real Major rosters, then take the team through the Major.',
+  'help.sourcesTitle': 'Sources and credits',
+  'help.sourcesLead': 'Where the rosters, photos, logos and sounds come from.',
+  'help.privacyTitle': 'Privacy and disclaimers',
+  'help.privacyLead': 'What the game stores, what it sends, and what it does not do.',
+  'help.tabPlay': 'How to play',
+  'help.tabSources': 'Sources and credits',
+  'help.tabPrivacy': 'Privacy',
+  'help.kicker': 'Guide',
+  'help.tablist': 'Help',
+
+  // The privacy notes (src/screens/PrivacyNotes.tsx)
+  'privacy.updated': 'Last updated 8 October 2026.',
+  'privacy.storedTitle': 'What is stored on your device',
+  'privacy.storedBody': "Everything the game remembers is kept in this browser's local storage: the run in progress, your stats and achievements, your progress in the daily, Guess the pro and Duo Link, your name, and your sound and tips settings. None of it is uploaded to us. Clearing this site's data in your browser removes all of it.",
+  'privacy.cookiesTitle': 'Cookies',
+  'privacy.cookiesBody': 'The game sets no cookies. Local storage is not sent along with web requests.',
+  'privacy.analyticsTitle': 'Analytics',
+  'privacy.analyticsOn': 'The site counts visits with {provider}. It uses no cookies and records anonymous page views and events only.',
+  'privacy.analyticsOff': 'No analytics are running on this site.',
+  'privacy.sentry': 'Errors are reported to Sentry, which can see your IP address and browser details when an error happens.',
+  'privacy.adsTitle': 'Ads and sponsors',
+  'privacy.adsBody': "There are no ad networks or trackers on the site. A sponsor's image, when one is shown, loads from the sponsor's server, which can see your IP address as any image host can. Sponsor links are marked as sponsored and open in a new tab. If an ad network is ever added, this page will say so, and you will be asked before it loads.",
+  'privacy.twitchTitle': 'Twitch chat',
+  'privacy.twitchBody': "Turning on Twitch chat connects your browser straight to Twitch's chat servers, anonymously and without logging in. Twitch sees that connection like any visit to its site, under its own privacy policy. The game does not save chat messages.",
+  'privacy.duelTitle': 'Duel links',
+  'privacy.duelBody': 'A duel link carries the draft inside the link itself. Nothing about it is stored on a server.',
+  'privacy.questionsTitle': 'Questions',
+  'privacy.questionsBody': 'For privacy questions, or to ask for something to be removed, use the Contact page.',
+  'privacy.disclaimersTitle': 'Disclaimers',
+  'privacy.labelFan': 'Fan project.',
+  'privacy.labelTrademarks': 'Trademarks.',
+  'privacy.labelSimulated': 'Simulated results.',
+  'privacy.labelMoney': 'No money.',
+  'privacy.labelAccuracy': 'Accuracy.',
+  'privacy.labelWarranty': 'No warranty.',
+  'privacy.disclaimerFan': '{label} Major Mayhem is not affiliated with, endorsed by or sponsored by Valve, any team or any tournament organiser.',
+  'privacy.disclaimerTrademarks': '{label} Game names, team names and logos belong to their owners. They are used only to identify players and teams.',
+  'privacy.disclaimerSimulated': '{label} Matches, ratings and placings are simulated for fun. They are not predictions, and player strength is hidden on purpose.',
+  'privacy.disclaimerMoney': '{label} There are no purchases, prizes or bets, and nothing in the game is for sale.',
+  'privacy.disclaimerAccuracy': '{label} Rosters and placements come from the public sources listed under Sources and credits. Mistakes happen; tell us if you spot one.',
+  'privacy.disclaimerWarranty': '{label} The game is provided as it is, without warranty of any kind.',
+
+  // The Contact page (src/screens/Contact.tsx)
+  'contact.kicker': 'Contact',
+  'contact.title': 'Get in touch',
+  'contact.lead': 'Bugs, ideas, advertising or anything else.',
+  'contact.adsTitle': 'Advertise here',
+  'contact.adsBody': 'There are two ad spaces: the home screen and the results screen. Each one is labelled and fixed in size. Nothing moves or pops up, and no ad appears during a draft, a veto or a match.',
+  'contact.adsAsk': "Tell us what you'd like to promote, with a link to it, and we'll say whether a space is free.",
+  'contact.adsSubject': 'Ad space enquiry',
+  'contact.adsPrefill': 'What would you like to promote, and what is the link?',
+  'contact.bugsTitle': 'Bugs and ideas',
+  'contact.bugsBody': 'Something broken, or an idea for a mode or a feature? Say what you were doing and which browser you used.',
+  'contact.bugsSubject': 'Bug report',
+  'contact.bugsPrefill': 'What were you doing, and which browser were you using?',
+  'contact.emailButton': 'Email {address}',
+  'contact.privacyTitle': 'Privacy and disclaimers',
+  'contact.privacyBody': 'What the game stores in your browser, what it sends, and what it does not do.',
+  'contact.privacyButton': 'Read the privacy notes',
+  'contact.supportTitle': 'Support the project',
+  'contact.supportBody': 'Optional. It helps cover hosting and future features, and it gets you nothing in the game.',
+
+  // The ad slot (src/ui/adSlot.tsx)
+  'ad.tag': 'Ad',
+  'ad.spaceLabel': 'Advertising space',
+  'ad.title': 'Your ad here',
+  'ad.body': 'Reach Counter-Strike fans who come back every day.',
+  'ad.cta': 'Advertise here',
+  'ad.sponsored': 'Sponsored',
+
+  // Words shared across screens
+  'common.on': 'On',
+  'common.off': 'Off',
+} as const;
+
+/** Plural forms, one entry per message. `other` is required; the others are used where a language has them. */
+export const plurals = {
+  'backup.runs': { one: '{n} Major run', other: '{n} Major runs' },
+  'backup.titles': { one: '{n} title', other: '{n} titles' },
+  'backup.dailies': { one: '{n} daily result', other: '{n} daily results' },
+  'backup.guessDays': { one: '{n} day of Guess history', other: '{n} days of Guess history' },
+} as const;
+
+export type Messages = Record<keyof typeof en, string>;
+export type PluralForms = { other: string; zero?: string; one?: string; two?: string; few?: string; many?: string };
+export type PluralMessages = Record<keyof typeof plurals, PluralForms>;

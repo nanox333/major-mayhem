@@ -3,6 +3,7 @@ import { track } from '../analytics';
 import { play, useSoundOn } from './sound';
 import { TwitchButton, useTwitchStatus } from './ChatVote';
 import * as I from './icons';
+import { useT } from '../i18n';
 
 // The one slim bar at the top (#101): the mark and wordmark, Guess the pro, help, sound and a menu. It never carries the run's progress:
 // the four steps live in the head of the console with the run they describe (#140).
@@ -39,34 +40,35 @@ interface TopBarProps {
 }
 
 export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse, onContact }: TopBarProps) {
+  const t = useT();
   const twitch = useTwitchStatus();
   const inGuess = view === 'guess';
   const inDuo = view === 'duo';
   const inArchive = view === 'archive';
   const toggleGame = () => setView('guess');
-  const backLabel = backView === 'home' ? 'Back to home' : 'Back to the draft';
+  const backLabel = backView === 'home' ? t('nav.backHome') : t('nav.backDraft');
   return (
     <header className={`topbar ${twitch !== 'off' ? 'topbar--twitch' : ''}`}>
       <div className="topbar__in">
         <h1 className="brand">
           {/* The wordmark is the way home, from anywhere; a run in progress is never touched by going there (#115). */}
           {/* On the home it stays a button, so it never turns into dead text: it just scrolls back to the top. */}
-          <button type="button" className="brand__btn" onClick={() => { setView('home'); if (view === 'home') window.scrollTo({ top: 0 }); }} aria-label="Major Mayhem: home" data-sfx="none"><LogoMark /><span className="wordmark"><b>Major</b> <i>Mayhem</i></span></button>
+          <button type="button" className="brand__btn" onClick={() => { setView('home'); if (view === 'home') window.scrollTo({ top: 0 }); }} aria-label={t('nav.homeLabel')} data-sfx="none"><LogoMark /><span className="wordmark"><b>Major</b> <i>Mayhem</i></span></button>
         </h1>
 
-        <nav className="shell-nav" aria-label="Game modes">
-          <button type="button" className="shell-link" aria-current={!inGuess && !inDuo && !inArchive && view !== 'stats' && view !== 'contact' ? 'page' : undefined} onClick={() => setView('home')}>Home</button>
-          <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label="Guess the pro" onClick={toggleGame}>
-            <span>Guess the pro</span>
+        <nav className="shell-nav" aria-label={t('nav.gameModes')}>
+          <button type="button" className="shell-link" aria-current={!inGuess && !inDuo && !inArchive && view !== 'stats' && view !== 'contact' ? 'page' : undefined} onClick={() => setView('home')}>{t('nav.home')}</button>
+          <button type="button" className="gamelink" aria-current={inGuess ? 'page' : undefined} aria-label={t('nav.guess')} onClick={toggleGame}>
+            <span>{t('nav.guess')}</span>
           </button>
-          <button type="button" className="shell-link" aria-current={inDuo ? 'page' : undefined} onClick={() => setView('duo')}>Duo Link</button>
-          {onBrowse && <button type="button" className="shell-link" aria-current={inArchive ? 'page' : undefined} onClick={onBrowse}>Roster archive</button>}
+          <button type="button" className="shell-link" aria-current={inDuo ? 'page' : undefined} onClick={() => setView('duo')}>{t('nav.duo')}</button>
+          {onBrowse && <button type="button" className="shell-link" aria-current={inArchive ? 'page' : undefined} onClick={onBrowse}>{t('nav.archive')}</button>}
         </nav>
 
-        <div className="topbar__end" role="group" aria-label="Sound, stats and more">
+        <div className="topbar__end" role="group" aria-label={t('nav.soundAndMore')}>
           <SoundButton />
-          <button type="button" className="hud-btn" aria-current={view === 'stats' ? 'page' : undefined} onClick={onStats} aria-label="Your stats" title="Your stats"><I.StatsIcon /></button>
-          <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label="Settings" title="Settings" data-sfx="none"><I.SettingsIcon /></button>
+          <button type="button" className="hud-btn" aria-current={view === 'stats' ? 'page' : undefined} onClick={onStats} aria-label={t('nav.stats')} title={t('nav.stats')}><I.StatsIcon /></button>
+          <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label={t('nav.settings')} title={t('nav.settings')} data-sfx="none"><I.SettingsIcon /></button>
           {/* Once chat votes are connected (or trying to), the button stays in view so the connection state does. Before that it's in the menu. */}
           {twitch !== 'off' && <TwitchButton onClick={onTwitch} />}
           <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} onDuo={() => setView('duo')} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView('home')} onContact={onContact} />
@@ -79,8 +81,9 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
 /** The master sound switch; on by default, and remembered. */
 function SoundButton() {
   const [on, toggle] = useSoundOn();
+  const t = useT();
   return (
-    <button type="button" className="hud-btn" data-sfx="none" aria-pressed={on} aria-label={on ? 'Turn sound off' : 'Turn sound on'} title={on ? 'Sound on' : 'Sound off'}
+    <button type="button" className="hud-btn" data-sfx="none" aria-pressed={on} aria-label={on ? t('nav.turnSoundOff') : t('nav.turnSoundOn')} title={on ? t('nav.soundOn') : t('nav.soundOff')}
       onClick={() => { toggle(); if (!on) play('click'); track('sound', { on: !on }); }}>
       <I.SoundIcon on={on} />
     </button>
@@ -91,13 +94,14 @@ interface MoreProps { onDuo: () => void; onBrowse?: () => void; onPlay: () => vo
 
 /** How to play, Twitch chat votes and a new run: the things you use now and then (and Guess the pro and Settings, on a phone, where the gear has no room). */
 function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwitch, onSettings, abandon, onNewRun, onBrowse, onPlay, onContact }: MoreProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [ask, setAsk] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
 
   // Starting over asks once, and forgets the question after three seconds.
-  useEffect(() => { if (!ask) return; const t = setTimeout(() => setAsk(false), 3000); return () => clearTimeout(t); }, [ask]);
+  useEffect(() => { if (!ask) return; const timer = setTimeout(() => setAsk(false), 3000); return () => clearTimeout(timer); }, [ask]);
   useEffect(() => {
     if (!open) { setAsk(false); return; }
     const away = (e: Event) => { if (!box.current?.contains(e.target as Node)) setOpen(false); };
@@ -109,25 +113,25 @@ function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwi
 
   // The menu closes and focus goes back to its button first, so a dialog opened from it hands focus back to something that is still on the page.
   const pick = (fn: () => void) => () => { setOpen(false); trigger.current?.focus(); fn(); };
-  const game = 'Guess the pro';
+  const game = t('nav.guess');
   return (
     <div className="menu" ref={box} onBlur={(e) => { if (open && !e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(false); }}>
-      <button ref={trigger} type="button" className="hud-btn" aria-haspopup="true" aria-expanded={open} aria-controls="topbar-menu" aria-label="More" title="More" onClick={() => setOpen((o) => !o)}>
+      <button ref={trigger} type="button" className="hud-btn" aria-haspopup="true" aria-expanded={open} aria-controls="topbar-menu" aria-label={t('nav.more')} title={t('nav.more')} onClick={() => setOpen((o) => !o)}>
         <I.MoreIcon />
       </button>
       {open && (
-        <div id="topbar-menu" className="menu__panel" role="group" aria-label="More">
-          <button type="button" className="menu__item menu__item--mode" onClick={pick(onPlay)}><I.CaseIcon /><span>Play</span></button>
-          {onBrowse && <button type="button" className="menu__item menu__item--mode" onClick={pick(onBrowse)}><I.RosterIcon /><span>Roster archive</span></button>}
+        <div id="topbar-menu" className="menu__panel" role="group" aria-label={t('nav.more')}>
+          <button type="button" className="menu__item menu__item--mode" onClick={pick(onPlay)}><I.CaseIcon /><span>{t('nav.play')}</span></button>
+          {onBrowse && <button type="button" className="menu__item menu__item--mode" onClick={pick(onBrowse)}><I.RosterIcon /><span>{t('nav.archive')}</span></button>}
           <button type="button" className="menu__item menu__item--game" onClick={pick(onGame)} aria-label={game}><I.CrosshairIcon /><span>{game}</span></button>
-          <button type="button" className="menu__item menu__item--mode" onClick={pick(onDuo)} aria-label="Duo Link"><I.RosterIcon /><span>Duo Link</span></button>
+          <button type="button" className="menu__item menu__item--mode" onClick={pick(onDuo)} aria-label={t('nav.duo')}><I.RosterIcon /><span>{t('nav.duo')}</span></button>
           {showTwitch && <TwitchButton variant="menu" onClick={pick(onTwitch)} />}
-          <button type="button" className="menu__item" onClick={pick(onHelp)} aria-label="How to play and data sources"><I.HelpIcon /><span>How to play</span></button>
-          <button type="button" className="menu__item" onClick={pick(onContact)} aria-label="Contact, advertising and bug reports"><I.MailIcon /><span>Contact</span></button>
-          <button type="button" className="menu__item menu__item--settings" onClick={pick(onSettings)} aria-label="Settings"><I.SettingsIcon /><span>Settings</span></button>
-          <button type="button" className={`menu__item ${ask ? 'is-ask' : ''}`} aria-label="Start a new run" title={ask && abandon ? "Today's daily will count as abandoned" : undefined}
+          <button type="button" className="menu__item" onClick={pick(onHelp)} aria-label={t('nav.howToAria')}><I.HelpIcon /><span>{t('nav.howTo')}</span></button>
+          <button type="button" className="menu__item" onClick={pick(onContact)} aria-label={t('nav.contactAria')}><I.MailIcon /><span>{t('nav.contact')}</span></button>
+          <button type="button" className="menu__item menu__item--settings" onClick={pick(onSettings)} aria-label={t('nav.settings')}><I.SettingsIcon /><span>{t('nav.settings')}</span></button>
+          <button type="button" className={`menu__item ${ask ? 'is-ask' : ''}`} aria-label={t('nav.newRun')} title={ask && abandon ? t('nav.dailyAbandoned') : undefined}
             onClick={() => { if (ask) { setAsk(false); setOpen(false); onNewRun(); } else setAsk(true); }}>
-            <I.RefreshIcon /><span>{ask ? (abandon ? 'Abandon daily?' : 'New run?') : 'New run'}</span>
+            <I.RefreshIcon /><span>{ask ? (abandon ? t('nav.abandonAsk') : t('nav.newRunAsk')) : t('nav.newRun')}</span>
           </button>
         </div>
       )}

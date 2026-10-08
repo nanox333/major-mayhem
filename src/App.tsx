@@ -22,6 +22,7 @@ import { useSoundOn } from './ui/sound';
 import { DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
 import { AdSlot } from './ui/adSlot';
 import { ContactPage } from './screens/Contact';
+import { useT, tNode } from './i18n';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
 import { DraftScene } from './ui/DraftScene';
@@ -55,6 +56,7 @@ function Game() {
     rawDispatch(a);
   }, []);
   const [help, setHelp] = useState<HelpTab | null>(null);
+  const t = useT();
   const [helpTopic, setHelpTopic] = useState<string | null>(null);
   const [twitch, setTwitch] = useState(false);
   const [settings, setSettings] = useState<false | 'shortcuts' | true>(false);
@@ -213,10 +215,10 @@ function Game() {
 
       {view === 'home' && <AdSlot />}
       <footer className={`foot ${__SITE__.support.url ? 'foot--four' : ''}`}>
-        <div className="foot__group"><DatabaseIcon size={24} /><p><strong>Data and credits</strong>Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep and 4 Oct 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.</p></div>
-        <div className="foot__group"><RosterIcon size={24} /><p><strong>Fan project</strong>Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated. <button type="button" className="link-btn" onClick={() => setHelp('privacy')}>Privacy and disclaimers</button>.</p></div>
-        <div className="foot__group"><GamepadIcon size={24} /><p><strong>Built by fans</strong>A love letter to Counter-Strike and its Major history.</p></div>
-        {__SITE__.support.url && <div className="foot__group"><StarIcon size={24} /><p><strong>{__SITE__.support.label}</strong>Optional. Helps cover hosting and future features, and gets you nothing in-game. <a href={__SITE__.support.url} rel="noopener" target="_blank">Open the support page</a></p></div>}
+        <div className="foot__group"><DatabaseIcon size={24} /><p><strong>{t('footer.dataTitle')}</strong>{tNode('footer.dataBody', { sources: <button type="button" className="link-btn" onClick={() => setHelp('sources')}>{t('footer.sourcesLink')}</button> })}</p></div>
+        <div className="foot__group"><RosterIcon size={24} /><p><strong>{t('footer.fanTitle')}</strong>{tNode('footer.fanBody', { privacy: <button type="button" className="link-btn" onClick={() => setHelp('privacy')}>{t('footer.privacyLink')}</button> })}</p></div>
+        <div className="foot__group"><GamepadIcon size={24} /><p><strong>{t('footer.builtTitle')}</strong>{t('footer.builtBody')}</p></div>
+        {__SITE__.support.url && <div className="foot__group"><StarIcon size={24} /><p><strong>{__SITE__.support.label}</strong>{tNode('footer.supportBody', { open: <a href={__SITE__.support.url} rel="noopener" target="_blank">{t('footer.supportOpen')}</a> })}</p></div>}
       </footer>
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
