@@ -117,6 +117,11 @@ export function FinalScreen({ mine, s, stats, dispatch }: { mine: G.Lineup[]; s:
             {stats.streak > 1 ? ` · ${stats.streak} titles in a row` : ''}{stats.bestStreak > 1 ? ` · best streak ${stats.bestStreak}` : ''}
           </p>
         )}
+        {__SITE__.support.url && (
+          <p className="result-next__record">
+            Free and fan-made. If you're enjoying it, <a href={__SITE__.support.url} rel="noopener" target="_blank">{__SITE__.support.label.toLowerCase()}</a>.
+          </p>
+        )}
       </div>
     </div>
   );
