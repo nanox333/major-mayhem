@@ -92,6 +92,8 @@ a.ad-slot__cta:hover, a.ad-slot__cta:focus-visible { text-decoration: underline;
 
 /* The footer is narrower than the page and centred, so it reads as separate from the content above it. */
 .page .foot { width: min(100%, 1060px); margin-inline: auto; }
+/* The support group makes four; on wide screens they sit in one row instead of wrapping (phones stack, as before). */
+@media (min-width: 801px) { .page .foot.foot--four { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 /* ---------- the header: a flat broadcast bar. Condensed wordmark, text tabs with a slanted orange active tab, plain icon buttons, one hairline. ---------- */
 .topbar { border-bottom: 1px solid var(--line-2); background: #0e0f0e; box-shadow: none; }
