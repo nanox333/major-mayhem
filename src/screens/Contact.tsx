@@ -4,7 +4,7 @@ import React from 'react';
  * Where to go with bugs, advertising and support. Each enquiry is a mailto: link to an address from site.config.json, so
  * the page stores and sends nothing itself.
  */
-export function ContactPage() {
+export function ContactPage({ onPrivacy }: { onPrivacy: () => void }) {
   const { contact, support } = __SITE__;
   const mail = (to: string, subject: string, body = '') => `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   return (
@@ -39,6 +39,14 @@ export function ContactPage() {
             <a className="ct-btn" href={mail(contact.bugsEmail, 'Bug report', 'What were you doing, and which browser were you using?')}>Email {contact.bugsEmail}</a>
           </div>
         )}
+      </section>
+
+      <section className="ct-card" aria-labelledby="ct-privacy">
+        <h4 id="ct-privacy">Privacy and disclaimers</h4>
+        <p>What the game stores in your browser, what it sends, and what it does not do.</p>
+        <div className="ct-actions">
+          <button type="button" className="ct-btn" onClick={onPrivacy}>Read the privacy notes</button>
+        </div>
       </section>
 
       {support.url && (

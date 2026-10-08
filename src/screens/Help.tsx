@@ -3,8 +3,15 @@ import { ROSTERS, CREDITS } from '../data/rosters';
 import { Modal } from '../ui/Modal';
 import { HowSteps, resetTips } from '../ui/tips';
 import { SHORTCUTS } from '../ui/shortcuts';
+import { PrivacyNotes } from './PrivacyNotes';
 
-export type HelpTab = 'play' | 'sources';
+export type HelpTab = 'play' | 'sources' | 'privacy';
+
+const TITLES: Record<HelpTab, [string, string]> = {
+  play: ['How to play', 'Draft five players, a coach and a bench from real Major rosters, then take the team through the Major.'],
+  sources: ['Sources and credits', 'Where the rosters, photos, logos and sounds come from.'],
+  privacy: ['Privacy and disclaimers', 'What the game stores, what it sends, and what it does not do.'],
+};
 
 /**
  * Two screens in one dialog (#21): how to play (three steps, then the details a player can open), and, kept apart from the
@@ -21,19 +28,20 @@ export function HelpModal({ onClose, tab: first = 'play', topic }: { onClose: ()
     d.querySelector('summary')?.focus();
   }, [topic]);
   return (
-    <Modal label={tab === 'play' ? 'How to play' : 'Sources and credits'} onClose={onClose} wide>
+    <Modal label={TITLES[tab][0]} onClose={onClose} wide>
      <div className="hp">
       <header className="hp__head">
         <span className="hp__kick">Guide</span>
-        <h3 className="hp__title">{tab === 'play' ? 'How to play' : 'Sources and credits'}</h3>
-        <p>{tab === 'play' ? 'Draft five players, a coach and a bench from real Major rosters, then take the team through the Major.' : 'Where the rosters, photos, logos and sounds come from.'}</p>
+        <h3 className="hp__title">{TITLES[tab][0]}</h3>
+        <p>{TITLES[tab][1]}</p>
       </header>
       <div className="seg help__tabs" role="tablist" aria-label="Help">
         <button role="tab" id="help-tab-play" aria-selected={tab === 'play'} aria-controls="help-panel" className={tab === 'play' ? 'is-on' : ''} onClick={() => setTab('play')}>How to play</button>
         <button role="tab" id="help-tab-sources" aria-selected={tab === 'sources'} aria-controls="help-panel" className={tab === 'sources' ? 'is-on' : ''} onClick={() => setTab('sources')}>Sources and credits</button>
+        <button role="tab" id="help-tab-privacy" aria-selected={tab === 'privacy'} aria-controls="help-panel" className={tab === 'privacy' ? 'is-on' : ''} onClick={() => setTab('privacy')}>Privacy</button>
       </div>
       <div role="tabpanel" id="help-panel" aria-labelledby={`help-tab-${tab}`}>
-        {tab === 'play' ? <HowToPlay /> : <Sources />}
+        {tab === 'play' ? <HowToPlay /> : tab === 'sources' ? <Sources /> : <PrivacyNotes />}
       </div>
      </div>
     </Modal>

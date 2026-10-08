@@ -4,5 +4,5 @@
 .ct-card h4::before { content: ''; flex: none; width: 8px; height: 8px; background: var(--accent); transform: skewX(-20deg); }
 .ct-card p { margin: 0 0 10px; max-width: 62ch; color: var(--muted); line-height: 1.5; }
 .ct-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
-.ct-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--accent); color: var(--strong); font: 700 .8rem/1 var(--f-read); letter-spacing: .08em; text-transform: uppercase; text-decoration: none; }
+.ct-btn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--accent); background: transparent; cursor: pointer; color: var(--strong); font: 700 .8rem/1 var(--f-read); letter-spacing: .08em; text-transform: uppercase; text-decoration: none; }
 .ct-btn:hover, .ct-btn:focus-visible { background: var(--accent); color: #0a0f1a; }

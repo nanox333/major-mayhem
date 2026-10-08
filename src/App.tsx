@@ -178,7 +178,7 @@ function Game() {
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view === 'duo' && <DuoScreen next={guessNext} />}
       {view === 'stats' && <StatsPage stats={stats} next={guessNext} />}
-      {view === 'contact' && <ContactPage />}
+      {view === 'contact' && <ContactPage onPrivacy={() => setHelp('privacy')} />}
       {view === 'setup' && <SetupScreen s={s} dispatch={dispatch} onStart={beginDraft} onBack={() => setView('home')} />}
       {view === 'archive' && <RosterBrowser page hard={!!s.opts?.hard && s.offerKey > 0 && s.phase !== 'final'} onClose={() => setView('home')} />}
       {view !== 'home' && view !== 'guess' && view !== 'duo' && view !== 'archive' && view !== 'stats' && view !== 'setup' && view !== 'contact' && <main className="console">
@@ -214,7 +214,7 @@ function Game() {
       {view === 'home' && <AdSlot />}
       <footer className="foot">
         <div className="foot__group"><DatabaseIcon size={24} /><p><strong>Data and credits</strong>Rosters and placements from Wikipedia's Major final standings (retrieved 28 Sep and 4 Oct 2026); every roster links to Liquipedia. Photos and logos from bo3.gg and Wikimedia Commons: see <button type="button" className="link-btn" onClick={() => setHelp('sources')}>sources and credits</button>. Logos are trademarks of their teams.</p></div>
-        <div className="foot__group"><RosterIcon size={24} /><p><strong>Fan project</strong>Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated.</p></div>
+        <div className="foot__group"><RosterIcon size={24} /><p><strong>Fan project</strong>Not affiliated with Valve or any team. Player strength is hidden and match ratings are simulated. <button type="button" className="link-btn" onClick={() => setHelp('privacy')}>Privacy and disclaimers</button>.</p></div>
         <div className="foot__group"><GamepadIcon size={24} /><p><strong>Built by fans</strong>A love letter to Counter-Strike and its Major history.</p></div>
         {__SITE__.support.url && <div className="foot__group"><StarIcon size={24} /><p><strong>{__SITE__.support.label}</strong>Optional. Helps cover hosting and future features, and gets you nothing in-game. <a href={__SITE__.support.url} rel="noopener" target="_blank">Open the support page</a></p></div>}
       </footer>
