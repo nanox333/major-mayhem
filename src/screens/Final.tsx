@@ -13,6 +13,7 @@ import { play } from '../ui/sound';
 import { AdSlot } from '../ui/adSlot';
 import { cardFileName, drawResultCard, siteHost } from '../ui/card';
 import { cleanName, duelFrom, duelLink, duelTerms } from '../game/duel';
+import { NAME_KEY } from '../game/challenge';
 import { reportError, track } from '../analytics';
 import { RosterList, Staff } from './Lobby';
 import { achievementById } from '../game/achievements';
@@ -200,7 +201,6 @@ export function ShareBar({ text, image, props = {}, onImageReady }: {
   );
 }
 
-const NAME_KEY = 'mm-name';
 /** Sends this team as a draft duel (#172): an equal-conditions one when the run kept its cases, otherwise a challenge to beat the team. */
 function ChallengeBar({ s }: { s: Run }) {
   const [name, setName] = useState(() => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } });

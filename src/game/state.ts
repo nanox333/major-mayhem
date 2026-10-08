@@ -263,7 +263,7 @@ export type Action =
   | { type: 'spin' } | { type: 'reroll' } | { type: 'team'; id: string } | { type: 'back' }
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
   | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode; opts?: Opts } | { type: 'recorded' }
-  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel } | { type: 'adopt'; run: Run }
+  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel } | { type: 'challenge'; seed: string } | { type: 'adopt'; run: Run }
   | { type: 'coach'; rosterId: string } | { type: 'bench'; player: Player } | { type: 'sub'; out: string | null } | { type: 'call'; call: G.Call };
 
 /** A daily draws only from rosters available on its date, so later data additions don't change it. */
@@ -434,6 +434,8 @@ function reduce(s: Run, a: Action): Run {
     case 'reset': return fresh(a.mode, today(), a.opts ?? ((a.mode ?? 'free') === 'free' ? s.opts : undefined));
     case 'opts': return s.offerKey === 0 && s.mode === 'free' && poolCheck(a.opts).ok ? fresh('free', today(), a.opts) : s;
     case 'duel': return freshDuel(a.duel);
+    // A challenge (#challenge): a free draft from the challenger's seed, to be sent back as a duel once it is finished.
+    case 'challenge': return { ...fresh('free'), seed: a.seed };
     case 'recorded': return { ...s, recorded: true };
     // Another tab moved this run on: take its version rather than overwrite it with a stale one (#163).
     case 'adopt': return a.run;

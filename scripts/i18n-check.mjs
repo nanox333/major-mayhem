@@ -15,6 +15,7 @@ const MIGRATED = new Set([
   'ui/adSlot.tsx',
   'screens/Contact.tsx',
   'screens/PrivacyNotes.tsx',
+  'screens/Challenge.tsx',
 ]);
 // Not part of the player-facing text: the catalogue itself, tests, and the debug menu (excluded in #275).
 const SKIP = (rel) => /\.test\.tsx?$/.test(rel) || rel.startsWith('i18n/') || rel.startsWith('ui/debug/') || rel === 'ui/DebugMenu.tsx' || rel.startsWith('assets/');

@@ -37,9 +37,11 @@ interface TopBarProps {
   onBrowse?: () => void;
   /** Opens the Contact page. */
   onContact: () => void;
+  /** Opens the link to send a friend before drafting (a challenge). */
+  onChallenge: () => void;
 }
 
-export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse, onContact }: TopBarProps) {
+export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onSettings, abandon, onNewRun, onBrowse, onContact, onChallenge }: TopBarProps) {
   const t = useT();
   const twitch = useTwitchStatus();
   const inGuess = view === 'guess';
@@ -71,7 +73,7 @@ export function TopBar({ view, setView, backView, onHelp, onStats, onTwitch, onS
           <button type="button" className="hud-btn hud-btn--gear" onClick={onSettings} aria-label={t('nav.settings')} title={t('nav.settings')} data-sfx="none"><I.SettingsIcon /></button>
           {/* Once chat votes are connected (or trying to), the button stays in view so the connection state does. Before that it's in the menu. */}
           {twitch !== 'off' && <TwitchButton onClick={onTwitch} />}
-          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} onDuo={() => setView('duo')} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView('home')} onContact={onContact} />
+          <MoreMenu inGuess={inGuess} backLabel={backLabel} onGame={toggleGame} onDuo={() => setView('duo')} showTwitch={twitch === 'off'} onHelp={onHelp} onTwitch={onTwitch} onSettings={onSettings} abandon={abandon} onNewRun={onNewRun} onBrowse={onBrowse} onPlay={() => setView('home')} onContact={onContact} onChallenge={onChallenge} />
         </div>
       </div>
     </header>
@@ -90,10 +92,10 @@ function SoundButton() {
   );
 }
 
-interface MoreProps { onDuo: () => void; onBrowse?: () => void; onPlay: () => void; onContact: () => void; inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onHelp: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
+interface MoreProps { onDuo: () => void; onBrowse?: () => void; onPlay: () => void; onContact: () => void; onChallenge: () => void; inGuess: boolean; backLabel: string; onGame: () => void; showTwitch: boolean; onHelp: () => void; onTwitch: () => void; onSettings: () => void; abandon: boolean; onNewRun: () => void }
 
 /** How to play, Twitch chat votes and a new run: the things you use now and then (and Guess the pro and Settings, on a phone, where the gear has no room). */
-function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwitch, onSettings, abandon, onNewRun, onBrowse, onPlay, onContact }: MoreProps) {
+function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwitch, onSettings, abandon, onNewRun, onBrowse, onPlay, onContact, onChallenge }: MoreProps) {
   const t = useT();
   const [open, setOpen] = useState(false);
   const [ask, setAsk] = useState(false);
@@ -127,6 +129,7 @@ function MoreMenu({ inGuess, backLabel, onGame, onDuo, showTwitch, onHelp, onTwi
           <button type="button" className="menu__item menu__item--mode" onClick={pick(onDuo)} aria-label={t('nav.duo')}><I.RosterIcon /><span>{t('nav.duo')}</span></button>
           {showTwitch && <TwitchButton variant="menu" onClick={pick(onTwitch)} />}
           <button type="button" className="menu__item" onClick={pick(onHelp)} aria-label={t('nav.howToAria')}><I.HelpIcon /><span>{t('nav.howTo')}</span></button>
+          <button type="button" className="menu__item" onClick={pick(onChallenge)} aria-label={t('nav.challengeAria')}><I.ShareIcon /><span>{t('nav.challenge')}</span></button>
           <button type="button" className="menu__item" onClick={pick(onContact)} aria-label={t('nav.contactAria')}><I.MailIcon /><span>{t('nav.contact')}</span></button>
           <button type="button" className="menu__item menu__item--settings" onClick={pick(onSettings)} aria-label={t('nav.settings')}><I.SettingsIcon /><span>{t('nav.settings')}</span></button>
           <button type="button" className={`menu__item ${ask ? 'is-ask' : ''}`} aria-label={t('nav.newRun')} title={ask && abandon ? t('nav.dailyAbandoned') : undefined}

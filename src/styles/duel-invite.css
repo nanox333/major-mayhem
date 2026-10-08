@@ -29,3 +29,9 @@
   .dv__head h3 { font-size: 1.7rem; }
   .dv__actions .mbtn { width: 100%; min-width: 0; }
 }
+
+/* The challenge dialog (src/screens/Challenge.tsx): a name field and the link to copy. */
+.dv__field { display: grid; gap: 6px; }
+.dv__field > span { font: 700 .7rem/1 var(--f-read); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.dv__input { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 0; background: rgba(255, 255, 255, .04); color: var(--text); font: inherit; }
+.dv__link { margin: 0; padding: 12px 14px; background: rgba(255, 255, 255, .04); box-shadow: inset 3px 0 0 var(--accent); color: var(--text-2); font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; user-select: all; }

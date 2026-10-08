@@ -22,6 +22,8 @@ import { useSoundOn } from './ui/sound';
 import { ArrowRightIcon, DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
 import { AdSlot } from './ui/adSlot';
 import { ContactPage } from './screens/Contact';
+import { ChallengeDialog, ChallengeInvite } from './screens/Challenge';
+import { Challenge, challengeCode, decodeChallenge } from './game/challenge';
 import { useT, tNode } from './i18n';
 import { HomeScreen } from './screens/Home';
 import { TeamStrip } from './ui/TeamStrip';
@@ -71,6 +73,14 @@ function Game() {
     try { history.replaceState(null, '', location.pathname + location.search); } catch { /* not allowed: fine */ }
     return { duel: decodeDuel(code) };
   });
+  // A challenge before a draft (#challenge=…): a friend's seed to draft from, opened the same way.
+  const [challengeIn, setChallengeIn] = useState<{ challenge: Challenge | null } | null>(() => {
+    const code = typeof location !== 'undefined' ? challengeCode(location.hash) : null;
+    if (!code) return null;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch { /* not allowed: fine */ }
+    return { challenge: decodeChallenge(code) };
+  });
+  const [challengeOpen, setChallengeOpen] = useState(false);
   useEffect(() => save(s), [s]);
   // Another tab changed what is saved (#163): take its run and its record rather than overwrite them with what this tab last saw.
   useEffect(() => {
@@ -172,7 +182,7 @@ function Game() {
   return (
     <>
     <TopBar view={view} setView={setView} backView={backView} onHelp={() => setHelp('play')} onStats={() => setView('stats')} onTwitch={() => setTwitch(true)} onSettings={() => setSettings(true)}
-      onBrowse={() => setView('archive')} onContact={() => setView('contact')} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />
+      onBrowse={() => setView('archive')} onContact={() => setView('contact')} onChallenge={() => setChallengeOpen(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />
     <UnsavedBar run={s} />
     {scene && <DraftScene />}
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
@@ -223,6 +233,9 @@ function Game() {
 
       {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
         onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); setView('draft'); }} />}
+      {challengeIn && <ChallengeInvite challenge={challengeIn.challenge} abandon={dailyStarted(s)} onClose={() => setChallengeIn(null)}
+        onAccept={(c) => { setChallengeIn(null); setReelFor(null); dispatch({ type: 'challenge', seed: c.seed }); setView('draft'); }} />}
+      {challengeOpen && <ChallengeDialog onClose={() => setChallengeOpen(false)} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
       {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />}
       {help && <HelpModal tab={help} topic={helpTopic ?? undefined} onClose={() => { setHelp(null); setHelpTopic(null); }} />}
