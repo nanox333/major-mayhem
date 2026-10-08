@@ -12,7 +12,8 @@ export interface SiteConfig {
   /** Optional "support the project" link (Ko-fi, GitHub Sponsors). Empty url hides it. */
   support: { url: string; label: string };
   /** The ad slot is off unless enabled. With no sponsor creative it shows a "your ad here" placeholder. */
-  ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string };
+  /** contactUrl is where "Advertise here" goes on the placeholder (a mailto: or contact page). Empty shows plain text. */
+  ads: { enabled: boolean; imageUrl: string; linkUrl: string; alt: string; contactUrl: string };
 }
 
 export function loadSite(env = process.env): SiteConfig {

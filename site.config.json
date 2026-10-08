@@ -20,6 +20,7 @@
     "enabled": false,
     "imageUrl": "",
     "linkUrl": "",
-    "alt": ""
+    "alt": "",
+    "contactUrl": ""
   }
 }

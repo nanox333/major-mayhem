@@ -17,10 +17,13 @@ export function AdSlot() {
   const mode = adMode(ads);
   if (mode === 'off') return null;
   if (mode === 'placeholder') {
+    // The call to action names the contact route, so a visitor knows a space can be bought before they ask.
+    const cta = ads.contactUrl ? <a className="ad-slot__cta" href={ads.contactUrl}>Advertise here →</a> : <span className="ad-slot__cta">Advertise here</span>;
     return (
       <aside className="ad-slot ad-slot--placeholder" aria-label="Advertising space">
-        <small>Ad</small>
-        <span>Your ad here</span>
+        <span className="ad-slot__tag" aria-hidden="true">Ad</span>
+        <span className="ad-slot__text"><strong>Your ad here</strong><span>Reach Counter-Strike fans who come back every day.</span></span>
+        {cta}
       </aside>
     );
   }
