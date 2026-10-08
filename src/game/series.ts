@@ -166,7 +166,8 @@ function setupMap(bestOf: 1 | 3, pool: string[], i: number, mine: Lineup[], oppL
   const map = pool[i];
   // The first two maps of a Bo3 are picks: whoever picked a map, the other team chooses its side. Usually that is you for the first one, but not after a coin flip.
   const picker = veto.steps.filter((x) => x.action === 'pick')[i]?.team ?? (i === 0 ? 'us' : 'them');
-  const how: Knife['how'] = bestOf === 3 && i < 2 ? (picker === 'us' ? 'our-pick' : 'their-pick') : 'knife';
+  // Random maps were picked by nobody, so a knife round decides every side.
+  const how: Knife['how'] = bestOf === 3 && i < 2 && !veto.random ? (picker === 'us' ? 'our-pick' : 'their-pick') : 'knife';
   const won = how === 'their-pick' ? true : how === 'our-pick' ? false : random() < 0.5;
   return { map, how, won, best: bestSide(map, mine, oppL), oppPick: bestSide(map, oppL, mine) };
 }
@@ -203,19 +204,17 @@ export function applyVeto(m: Match, mine: Lineup[], map: string): Match {
 }
 
 /**
- * The whole veto, chosen by one rule for both teams (#172): each bans the map that suits the other most and picks the one that suits itself most. A coin
- * flip, seeded like the rest of the match, says who goes first, so neither side has the first ban.
+ * An equal-conditions showmatch (#172) picks its maps at random, the same way for both teams: a Bo1 plays one map, a Bo3 plays three, all different.
+ * Nobody bans or picks, so the veto has no turns. Sides are chosen by one rule for both teams (autoSide), and a knife round on each map decides who takes
+ * the better side.
  */
-export function autoVeto(m: Match, mine: Lineup[]): Match {
+export function randomMaps(m: Match, mine: Lineup[]): Match {
   const oppL = naturalLineup(rosterById.get(m.opponentId)!);
-  const swap = random() < 0.5;
-  let v: Veto = { ...m.veto, auto: true, order: swap ? m.veto.order.map((o) => ({ ...o, team: (o.team === 'us' ? 'them' : 'us') as Team })) : m.veto.order };
-  for (let t = vetoTurn(v); t; t = vetoTurn(v)) {
-    const map = vetoChoice(v, t.team, mine, oppL);
-    v = { ...v, steps: [...v.steps, { team: t.team, action: t.action, map }], left: v.left.filter((x) => x !== map) };
-  }
-  const pool = [...v.steps.filter((x) => x.action === 'pick').map((x) => x.map), v.left[0]];
-  return { ...m, veto: v, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL, v) };
+  const left = [...MAPS];
+  const pool: string[] = [];
+  for (let n = m.bestOf === 1 ? 1 : 3; pool.length < n;) pool.push(left.splice(Math.floor(random() * left.length), 1)[0]);
+  const veto: Veto = { order: [], steps: [], left: pool, auto: true, random: true };
+  return { ...m, veto, pool, next: setupMap(m.bestOf, pool, 0, mine, oppL, veto) };
 }
 
 /** Plays the next map with your team starting on `start`, then sets up the following side choice if the series goes on. */

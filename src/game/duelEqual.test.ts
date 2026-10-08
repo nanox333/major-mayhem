@@ -126,16 +126,29 @@ describe('the showmatch is played on equal terms (#172)', () => {
     expect(G.canCall(live.current!, { kind: 'force', round: 1 })).toBe(false);
   });
 
-  it('runs the veto for both teams by one rule, so there is no map to choose', () => {
+  it('draws three different maps at random, with no ban or pick for either team', () => {
     const live = reducer(reducer(ready('free-eq6'), { type: 'play' }), { type: 'start' });
     const m = live.current!;
     expect(m.veto.auto).toBe(true);
+    expect(m.veto.random).toBe(true);
     expect(G.vetoTurn(m.veto)).toBeNull();
-    expect(m.veto.steps).toHaveLength(6);
+    expect(m.veto.steps).toHaveLength(0);
     expect(m.pool).toHaveLength(3);
     expect(new Set(m.pool).size).toBe(3);
+    expect(m.veto.left).toEqual(m.pool);
     expect(m.next).not.toBeNull();
-    expect(reducer(live, { type: 'veto', map: m.veto.left[0] ?? 'Mirage' })).toEqual(live);
+    expect(reducer(live, { type: 'veto', map: m.pool[0] })).toEqual(live);
+  });
+
+  it('draws the same maps every time the same match is set up, so a reload changes nothing', () => {
+    const pool = (seed: string) => reducer(reducer(ready(seed), { type: 'play' }), { type: 'start' }).current!.pool;
+    expect(pool('free-eq30')).toEqual(pool('free-eq30'));
+  });
+
+  it('draws different maps for different matches', () => {
+    const pools = new Set<string>();
+    for (let i = 0; i < 12; i++) pools.add(reducer(reducer(ready(`free-eq${40 + i}`), { type: 'play' }), { type: 'start' }).current!.pool.join('|'));
+    expect(pools.size).toBeGreaterThan(1);
   });
 
   it('takes each team to its stronger side and ignores a side that was asked for', () => {
@@ -147,13 +160,17 @@ describe('the showmatch is played on equal terms (#172)', () => {
     expect(played.current!.maps[0].start).toBe(want);
   });
 
-  it('flips a coin for who vetoes first, so neither side always starts', () => {
-    const firsts = new Set<string>();
-    for (let i = 0; i < 12; i++) {
-      const live = reducer(reducer(ready(`free-eq${10 + i}`), { type: 'play' }), { type: 'start' });
-      firsts.add(live.current!.veto.order[0].team);
-    }
-    expect([...firsts].sort()).toEqual(['them', 'us']);
+  it('gives a Bo3 showmatch its maps in play order, each with a knife round for the side', () => {
+    const live = reducer(reducer(ready('free-eq11'), { type: 'play' }), { type: 'start' });
+    const m = live.current!;
+    expect(m.bestOf).toBe(3);
+    expect(m.next!.map).toBe(m.pool[0]);
+    expect(m.next!.how).toBe('knife');
+  });
+
+  it('drops the coin flip for who vetoes first, since nobody vetoes', () => {
+    const live = reducer(reducer(ready('free-eq12'), { type: 'play' }), { type: 'start' });
+    expect(live.current!.veto.order).toEqual([]);
   });
 
   it('plays a whole showmatch through to a result', () => {

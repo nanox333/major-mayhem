@@ -394,7 +394,7 @@ function reduce(s: Run, a: Action): Run {
       const m = G.seeded(`${s.seed}:match:${s.t.matches.length}`, () => {
         const lineup = lineupFor(s, subOut, form);
         const start = G.startMatch(stage, lineup, oppId, G.bestOfFor(stage, s.t));
-        return equalDuel(s) ? G.autoVeto(start, lineup) : start;
+        return equalDuel(s) ? G.randomMaps(start, lineup) : start;
       });
       return { ...s, phase: 'live', current: { ...m, ...(form ? { playerForm: form, subOut: subOut ?? null } : {}) } };
     }

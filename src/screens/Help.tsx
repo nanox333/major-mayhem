@@ -214,7 +214,7 @@ function HowToPlay() {
             <p>Challenge a friend from your results screen. The link carries your team and every case you saw.</p>
             <dl className="hpl">
               <dt>Same cases</dt><dd>Your friend is dealt the cases you were, in the same order, and can spin only where you did.</dd>
-              <dt>Equal terms</dt><dd>Then the two teams play a best of three with no match-day form, substitutions or tactical calls for either side. Maps and sides are chosen by the same rule for both, and a coin flip decides who vetoes first.</dd>
+              <dt>Equal terms</dt><dd>Then the two teams play a best of three with no match-day form, substitutions or tactical calls for either side. Nobody bans or picks: the maps are drawn at random, and a knife round on each map decides the sides.</dd>
               <dt>Older links</dt><dd>A link made before this existed is a challenge to beat a saved team instead, and says so.</dd>
             </dl>
           </div>

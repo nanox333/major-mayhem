@@ -1,7 +1,7 @@
 import React from 'react';
 import { ROLE_LABEL } from '../data/rosters';
 import * as G from '../game/logic';
-import { Action, Run, benchLineup } from '../game/state';
+import { Action, Run, benchLineup, equalDuel } from '../game/state';
 import { challengerLineup, duelTerms } from '../game/duel';
 import { Avatar, RatingMark, RoleIcon, Sr, TeamBadge } from '../ui/art';
 import { fmt, ratingClass } from '../ui/util';
@@ -205,7 +205,7 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
           <ChemistrySummary mine={mine} links={power.synergies} />
           <SynergyList list={power.synergies} detail={(x) => linkDetail(x, mine)} />
         </section>
-        <MapComfort mine={mine} />
+        <MapComfort mine={mine} random={equalDuel(s)} />
       </div>
       {s.duel && <Challenger s={s} />}
       <ArrivalFocus selector=".action-bar .cta" />
@@ -221,11 +221,11 @@ export function ReadyScreen({ mine, s, dispatch }: { mine: G.Lineup[]; s: Run; d
  * Which maps your five are at home on, before the first veto (#49), so the veto isn't a surprise. The same comfort the veto panel compares with the
  * opponent's, shown as pips and a word; the opponent's comfort still decides who has the edge, so this is half of the picture.
  */
-function MapComfort({ mine }: { mine: G.Lineup[] }) {
+function MapComfort({ mine, random }: { mine: G.Lineup[]; /** A duel's maps are drawn at random, so comfort decides nothing. */ random?: boolean }) {
   const maps = mapComfort(mine);
   return (
     <section className="comfort" aria-labelledby="comfort-h">
-      <h4 id="comfort-h">Your maps <small>Where your five are most at home. Your opponent's comfort decides the veto too.</small></h4>
+      <h4 id="comfort-h">Your maps <small>{random ? 'Where your five are most at home. In a duel the maps are drawn at random, so this shows how well you play each map, not which maps you get.' : "Where your five are most at home. Your opponent's comfort decides the veto too."}</small></h4>
       <ul>
         {maps.map((x) => (
           <li key={x.map} className={`comfort--${x.word}`}>

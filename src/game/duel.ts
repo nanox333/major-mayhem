@@ -144,7 +144,7 @@ export function duelTerms(d: Pick<Duel, 'v' | 'name'>): { headline: string; line
     lines: [
       `You are dealt the cases ${d.name} saw, in the same order. You can spin only where they spun, and no more often than they did.`,
       'The showmatch is a best of three on equal terms: no match-day form, no substitutions and no tactical calls for either team. Your bench player and theirs sit it out.',
-      'Both teams ban, pick and take sides by the same rule, and a coin flip decides who vetoes first.',
+      'Nobody bans or picks: the maps are drawn at random, the same for both teams, and a knife round on each map decides the sides.',
     ],
   } : {
     headline: 'A challenge to beat their saved team',

@@ -128,7 +128,7 @@ export function PreviewScreen({ mine: starters, s, pending, t, dispatch }: { min
             </div>
           </div>
           <SubPanel s={s} pending={pending} dispatch={dispatch} />
-          {equalDuel(s) && <p className="muted small duel-rules">Equal terms: no match-day form, substitutions or tactical calls for either team. Maps and sides are chosen by the same rule, and the first ban goes to a coin flip.</p>}
+          {equalDuel(s) && <p className="muted small duel-rules">Equal terms: no match-day form, substitutions or tactical calls for either team. Maps are picked at random, and a knife round on each map decides the sides.</p>}
           <div className="action-bar">
             <div className="accept-bar"><span /></div>
             <button className="cta cta--go" data-sfx="accept" onClick={() => dispatch({ type: 'start' })}>Accept</button>
@@ -387,7 +387,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
               const name = g?.map ?? (i === m.maps.length && m.next ? m.next.map : m.pool[i]);
               return (
                 <span key={i} className={`maps__pill ${i === mapIdx ? 'is-now' : ''} ${played ? (g.won ? 'w' : 'l') : ''}`}>
-                  {played && <>{g.won ? '✓' : '✗'} </>}{i === 2 && !g ? `Decider · ${name}` : name}{played ? ` ${g.score[0]}–${g.score[1]}` : ''}{played && <Sr> {g.won ? 'won' : 'lost'}</Sr>}
+                  {played && <>{g.won ? '✓' : '✗'} </>}{i === 2 && !g && !m.veto.random ? `Decider · ${name}` : name}{played ? ` ${g.score[0]}–${g.score[1]}` : ''}{played && <Sr> {g.won ? 'won' : 'lost'}</Sr>}
                 </span>
               );
             })}
@@ -398,7 +398,7 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
       {vetoing ? (
         <VetoPanel m={{ ...m, veto: replay.veto }} opp={opp} mine={mine} dispatch={dispatch} latest={replay.latest} />
       ) : !game ? (
-        m.next && <><SeriesPreview m={m} opp={opp} /><KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} auto={!!m.veto.auto} dispatch={dispatch} /></>
+        m.next && <><SeriesPreview m={m} opp={opp} /><KnifePanel k={m.next} opp={opp} mine={mine} mapNo={mapIdx + 1} bestOf={m.bestOf} voteKey={`side-${m.form}-${m.maps.length}`} auto={!!m.veto.auto} random={!!m.veto.random} dispatch={dispatch} /></>
       ) : !mapDone ? (
         <div className="match-workspace">
           <aside className="match-five" aria-label="Your fielded five"><h3>Your fielded five · {side}</h3>{mine.map((x) => <div key={x.player.id}><Avatar player={x.player} roster={x.roster} /><span><b>{x.player.nick}</b><small>{ROLE_SHORT[x.slot]} · {x.roster.org} {x.roster.year}</small></span><FormTag v={m.playerForm?.[x.player.id] ?? 0} /></div>)}</aside>
@@ -493,14 +493,19 @@ export function LiveScreen({ mine, m, t, coach, dispatch, board }: { mine: G.Lin
 /** Before each map: the knife round. Win it and you pick the starting side; lose it and the opponent picks. */
 function SeriesPreview({ m, opp }: { m: G.Match; opp: Roster }) {
   if (m.bestOf === 1) return null;
+  // Random maps (a duel) were picked by nobody, so they are listed in the order they are played, and the knife round decides every side.
+  if (m.veto.random) return <><p className="knife__kicker">Randomly picked these maps</p><ol className="veto-series" aria-label="Series maps">{m.pool.map((map, i) => <li key={map} className={map === m.next?.map ? 'is-now' : ''}>
+    <MapShot map={map} /><b>Map {i + 1}: {map}</b><span>Picked at random · the knife round decides the side</span>
+  </li>)}</ol></>;
   return <ol className="veto-series" aria-label="Series maps">{G.vetoMaps(m.veto).map((x, i) => <li key={x.map} className={x.map === m.next?.map ? 'is-now' : ''}>
     <MapShot map={x.map} /><b>{x.by === 'decider' ? 'Decider' : `Map ${i + 1}`}: {x.map}</b>
     <span>{x.by === 'decider' ? 'Knife round decides sides' : `${x.by === 'us' ? 'You' : opp.tag} picked · ${m.veto.auto ? 'the other team takes its stronger side' : `${x.by === 'us' ? opp.tag : 'You'} choose sides`}`}</span>
   </li>)}</ol>;
 }
 
-function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, dispatch }: {
-  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; voteKey: string; /** An equal-conditions showmatch: both teams take their stronger side, so there is nothing to choose. */ auto: boolean; dispatch: React.Dispatch<Action>;
+function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, random, dispatch }: {
+  k: G.Knife; opp: Roster; mine: G.Lineup[]; mapNo: number; bestOf: number; voteKey: string; /** An equal-conditions showmatch: both teams take their stronger side, so there is nothing to choose. */ auto: boolean;
+  /** The maps were drawn at random, so no map is a decider: each one is just a knife round. */ random?: boolean; dispatch: React.Dispatch<Action>;
 }) {
   const left = G.otherSide(k.oppPick);
   // Where each team starts when you don't choose: the side the opponent left you, or (taking the stronger side automatically) your best one.
@@ -510,7 +515,7 @@ function KnifePanel({ k, opp, mine, mapNo, bestOf, voteKey, auto, dispatch }: {
   const title = k.how === 'our-pick' ? (auto ? `Your pick: ${opp.org} take ${theirs}` : `Your pick: ${opp.org} choose sides`)
     : k.how === 'their-pick' ? (auto ? `${opp.org}'s pick: you take ${yours}` : `${opp.org}'s pick: you choose sides`)
       : k.won ? 'You won the knife!' : `${opp.org} won the knife`;
-  const label = k.how === 'knife' ? (bestOf === 3 ? 'Decider · Knife round' : 'Knife round') : 'Side choice';
+  const label = k.how === 'knife' ? (bestOf === 3 && !random ? 'Decider · Knife round' : 'Knife round') : 'Side choice';
   const lean = G.sideLean(k.map);
   const SIDE_NOTE = { T: 'You attack first. Sides swap at halftime.', CT: 'You defend first. Sides swap at halftime.' } as const;
   return (
@@ -575,7 +580,7 @@ function useVetoReplay(m: G.Match) {
   const finished = m.pool.length > 0;
   // A veto that is already settled when the screen opens (a reload, history) is shown as it is, with no replay.
   // An automatic veto (equal-conditions showmatch) is complete the moment the match is set up, so it is played back from the start the first time it is seen.
-  const unseen = !!m.veto.auto && m.maps.length === 0;
+  const unseen = !!m.veto.auto && !m.veto.random && m.maps.length === 0;
   const [shown, setShown] = useState(unseen ? 0 : m.veto.steps.length);
   const [released, setReleased] = useState(finished && !unseen);
   const target = m.veto.steps.length;

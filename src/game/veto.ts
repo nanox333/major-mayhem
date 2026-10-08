@@ -8,8 +8,10 @@ export type Team = 'us' | 'them';
 export interface VetoStep { team: Team; action: 'ban' | 'pick'; map: string }
 export interface Veto {
   order: { team: Team; action: 'ban' | 'pick' }[]; steps: VetoStep[]; left: string[];
-  /** Both teams chose by the same rule, with a coin flip for who started (an equal-conditions showmatch, #172): nobody on screen vetoes. */
+  /** An equal-conditions showmatch (#172): nobody on screen vetoes, and sides are chosen by one rule for both teams. */
   auto?: boolean;
+  /** The maps were picked at random, the same way for both teams (a duel), so the veto has no turns. `left` holds them in play order. */
+  random?: boolean;
 }
 
 const turn = (team: Team, action: 'ban' | 'pick') => ({ team, action });
