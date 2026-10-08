@@ -184,7 +184,10 @@ export const en = {
   'challenge.step2': 'When it is finished, send your team back from the results page with Send challenge.',
   'challenge.step3': '{name} then drafts against your team in a best-of-three showmatch.',
   'challenge.start': 'Start drafting',
-  'challenge.abandon': "Accepting now counts today's daily as abandoned.",
+  'challenge.replaces': 'A challenge you already have waiting will be replaced. Your own run is not touched.',
+  'challenge.bannerOpen': 'A challenge from {name} is waiting for your draft.',
+  'challenge.bannerFinished': 'Your challenge from {name} is finished: send your team back, or see the result.',
+  'challenge.bannerButton': 'Open the challenge',
   'challenge.badTitle': "That challenge link doesn't work",
   'challenge.badBody': "It's incomplete or damaged. Ask for a fresh link.",
 

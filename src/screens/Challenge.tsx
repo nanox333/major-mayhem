@@ -15,7 +15,7 @@ export function ChallengeDialog({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState(() => { try { return localStorage.getItem(NAME_KEY) ?? ''; } catch { return ''; } });
   const [seed] = useState(newChallengeSeed);
   const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
-  const link = `${pageUrl() ?? __SITE__.url}#challenge=${encodeChallenge({ name, seed })}`;
+  const link = `${pageUrl() ?? __SITE__.url}#c=${encodeChallenge({ name, seed })}`;
   const copy = async () => {
     try { localStorage.setItem(NAME_KEY, name); } catch { /* storage unavailable */ }
     const ok = await copyText(link);
@@ -48,8 +48,22 @@ export function ChallengeDialog({ onClose }: { onClose: () => void }) {
   );
 }
 
+/**
+ * A banner on the Home for a challenge waiting in its own slot. It sits above the page, and opens the challenge from there: your own run is not touched.
+ */
+export function ChallengeBanner({ waiting, onOpen }: { waiting: { from: string; finished: boolean }; onOpen: () => void }) {
+  const t = useT();
+  return (
+    <section className="challenge-banner" aria-label={t('challenge.kicker')}>
+      <span className="dv__kick">{t('challenge.kicker')}</span>
+      <p>{waiting.finished ? t('challenge.bannerFinished', { name: waiting.from }) : t('challenge.bannerOpen', { name: waiting.from })}</p>
+      <button type="button" className="ghost-btn" onClick={onOpen}>{t('challenge.bannerButton')}</button>
+    </section>
+  );
+}
+
 /** The challenge a friend sent you: start drafting from its seed. Shown in place of the duel invitation when the link is a challenge. */
-export function ChallengeInvite({ challenge, abandon, onAccept, onClose }: { challenge: Challenge | null; abandon: boolean; onAccept: (c: Challenge) => void; onClose: () => void }) {
+export function ChallengeInvite({ challenge, replaces, onAccept, onClose }: { challenge: Challenge | null; /** A challenge is already waiting in its slot, so accepting this one replaces it. */ replaces: boolean; onAccept: (c: Challenge) => void; onClose: () => void }) {
   const t = useT();
   return (
     <Modal label={t('challenge.kicker')} onClose={onClose}>
@@ -69,7 +83,7 @@ export function ChallengeInvite({ challenge, abandon, onAccept, onClose }: { cha
                 <li>{t('challenge.step3', { name: cleanName(challenge.name) })}</li>
               </ol>
             </section>
-            {abandon && <p className="dv__note">{t('challenge.abandon')}</p>}
+            {replaces && <p className="dv__note">{t('challenge.replaces')}</p>}
             <div className="dv__actions">
               <button type="button" className="mbtn mbtn--main" onClick={() => onAccept(challenge)}><span>{t('challenge.start')}</span><ArrowRightIcon size={22} /></button>
             </div>

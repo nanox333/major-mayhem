@@ -6,7 +6,7 @@ import { LATEST_RULES, Player, ROLE_ORDER, Role, Roster, activeRosters, isCoach,
 import * as G from './logic';
 import { DUEL_ID, Duel, duelRosters, registerDuel, validDuel } from './duel';
 import { isRealDate } from './dates';
-import { readKey, safeSet } from './persist';
+import { readKey, removeKey, safeSet } from './persist';
 
 export type Phase = 'draft' | 'ready' | 'preview' | 'live' | 'final';
 export type Mode = 'free' | 'daily' | 'duel';
@@ -60,6 +60,8 @@ export interface Run {
   opts?: Opts;
   /** A draft duel: the challenger's team, which this run drafts against. */
   duel?: Duel;
+  /** A free draft started from a friend's challenge (#challenge): the friend's name, for the banner. */
+  challengeFrom?: string;
   /** The rules version this run plays under (#24); runs saved before versions existed are v1. */
   rules?: number;
   /**
@@ -164,12 +166,31 @@ export function parseRun(raw: string | null): Run | null {
 
 /** The saved run, or a fresh one. `bad` says a save was there but could not be used, so the page can say so instead of quietly starting over. */
 export function load(): Run {
-  const r = parseRun(readKey(KEY));
-  if (!r) return fresh();
-  if (r.duel) registerDuel(r.duel);
+  const r = loadSlot('main') ?? fresh();
   G.setRules(rulesOf(r));
   return r;
 }
+
+/**
+ * Two runs are kept apart (#challenge): your own run ("main", the daily, free play or a duel you took), and a challenge a friend sent, which
+ * has a slot of its own so accepting one never replaces your run.
+ */
+export type Slot = 'main' | 'challenge';
+export const CHALLENGE_KEY = 'major-mayhem-challenge-v1';
+const slotKey = (slot: Slot) => (slot === 'main' ? KEY : CHALLENGE_KEY);
+
+/** The run saved in a slot, or null when there is none. Loading one registers its duel, as loading your run always has. */
+export function loadSlot(slot: Slot): Run | null {
+  const r = parseRun(readKey(slotKey(slot)));
+  if (!r) return null;
+  if (r.duel) registerDuel(r.duel);
+  return r;
+}
+/** Whether a challenge is waiting in its slot, who sent it, and whether it is finished. */
+export const peekChallenge = (): { from: string; finished: boolean } | null => {
+  const r = parseRun(readKey(CHALLENGE_KEY));
+  return r ? { from: r.duel?.name ?? r.challengeFrom ?? 'A friend', finished: r.phase === 'final' } : null;
+};
 /** Whether there is a saved run that cannot be used. */
 export const savedRunIsBroken = () => { const raw = readKey(KEY); return !!raw && !parseRun(raw); };
 
@@ -218,6 +239,7 @@ export function validRun(r: any): boolean {
   if (r.mode === 'free' && r.seed.startsWith('daily-')) return false;
   if ((r.mode === 'duel') !== (r.duel !== undefined)) return false;
   if (r.duel !== undefined && (!validDuel(r.duel) || r.duel.seed !== r.seed)) return false;
+  if (r.challengeFrom !== undefined && typeof r.challengeFrom !== 'string') return false;
   if (!isInt(r.offerKey, 0, 10000) || !isInt(r.rerollKey, 0, 10000) || !isInt(r.rerolls, 0, 10)) return false;
   if (typeof r.recorded !== 'boolean' || (r.extras !== undefined && typeof r.extras !== 'boolean')) return false;
   if (r.attempt !== undefined && (typeof r.attempt !== 'string' || r.attempt.length > 60)) return false;
@@ -257,13 +279,16 @@ export function validRun(r: any): boolean {
   if (r.phase === 'final' && t.status === 'running') return false;
   return true;
 }
-export const save = (r: Run) => { safeSet(KEY, JSON.stringify(r), 'your run'); };
+/** Empties a slot. Used when a challenge is left with nothing in it that is a challenge. */
+export const clearSlot = (slot: Slot) => removeKey(slotKey(slot));
+/** Saves the run on screen into the slot it belongs to, so a challenge never writes over your run. */
+export const saveSlot = (r: Run, slot: Slot) => { safeSet(slotKey(slot), JSON.stringify(r), slot === 'main' ? 'your run' : 'your challenge'); };
 
 export type Action =
   | { type: 'spin' } | { type: 'reroll' } | { type: 'team'; id: string } | { type: 'back' }
   | { type: 'draft'; player: Player; slot: Role } | { type: 'play' } | { type: 'start' }
   | { type: 'veto'; map: string } | { type: 'side'; side: G.Side } | { type: 'next' } | { type: 'reset'; mode?: Mode; opts?: Opts } | { type: 'recorded' }
-  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel } | { type: 'challenge'; seed: string } | { type: 'adopt'; run: Run }
+  | { type: 'opts'; opts: Opts } | { type: 'duel'; duel: Duel } | { type: 'challenge'; seed: string; from: string } | { type: 'adopt'; run: Run }
   | { type: 'coach'; rosterId: string } | { type: 'bench'; player: Player } | { type: 'sub'; out: string | null } | { type: 'call'; call: G.Call };
 
 /** A daily draws only from rosters available on its date, so later data additions don't change it. */
@@ -435,7 +460,7 @@ function reduce(s: Run, a: Action): Run {
     case 'opts': return s.offerKey === 0 && s.mode === 'free' && poolCheck(a.opts).ok ? fresh('free', today(), a.opts) : s;
     case 'duel': return freshDuel(a.duel);
     // A challenge (#challenge): a free draft from the challenger's seed, to be sent back as a duel once it is finished.
-    case 'challenge': return { ...fresh('free'), seed: a.seed };
+    case 'challenge': return { ...fresh('free'), seed: a.seed, challengeFrom: a.from };
     case 'recorded': return { ...s, recorded: true };
     // Another tab moved this run on: take its version rather than overwrite it with a stale one (#163).
     case 'adopt': return a.run;

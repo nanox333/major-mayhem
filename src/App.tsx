@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import * as G from './game/logic';
-import { Action, Phase, currentLineup, dailyDate, dailyNumber, draftRounds, KEY, load, optsLabel, parseRun, reducer, roundNumber, roundOf, save, today } from './game/state';
+import { Action, Phase, currentLineup, dailyDate, dailyNumber, draftRounds, KEY, load, loadSlot, optsLabel, parseRun, peekChallenge, reducer, roundNumber, roundOf, Slot, clearSlot, saveSlot, fresh, today } from './game/state';
 import { STATS_KEY, abandonDaily, dailyStarted, forgetStats, loadStats, recordDuel, recordRun } from './game/stats';
 import { GUESS_KEY, forgetGuesses } from './game/guess';
 import { DUO_KEY, forgetDuo } from './game/duo';
@@ -22,7 +22,7 @@ import { useSoundOn } from './ui/sound';
 import { ArrowRightIcon, DatabaseIcon, RosterIcon, GamepadIcon, StarIcon } from './ui/icons';
 import { AdSlot } from './ui/adSlot';
 import { ContactPage } from './screens/Contact';
-import { ChallengeDialog, ChallengeInvite } from './screens/Challenge';
+import { ChallengeBanner, ChallengeDialog, ChallengeInvite } from './screens/Challenge';
 import { Challenge, challengeCode, decodeChallenge } from './game/challenge';
 import { useT, tNode } from './i18n';
 import { HomeScreen } from './screens/Home';
@@ -50,6 +50,10 @@ export default function App() {
 
 function Game() {
   const [s, rawDispatch] = useReducer(reducer, undefined, load);
+  // Which run is on screen (#challenge). Your run is the one the Home shows; a challenge sits in its own slot until it is opened from the Home's banner.
+  const [slot, setSlot] = useState<Slot>('main');
+  const slotRef = useRef<Slot>(slot);
+  slotRef.current = slot;
   const latest = useRef(s);
   latest.current = s;
   // Resetting a daily after opening a case records it as abandoned, so it can't be replayed with hindsight.
@@ -81,14 +85,25 @@ function Game() {
     return { challenge: decodeChallenge(code) };
   });
   const [challengeOpen, setChallengeOpen] = useState(false);
-  useEffect(() => save(s), [s]);
+  // Opens the run in a slot. Going back to your run never disturbs a challenge: the challenge stays in its slot until you open it again.
+  const openSlot = (to: Slot) => {
+    const run = loadSlot(to) ?? (to === 'main' ? fresh() : null);
+    if (!run) return;
+    // A challenge slot left holding a plain free run (a New run started on a challenge) is emptied, so it does not look like a waiting challenge.
+    if (slotRef.current === 'challenge' && to === 'main' && !s.challengeFrom && !s.duel) clearSlot('challenge');
+    setSlot(to); setReelFor(null); setPreview(null);
+    rawDispatch({ type: 'adopt', run });
+  };
+  // Accepting a challenge or a duel puts it in the challenge slot. It is not dispatched through `dispatch`, so nothing about your run is abandoned.
+  const acceptInto = (a: Action) => { setSlot('challenge'); setReelFor(null); rawDispatch(a); setView('draft'); };
+  useEffect(() => saveSlot(s, slot), [s, slot]);
   // Another tab changed what is saved (#163): take its run and its record rather than overwrite them with what this tab last saw.
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
       if (e.key === STATS_KEY) { forgetStats(); setStats(loadStats()); }
       else if (e.key === GUESS_KEY) forgetGuesses();
       else if (e.key === DUO_KEY) forgetDuo();
-      else if (e.key === KEY) {
+      else if (e.key === KEY && slotRef.current === 'main') {
         const run = parseRun(e.newValue);
         if (run && JSON.stringify(run) !== JSON.stringify(latest.current)) { if (run.duel) registerDuel(run.duel); rawDispatch({ type: 'adopt', run }); }
       }
@@ -134,6 +149,11 @@ function Game() {
   const beginDraft = () => { setBegan(true); setView('draft'); };
   const backView: View = atStart && !began && s.mode !== 'duel' ? 'home' : 'draft';
   const view: View = chosen === 'draft' ? backView : chosen;
+  // The Home is your run: whenever the Home is shown while a challenge is on screen, your run comes back and the challenge waits in its slot.
+  // (`chosen` is the page picked: `view` is the page a draft came from, so it reads "home" during a draft.)
+  useEffect(() => { if (chosen === 'home' && slotRef.current === 'challenge') openSlot('main'); }, [chosen]);
+  // A challenge waiting for you is offered as a banner on the Home. It is read only while the Home is on screen.
+  const waiting = useMemo(() => (chosen === 'home' && slot === 'main' ? peekChallenge() : null), [chosen, slot, s]);
   // Single-key shortcuts (#77), off-able in the settings and quiet while a dialog is open or you are typing.
   const prefs = usePrefs();
   const [, toggleSound] = useSoundOn();
@@ -186,6 +206,7 @@ function Game() {
     <UnsavedBar run={s} />
     {scene && <DraftScene />}
     <div className={`page phase-${s.phase} ${start ? 'is-start' : ''} ${drafting ? 'is-wide' : ''} ${view === 'home' ? 'is-home' : ''} ${scene ? 'is-scene' : ''}`}>
+      {waiting && <ChallengeBanner waiting={waiting} onOpen={() => { openSlot('challenge'); setView('draft'); }} />}
       {view === 'home' && <HomeScreen s={s} stats={stats} dispatch={dispatch} showDraft={beginDraft} showSetup={() => setView('setup')} showGuess={() => setView('guess')} showDuo={() => setView('duo')} onStats={() => setView('stats')} onBrowse={() => setView('archive')} />}
       {view === 'guess' && <GuessScreen next={guessNext} />}
       {view === 'duo' && <DuoScreen next={guessNext} />}
@@ -231,10 +252,10 @@ function Game() {
         {__SITE__.support.url && <div className="foot__group"><StarIcon size={24} /><p><strong>{__SITE__.support.label}</strong>{tNode('footer.supportBody', { open: <a href={__SITE__.support.url} rel="noopener" target="_blank">{t('footer.supportOpen')}</a> })}</p></div>}
       </footer>
 
-      {invite && <DuelInvite duel={invite.duel} abandon={dailyStarted(s)} onClose={() => setInvite(null)}
-        onAccept={(d) => { setInvite(null); setReelFor(null); dispatch({ type: 'duel', duel: d }); setView('draft'); }} />}
-      {challengeIn && <ChallengeInvite challenge={challengeIn.challenge} abandon={dailyStarted(s)} onClose={() => setChallengeIn(null)}
-        onAccept={(c) => { setChallengeIn(null); setReelFor(null); dispatch({ type: 'challenge', seed: c.seed }); setView('draft'); }} />}
+      {invite && <DuelInvite duel={invite.duel} replaces={!!peekChallenge()} onClose={() => setInvite(null)}
+        onAccept={(d) => { setInvite(null); acceptInto({ type: 'duel', duel: d }); }} />}
+      {challengeIn && <ChallengeInvite challenge={challengeIn.challenge} replaces={!!peekChallenge()} onClose={() => setChallengeIn(null)}
+        onAccept={(c) => { setChallengeIn(null); acceptInto({ type: 'challenge', seed: c.seed, from: c.name }); }} />}
       {challengeOpen && <ChallengeDialog onClose={() => setChallengeOpen(false)} />}
       {twitch && <TwitchPanel onClose={() => setTwitch(false)} />}
       {settings && <SettingsDialog run={s} onClose={() => setSettings(false)} toShortcuts={settings === 'shortcuts'} onTwitch={() => setTwitch(true)} abandon={dailyStarted(s)} onNewRun={() => { setReelFor(null); setBegan(false); dispatch({ type: 'reset' }); setView('home'); }} />}
@@ -251,7 +272,7 @@ function Game() {
 }
 
 /** The invitation to a draft duel (a link someone sent). Built like the Settings and Help dialogs, with the home page's buttons (src/styles/duel-invite.css). */
-function DuelInvite({ duel, abandon, onAccept, onClose }: { duel: Duel | null; abandon: boolean; onAccept: (d: Duel) => void; onClose: () => void }) {
+function DuelInvite({ duel, replaces, onAccept, onClose }: { duel: Duel | null; /** A challenge is already waiting in its slot, so accepting this one replaces it. */ replaces: boolean; onAccept: (d: Duel) => void; onClose: () => void }) {
   return (
     <Modal label="Draft duel" onClose={onClose}>
       <div className="dv">
@@ -266,7 +287,7 @@ function DuelInvite({ duel, abandon, onAccept, onClose }: { duel: Duel | null; a
               <h4 id="dv-terms">{duelTerms(duel).headline}</h4>
               <ul className="dv__terms">{duelTerms(duel).lines.map((l) => <li key={l}>{l}</li>)}</ul>
             </section>
-            {abandon && <p className="dv__note">Accepting now counts today's daily as abandoned.</p>}
+            {replaces && <p className="dv__note">A challenge you already have waiting will be replaced. Your own run is not touched.</p>}
             <div className="dv__actions">
               <button type="button" className="mbtn mbtn--main" onClick={() => onAccept(duel)}><span>Accept the duel</span><ArrowRightIcon size={22} /></button>
             </div>

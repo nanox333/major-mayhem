@@ -31,41 +31,50 @@ describe('a challenge before a draft (#challenge)', () => {
     const seed = newChallengeSeed();
     const code = encodeChallenge({ name: 'Kris', seed });
     expect(decodeChallenge(code)).toEqual({ name: 'Kris', seed });
-    expect(challengeCode(`#challenge=${code}`)).toBe(code);
+    expect(challengeCode(`#c=${code}`)).toBe(code);
     expect(challengeCode('#duel=abc')).toBeNull();
   });
 
-  it('is a short link: a name and a seed, well under a hundred characters', () => {
-    expect(encodeChallenge({ name: 'Kris', seed: 'free-k7x2mpq9' }).length).toBeLessThan(60);
+  it('is a short code: 11 characters with a name, 6 without', () => {
+    expect(encodeChallenge({ name: 'Kris', seed: 'free-k7x2' }).length).toBe(11);
+    expect(encodeChallenge({ name: '', seed: 'free-k7x2' }).length).toBe(6);
+    expect(decodeChallenge(encodeChallenge({ name: '', seed: 'free-k7x2' }))).toEqual({ name: 'A friend', seed: 'free-k7x2' });
+  });
+
+  it('makes seeds of four characters, which differ between challenges', () => {
+    const seeds = new Set(Array.from({ length: 20 }, () => newChallengeSeed()));
+    for (const seed of seeds) expect(seed).toMatch(/^free-[a-z0-9]{4}$/);
+    expect(seeds.size).toBeGreaterThan(15);
   });
 
   it('refuses a seed a free run could not have, and a name too long to carry', () => {
     expect(() => encodeChallenge({ name: 'Kris', seed: 'daily-2026-10-08' })).toThrow();
-    expect(() => encodeChallenge({ name: 'Kris', seed: 'free-' + 'a'.repeat(40) })).toThrow();
+    expect(() => encodeChallenge({ name: 'Kris', seed: 'free-' + 'a'.repeat(8) })).toThrow();
     // The same bytes with another format byte are not a challenge.
-    const bytes = fromBase64Url(encodeChallenge({ name: 'Kris', seed: 'free-k7x2mpq9' }));
+    const bytes = fromBase64Url(encodeChallenge({ name: 'Kris', seed: 'free-k7x2' }));
     bytes[0] = 3;
     expect(decodeChallenge(toBase64Url(bytes))).toBeNull();
   });
 
-  it('refuses a link that is cut short or is not a challenge at all', () => {
-    const code = encodeChallenge({ name: 'Kris', seed: 'free-k7x2mpq9' });
-    expect(decodeChallenge(code.slice(0, code.length - 4))).toBeNull();
-    expect(decodeChallenge('not-a-challenge')).toBeNull();
+  it('refuses a code too short to hold a seed, or one that is not a code at all', () => {
+    const code = encodeChallenge({ name: '', seed: 'free-k7x2' });
+    expect(decodeChallenge(code.slice(0, 4))).toBeNull();
+    expect(decodeChallenge('not a code!')).toBeNull();
   });
 
   it('starts a free draft from the challenger\'s seed, with nothing drafted yet', () => {
-    const s = reducer(fresh('free'), { type: 'challenge', seed: 'free-k7x2mpq9' });
-    expect(s.seed).toBe('free-k7x2mpq9');
+    const s = reducer(fresh('free'), { type: 'challenge', seed: 'free-k7x2', from: 'Kris' });
+    expect(s.seed).toBe('free-k7x2');
     expect(s.mode).toBe('free');
     expect(s.phase).toBe('draft');
     expect(s.picks).toEqual([]);
+    expect(s.challengeFrom).toBe('Kris');
   });
 
   it('closes the loop with no server: a friend drafts from the seed, sends a team back, and the challenger drafts against it', () => {
-    const challenge = { name: 'Kris', seed: 'free-k7x2mpq9' };
+    const challenge = { name: 'Kris', seed: 'free-k7x2' };
     // The friend opens the challenge and drafts a whole team from its seed.
-    const friend = draft(reducer(fresh('free'), { type: 'challenge', seed: decodeChallenge(encodeChallenge(challenge))!.seed }));
+    const friend = draft(reducer(fresh('free'), { type: 'challenge', seed: decodeChallenge(encodeChallenge(challenge))!.seed, from: 'Kris' }));
     expect(friend.picks).toHaveLength(5);
     // They send the team back as a duel link. It carries their cases, so it is an equal-conditions duel.
     const reply = duelFrom(friend, 'Ana');

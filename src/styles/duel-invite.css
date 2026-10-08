@@ -35,3 +35,9 @@
 .dv__field > span { font: 700 .7rem/1 var(--f-read); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
 .dv__input { min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 0; background: rgba(255, 255, 255, .04); color: var(--text); font: inherit; }
 .dv__link { margin: 0; padding: 12px 14px; background: rgba(255, 255, 255, .04); box-shadow: inset 3px 0 0 var(--accent); color: var(--text-2); font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; user-select: all; }
+
+/* The banner on the Home for a challenge waiting in its own slot (ChallengeBanner in src/screens/Challenge.tsx). */
+.challenge-banner { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 16px; margin: 0 0 18px; padding: 12px 16px; background: rgba(255, 255, 255, .04); box-shadow: inset 3px 0 0 var(--accent); }
+.challenge-banner .dv__kick { flex: none; }
+.challenge-banner p { flex: 1 1 260px; margin: 0; color: var(--text-2); font-size: .92rem; line-height: 1.4; }
+.challenge-banner .ghost-btn { flex: none; min-height: 40px; }
